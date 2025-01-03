@@ -116,7 +116,7 @@ public class CarController : NetworkBehaviour
   float localVelocityZ;
   float localVelocityX;
   bool deceleratingCar;
-  bool touchControlsSetup = false;
+
   /*
   The following variables are used to store information about sideways friction of the wheels (such as
   extremumSlip,extremumValue, asymptoteSlip, asymptoteValue and stiffness). We change this values to
@@ -203,7 +203,7 @@ public class CarController : NetworkBehaviour
   // Update is called once per frame
   void Update()
   {
-    if (IsOwner || !Application.isFocused) return;
+    if (!IsOwner || !Application.isFocused) return;
     //CAR DATA
 
     // We determine the speed of the car.
