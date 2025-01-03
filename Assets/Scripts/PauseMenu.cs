@@ -25,6 +25,7 @@ public class PauseMenu : NetworkBehaviour
 
     public void Resume()
     {
+        Cursor.lockState = CursorLockMode.Locked;
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
         gameIsPaused = false;
@@ -32,6 +33,8 @@ public class PauseMenu : NetworkBehaviour
 
     void Pause()
     {
+
+        Cursor.lockState = CursorLockMode.None;
         pauseMenuUI.SetActive(true);
         gameIsPaused = true;
     }
@@ -41,7 +44,7 @@ public class PauseMenu : NetworkBehaviour
        settingsMenuUI.SetActive(!settingsMenuUI.activeSelf);
        pauseMenuUI.SetActive(!pauseMenuUI.activeSelf);
     }
-    
+
     public void ReloadScene()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
