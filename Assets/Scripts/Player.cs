@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using Cinemachine;
 
 public enum PlayerState
 {
@@ -10,23 +11,36 @@ public enum PlayerState
 
 public class Player : NetworkBehaviour
 {
+    [Header("Camera")]
+    [SerializeField] public CinemachineFreeLook mainCamera;
+    [SerializeField] public AudioListener audioListener;
     public PlayerState state;
     public Vector3 spawnPoint;
 
-    void Start()
+    void Awake()
     {
-        if (!IsOwner) return;
-        spawnPoint =  SpawnPointManager.instance.AssignSpawnPoint();
+        spawnPoint = SpawnPointManager.instance.AssignSpawnPoint();
         Respawn();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            audioListener.enabled = true;
+            mainCamera.Priority = 1;
+        }
+        else
+        {
+            mainCamera.Priority = 0;
+        }
     }
 
     public void Respawn()
     {
         Debug.Log("Respawning Player");
         transform.position = spawnPoint;
-        CarController car = gameObject.GetComponentsInChildren<CarController>()[0];
-        car.transform.position = spawnPoint;
-        car.transform.LookAt(SpawnPointManager.instance.transform);
-        car.gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        transform.LookAt(SpawnPointManager.instance.transform);
+        gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
     }
 }

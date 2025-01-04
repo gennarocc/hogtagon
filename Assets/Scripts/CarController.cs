@@ -10,23 +10,24 @@ something useful for your game. Best regards, Mena.
 
 using System;
 using Unity.Netcode;
+using Cinemachine;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class CarController : NetworkBehaviour
 {
 
-  //CAR SETUP
+  [Header("Camera")]
+  [SerializeField] public CinemachineFreeLook mainCamera;
+  [SerializeField] public float cameraAngle;
 
-  //[Header("CAR SETUP")]
+  [Header("Car Params")]
   [Range(20, 190)]
   public int maxSpeed = 90; //The maximum speed that the car can reach in km/h.
   [Range(10, 120)]
   public int maxReverseSpeed = 45; //The maximum speed that the car can reach while going on reverse in km/h.
   [Range(1, 10)]
   public int accelerationMultiplier = 2; // How fast the car can accelerate. 1 is a slow acceleration and 10 is the fastest.
-  [Space(10)]
-  [Range(10, 45)]
+  [Range(10, 90)]
   public int maxSteeringAngle = 27; // The maximum angle that the tires can reach while rotating the steering wheel.
   [Range(0.1f, 1f)]
   public float steeringSpeed = 0.5f; // How fast the steering wheel turns.
@@ -43,12 +44,7 @@ public class CarController : NetworkBehaviour
 
   //WHEELS
 
-  [Header("WHEELS")]
-  /*
-  The following variables are used to store the wheels' data of the car. We need both the mesh-only game objects and wheel
-  collider components of the wheels. The wheel collider components and 3D meshes of the wheels cannot come from the same
-  game object; they must be separate game objects.
-  */
+  [Header("Wheel References")]
   public GameObject frontLeftMesh;
   public WheelCollider frontLeftCollider;
   [Space(10)]
@@ -61,42 +57,6 @@ public class CarController : NetworkBehaviour
   public GameObject rearRightMesh;
   public WheelCollider rearRightCollider;
 
-  //PARTICLE SYSTEMS
-
-  [Header("EFFECTS")]
-  //The following variable lets you to set up particle systems in your car
-  public bool useEffects = false;
-
-  // The following particle systems are used as tire smoke when the car drifts.
-  public ParticleSystem RLWParticleSystem;
-  public ParticleSystem RRWParticleSystem;
-
-  // The following trail renderers are used as tire skids when the car loses traction.
-  public TrailRenderer RLWTireSkid;
-  public TrailRenderer RRWTireSkid;
-
-
-  [Header("UI")]
-  //The following variable lets you to set up a UI text to display the speed of your car.
-  public bool useUI = false;
-  public Text carSpeedText; // Used to store the UI object that is going to show the speed of the car.
-
-  [Header("Sounds")]
-  //The following variable lets you to set up sounds for your car such as the car engine or tire screech sounds.
-  public bool useSounds = false;
-  public AudioSource carEngineSound; // This variable stores the sound of the car engine.
-  public AudioSource tireScreechSound; // This variable stores the sound of the tire screech (when the car is drifting).
-  float initialCarEngineSoundPitch; // Used to store the initial pitch of the car engine sound.
-
-  [Header("Turning")]
-  [SerializeField] public Vector2 turn;
-
-  [SerializeField] public float maxTurn;
-  [SerializeField] public float sensitivity;
-
-
-  //CAR DATA
-
   [HideInInspector]
   public float carSpeed; // Used to store the speed of the car.
   [HideInInspector]
@@ -104,11 +64,6 @@ public class CarController : NetworkBehaviour
   [HideInInspector]
   public bool isTractionLocked; // Used to know whether the traction of the car is locked or not.
 
-  //PRIVATE VARIABLES
-
-  /*
-  IMPORTANT: The following variables should not be modified manually since their values are automatically given via script.
-  */
   Rigidbody carRigidbody; // Stores the car's rigidbody.
   public float steeringAxis; // Used to know whether the steering wheel has reached the maximum value. It goes from -1 to 1.
   float throttleAxis; // Used to know whether the throttle has reached the maximum value. It goes from -1 to 1.
@@ -131,81 +86,17 @@ public class CarController : NetworkBehaviour
   WheelFrictionCurve RRwheelFriction;
   float RRWextremumSlip;
 
-  // Start is called before the first frame update
   void Start()
   {
     Cursor.visible = !Cursor.visible; // toggle visibility
     Cursor.lockState = CursorLockMode.Locked;
-    //In this part, we set the 'carRigidbody' value with the Rigidbody attached to this
-    //gameObject. Also, we define the center of mass of the car with the Vector3 given
-    //in the inspector.
     carRigidbody = gameObject.GetComponent<Rigidbody>();
     carRigidbody.centerOfMass = bodyMassCenter;
-
-    // We save the initial pitch of the car engine sound.
-    if (carEngineSound != null)
-    {
-      initialCarEngineSoundPitch = carEngineSound.pitch;
-    }
-
-    // We invoke 2 methods inside this script. CarSpeedUI() changes the text of the UI object that stores
-    // the speed of the car and CarSounds() controls the engine and drifting sounds. Both methods are invoked
-    // in 0 seconds, and repeatedly called every 0.1 seconds.
-    if (useUI)
-    {
-      InvokeRepeating("CarSpeedUI", 0f, 0.1f);
-    }
-    else if (!useUI)
-    {
-      if (carSpeedText != null)
-      {
-        carSpeedText.text = "0";
-      }
-    }
-
-    if (useSounds)
-    {
-      InvokeRepeating("CarSounds", 0f, 0.1f);
-    }
-    else if (!useSounds)
-    {
-      if (carEngineSound != null)
-      {
-        carEngineSound.Stop();
-      }
-      if (tireScreechSound != null)
-      {
-        tireScreechSound.Stop();
-      }
-    }
-
-    if (!useEffects)
-    {
-      if (RLWParticleSystem != null)
-      {
-        RLWParticleSystem.Stop();
-      }
-      if (RRWParticleSystem != null)
-      {
-        RRWParticleSystem.Stop();
-      }
-      if (RLWTireSkid != null)
-      {
-        RLWTireSkid.emitting = false;
-      }
-      if (RRWTireSkid != null)
-      {
-        RRWTireSkid.emitting = false;
-      }
-    }
   }
 
-  // Update is called once per frame
   void Update()
   {
-    if (!IsOwner || !Application.isFocused) return;
-    //CAR DATA
-
+    if (!IsOwner) return;
     // We determine the speed of the car.
     carSpeed = (2 * Mathf.PI * frontLeftCollider.radius * frontLeftCollider.rpm * 60) / 1000;
     // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
@@ -213,21 +104,13 @@ public class CarController : NetworkBehaviour
     // Save the local velocity of the car in the z axis. Used to know if the car is going forward or backwards.
     localVelocityZ = transform.InverseTransformDirection(carRigidbody.velocity).z;
 
-    //CAR PHYSICS
-
-    /*
-    The next part is regarding to the car controller. First, it checks if the user wants to use touch controls (for
-    mobile devices) or analog input controls (WASD + Space).
-
-    The following methods are called whenever a certain key is pressed. For example, in the first 'if' we call the
-    method GoForward() if the user has pressed W.
-
-    In this part of the code we specify what the car needs to do if the user presses W (throttle), S (reverse),
-    A (turn left), D (turn right) or Space bar (handbrake).
-    */
-
-    turn.x += Input.GetAxis("Mouse X") * sensitivity;
-    turn.x = Mathf.Clamp(turn.x, maxTurn * -1 , maxTurn);
+    // Calculate camera angle in relation to vehical - This will be use to steer.
+    Vector3 cameraVector = transform.position - mainCamera.State.FinalPosition;
+    cameraVector.y = 0; // We only care about the horizontal axis.
+    Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
+    cameraAngle = Vector3.Angle(carDirection, cameraVector);
+    // Use dot product to determine if camera is looking left or right. 
+    float cameraOrientation = Vector3.Dot(cameraVector, transform.right);
 
     if (Input.GetKey(KeyCode.W))
     {
@@ -241,12 +124,11 @@ public class CarController : NetworkBehaviour
       deceleratingCar = false;
       GoReverse();
     }
-
-    if (turn.x < 0)
+    if (cameraOrientation < 0)
     {
       TurnLeft();
     }
-    if (turn.x > 0)
+    if (cameraOrientation > 0)
     {
       TurnRight();
     }
@@ -260,85 +142,17 @@ public class CarController : NetworkBehaviour
     {
       RecoverTraction();
     }
-    if ((!Input.GetKey(KeyCode.S) && !Input.GetKey(KeyCode.W)))
+    if (!Input.GetKey(KeyCode.S) && !Input.GetKey(KeyCode.W))
     {
       ThrottleOff();
     }
-    if ((!Input.GetKey(KeyCode.S) && !Input.GetKey(KeyCode.W)) && !Input.GetKey(KeyCode.Space) && !deceleratingCar)
+    if (!Input.GetKey(KeyCode.S) && !Input.GetKey(KeyCode.W) && !Input.GetKey(KeyCode.Space) && !deceleratingCar)
     {
       InvokeRepeating("DecelerateCar", 0f, 0.1f);
       deceleratingCar = true;
     }
-
     // We call the method AnimateWheelMeshes() in order to match the wheel collider movements with the 3D meshes of the wheels.
     AnimateWheelMeshes();
-
-  }
-
-  // This method converts the car speed data from float to string, and then set the text of the UI carSpeedText with this value.
-  public void CarSpeedUI()
-  {
-
-    if (useUI)
-    {
-      try
-      {
-        float absoluteCarSpeed = Mathf.Abs(carSpeed);
-        carSpeedText.text = Mathf.RoundToInt(absoluteCarSpeed).ToString();
-      }
-      catch (Exception ex)
-      {
-        Debug.LogWarning(ex);
-      }
-    }
-
-  }
-
-  // This method controls the car sounds. For example, the car engine will sound slow when the car speed is low because the
-  // pitch of the sound will be at its lowest point. On the other hand, it will sound fast when the car speed is high because
-  // the pitch of the sound will be the sum of the initial pitch + the car speed divided by 100f.
-  // Apart from that, the tireScreechSound will play whenever the car starts drifting or losing traction.
-  public void CarSounds()
-  {
-
-    if (useSounds)
-    {
-      try
-      {
-        if (carEngineSound != null)
-        {
-          float engineSoundPitch = initialCarEngineSoundPitch + (Mathf.Abs(carRigidbody.velocity.magnitude) / 25f);
-          carEngineSound.pitch = engineSoundPitch;
-        }
-        if ((isDrifting) || (isTractionLocked && Mathf.Abs(carSpeed) > 12f))
-        {
-          if (!tireScreechSound.isPlaying)
-          {
-            tireScreechSound.Play();
-          }
-        }
-        else if ((!isDrifting) && (!isTractionLocked || Mathf.Abs(carSpeed) < 12f))
-        {
-          tireScreechSound.Stop();
-        }
-      }
-      catch (Exception ex)
-      {
-        Debug.LogWarning(ex);
-      }
-    }
-    else if (!useSounds)
-    {
-      if (carEngineSound != null && carEngineSound.isPlaying)
-      {
-        carEngineSound.Stop();
-      }
-      if (tireScreechSound != null && tireScreechSound.isPlaying)
-      {
-        tireScreechSound.Stop();
-      }
-    }
-
   }
 
   //
@@ -348,7 +162,7 @@ public class CarController : NetworkBehaviour
   //The following method turns the front car wheels to the left. The speed of this movement will depend on the steeringSpeed variable.
   public void TurnLeft()
   {
-    var steeringAngle = -1 * (Math.Abs(turn.x)/maxTurn) * maxSteeringAngle;
+    var steeringAngle = -1 * Math.Clamp(cameraAngle, 0, maxSteeringAngle);
     frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
     frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
   }
@@ -356,7 +170,7 @@ public class CarController : NetworkBehaviour
   //The following method turns the front car wheels to the right. The speed of this movement will depend on the steeringSpeed variable.
   public void TurnRight()
   {
-    var steeringAngle = (Math.Abs(turn.x)/maxTurn) * maxSteeringAngle;
+    var steeringAngle = Math.Clamp(cameraAngle, 0, maxSteeringAngle);
     frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
     frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
   }
@@ -411,12 +225,10 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
       isDrifting = true;
-      DriftCarPS();
     }
     else
     {
       isDrifting = false;
-      DriftCarPS();
     }
     // The following part sets the throttle power to 1 smoothly.
     throttleAxis = throttleAxis + (Time.deltaTime * 3f);
@@ -466,12 +278,10 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
       isDrifting = true;
-      DriftCarPS();
     }
     else
     {
       isDrifting = false;
-      DriftCarPS();
     }
     // The following part sets the throttle power to -1 smoothly.
     throttleAxis = throttleAxis - (Time.deltaTime * 3f);
@@ -530,12 +340,10 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 2.5f)
     {
       isDrifting = true;
-      DriftCarPS();
     }
     else
     {
       isDrifting = false;
-      DriftCarPS();
     }
     // The following part resets the throttle power to 0 smoothly.
     if (throttleAxis != 0f)
@@ -628,75 +436,10 @@ public class CarController : NetworkBehaviour
     // Whenever the player uses the handbrake, it means that the wheels are locked, so we set 'isTractionLocked = true'
     // and, as a consequense, the car starts to emit trails to simulate the wheel skids.
     isTractionLocked = true;
-    DriftCarPS();
-
   }
 
   // This function is used to emit both the particle systems of the tires' smoke and the trail renderers of the tire skids
   // depending on the value of the bool variables 'isDrifting' and 'isTractionLocked'.
-  public void DriftCarPS()
-  {
-    return;
-    if (useEffects)
-    {
-      try
-      {
-        if (isDrifting)
-        {
-          RLWParticleSystem.Play();
-          RRWParticleSystem.Play();
-        }
-        else if (!isDrifting)
-        {
-          RLWParticleSystem.Stop();
-          RRWParticleSystem.Stop();
-        }
-      }
-      catch (Exception ex)
-      {
-        Debug.LogWarning(ex);
-      }
-
-      try
-      {
-        if ((isTractionLocked || Mathf.Abs(localVelocityX) > 5f) && Mathf.Abs(carSpeed) > 12f)
-        {
-          RLWTireSkid.emitting = true;
-          RRWTireSkid.emitting = true;
-        }
-        else
-        {
-          RLWTireSkid.emitting = false;
-          RRWTireSkid.emitting = false;
-        }
-      }
-      catch (Exception ex)
-      {
-        Debug.LogWarning(ex);
-      }
-    }
-    else if (!useEffects)
-    {
-      if (RLWParticleSystem != null)
-      {
-        RLWParticleSystem.Stop();
-      }
-      if (RRWParticleSystem != null)
-      {
-        RRWParticleSystem.Stop();
-      }
-      if (RLWTireSkid != null)
-      {
-        RLWTireSkid.emitting = false;
-      }
-      if (RRWTireSkid != null)
-      {
-        RRWTireSkid.emitting = false;
-      }
-    }
-
-  }
-
   // This function is used to recover the traction of the car when the user has stopped using the car's handbrake.
   public void RecoverTraction()
   {
