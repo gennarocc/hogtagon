@@ -22,21 +22,21 @@ public class CarController : NetworkBehaviour
 
   [Header("Car Params")]
   [Range(20, 190)]
-  public int maxSpeed = 90; //The maximum speed that the car can reach in km/h.
+  [SerializeField] public int maxSpeed = 90; //The maximum speed that the car can reach in km/h.
   [Range(10, 120)]
-  public int maxReverseSpeed = 45; //The maximum speed that the car can reach while going on reverse in km/h.
+  [SerializeField] public int maxReverseSpeed = 45; //The maximum speed that the car can reach while going on reverse in km/h.
   [Range(1, 10)]
-  public int accelerationMultiplier = 2; // How fast the car can accelerate. 1 is a slow acceleration and 10 is the fastest.
+  [SerializeField] public int accelerationMultiplier = 2; // How fast the car can accelerate. 1 is a slow acceleration and 10 is the fastest.
   [Range(10, 90)]
-  public int maxSteeringAngle = 27; // The maximum angle that the tires can reach while rotating the steering wheel.
+  [SerializeField] public int maxSteeringAngle = 27; // The maximum angle that the tires can reach while rotating the steering wheel.
   [Range(0.1f, 1f)]
-  public float steeringSpeed = 0.5f; // How fast the steering wheel turns.
+  [SerializeField] public float steeringSpeed = 0.5f; // How fast the steering wheel turns.
   [Range(100, 600)]
-  public int brakeForce = 350; // The strength of the wheel brakes.
+  [SerializeField] public int brakeForce = 350; // The strength of the wheel brakes.
   [Range(1, 10)]
-  public int decelerationMultiplier = 2; // How fast the car decelerates when the user is not using the throttle.
+  [SerializeField] public int decelerationMultiplier = 2; // How fast the car decelerates when the user is not using the throttle.
   [Range(1, 10)]
-  public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
+  [SerializeField] public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
   public Vector3 bodyMassCenter; // This is a vector that contains the center of mass of the car. I recommend to set this value
                                  // in the points x = 0 and z = 0 of your car. You can select the value that you want in the y axis,
                                  // however, you must notice that the higher this value is, the more unstable the car becomes.
@@ -45,17 +45,17 @@ public class CarController : NetworkBehaviour
   //WHEELS
 
   [Header("Wheel References")]
-  public GameObject frontLeftMesh;
-  public WheelCollider frontLeftCollider;
+  [SerializeField] public GameObject frontLeftMesh;
+  [SerializeField] public WheelCollider frontLeftCollider;
   [Space(10)]
-  public GameObject frontRightMesh;
-  public WheelCollider frontRightCollider;
+  [SerializeField] public GameObject frontRightMesh;
+  [SerializeField] public WheelCollider frontRightCollider;
   [Space(10)]
-  public GameObject rearLeftMesh;
-  public WheelCollider rearLeftCollider;
+  [SerializeField] public GameObject rearLeftMesh;
+  [SerializeField] public WheelCollider rearLeftCollider;
   [Space(10)]
-  public GameObject rearRightMesh;
-  public WheelCollider rearRightCollider;
+  [SerializeField] public GameObject rearRightMesh;
+  [SerializeField] public WheelCollider rearRightCollider;
 
   [HideInInspector]
   public float carSpeed; // Used to store the speed of the car.
@@ -65,7 +65,7 @@ public class CarController : NetworkBehaviour
   public bool isTractionLocked; // Used to know whether the traction of the car is locked or not.
 
   Rigidbody carRigidbody; // Stores the car's rigidbody.
-  public float steeringAxis; // Used to know whether the steering wheel has reached the maximum value. It goes from -1 to 1.
+  [SerializeField] public float steeringAxis; // Used to know whether the steering wheel has reached the maximum value. It goes from -1 to 1.
   float throttleAxis; // Used to know whether the throttle has reached the maximum value. It goes from -1 to 1.
   float driftingAxis;
   float localVelocityZ;
@@ -77,6 +77,7 @@ public class CarController : NetworkBehaviour
   extremumSlip,extremumValue, asymptoteSlip, asymptoteValue and stiffness). We change this values to
   make the car to start drifting.
   */
+
   WheelFrictionCurve FLwheelFriction;
   float FLWextremumSlip;
   WheelFrictionCurve FRwheelFriction;
@@ -92,6 +93,8 @@ public class CarController : NetworkBehaviour
     Cursor.lockState = CursorLockMode.Locked;
     carRigidbody = gameObject.GetComponent<Rigidbody>();
     carRigidbody.centerOfMass = bodyMassCenter;
+    carRigidbody.isKinematic = !IsServer;
+    GameManager.instance.PrintPlayers();
   }
 
   void Update()
@@ -100,10 +103,15 @@ public class CarController : NetworkBehaviour
     // We determine the speed of the car.
     carSpeed = (2 * Mathf.PI * frontLeftCollider.radius * frontLeftCollider.rpm * 60) / 1000;
     // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
-    localVelocityX = transform.InverseTransformDirection(carRigidbody.velocity).x;
+    localVelocityX = transform.InverseTransformDirection(carRigidbody.linearVelocity).x;
     // Save the local velocity of the car in the z axis. Used to know if the car is going forward or backwards.
-    localVelocityZ = transform.InverseTransformDirection(carRigidbody.velocity).z;
+    localVelocityZ = transform.InverseTransformDirection(carRigidbody.linearVelocity).z;
+    SendPlayerMoveData();
+  }
 
+  // Gather all data needed for movement then send to server.
+  public void SendPlayerMoveData()
+  {
     // Calculate camera angle in relation to vehical - This will be use to steer.
     Vector3 cameraVector = transform.position - mainCamera.State.FinalPosition;
     cameraVector.y = 0; // We only care about the horizontal axis.
@@ -112,74 +120,79 @@ public class CarController : NetworkBehaviour
     // Use dot product to determine if camera is looking left or right. 
     float cameraOrientation = Vector3.Dot(cameraVector, transform.right);
 
-    if (Input.GetKey(KeyCode.W))
+    var moveData = new MoveData()
+    {
+      id = OwnerClientId,
+      throttle = Input.GetKey(KeyCode.W),
+      breakReverse = Input.GetKey(KeyCode.S),
+      cameraAngle = cameraAngle,
+      cameraOrientation = cameraOrientation
+    };
+    MovePlayerServerRPC(moveData);
+  }
+
+  [ServerRpc]
+  private void MovePlayerServerRPC(MoveData moveData)
+  {
+    if (moveData.throttle)
     {
       CancelInvoke("DecelerateCar");
       deceleratingCar = false;
       GoForward();
     }
-    if (Input.GetKey(KeyCode.S))
+    if (moveData.breakReverse)
     {
       CancelInvoke("DecelerateCar");
       deceleratingCar = false;
       GoReverse();
     }
-    if (cameraOrientation < 0)
-    {
-      TurnLeft();
-    }
-    if (cameraOrientation > 0)
-    {
-      TurnRight();
-    }
-    if (Input.GetKey(KeyCode.Space))
-    {
-      CancelInvoke("DecelerateCar");
-      deceleratingCar = false;
-      Handbrake();
-    }
-    if (Input.GetKeyUp(KeyCode.Space))
-    {
-      RecoverTraction();
-    }
-    if (!Input.GetKey(KeyCode.S) && !Input.GetKey(KeyCode.W))
+
+    // TODO - Re-enable
+    // if (Input.GetKey(KeyCode.Space))
+    // {
+    //   CancelInvoke("DecelerateCar");
+    //   deceleratingCar = false;
+    //   Handbrake();
+    // }
+    // if (Input.GetKeyUp(KeyCode.Space))
+    // {
+    //   RecoverTraction();
+    // }
+
+    if (!moveData.breakReverse && !moveData.throttle)
     {
       ThrottleOff();
     }
-    if (!Input.GetKey(KeyCode.S) && !Input.GetKey(KeyCode.W) && !Input.GetKey(KeyCode.Space) && !deceleratingCar)
+    if (!moveData.breakReverse && !moveData.throttle && !deceleratingCar)
     {
       InvokeRepeating("DecelerateCar", 0f, 0.1f);
       deceleratingCar = true;
     }
     // We call the method AnimateWheelMeshes() in order to match the wheel collider movements with the 3D meshes of the wheels.
+    TurnsWheelsClientRpc(moveData.cameraAngle, moveData.cameraOrientation);
     AnimateWheelMeshes();
   }
 
-  //
-  //STEERING METHODS
-  //
-
-  //The following method turns the front car wheels to the left. The speed of this movement will depend on the steeringSpeed variable.
-  public void TurnLeft()
+  [ClientRpc]
+  private void TurnsWheelsClientRpc(float cameraAngle, float cameraOrientation)
   {
-    var steeringAngle = -1 * Math.Clamp(cameraAngle, 0, maxSteeringAngle);
-    frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
-    frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
+    // if (!IsOwner) return; // TODO Maybe remove if other client wheels aren't updating.
+    if (cameraOrientation < 0)
+    {
+      var steeringAngle = -1 * Math.Clamp(cameraAngle, 0, maxSteeringAngle);
+      frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
+      frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
+    }
+    if (cameraOrientation > 0)
+    {
+      var steeringAngle = Math.Clamp(cameraAngle, 0, maxSteeringAngle);
+      frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
+      frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
+    }
+    
   }
 
-  //The following method turns the front car wheels to the right. The speed of this movement will depend on the steeringSpeed variable.
-  public void TurnRight()
-  {
-    var steeringAngle = Math.Clamp(cameraAngle, 0, maxSteeringAngle);
-    frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
-    frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
-  }
-
-  //The following method takes the front car wheels to their default position (rotation = 0). The speed of this movement will depend
-  // on the steeringSpeed variable.
-
-  // This method matches both the position and rotation of the WheelColliders with the WheelMeshes.
-  void AnimateWheelMeshes()
+  private void AnimateWheelMeshes()
   {
     try
     {
@@ -361,7 +374,7 @@ public class CarController : NetworkBehaviour
         throttleAxis = 0f;
       }
     }
-    carRigidbody.velocity = carRigidbody.velocity * (1f / (1f + (0.025f * decelerationMultiplier)));
+    carRigidbody.linearVelocity = carRigidbody.linearVelocity * (1f / (1f + (0.025f * decelerationMultiplier)));
     // Since we want to decelerate the car, we are going to remove the torque from the wheels of the car.
     frontLeftCollider.motorTorque = 0;
     frontRightCollider.motorTorque = 0;
@@ -369,9 +382,9 @@ public class CarController : NetworkBehaviour
     rearRightCollider.motorTorque = 0;
     // If the magnitude of the car's velocity is less than 0.25f (very slow velocity), then stop the car completely and
     // also cancel the invoke of this method.
-    if (carRigidbody.velocity.magnitude < 0.25f)
+    if (carRigidbody.linearVelocity.magnitude < 0.25f)
     {
-      carRigidbody.velocity = Vector3.zero;
+      carRigidbody.linearVelocity = Vector3.zero;
       CancelInvoke("DecelerateCar");
     }
   }
@@ -488,4 +501,52 @@ public class CarController : NetworkBehaviour
     }
   }
 
+  [ServerRpc]
+  private void NotifyPlayerCollisionServerRPC(ulong netObjectID)
+  {
+    Debug.Log(message: "Player Collision - Server");
+    NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(netObjectID, out NetworkObject networkObject);
+    networkObject.gameObject.GetComponent<Rigidbody>().AddForce(carRigidbody.linearVelocity * carRigidbody.mass);
+  }
+
+  [ClientRpc]
+  private void NotifyPlayerCollisionClientRPC(ulong netObjectID)
+  {
+    Debug.Log(message: "Player Collision - Client");
+  }
+
+  // private void OnCollisionEnter(Collision col)
+  // {
+  //   if (!col.gameObject.CompareTag("Player")) return;
+  //   var collisionData = new MoveData()
+  //   {
+  //     id = OwnerClientId,
+  //     throttle = Input.GetKey(KeyCode.W),
+  //     breakReverse = Input.GetKey(KeyCode.S),
+  //     cameraAngle = cameraAngle,
+  //     cameraOrientation = cameraOrientation;
+  //   };
+  //   if (!IsOwner) return;
+
+  //   if (IsServer) NotifyPlayerCollisionServerRPC(col.gameObject.GetComponent<NetworkObject>().NetworkObjectId);
+  //   if (!IsServer) NotifyPlayerCollisionClientRPC(col.gameObject.GetComponent<NetworkObject>().NetworkObjectId);
+  // }
+
+  struct MoveData : INetworkSerializable
+  {
+    public ulong id;
+    public bool throttle;
+    public bool breakReverse;
+    public float cameraAngle;
+    public float cameraOrientation;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+      serializer.SerializeValue(ref id);
+      serializer.SerializeValue(ref throttle);
+      serializer.SerializeValue(ref breakReverse);
+      serializer.SerializeValue(ref cameraAngle);
+      serializer.SerializeValue(ref cameraOrientation);
+    }
+  }
 }

@@ -37,13 +37,4 @@ public class SpawnPointManager : MonoBehaviour
         AvialableSpawnPoints.Add(sp);
     }
 
-
-    void ConnectionApprovalWithRandomSpawnPos(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
-    {
-        // Here we are only using ConnectionApproval to set the player's spawn position. Connections are always approved.
-        response.CreatePlayerObject = true;
-        response.Position = AssignSpawnPoint();
-        response.Rotation = Quaternion.identity;
-        response.Approved = true;
-    }
 }
