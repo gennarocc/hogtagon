@@ -1,94 +1,255 @@
-using TMPro;
-using Unity.Netcode;
 using UnityEngine;
-using System.Text;
+using Unity.Netcode;
 using System.Collections.Generic;
 
-public class ConnectionManager : MonoBehaviour
+public class ConnectionManager : NetworkBehaviour
 {
-    [SerializeField] public TMP_InputField usernameInput;
-    [SerializeField] public Camera startCamera;
-
-    private Dictionary<ulong, string> pendingPlayerData = new Dictionary<ulong, string>();
-    private GameManager gm;
+    private Dictionary<ulong, PlayerData> clientDataDictionary = new Dictionary<ulong, PlayerData>();
+    private Dictionary<ulong, PlayerData> pendingPlayerData = new Dictionary<ulong, PlayerData>();
+    public static ConnectionManager instance;
 
     private void Start()
     {
-        gm = GameManager.instance;
-        startCamera.cullingMask = 31;
-    }
-    public void StartServer()
-    {
-        NetworkManager.Singleton.StartServer();
-        startCamera.gameObject.SetActive(false);
-    }
-    public void StartClient()
-    {
-        // Configure connection with username as payload;
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
-        NetworkManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
+        NetworkManager.Singleton.ConnectionApprovalCallback += ConnectionApprovalCallback;
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
-        NetworkManager.Singleton.StartClient();
-        startCamera.gameObject.SetActive(false);
-    }
-    public void StartHost()
-    {
-        NetworkManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
-        NetworkManager.Singleton.StartHost();
-        startCamera.gameObject.SetActive(false);
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
-    private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+    private void ConnectionApprovalCallback(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
     {
-        Debug.Log(message: "Checking new connection");
+        Debug.Log(message: "New player connecting...");
         // The client identifier to be authenticated
         var clientId = request.ClientNetworkId;
 
         // Set player username
-        string decodedUsername = Encoding.ASCII.GetString(request.Payload);
+        string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
         if (decodedUsername.Length == 0)
         {
-            decodedUsername = "Player " + gm.GetPlayerCount();
+            decodedUsername = "Player " + GetPlayerCount();
         }
 
         response.Approved = false;
 
-        if (!gm.CheckUsernameAvailability(decodedUsername))
+        if (CheckUsernameAvailability(decodedUsername) && GetPlayerCount() <= 8)
         {
-            var spawnPoint = SpawnPointManager.instance.AssignSpawnPoint();
+            var sp = SpawnPointManager.instance.AssignSpawnPoint();
+            var player = new PlayerData()
+            {
+                username = decodedUsername,
+                score = 0,
+                color = Random.ColorHSV(),
+                state = PlayerState.Alive,
+                spawnPoint = sp,
+                isLobbyLeader = clientDataDictionary.Count == 0
+            };
+            pendingPlayerData.Add(clientId, player);
             response.Approved = true;
+            response.Position = sp;
+            response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - sp);
             response.CreatePlayerObject = true;
-            response.Position = spawnPoint;
-            response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - spawnPoint );
-            pendingPlayerData.Add(clientId, decodedUsername);
         }
-        // Your approval logic determines the following values
-
-        // The Prefab hash value of the NetworkPrefab, if null the default NetworkManager player Prefab is used
-        response.PlayerPrefabHash = null;
-
-        // If response.Approved is false, you can provide a message that explains the reason why via ConnectionApprovalResponse.Reason
-        // On the client-side, NetworkManager.DisconnectReason will be populated with this message via DisconnectReasonMessage
-        // response.Reason = "Some reason for not approving the client";
-
-        // If additional approval steps are needed, set this to true until the additional steps are complete
-        // once it transitions from true to false the connection approval response will be processed.
-        response.Pending = false;
     }
 
     private void OnClientConnectedCallback(ulong clientId)
     {
-        Debug.Log("Hit");
-        string username = pendingPlayerData[clientId];
-        pendingPlayerData.Remove(clientId);
-        gm.AddPlayerServerRpc(clientId, username);
+        ClientDataListSerialized serializedList = DictionaryExtensions.ConvertDictionaryToSerializableList(clientDataDictionary);
+        SendClientDataListClientRpc(clientId, serializedList);
     }
 
-    // private void OnDestroy()
-    // {
-    //     NetworkManager.Singleton.ConnectionApprovalCallback -= ApprovalCheck;
-    //     NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-    // }
+    private void OnClientDisconnectCallback(ulong clientId)
+    {
+        if (clientDataDictionary.ContainsKey(clientId))
+        {
+            clientDataDictionary.Remove(clientId);
+        }
+    }
+
+    public bool CheckUsernameAvailability(string username)
+    {
+        foreach (var player in clientDataDictionary.Values)
+        {
+            if (player.username == username) return false;
+        }
+        return true;
+    }
+
+    [ClientRpc]
+    private void SendClientDataListClientRpc(ulong clientId, ClientDataListSerialized serializedList)
+    {
+        if (NetworkManager.Singleton.LocalClientId == clientId)
+        {
+            Debug.Log(message: "ClientDataList Recieved");
+            Dictionary<ulong, PlayerData> clientData = DictionaryExtensions.ConvertSerializableListToDictionary(serializedList);
+            foreach (var data in clientData)
+            {
+                clientDataDictionary.Add(data.Key, data.Value);
+                Debug.Log("Adding existing player - : " + data.Value.username);
+            }
+            AddPlayerServerRpc(clientId);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void AddPlayerServerRpc(ulong clientId)
+    {
+        PlayerData playerData = pendingPlayerData[clientId];
+        Debug.Log(message: "Player conneted - " + playerData.username);
+        clientDataDictionary.Add(clientId, playerData);
+        UpdatePlayerDataClientRpc(clientId, playerData);
+        foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
+        {
+            if (player.clientId == clientId)
+            {
+                player.SetPlayerData(playerData);
+            }
+        }
+        pendingPlayerData.Remove(clientId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void UpdatePlayerServerRpc(ulong clientId, int score)
+    {
+        if (!clientDataDictionary.ContainsKey(clientId)) return;
+
+        PlayerData player = clientDataDictionary[clientId];
+        player.score = score;
+        UpdatePlayerDataClientRpc(clientId, player);
+    }
+
+    [ClientRpc]
+    private void UpdatePlayerDataClientRpc(ulong clientId, PlayerData player)
+    {
+        if (clientDataDictionary.ContainsKey(clientId))
+        {
+            clientDataDictionary[clientId] = player;
+        }
+        else
+        {
+            clientDataDictionary.Add(clientId, player);
+            Debug.Log(message: "Player conneted - " + player.username);
+        }
+    }
+
+    public string GetClientUsername(ulong clientId)
+    {
+        clientDataDictionary.TryGetValue(clientId, out PlayerData player);
+        return player.username;
+    }
+
+    public int GetPlayerCount()
+    {
+        return clientDataDictionary.Count;
+    }
+
+    public string PrintPlayers()
+    {
+        var str = "";
+        foreach (var player in clientDataDictionary)
+        {
+            str += player.Value.username + "\n ";
+        }
+
+        return str;
+    }
+
+    public string PrintScore()
+    {
+        var str = "";
+        foreach (var player in clientDataDictionary)
+        {
+            str += player.Value.score + "\n ";
+        }
+
+        return str;
+    }
+
+    public Color GetPlayerColor(ulong client)
+    {
+        return clientDataDictionary[client].color;
+    }
+}
+
+public struct PlayerData : INetworkSerializable
+{
+    public string username;
+    public int score;
+    public Color color;
+    public PlayerState state;
+    public Vector3 spawnPoint;
+    public bool isLobbyLeader;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref username);
+        serializer.SerializeValue(ref score);
+        serializer.SerializeValue(ref color);
+        serializer.SerializeValue(ref spawnPoint);
+        serializer.SerializeValue(ref state);
+        serializer.SerializeValue(ref isLobbyLeader);
+    }
+}
+
+public struct ClientData : INetworkSerializable
+{
+    public ulong clientId;
+    public string username;
+    public int score;
+    public Color color;
+    public Vector3 spawnPoint;
+    public PlayerState state;
+    public bool isLobbyLeader;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref clientId);
+        serializer.SerializeValue(ref username);
+        serializer.SerializeValue(ref score);
+        serializer.SerializeValue(ref color);
+        serializer.SerializeValue(ref state);
+        serializer.SerializeValue(ref spawnPoint);
+        serializer.SerializeValue(ref isLobbyLeader);
+    }
+}
+
+[System.Serializable]
+public class ClientDataListSerialized : INetworkSerializable
+{
+    public List<ClientData> ClientDataList;
+    public ClientDataListSerialized()
+    {
+        ClientDataList = new List<ClientData>();
+    }
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        int count = ClientDataList.Count;
+        serializer.SerializeValue(ref count);
+
+        if (serializer.IsReader)
+        {
+            ClientDataList.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                ClientData clientData = new ClientData();
+                clientData.NetworkSerialize(serializer);
+                ClientDataList.Add(clientData);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < count; i++)
+            {
+                ClientDataList[i].NetworkSerialize(serializer);
+            }
+        }
+    }
 }

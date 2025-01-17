@@ -2,11 +2,12 @@ using Unity.Netcode;
 using UnityEngine;
 using Cinemachine;
 using TMPro;
-using System;
+using Unity.VisualScripting;
 
 public class Player : NetworkBehaviour
 {
     [Header("PlayerInfo")]
+    [SerializeField] public ulong clientId;
     [SerializeField] public PlayerData playerData;
     [SerializeField] public Vector3 spawnPoint;
 
@@ -18,10 +19,11 @@ public class Player : NetworkBehaviour
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
 
-    private GameManager gm;
+    private ConnectionManager cm;
 
-    public override void OnNetworkSpawn()
+    private void Start()
     {
+        cm = ConnectionManager.instance;
         if (IsOwner)
         {
             audioListener.enabled = true;
@@ -31,17 +33,20 @@ public class Player : NetworkBehaviour
         {
             mainCamera.Priority = 0;
         }
-    }
-
-    private void Start()
-    {
-        gm = GameManager.instance;
+        clientId = NetworkManager.Singleton.LocalClientId;
     }
 
     private void Update()
     {
         floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestPlayerDataListServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        // gm.SendClientDataListClientRpc(clientId);
     }
 
     public void Respawn()
@@ -52,14 +57,15 @@ public class Player : NetworkBehaviour
         gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
     }
 
-    internal void SetPlayerData(PlayerData playerData)
+    public void SetPlayerData(PlayerData playerData)
     {
         this.playerData = playerData;
+        spawnPoint = playerData.spawnPoint;
         worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
         floatingUsername.text = playerData.username;
         floatingUsername.transform.SetParent(worldspaceCanvas.transform);
         var playerIndicator = transform.Find("PlayerIndicator").gameObject;
-        playerIndicator.SetActive(!IsServer);
-        playerIndicator.GetComponent<Renderer>().material.color = GameManager.instance.GetPlayerColor(OwnerClientId);
+        playerIndicator.SetActive(clientId != NetworkManager.Singleton.LocalClientId);
+        playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
     }
 }

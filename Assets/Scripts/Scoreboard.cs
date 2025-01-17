@@ -9,7 +9,7 @@ public class Scoreboard : MonoBehaviour
 
     private void OnEnable()
     {
-        players.text = GameManager.instance.PrintPlayers();
-        score.text = GameManager.instance.PrintScore();
+        players.text = ConnectionManager.instance.PrintPlayers();
+        score.text = ConnectionManager.instance.PrintScore();
     }
 }

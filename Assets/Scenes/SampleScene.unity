@@ -2689,7 +2689,7 @@ GameObject:
   - component: {fileID: 853678930}
   - component: {fileID: 853678931}
   m_Layer: 0
-  m_Name: GameManager
+  m_Name: ConnectionManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2743,8 +2743,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bf3bf65ee56b8749a85d6f774d195bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  state: 0
-  gameTime: 0
 --- !u!1 &912466046
 GameObject:
   m_ObjectHideFlags: 0
@@ -5066,8 +5064,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 307b1d98147062f48bc0b9109f3fd1a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  usernameInput: {fileID: 1060129797}
   startCamera: {fileID: 1186665807}
+  usernameInput: {fileID: 1060129797}
 --- !u!1 &1511192685
 GameObject:
   m_ObjectHideFlags: 0
