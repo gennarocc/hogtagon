@@ -42,20 +42,23 @@ public class CarController : NetworkBehaviour
                                  // however, you must notice that the higher this value is, the more unstable the car becomes.
                                  // Usually the y value goes from 0 to 1.5.
 
-  //WHEELS
-
   [Header("Wheel References")]
   [SerializeField] public GameObject frontLeftMesh;
   [SerializeField] public WheelCollider frontLeftCollider;
-  [Space(10)]
   [SerializeField] public GameObject frontRightMesh;
   [SerializeField] public WheelCollider frontRightCollider;
-  [Space(10)]
   [SerializeField] public GameObject rearLeftMesh;
   [SerializeField] public WheelCollider rearLeftCollider;
-  [Space(10)]
   [SerializeField] public GameObject rearRightMesh;
   [SerializeField] public WheelCollider rearRightCollider;
+
+  [Header("Effects")]
+  public bool useEffects = true;
+  public ParticleSystem RLWParticleSystem;
+  public ParticleSystem RRWParticleSystem;
+  public TrailRenderer RLWTireSkid;
+  public TrailRenderer RRWTireSkid;
+
 
   [HideInInspector]
   public float carSpeed; // Used to store the speed of the car.
@@ -63,21 +66,13 @@ public class CarController : NetworkBehaviour
   public bool isDrifting; // Used to know whether the car is drifting or not.
   [HideInInspector]
   public bool isTractionLocked; // Used to know whether the traction of the car is locked or not.
-
   Rigidbody carRigidbody; // Stores the car's rigidbody.
-  [SerializeField] public float steeringAxis; // Used to know whether the steering wheel has reached the maximum value. It goes from -1 to 1.
+  float steeringAxis; // Used to know whether the steering wheel has reached the maximum value. It goes from -1 to 1.
   float throttleAxis; // Used to know whether the throttle has reached the maximum value. It goes from -1 to 1.
   float driftingAxis;
   float localVelocityZ;
   float localVelocityX;
   bool deceleratingCar;
-
-  /*
-  The following variables are used to store information about sideways friction of the wheels (such as
-  extremumSlip,extremumValue, asymptoteSlip, asymptoteValue and stiffness). We change this values to
-  make the car to start drifting.
-  */
-
   WheelFrictionCurve FLwheelFriction;
   float FLWextremumSlip;
   WheelFrictionCurve FRwheelFriction;
@@ -94,7 +89,6 @@ public class CarController : NetworkBehaviour
     carRigidbody = gameObject.GetComponent<Rigidbody>();
     carRigidbody.centerOfMass = bodyMassCenter;
     carRigidbody.isKinematic = !IsServer;
-    GameManager.instance.PrintPlayers();
   }
 
   void Update()
@@ -189,7 +183,48 @@ public class CarController : NetworkBehaviour
       frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
       frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
     }
-    
+  }
+
+  public void DriftCarPS()
+  {
+    if (useEffects)
+    {
+      try
+      {
+        if (isDrifting)
+        {
+          RLWParticleSystem.Play();
+          RRWParticleSystem.Play();
+        }
+        else if (!isDrifting)
+        {
+          RLWParticleSystem.Stop();
+          RRWParticleSystem.Stop();
+        }
+      }
+      catch (Exception ex)
+      {
+        Debug.LogWarning(ex);
+      }
+
+      try
+      {
+        if ((isTractionLocked || Mathf.Abs(localVelocityX) > 5f) && Mathf.Abs(carSpeed) > 12f)
+        {
+          RLWTireSkid.emitting = true;
+          RRWTireSkid.emitting = true;
+        }
+        else
+        {
+          RLWTireSkid.emitting = false;
+          RRWTireSkid.emitting = false;
+        }
+      }
+      catch (Exception ex)
+      {
+        Debug.LogWarning(ex);
+      }
+    }
   }
 
   private void AnimateWheelMeshes()
@@ -238,10 +273,12 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
       isDrifting = true;
+      DriftCarPS();
     }
     else
     {
       isDrifting = false;
+      DriftCarPS();
     }
     // The following part sets the throttle power to 1 smoothly.
     throttleAxis = throttleAxis + (Time.deltaTime * 3f);
@@ -291,10 +328,12 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
       isDrifting = true;
+      DriftCarPS();
     }
     else
     {
       isDrifting = false;
+      DriftCarPS();
     }
     // The following part sets the throttle power to -1 smoothly.
     throttleAxis = throttleAxis - (Time.deltaTime * 3f);
@@ -353,10 +392,12 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 2.5f)
     {
       isDrifting = true;
+      DriftCarPS();
     }
     else
     {
       isDrifting = false;
+      DriftCarPS();
     }
     // The following part resets the throttle power to 0 smoothly.
     if (throttleAxis != 0f)
@@ -449,6 +490,7 @@ public class CarController : NetworkBehaviour
     // Whenever the player uses the handbrake, it means that the wheels are locked, so we set 'isTractionLocked = true'
     // and, as a consequense, the car starts to emit trails to simulate the wheel skids.
     isTractionLocked = true;
+    DriftCarPS();
   }
 
   // This function is used to emit both the particle systems of the tires' smoke and the trail renderers of the tire skids

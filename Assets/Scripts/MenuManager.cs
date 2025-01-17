@@ -2,13 +2,14 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class PauseMenu : NetworkBehaviour
+public class MenuManager : NetworkBehaviour
 {
     public bool gameIsPaused = false;
 
     [Header("UI Components")]
     [SerializeField] public GameObject pauseMenuUI;
     [SerializeField] public GameObject settingsMenuUI;
+    [SerializeField] public GameObject scoreboardUI;
 
     // Update is called once per frame
     void Update()
@@ -20,7 +21,10 @@ public class PauseMenu : NetworkBehaviour
             } else {
                 Pause();
             }
-        }  
+        } 
+
+        if (Input.GetKeyDown(KeyCode.Tab)) scoreboardUI.SetActive(true);
+        if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
     }
 
     public void Resume()
@@ -33,7 +37,6 @@ public class PauseMenu : NetworkBehaviour
 
     void Pause()
     {
-
         Cursor.lockState = CursorLockMode.None;
         pauseMenuUI.SetActive(true);
         gameIsPaused = true;

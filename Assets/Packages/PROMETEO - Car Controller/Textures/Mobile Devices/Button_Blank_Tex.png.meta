@@ -118,3 +118,10 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 209444
+  packageName: 'PROMETEO: Car Controller'
+  packageVersion: 1.2.2
+  assetPath: Assets/Packages/PROMETEO - Car Controller/Textures/Mobile Devices/Button_Blank_Tex.png
+  uploadId: 513063

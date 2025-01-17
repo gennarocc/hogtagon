@@ -2,21 +2,14 @@ using Unity.Netcode;
 using UnityEngine;
 using Cinemachine;
 using TMPro;
-
-public enum PlayerState
-{
-    Alive,
-    Dead,
-    Spectating
-}
+using System;
 
 public class Player : NetworkBehaviour
 {
     [Header("PlayerInfo")]
-    [SerializeField] public string username;
-    [SerializeField] public PlayerState state;
+    [SerializeField] public PlayerData playerData;
     [SerializeField] public Vector3 spawnPoint;
-    
+
     [Header("References")]
     [SerializeField] public TextMeshProUGUI floatingUsername;
     private Canvas worldspaceCanvas;
@@ -25,10 +18,7 @@ public class Player : NetworkBehaviour
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
 
-    void Awake()
-    {
-        // Respawn();
-    }
+    private GameManager gm;
 
     public override void OnNetworkSpawn()
     {
@@ -41,16 +31,16 @@ public class Player : NetworkBehaviour
         {
             mainCamera.Priority = 0;
         }
+    }
 
-        username = GameManager.instance.GetClientUsername(OwnerClientId);
-        worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
-        floatingUsername.text = username;
-        floatingUsername.transform.SetParent(worldspaceCanvas.transform);
+    private void Start()
+    {
+        gm = GameManager.instance;
     }
 
     private void Update()
     {
-        floatingUsername.transform.position = transform.position + new Vector3 (0, 3f, -1f);
+        floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
     }
 
@@ -60,5 +50,16 @@ public class Player : NetworkBehaviour
         transform.position = spawnPoint;
         transform.LookAt(SpawnPointManager.instance.transform);
         gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+    }
+
+    internal void SetPlayerData(PlayerData playerData)
+    {
+        this.playerData = playerData;
+        worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
+        floatingUsername.text = playerData.username;
+        floatingUsername.transform.SetParent(worldspaceCanvas.transform);
+        var playerIndicator = transform.Find("PlayerIndicator").gameObject;
+        playerIndicator.SetActive(!IsServer);
+        playerIndicator.GetComponent<Renderer>().material.color = GameManager.instance.GetPlayerColor(OwnerClientId);
     }
 }
