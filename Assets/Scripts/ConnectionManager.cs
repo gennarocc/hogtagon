@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class ConnectionManager : NetworkBehaviour
 {
@@ -115,18 +116,8 @@ public class ConnectionManager : NetworkBehaviour
         pendingPlayerData.Remove(clientId);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void UpdatePlayerServerRpc(ulong clientId, int score)
-    {
-        if (!clientDataDictionary.ContainsKey(clientId)) return;
-
-        PlayerData player = clientDataDictionary[clientId];
-        player.score = score;
-        UpdatePlayerDataClientRpc(clientId, player);
-    }
-
     [ClientRpc]
-    private void UpdatePlayerDataClientRpc(ulong clientId, PlayerData player)
+    public void UpdatePlayerDataClientRpc(ulong clientId, PlayerData player)
     {
         if (clientDataDictionary.ContainsKey(clientId))
         {
@@ -155,7 +146,7 @@ public class ConnectionManager : NetworkBehaviour
         var str = "";
         foreach (var player in clientDataDictionary)
         {
-            str += player.Value.username + "\n ";
+            str += player.Value.username + "\n";
         }
 
         return str;
@@ -166,7 +157,7 @@ public class ConnectionManager : NetworkBehaviour
         var str = "";
         foreach (var player in clientDataDictionary)
         {
-            str += player.Value.score + "\n ";
+            str += player.Value.score + "\n";
         }
 
         return str;
@@ -175,6 +166,28 @@ public class ConnectionManager : NetworkBehaviour
     public Color GetPlayerColor(ulong client)
     {
         return clientDataDictionary[client].color;
+    }
+
+    public List<PlayerData> GetAlivePlayers()
+    {
+       List<PlayerData> alivePlayers = new List<PlayerData>(); 
+       foreach (var player in clientDataDictionary)
+       {
+           if (player.Value.state == PlayerState.Alive) alivePlayers.Add(player.Value);
+       }
+       return alivePlayers; 
+    }
+
+    public bool TryGetPlayerData(ulong clientId, out PlayerData player)
+    {
+        if (!clientDataDictionary.ContainsKey(clientId))
+        {
+            Debug.Log(message: "Client Id - " + clientId + "does not exist.");
+            player = new PlayerData(){};
+            return false;
+        }
+        player = clientDataDictionary[clientId];
+        return true;
     }
 }
 

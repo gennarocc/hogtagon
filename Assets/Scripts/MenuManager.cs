@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -10,9 +11,9 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public GameObject pauseMenuUI;
     [SerializeField] public GameObject settingsMenuUI;
     [SerializeField] public GameObject scoreboardUI;
+    [SerializeField] public Button startGameButton;
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape)) {
             if (gameIsPaused)
@@ -25,6 +26,7 @@ public class MenuManager : NetworkBehaviour
 
         if (Input.GetKeyDown(KeyCode.Tab)) scoreboardUI.SetActive(true);
         if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
+        // if (!NetworkManager.Singleton.IsServer) startGameButton.interactable = false;
     }
 
     public void Resume()
@@ -40,6 +42,12 @@ public class MenuManager : NetworkBehaviour
         Cursor.lockState = CursorLockMode.None;
         pauseMenuUI.SetActive(true);
         gameIsPaused = true;
+    }
+
+    public void StartGame()    
+    {
+        GameManager.instance.TransitionToState(GameState.Ending);
+        Resume();
     }
 
     public void Settings()

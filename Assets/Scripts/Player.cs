@@ -2,14 +2,12 @@ using Unity.Netcode;
 using UnityEngine;
 using Cinemachine;
 using TMPro;
-using Unity.VisualScripting;
 
 public class Player : NetworkBehaviour
 {
     [Header("PlayerInfo")]
     [SerializeField] public ulong clientId;
     [SerializeField] public PlayerData playerData;
-    [SerializeField] public Vector3 spawnPoint;
 
     [Header("References")]
     [SerializeField] public TextMeshProUGUI floatingUsername;
@@ -33,7 +31,7 @@ public class Player : NetworkBehaviour
         {
             mainCamera.Priority = 0;
         }
-        clientId = NetworkManager.Singleton.LocalClientId;
+        clientId = gameObject.GetComponent<NetworkObject>().OwnerClientId;
     }
 
     private void Update()
@@ -42,17 +40,10 @@ public class Player : NetworkBehaviour
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestPlayerDataListServerRpc(ServerRpcParams rpcParams = default)
-    {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        // gm.SendClientDataListClientRpc(clientId);
-    }
-
     public void Respawn()
     {
         Debug.Log("Respawning Player");
-        transform.position = spawnPoint;
+        transform.position = playerData.spawnPoint;
         transform.LookAt(SpawnPointManager.instance.transform);
         gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
     }
@@ -60,10 +51,13 @@ public class Player : NetworkBehaviour
     public void SetPlayerData(PlayerData playerData)
     {
         this.playerData = playerData;
-        spawnPoint = playerData.spawnPoint;
+
+        // Floating Name Text
         worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
         floatingUsername.text = playerData.username;
         floatingUsername.transform.SetParent(worldspaceCanvas.transform);
+
+        // Player Indicator
         var playerIndicator = transform.Find("PlayerIndicator").gameObject;
         playerIndicator.SetActive(clientId != NetworkManager.Singleton.LocalClientId);
         playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
