@@ -170,7 +170,6 @@ public class CarController : NetworkBehaviour
   [ClientRpc]
   private void TurnsWheelsClientRpc(float cameraAngle, float cameraOrientation)
   {
-    // if (!IsOwner) return; // TODO Maybe remove if other client wheels aren't updating.
     if (cameraOrientation < 0)
     {
       var steeringAngle = -1 * Math.Clamp(cameraAngle, 0, maxSteeringAngle);
@@ -185,7 +184,8 @@ public class CarController : NetworkBehaviour
     }
   }
 
-  public void DriftCarPS()
+  [ClientRpc]
+  public void DriftCarPSClientRpc()
   {
     if (useEffects)
     {
@@ -273,12 +273,12 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
       isDrifting = true;
-      DriftCarPS();
+      DriftCarPSClientRpc();
     }
     else
     {
       isDrifting = false;
-      DriftCarPS();
+      DriftCarPSClientRpc();
     }
     // The following part sets the throttle power to 1 smoothly.
     throttleAxis = throttleAxis + (Time.deltaTime * 3f);
@@ -328,12 +328,12 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
       isDrifting = true;
-      DriftCarPS();
+      DriftCarPSClientRpc();
     }
     else
     {
       isDrifting = false;
-      DriftCarPS();
+      DriftCarPSClientRpc();
     }
     // The following part sets the throttle power to -1 smoothly.
     throttleAxis = throttleAxis - (Time.deltaTime * 3f);
@@ -392,12 +392,12 @@ public class CarController : NetworkBehaviour
     if (Mathf.Abs(localVelocityX) > 2.5f)
     {
       isDrifting = true;
-      DriftCarPS();
+      DriftCarPSClientRpc();
     }
     else
     {
       isDrifting = false;
-      DriftCarPS();
+      DriftCarPSClientRpc();
     }
     // The following part resets the throttle power to 0 smoothly.
     if (throttleAxis != 0f)
@@ -490,7 +490,7 @@ public class CarController : NetworkBehaviour
     // Whenever the player uses the handbrake, it means that the wheels are locked, so we set 'isTractionLocked = true'
     // and, as a consequense, the car starts to emit trails to simulate the wheel skids.
     isTractionLocked = true;
-    DriftCarPS();
+    DriftCarPSClientRpc();
   }
 
   // This function is used to emit both the particle systems of the tires' smoke and the trail renderers of the tire skids

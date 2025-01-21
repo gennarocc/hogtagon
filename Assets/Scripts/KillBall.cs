@@ -1,7 +1,5 @@
 using UnityEngine;
 using Unity.Netcode;
-using System.Data.Common;
-using UnityEditor.Animations;
 
 public class KillBall : NetworkBehaviour
 {

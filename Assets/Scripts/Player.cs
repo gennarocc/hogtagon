@@ -22,6 +22,7 @@ public class Player : NetworkBehaviour
     private void Start()
     {
         cm = ConnectionManager.instance;
+        ConnectionManager.instance.isConnected = true; 
         if (IsOwner)
         {
             audioListener.enabled = true;
@@ -59,7 +60,7 @@ public class Player : NetworkBehaviour
 
         // Player Indicator
         var playerIndicator = transform.Find("PlayerIndicator").gameObject;
-        playerIndicator.SetActive(clientId != NetworkManager.Singleton.LocalClientId);
+        playerIndicator.SetActive(clientId != gameObject.GetComponent<NetworkObject>().OwnerClientId);
         playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
     }
 }

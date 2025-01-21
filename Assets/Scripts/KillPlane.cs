@@ -13,7 +13,6 @@ public class KillPlane : MonoBehaviour
             if (networkObject != null)
             {
                 GameManager.instance.PlayerDied(networkObject.OwnerClientId);
-                // Debug.Log (networkObject.OwnerClientId);
             } else {
                 Debug.Log("No Network Object found");
             }

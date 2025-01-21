@@ -1,3 +1,4 @@
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,10 +13,14 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public GameObject settingsMenuUI;
     [SerializeField] public GameObject scoreboardUI;
     [SerializeField] public Button startGameButton;
+    [SerializeField] public TextMeshProUGUI joinCodeText;
+
+
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape)) {
+        // Pause Menu
+        if (Input.GetKeyDown(KeyCode.Escape) && ConnectionManager.instance.isConnected) {
             if (gameIsPaused)
             {
                 Resume();
@@ -23,10 +28,13 @@ public class MenuManager : NetworkBehaviour
                 Pause();
             }
         } 
-
-        if (Input.GetKeyDown(KeyCode.Tab)) scoreboardUI.SetActive(true);
+        // Scoreboard
+        if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) scoreboardUI.SetActive(true);
         if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
-        // if (!NetworkManager.Singleton.IsServer) startGameButton.interactable = false;
+        // Start Game Button (Host only)
+        if (NetworkManager.Singleton.IsServer) startGameButton.interactable = true;
+        // Set join code.
+        joinCodeText.text = "Join Code: " + ConnectionManager.instance.joinCode;
     }
 
     public void Resume()

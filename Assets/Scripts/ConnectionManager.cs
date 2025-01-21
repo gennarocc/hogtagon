@@ -1,10 +1,11 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 
 public class ConnectionManager : NetworkBehaviour
 {
+    [SerializeField] public string joinCode;
+    [SerializeField] public bool isConnected = false;
     private Dictionary<ulong, PlayerData> clientDataDictionary = new Dictionary<ulong, PlayerData>();
     private Dictionary<ulong, PlayerData> pendingPlayerData = new Dictionary<ulong, PlayerData>();
     public static ConnectionManager instance;
