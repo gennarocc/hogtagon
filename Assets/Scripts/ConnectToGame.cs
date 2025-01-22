@@ -14,7 +14,6 @@ public class ConnectToGame : MonoBehaviour
     [SerializeField] public TMP_InputField usernameInput;
     [SerializeField] public TMP_InputField joinCodeInput;
 
-
     private async void Start()
     {
         startCamera.cullingMask = 31;
@@ -22,10 +21,9 @@ public class ConnectToGame : MonoBehaviour
         await UnityServices.InitializeAsync();
         AuthenticationService.Instance.SignedIn += () =>
         {
-            Debug.Log(message: "Signed in " + AuthenticationService.Instance.PlayerId);
+           Debug.Log(message: "Signed in " + AuthenticationService.Instance.PlayerId);
         };
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
-
     }
 
     private async void CreateRelay()
@@ -72,7 +70,6 @@ public class ConnectToGame : MonoBehaviour
     {
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
         CreateRelay();
-        
         startCamera.gameObject.SetActive(false);
     }
 }

@@ -77,6 +77,7 @@ public class ConnectionManager : NetworkBehaviour
 
     public bool CheckUsernameAvailability(string username)
     {
+        if (username.Length > 10) return false;
         foreach (var player in clientDataDictionary.Values)
         {
             if (player.username == username) return false;
@@ -142,6 +143,7 @@ public class ConnectionManager : NetworkBehaviour
         return clientDataDictionary.Count;
     }
 
+
     public string PrintPlayers()
     {
         var str = "";
@@ -171,12 +173,12 @@ public class ConnectionManager : NetworkBehaviour
 
     public List<PlayerData> GetAlivePlayers()
     {
-       List<PlayerData> alivePlayers = new List<PlayerData>(); 
-       foreach (var player in clientDataDictionary)
-       {
-           if (player.Value.state == PlayerState.Alive) alivePlayers.Add(player.Value);
-       }
-       return alivePlayers; 
+        List<PlayerData> alivePlayers = new List<PlayerData>();
+        foreach (var player in clientDataDictionary)
+        {
+            if (player.Value.state == PlayerState.Alive) alivePlayers.Add(player.Value);
+        }
+        return alivePlayers;
     }
 
     public bool TryGetPlayerData(ulong clientId, out PlayerData player)
@@ -184,11 +186,24 @@ public class ConnectionManager : NetworkBehaviour
         if (!clientDataDictionary.ContainsKey(clientId))
         {
             Debug.Log(message: "Client Id - " + clientId + "does not exist.");
-            player = new PlayerData(){};
+            player = new PlayerData() { };
             return false;
         }
         player = clientDataDictionary[clientId];
         return true;
+    }
+
+    public Player GetPlayer(ulong clientId)
+    {
+        foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
+        {
+            if (player.clientId == clientId)
+            {
+                return player;
+            }
+        }
+        Debug.Log(message: "GetPlayer() could not find requested player - " + clientId);
+        return null;
     }
 }
 

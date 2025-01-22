@@ -1,4 +1,3 @@
-using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -17,8 +16,6 @@ public class SpawnPointManager : MonoBehaviour
         {
             AvialableSpawnPoints.Add(child.position);
         }
-        
-        //NetworkManager.Singleton.ConnectionApprovalCallback += ConnectionApprovalWithRandomSpawnPos;
     }
 
     // Randomly selects an available spawn point. Removes from list and adds to assigned list.
@@ -36,5 +33,4 @@ public class SpawnPointManager : MonoBehaviour
         AssignedSpawnPoints.Remove(sp);
         AvialableSpawnPoints.Add(sp);
     }
-
 }

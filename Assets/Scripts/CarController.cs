@@ -25,22 +25,19 @@ public class CarController : NetworkBehaviour
   [SerializeField] public int maxSpeed = 90; //The maximum speed that the car can reach in km/h.
   [Range(10, 120)]
   [SerializeField] public int maxReverseSpeed = 45; //The maximum speed that the car can reach while going on reverse in km/h.
-  [Range(1, 10)]
+  [Range(1, 20)]
   [SerializeField] public int accelerationMultiplier = 2; // How fast the car can accelerate. 1 is a slow acceleration and 10 is the fastest.
   [Range(10, 90)]
   [SerializeField] public int maxSteeringAngle = 27; // The maximum angle that the tires can reach while rotating the steering wheel.
   [Range(0.1f, 1f)]
   [SerializeField] public float steeringSpeed = 0.5f; // How fast the steering wheel turns.
-  [Range(100, 600)]
+  [Range(100, 1000)]
   [SerializeField] public int brakeForce = 350; // The strength of the wheel brakes.
   [Range(1, 10)]
   [SerializeField] public int decelerationMultiplier = 2; // How fast the car decelerates when the user is not using the throttle.
   [Range(1, 10)]
   [SerializeField] public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
-  public Vector3 bodyMassCenter; // This is a vector that contains the center of mass of the car. I recommend to set this value
-                                 // in the points x = 0 and z = 0 of your car. You can select the value that you want in the y axis,
-                                 // however, you must notice that the higher this value is, the more unstable the car becomes.
-                                 // Usually the y value goes from 0 to 1.5.
+  [SerializeField] public Vector3 bodyMassCenter;
 
   [Header("Wheel References")]
   [SerializeField] public GameObject frontLeftMesh;
@@ -63,15 +60,13 @@ public class CarController : NetworkBehaviour
   [HideInInspector]
   public float carSpeed; // Used to store the speed of the car.
   [HideInInspector]
-  public bool isDrifting; // Used to know whether the car is drifting or not.
-  [HideInInspector]
   public bool isTractionLocked; // Used to know whether the traction of the car is locked or not.
+  private float localVelocityZ;
+  private float localVelocityX;
   Rigidbody carRigidbody; // Stores the car's rigidbody.
-  float steeringAxis; // Used to know whether the steering wheel has reached the maximum value. It goes from -1 to 1.
+  private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
   float throttleAxis; // Used to know whether the throttle has reached the maximum value. It goes from -1 to 1.
   float driftingAxis;
-  float localVelocityZ;
-  float localVelocityX;
   bool deceleratingCar;
   WheelFrictionCurve FLwheelFriction;
   float FLWextremumSlip;
@@ -88,19 +83,31 @@ public class CarController : NetworkBehaviour
     Cursor.lockState = CursorLockMode.Locked;
     carRigidbody = gameObject.GetComponent<Rigidbody>();
     carRigidbody.centerOfMass = bodyMassCenter;
-    carRigidbody.isKinematic = !IsServer;
+    // carRigidbody.isKinematic = !IsServer;
   }
 
   void Update()
   {
-    if (!IsOwner) return;
     // We determine the speed of the car.
     carSpeed = (2 * Mathf.PI * frontLeftCollider.radius * frontLeftCollider.rpm * 60) / 1000;
     // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
     localVelocityX = transform.InverseTransformDirection(carRigidbody.linearVelocity).x;
     // Save the local velocity of the car in the z axis. Used to know if the car is going forward or backwards.
     localVelocityZ = transform.InverseTransformDirection(carRigidbody.linearVelocity).z;
+
+    if (IsOwner)
+    {
+      HandleClientInput();
+    }
+    else
+    {
+    }
+
     SendPlayerMoveData();
+  }
+
+  private void HandleClientInput()
+  {
   }
 
   // Gather all data needed for movement then send to server.
@@ -123,6 +130,7 @@ public class CarController : NetworkBehaviour
       cameraOrientation = cameraOrientation
     };
     MovePlayerServerRPC(moveData);
+    DriftCarPS();
   }
 
   [ServerRpc]
@@ -175,28 +183,31 @@ public class CarController : NetworkBehaviour
       var steeringAngle = -1 * Math.Clamp(cameraAngle, 0, maxSteeringAngle);
       frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
       frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
+      rearLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
+      rearRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
     }
     if (cameraOrientation > 0)
     {
       var steeringAngle = Math.Clamp(cameraAngle, 0, maxSteeringAngle);
       frontLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, steeringAngle, steeringSpeed);
       frontRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, steeringAngle, steeringSpeed);
+      rearLeftCollider.steerAngle = Mathf.Lerp(frontLeftCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
+      rearRightCollider.steerAngle = Mathf.Lerp(frontRightCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
     }
   }
 
-  [ClientRpc]
-  public void DriftCarPSClientRpc()
+  public void DriftCarPS()
   {
     if (useEffects)
     {
       try
       {
-        if (isDrifting)
+        if (isDrifting.Value)
         {
           RLWParticleSystem.Play();
           RRWParticleSystem.Play();
         }
-        else if (!isDrifting)
+        else if (!isDrifting.Value)
         {
           RLWParticleSystem.Stop();
           RRWParticleSystem.Stop();
@@ -261,24 +272,17 @@ public class CarController : NetworkBehaviour
     }
   }
 
-  //
-  //ENGINE AND BRAKING METHODS
-  //
-
-  // This method apply positive torque to the wheels in order to go forward.
   public void GoForward()
   {
     //If the forces aplied to the rigidbody in the 'x' asis are greater than
     //3f, it means that the car is losing traction, then the car will start emitting particle systems.
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
-      isDrifting = true;
-      DriftCarPSClientRpc();
+      isDrifting.Value = true;
     }
     else
     {
-      isDrifting = false;
-      DriftCarPSClientRpc();
+      isDrifting.Value = false;
     }
     // The following part sets the throttle power to 1 smoothly.
     throttleAxis = throttleAxis + (Time.deltaTime * 3f);
@@ -320,20 +324,17 @@ public class CarController : NetworkBehaviour
     }
   }
 
-  // This method apply negative torque to the wheels in order to go backwards.
   public void GoReverse()
   {
     //If the forces aplied to the rigidbody in the 'x' asis are greater than
     //3f, it means that the car is losing traction, then the car will start emitting particle systems.
     if (Mathf.Abs(localVelocityX) > 4.5f)
     {
-      isDrifting = true;
-      DriftCarPSClientRpc();
+      isDrifting.Value = true;
     }
     else
     {
-      isDrifting = false;
-      DriftCarPSClientRpc();
+      isDrifting.Value = false;
     }
     // The following part sets the throttle power to -1 smoothly.
     throttleAxis = throttleAxis - (Time.deltaTime * 3f);
@@ -391,13 +392,12 @@ public class CarController : NetworkBehaviour
   {
     if (Mathf.Abs(localVelocityX) > 2.5f)
     {
-      isDrifting = true;
-      DriftCarPSClientRpc();
+      isDrifting.Value = true;
+
     }
     else
     {
-      isDrifting = false;
-      DriftCarPSClientRpc();
+      isDrifting.Value = false;
     }
     // The following part resets the throttle power to 0 smoothly.
     if (throttleAxis != 0f)
@@ -463,11 +463,11 @@ public class CarController : NetworkBehaviour
     //3f, it means that the car lost its traction, then the car will start emitting particle systems.
     if (Mathf.Abs(localVelocityX) > 2.5f)
     {
-      isDrifting = true;
+      isDrifting.Value = true;
     }
     else
     {
-      isDrifting = false;
+      isDrifting.Value = false;
     }
     //If the 'driftingAxis' value is not 1f, it means that the wheels have not reach their maximum drifting
     //value, so, we are going to continue increasing the sideways friction of the wheels until driftingAxis
@@ -490,11 +490,10 @@ public class CarController : NetworkBehaviour
     // Whenever the player uses the handbrake, it means that the wheels are locked, so we set 'isTractionLocked = true'
     // and, as a consequense, the car starts to emit trails to simulate the wheel skids.
     isTractionLocked = true;
-    DriftCarPSClientRpc();
   }
 
   // This function is used to emit both the particle systems of the tires' smoke and the trail renderers of the tire skids
-  // depending on the value of the bool variables 'isDrifting' and 'isTractionLocked'.
+  // depending on the value of the bool variables 'isDrifting.Value' and 'isTractionLocked'.
   // This function is used to recover the traction of the car when the user has stopped using the car's handbrake.
   public void RecoverTraction()
   {
@@ -543,36 +542,6 @@ public class CarController : NetworkBehaviour
     }
   }
 
-  [ServerRpc]
-  private void NotifyPlayerCollisionServerRPC(ulong netObjectID)
-  {
-    Debug.Log(message: "Player Collision - Server");
-    NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(netObjectID, out NetworkObject networkObject);
-    networkObject.gameObject.GetComponent<Rigidbody>().AddForce(carRigidbody.linearVelocity * carRigidbody.mass);
-  }
-
-  [ClientRpc]
-  private void NotifyPlayerCollisionClientRPC(ulong netObjectID)
-  {
-    Debug.Log(message: "Player Collision - Client");
-  }
-
-  // private void OnCollisionEnter(Collision col)
-  // {
-  //   if (!col.gameObject.CompareTag("Player")) return;
-  //   var collisionData = new MoveData()
-  //   {
-  //     id = OwnerClientId,
-  //     throttle = Input.GetKey(KeyCode.W),
-  //     breakReverse = Input.GetKey(KeyCode.S),
-  //     cameraAngle = cameraAngle,
-  //     cameraOrientation = cameraOrientation;
-  //   };
-  //   if (!IsOwner) return;
-
-  //   if (IsServer) NotifyPlayerCollisionServerRPC(col.gameObject.GetComponent<NetworkObject>().NetworkObjectId);
-  //   if (!IsServer) NotifyPlayerCollisionClientRPC(col.gameObject.GetComponent<NetworkObject>().NetworkObjectId);
-  // }
 
   struct MoveData : INetworkSerializable
   {
@@ -591,4 +560,5 @@ public class CarController : NetworkBehaviour
       serializer.SerializeValue(ref cameraOrientation);
     }
   }
+
 }
