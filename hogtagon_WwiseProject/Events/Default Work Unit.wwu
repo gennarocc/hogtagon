@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" SchemaVersion="123">
+	<Events>
+		<WorkUnit Name="Default Work Unit" ID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" PersistMode="Standalone">
+			<ChildrenList>
+				<Event Name="uiClick" ID="{2043224E-8C2D-4E36-B5B2-AAD4DB5AC0DE}">
+					<ChildrenList>
+						<Action Name="" ID="{E46648B5-0D63-45CA-B95B-9393E654654E}" ShortID="578991552">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="ui-navigation-click_bip" ID="{235667B5-CF67-42F9-AD99-813C1AFDA597}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="uiConfirm" ID="{35F72BE4-E30A-4D8A-98CC-897D16A1EC27}">
+					<ChildrenList>
+						<Action Name="" ID="{D6CFCA45-6CAA-4037-AB36-3ED7EE10DBD5}" ShortID="137839727">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="ui-confirmation" ID="{9C694329-3F27-4946-B6A0-C6C99A7F7A00}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="CarExplosion" ID="{D3E88339-27D2-4421-BF62-7AF5F454891F}">
+					<ChildrenList>
+						<Action Name="" ID="{B657325C-0B5D-4993-84EA-B3BBB65CB216}" ShortID="744306895">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="car-explosion" ID="{38FA73A5-FE29-42E2-9DEF-149CD7526467}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="EngineOn" ID="{6DC496AD-3332-4DA5-8F13-711E68963147}">
+					<ChildrenList>
+						<Action Name="" ID="{AAD4D6B2-827B-4F51-A16D-D657B618F79C}" ShortID="39501187">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="EngineOff" ID="{7BBE8545-1595-449C-9FD0-2BDD92F52984}">
+					<ChildrenList>
+						<Action Name="" ID="{6D4B01D0-C89C-4151-87FE-F6539EFF4024}" ShortID="375400628">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="2"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+			</ChildrenList>
+		</WorkUnit>
+	</Events>
+</WwiseDocument>

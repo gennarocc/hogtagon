@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{B8A5728E-C73C-49C7-BA92-B3057D953094}" SchemaVersion="123">
+	<GameParameters>
+		<WorkUnit Name="Default Work Unit" ID="{B8A5728E-C73C-49C7-BA92-B3057D953094}" PersistMode="Standalone">
+			<ChildrenList>
+				<GameParameter Name="RPM" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}">
+					<PropertyList>
+						<Property Name="InitialValue" Type="Real64" Value="0"/>
+					</PropertyList>
+				</GameParameter>
+			</ChildrenList>
+		</WorkUnit>
+	</GameParameters>
+</WwiseDocument>

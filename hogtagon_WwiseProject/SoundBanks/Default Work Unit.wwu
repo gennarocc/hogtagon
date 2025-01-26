@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{652EDBB2-3AC5-43EB-BD42-92A1D2C54878}" SchemaVersion="123">
+	<SoundBanks>
+		<WorkUnit Name="Default Work Unit" ID="{652EDBB2-3AC5-43EB-BD42-92A1D2C54878}" PersistMode="Standalone">
+			<ChildrenList>
+				<SoundBank Name="Main" ID="{1F271523-D06E-43F1-94DA-5F0AB2541AA1}">
+					<ObjectInclusionList>
+						<ObjectRef Name="CarExplosion" ID="{D3E88339-27D2-4421-BF62-7AF5F454891F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="EngineOff" ID="{7BBE8545-1595-449C-9FD0-2BDD92F52984}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="uiConfirm" ID="{35F72BE4-E30A-4D8A-98CC-897D16A1EC27}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="EngineOn" ID="{6DC496AD-3332-4DA5-8F13-711E68963147}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="uiClick" ID="{2043224E-8C2D-4E36-B5B2-AAD4DB5AC0DE}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+			</ChildrenList>
+		</WorkUnit>
+	</SoundBanks>
+</WwiseDocument>
