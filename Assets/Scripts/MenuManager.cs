@@ -16,8 +16,6 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public TextMeshProUGUI joinCodeText;
     [SerializeField] public Slider cameraSensitivity;
 
-
-
     private void Update()
     {
         // Pause Menu
@@ -36,9 +34,9 @@ public class MenuManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) scoreboardUI.SetActive(true);
         if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
         // Start Game Button (Host only)
-        if (NetworkManager.Singleton.IsServer) startGameButton.interactable = true;
+        // if (NetworkManager.Singleton.IsServer) startGameButton.interactable = true;
         // Set join code.
-        joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
+        if (ConnectionManager.instance.joinCode != null) joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
     }
 
     public void Resume()
