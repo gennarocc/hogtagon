@@ -1,0 +1,294 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Linux",
+  "BasePlatform": "Linux",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "154",
+  "SoundBanks": [
+   {
+    "Id": "3161908922",
+    "Type": "User",
+    "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
+    "Language": "SFX",
+    "Hash": "{CEF5B644-B308-CCF1-9CB5-2F8B3D3669A5}",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
+    "ShortName": "Main",
+    "Path": "Main.bnk",
+    "Media": [
+     {
+      "Id": "6024752",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\car-explosion-1.wav",
+      "CachePath": "3A/{3AC9F094-060F-FA50-3025-0617BF8F20D7}.wem"
+     },
+     {
+      "Id": "12516876",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\ui-navigation-click_bip.wav",
+      "CachePath": "EE/{EE3D3735-906C-E2D9-0762-C266C94EA5C2}.wem"
+     },
+     {
+      "Id": "24408083",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\gear-shift-5.wav",
+      "CachePath": "5B/{5B1262CF-529A-BFFE-DB17-7837F76E91F8}.wem"
+     },
+     {
+      "Id": "27220251",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\6k-rpm-loop.wav",
+      "CachePath": "47/{4780DB24-F5D9-3D8F-C651-E1BB65757714}.wem"
+     },
+     {
+      "Id": "58965652",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\gear-shift-3.wav",
+      "CachePath": "63/{631BF3EF-E5B1-AE4F-126C-64497A765ECB}.wem"
+     },
+     {
+      "Id": "59074654",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\gear-shift-1.wav",
+      "CachePath": "BF/{BF9E2490-01AC-9E10-254F-E8B71CC94531}.wem"
+     },
+     {
+      "Id": "142434758",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\1k-rpm-loop.wav",
+      "CachePath": "CA/{CA9CDBAF-E748-08CB-D09E-D357C5E44CAA}.wem"
+     },
+     {
+      "Id": "348634209",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\car-explosion-4.wav",
+      "CachePath": "04/{04464716-E5BF-C776-6E88-A982DF6C8D51}.wem"
+     },
+     {
+      "Id": "487559685",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\5k-rpm-loop.wav",
+      "CachePath": "E8/{E889B0D4-615A-2483-B1A6-89C48B846DD5}.wem"
+     },
+     {
+      "Id": "509400112",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\ui-confirmation.wav",
+      "CachePath": "E4/{E4FCE718-67AA-ABF1-5488-8645A10E3261}.wem"
+     },
+     {
+      "Id": "512876442",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\car-explosion-2.wav",
+      "CachePath": "4B/{4B35B243-15D4-BF3F-5176-920C0187E28F}.wem"
+     },
+     {
+      "Id": "622663132",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\car-explosion-5.wav",
+      "CachePath": "F1/{F1E346AF-5668-7DFE-D996-3FECF06B33FD}.wem"
+     },
+     {
+      "Id": "632899163",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\idle-rpm-loop.wav",
+      "CachePath": "10/{1073E8F7-C22A-4F8B-C5DE-1F83FF2B11F4}.wem"
+     },
+     {
+      "Id": "762622656",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\gear-shift-4.wav",
+      "CachePath": "3F/{3F3D6320-AAD6-85DB-F678-C2E5878F2537}.wem"
+     },
+     {
+      "Id": "808429037",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\3k-rpm-loop.wav",
+      "CachePath": "B8/{B82C6134-2243-0A79-1843-F2AD25F59264}.wem"
+     },
+     {
+      "Id": "1016150173",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\gear-shift-2.wav",
+      "CachePath": "0B/{0B0E7B9A-1BFF-21C3-CF92-BBFA9CEFE130}.wem"
+     },
+     {
+      "Id": "1057082725",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\2k-rpm-loop.wav",
+      "CachePath": "8A/{8A7FA16C-F8F1-EDE1-5AC8-69DE5D18EE0E}.wem"
+     },
+     {
+      "Id": "1062246044",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\4k-rpm-loop.wav",
+      "CachePath": "B5/{B559CE53-BDB7-4A0C-3E98-8501CCCF27F3}.wem"
+     },
+     {
+      "Id": "1069524030",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Bounces\\car-explosion-3.wav",
+      "CachePath": "84/{84403A08-4042-8656-5FA6-2B1970E767CC}.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "144991338",
+      "Name": "CarExplosion",
+      "ObjectPath": "\\Events\\Default Work Unit\\CarExplosion",
+      "GUID": "{D3E88339-27D2-4421-BF62-7AF5F454891F}",
+      "DurationType": "OneShot",
+      "DurationMin": "5.6",
+      "DurationMax": "29.328",
+      "MediaRefs": [
+       {
+        "Id": "6024752"
+       },
+       {
+        "Id": "348634209"
+       },
+       {
+        "Id": "512876442"
+       },
+       {
+        "Id": "622663132"
+       },
+       {
+        "Id": "1069524030"
+       }
+      ]
+     },
+     {
+      "Id": "2388455330",
+      "Name": "EngineOff",
+      "ObjectPath": "\\Events\\Default Work Unit\\EngineOff",
+      "GUID": "{7BBE8545-1595-449C-9FD0-2BDD92F52984}",
+      "MaxAttenuation": "0",
+      "DurationType": "OneShot",
+      "DurationMin": "0",
+      "DurationMax": "0"
+     },
+     {
+      "Id": "2439330724",
+      "Name": "EngineOn",
+      "ObjectPath": "\\Events\\Default Work Unit\\EngineOn",
+      "GUID": "{6DC496AD-3332-4DA5-8F13-711E68963147}",
+      "DurationType": "Infinite",
+      "MediaRefs": [
+       {
+        "Id": "24408083"
+       },
+       {
+        "Id": "27220251"
+       },
+       {
+        "Id": "58965652"
+       },
+       {
+        "Id": "59074654"
+       },
+       {
+        "Id": "142434758"
+       },
+       {
+        "Id": "487559685"
+       },
+       {
+        "Id": "632899163"
+       },
+       {
+        "Id": "762622656"
+       },
+       {
+        "Id": "808429037"
+       },
+       {
+        "Id": "1016150173"
+       },
+       {
+        "Id": "1057082725"
+       },
+       {
+        "Id": "1062246044"
+       }
+      ]
+     },
+     {
+      "Id": "3164408517",
+      "Name": "uiClick",
+      "ObjectPath": "\\Events\\Default Work Unit\\uiClick",
+      "GUID": "{2043224E-8C2D-4E36-B5B2-AAD4DB5AC0DE}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.16666667",
+      "DurationMax": "0.16666667",
+      "MediaRefs": [
+       {
+        "Id": "12516876"
+       }
+      ]
+     },
+     {
+      "Id": "685626117",
+      "Name": "uiConfirm",
+      "ObjectPath": "\\Events\\Default Work Unit\\uiConfirm",
+      "GUID": "{35F72BE4-E30A-4D8A-98CC-897D16A1EC27}",
+      "DurationType": "OneShot",
+      "DurationMin": "1",
+      "DurationMax": "1",
+      "MediaRefs": [
+       {
+        "Id": "509400112"
+       }
+      ]
+     }
+    ],
+    "GameParameters": [
+     {
+      "Id": "796049864",
+      "Name": "RPM",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\RPM",
+      "GUID": "{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}"
+     }
+    ]
+   }
+  ],
+  "FileHash": "{0D47509F-8CF9-30A5-D344-CAB360BDFA29}"
+ }
+}
