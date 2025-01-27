@@ -17,12 +17,14 @@ public class Player : NetworkBehaviour
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
 
-    private ConnectionManager cm;
 
     private void Start()
     {
-        cm = ConnectionManager.instance;
-        ConnectionManager.instance.isConnected = true; 
+        Cursor.visible = !Cursor.visible; // toggle visibility
+        Cursor.lockState = CursorLockMode.Locked;
+
+        ConnectionManager.instance.isConnected = true;
+
         if (IsOwner)
         {
             audioListener.enabled = true;
@@ -47,6 +49,7 @@ public class Player : NetworkBehaviour
         transform.position = playerData.spawnPoint;
         transform.LookAt(SpawnPointManager.instance.transform);
         gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+        gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
     }
 
     public void SetPlayerData(PlayerData playerData)
@@ -62,5 +65,15 @@ public class Player : NetworkBehaviour
         var playerIndicator = transform.Find("PlayerIndicator").gameObject;
         playerIndicator.SetActive(clientId != gameObject.GetComponent<NetworkObject>().OwnerClientId);
         playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
+    }
+
+    public void Destory()
+    {
+        if (IsServer) SpawnPointManager.instance.UnassignSpawnPoint(clientId);
+        if (IsOwner)
+        {
+            Cursor.visible = Cursor.visible; 
+            Cursor.lockState = CursorLockMode.None;
+        }
     }
 }

@@ -2,6 +2,8 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 
+using System.Text.RegularExpressions;
+
 public class ConnectionManager : NetworkBehaviour
 {
     [SerializeField] public string joinCode;
@@ -36,14 +38,14 @@ public class ConnectionManager : NetworkBehaviour
         string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
         if (decodedUsername.Length == 0)
         {
-            decodedUsername = "Player " + GetPlayerCount();
+            decodedUsername = "Player" + (GetPlayerCount() + 1);
         }
 
         response.Approved = false;
 
         if (CheckUsernameAvailability(decodedUsername) && GetPlayerCount() <= 8)
         {
-            var sp = SpawnPointManager.instance.AssignSpawnPoint();
+            var sp = SpawnPointManager.instance.AssignSpawnPoint(clientId);
             var player = new PlayerData()
             {
                 username = decodedUsername,
@@ -77,11 +79,17 @@ public class ConnectionManager : NetworkBehaviour
 
     public bool CheckUsernameAvailability(string username)
     {
+        // Check length. 
         if (username.Length > 10) return false;
+        // Only alpha numeric characters.
+        var regex = new Regex("^[a-zA-Z0-9]*$");
+        if (!regex.IsMatch(username)) return false;
+        // Isn't already in use.
         foreach (var player in clientDataDictionary.Values)
         {
             if (player.username == username) return false;
         }
+
         return true;
     }
 

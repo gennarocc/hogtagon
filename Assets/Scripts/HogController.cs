@@ -1,8 +1,9 @@
 using UnityEngine;
 using Unity.Netcode;
 using Cinemachine;
-using System.Collections.Generic;
 using System;
+using Unity.VisualScripting;
+using UnityEngine.Rendering;
 
 public class HogController : NetworkBehaviour
 {
@@ -11,7 +12,9 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
+    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .8f;
     [SerializeField] public float additionalCollisionForce = 1000f; // Customizable variable for additional force
+    [SerializeField] private float decelerationMultiplier = 0.95f;
 
     [Header("References")]
     [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
@@ -24,33 +27,42 @@ public class HogController : NetworkBehaviour
     [SerializeField] private Transform frontRightWheelTransform;
     [SerializeField] private Transform rearLeftWheelTransform;
     [SerializeField] private Transform rearRightWheelTransform;
-    private CarState state;
-    private Dictionary<float, Vector3> velocityBuffer;
-    private float bufferDuration = 1f;
-    private float bufferTimer = 0f;
-    private Vector3 peakVelocity;
-    float currentTorque;
+
+    [Header("Effects")]
+    [SerializeField] public ParticleSystem RLWParticleSystem;
+    [SerializeField] public ParticleSystem RRWParticleSystem;
+    [SerializeField] public TrailRenderer RLWTireSkid;
+    [SerializeField] public TrailRenderer RRWTireSkid;
+
+    [Header("Wwise")]
+    [SerializeField] public AK.Wwise.Event EngineOn;
+    [SerializeField] public AK.Wwise.Event EngineOff;
+    [SerializeField] public AK.Wwise.Event CarExplosion;
+    [SerializeField] public AK.Wwise.RTPC rpm;
+
+
+    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    private float currentTorque;
+    private float localVelocityX;
 
     void Start()
     {
         rb.centerOfMass = centerOfMass;
-        peakVelocity = Vector3.zero;
-        velocityBuffer = new Dictionary<float, Vector3>();
-        bufferTimer = 0f;
+        if (IsOwner) EngineOn.Post(gameObject);
     }
 
     private void Update()
     {
+        // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
+        localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
+
         if (IsClient && IsOwner)
         {
-            bufferTimer += Time.deltaTime;
-            UpdateVelocityBuffer();
-            CalculatePeakVelocity();
-
             ClientMove();
         }
 
         UpdateWheelPositions();
+        DriftCarPS();
     }
 
     private void ClientMove()
@@ -63,32 +75,23 @@ public class HogController : NetworkBehaviour
         if (Input.GetKey(KeyCode.Space)) brake = 1f;
         float steering = freeLookCamera.m_XAxis.Value;
 
-        // Move car localy.
-        ApplyMotorTorque(move, brake);
-        ApplySteering(steering);
-
-        CarState state = new CarState
+        ClientInput input = new ClientInput
         {
-            motorTorque = move * maxTorque,
+            clientId = OwnerClientId,
+            moveInput = move,
+            brakeInput = brake,
             steeringAngle = steering,
-            peakVelocity = peakVelocity
         };
 
-        // Set new local state.
-        this.state = state;
-        // Send input data to server for processing.
-        SendClientStateServerRpc(state);
+        SendClientInputServerRpc(input);
     }
 
     [ServerRpc]
-    private void SendClientStateServerRpc(CarState state)
+    private void SendClientInputServerRpc(ClientInput input)
     {
-        this.state = state;
-    }
-
-    private CarState GetClientState()
-    {
-        return state;
+        ApplyMotorTorque(input.moveInput, input.brakeInput);
+        ApplySteering(input.steeringAngle);
+        isDrifting.Value = localVelocityX > .25f ? true : false;
     }
 
     private void ApplyMotorTorque(float moveInput, float brakeInput)
@@ -108,17 +111,26 @@ public class HogController : NetworkBehaviour
         frontRightWheelCollider.brakeTorque = appliedBrakeTorque;
         rearLeftWheelCollider.brakeTorque = appliedBrakeTorque;
         rearRightWheelCollider.brakeTorque = appliedBrakeTorque;
+
+        // Decelerate the car on no input
+        if (moveInput == 0 && brakeInput == 0)
+        {
+            // rb.linearVelocity = rb.linearVelocity * (1f / (1f + (0.025f * decelerationMultiplier)));
+            // If the magnitude of the car's velocity is less than 0.25f (very slow velocity), then stop the car completely and
+            if (rb.linearVelocity.magnitude < 0.25f)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+        }
     }
 
     private void ApplySteering(float cameraAngle)
     {
         float steeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
-
-        // Apply steering only to front wheels
-        frontLeftWheelCollider.steerAngle = steeringAngle;
-        frontRightWheelCollider.steerAngle = steeringAngle;
-        rearLeftWheelCollider.steerAngle = steeringAngle * -1;
-        rearRightWheelCollider.steerAngle = steeringAngle * -1;
+        frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, steeringAngle, steeringSpeed);
+        frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, steeringAngle, steeringSpeed);
+        rearLeftWheelCollider.steerAngle = Mathf.Lerp(rearLeftWheelCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
+        rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
     }
 
     private void UpdateWheelPositions()
@@ -142,65 +154,6 @@ public class HogController : NetworkBehaviour
         transform.localRotation = Quaternion.Euler(transform.localRotation.eulerAngles + new Vector3(collider.rpm / 60 * 360 * Time.deltaTime, 0, 0));
     }
 
-    private void UpdateVelocityBuffer()
-    {
-        // Get the current velocity
-        Vector3 currentVelocity = rb.linearVelocity;
-
-        // Add the current velocity to the buffer with the current time as the key
-        velocityBuffer[bufferTimer] = currentVelocity;
-
-        // Remove old velocities from the buffer
-        List<float> keysToRemove = new List<float>();
-        foreach (var entry in velocityBuffer)
-        {
-            if (bufferTimer - entry.Key > bufferDuration)
-            {
-                keysToRemove.Add(entry.Key);
-            }
-        }
-
-        // Remove the old keys
-        foreach (var key in keysToRemove)
-        {
-            velocityBuffer.Remove(key);
-        }
-    }
-
-    private void CalculatePeakVelocity()
-    {
-        // Reset peak velocity
-        Vector3 peakVelocity = Vector3.zero;
-
-        // Calculate the peak velocity from the buffer
-        foreach (var velocity in velocityBuffer.Values)
-        {
-            if (velocity.magnitude > peakVelocity.magnitude)
-            {
-                peakVelocity = velocity;
-            }
-        }
-
-        this.peakVelocity = peakVelocity;
-    }
-
-    // Respawn Logic
-    [ClientRpc]
-    public void RespawnCarClientRpc(ulong clientId)
-    {
-        if (GetComponent<Player>().clientId == clientId)
-        {
-            Debug.Log("Respawning - " + ConnectionManager.instance.GetClientUsername(clientId));
-
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-
-            var playerData = gameObject.GetComponent<Player>().playerData;
-            transform.position = playerData.spawnPoint;
-            transform.rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - playerData.spawnPoint);
-        }
-    }
-
     private void OnCollisionEnter(Collision collision)
     {
         collision.gameObject.TryGetComponent<HogController>(out HogController collisionTarget);
@@ -210,15 +163,6 @@ public class HogController : NetworkBehaviour
             Rigidbody rb1 = rb;
             Rigidbody rb2 = collision.gameObject.GetComponent<Rigidbody>();
 
-            CarState collisionTargetState = collisionTarget.GetClientState();
-
-            // Calculate the relative velocity
-            Vector3 relativeVelocity = state.peakVelocity - collisionTargetState.peakVelocity;
-
-            // Calculate the impulse
-            Vector3 impulse1 = relativeVelocity;
-            Vector3 impulse2 = -impulse1;
-
             ulong player1Id = GetComponent<NetworkObject>().OwnerClientId;
             ulong player2Id = collision.gameObject.GetComponent<NetworkObject>().OwnerClientId;
 
@@ -226,41 +170,45 @@ public class HogController : NetworkBehaviour
                 "Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
                  + " and " + ConnectionManager.instance.GetClientUsername(player2Id)
             );
-
-            Debug.Log("Collision Relative Velocity - " + relativeVelocity);
-
-            // Notify clients about the collision and applied force
-            ApplyCollisionForceClientRpc(player1Id, impulse1);
-            ApplyCollisionForceClientRpc(player2Id, impulse2);
         }
     }
 
-    [ClientRpc]
-    private void ApplyCollisionForceClientRpc(ulong clientId, Vector3 force)
+    public void DriftCarPS()
     {
-        if (IsOwner && clientId == GetComponent<NetworkObject>().OwnerClientId)
+        if (isDrifting.Value)
         {
-            Debug.Log(message:
-                "Applying collision force of " + force * additionalCollisionForce + " to " + ConnectionManager.instance.GetClientUsername(clientId)
-            );
-            var client = NetworkManager.Singleton.ConnectedClients[clientId];
-            client.PlayerObject.GetComponent<Rigidbody>().AddForce(force * additionalCollisionForce, ForceMode.Impulse);
+            RLWParticleSystem.Play();
+            RRWParticleSystem.Play();
+            RLWTireSkid.emitting = true;
+            RRWTireSkid.emitting = true;
+        }
+        else if (!isDrifting.Value)
+        {
+            RLWParticleSystem.Stop();
+            RRWParticleSystem.Stop();
+            RLWTireSkid.emitting = false;
+            RRWTireSkid.emitting = false;
         }
     }
 
-    private struct CarState : INetworkSerializable
+    public void ExplodeCarFX()
+    {
+        CarExplosion.Post(gameObject); // Audio Event;
+    }
+
+    private struct ClientInput : INetworkSerializable
     {
         public ulong clientId;
-        public float motorTorque;
+        public float moveInput;
+        public float brakeInput;
         public float steeringAngle;
-        public Vector3 peakVelocity;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref clientId);
-            serializer.SerializeValue(ref motorTorque);
+            serializer.SerializeValue(ref moveInput);
+            serializer.SerializeValue(ref brakeInput);
             serializer.SerializeValue(ref steeringAngle);
-            serializer.SerializeValue(ref peakVelocity);
         }
     }
 }

@@ -79,8 +79,6 @@ public class CarController : NetworkBehaviour
 
   void Start()
   {
-    Cursor.visible = !Cursor.visible; // toggle visibility
-    Cursor.lockState = CursorLockMode.Locked;
     carRigidbody = gameObject.GetComponent<Rigidbody>();
     carRigidbody.centerOfMass = bodyMassCenter;
     // carRigidbody.isKinematic = !IsServer;
@@ -98,9 +96,6 @@ public class CarController : NetworkBehaviour
     if (IsOwner)
     {
       HandleClientInput();
-    }
-    else
-    {
     }
 
     SendPlayerMoveData();
