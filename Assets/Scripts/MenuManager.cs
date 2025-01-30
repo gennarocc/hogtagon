@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -12,9 +13,13 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public GameObject pauseMenuUI;
     [SerializeField] public GameObject settingsMenuUI;
     [SerializeField] public GameObject scoreboardUI;
+    [SerializeField] public GameObject tempUI;
     [SerializeField] public Button startGameButton;
     [SerializeField] public TextMeshProUGUI joinCodeText;
     [SerializeField] public Slider cameraSensitivity;
+    [SerializeField] public TextMeshProUGUI countdownText;
+    [SerializeField] public TextMeshProUGUI winnerText;
+    private int countdownTime;
 
     private void Update()
     {
@@ -34,7 +39,7 @@ public class MenuManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) scoreboardUI.SetActive(true);
         if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
         // Start Game Button (Host only)
-        // if (NetworkManager.Singleton.IsServer) startGameButton.interactable = true;
+        if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton.interactable = true;
         // Set join code.
         if (ConnectionManager.instance.joinCode != null) joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
     }
@@ -58,7 +63,7 @@ public class MenuManager : NetworkBehaviour
 
     public void StartGame()
     {
-        GameManager.instance.TransitionToState(GameState.Ending);
+        if (IsServer) GameManager.instance.TransitionToState(GameState.Playing);
         Resume();
     }
 
@@ -93,6 +98,45 @@ public class MenuManager : NetworkBehaviour
             player.mainCamera.m_XAxis.m_MaxSpeed = cameraSensitivity.value * 300f;
             player.mainCamera.m_YAxis.m_MaxSpeed = cameraSensitivity.value * 2f;
         }
+    }
+
+    [ClientRpc]
+    public void StartCountdownClientRpc()
+    {
+        countdownTime = 3;
+        countdownText.text = countdownTime.ToString();
+        tempUI.SetActive(true);
+        StartCoroutine(CountdownToStart());
+    }
+
+    private IEnumerator CountdownToStart()
+    {
+        while (countdownTime > 0)
+        {
+            countdownText.text = countdownTime.ToString();
+            yield return new WaitForSeconds(1f);
+            countdownTime--;
+        }
+
+        countdownText.text = "Go!";
+        yield return new WaitForSeconds(1f);
+        countdownText.text = "";
+        tempUI.SetActive(false);
+    }
+
+    [ClientRpc]
+    public void DisplayWinnerClientRpc(string player)
+    {
+        tempUI.SetActive(true);
+        winnerText.text = player + " won the round";
+        StartCoroutine(BetweenRoundTime());
+    }
+
+    public IEnumerator BetweenRoundTime()
+    {
+        yield return new WaitForSeconds(7f);        
+        winnerText.text = "";
+        tempUI.SetActive(false);
     }
 
     public void QuitGame()

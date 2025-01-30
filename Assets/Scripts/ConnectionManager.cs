@@ -179,14 +179,14 @@ public class ConnectionManager : NetworkBehaviour
         return clientDataDictionary[client].color;
     }
 
-    public List<PlayerData> GetAlivePlayers()
+    public List<ulong> GetAliveClients()
     {
-        List<PlayerData> alivePlayers = new List<PlayerData>();
+        List<ulong> aliveClients = new List<ulong>();
         foreach (var player in clientDataDictionary)
         {
-            if (player.Value.state == PlayerState.Alive) alivePlayers.Add(player.Value);
+            if (player.Value.state == PlayerState.Alive) aliveClients.Add(player.Key);
         }
-        return alivePlayers;
+        return aliveClients;
     }
 
     public bool TryGetPlayerData(ulong clientId, out PlayerData player)

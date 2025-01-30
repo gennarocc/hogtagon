@@ -4,6 +4,18 @@ using Unity.Netcode;
 public class KillBall : NetworkBehaviour
 {
     [SerializeField] private float blowupForce = 2;
+    [SerializeField] public Vector3 initialSize;
+    [SerializeField] public Vector3 targetSize;
+    [SerializeField] private float duration = 60;
+    
+
+    private void Update()
+    {
+       float scaleLerp = Mathf.Clamp01(GameManager.instance.gameTime / duration); 
+       transform.localScale = Vector3.Lerp(initialSize, targetSize, scaleLerp);
+    }
+
+
     private void OnTriggerEnter(Collider col)
     {
         if (!col.gameObject.CompareTag("Player")) return;

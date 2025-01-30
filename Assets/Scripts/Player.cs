@@ -45,11 +45,18 @@ public class Player : NetworkBehaviour
 
     public void Respawn()
     {
+        if (!IsServer) return;
         Debug.Log("Respawning Player");
         transform.position = playerData.spawnPoint;
         transform.LookAt(SpawnPointManager.instance.transform);
         gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+        
+        if (playerData.state != PlayerState.Alive)
+        {
+            playerData.state = PlayerState.Alive;
+            ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+        }
     }
 
     public void SetPlayerData(PlayerData playerData)
@@ -72,7 +79,7 @@ public class Player : NetworkBehaviour
         if (IsServer) SpawnPointManager.instance.UnassignSpawnPoint(clientId);
         if (IsOwner)
         {
-            Cursor.visible = Cursor.visible; 
+            Cursor.visible = Cursor.visible;
             Cursor.lockState = CursorLockMode.None;
         }
     }

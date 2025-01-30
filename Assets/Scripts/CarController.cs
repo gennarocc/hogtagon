@@ -21,6 +21,8 @@ public class CarController : NetworkBehaviour
   [SerializeField] public float cameraAngle;
 
   [Header("Car Params")]
+
+  [SerializeField] public bool canMove = true;
   [Range(20, 190)]
   [SerializeField] public int maxSpeed = 90; //The maximum speed that the car can reach in km/h.
   [Range(10, 120)]
@@ -131,6 +133,7 @@ public class CarController : NetworkBehaviour
   [ServerRpc]
   private void MovePlayerServerRPC(MoveData moveData)
   {
+    if (!canMove) return;
     if (moveData.throttle)
     {
       CancelInvoke("DecelerateCar");

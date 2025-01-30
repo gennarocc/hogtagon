@@ -16,9 +16,6 @@ public class KillPlane : MonoBehaviour
             } else {
                 Debug.Log("No Network Object found");
             }
-
-            player.Respawn();
         }
-
     }
 }

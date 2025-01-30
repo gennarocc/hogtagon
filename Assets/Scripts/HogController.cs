@@ -2,12 +2,12 @@ using UnityEngine;
 using Unity.Netcode;
 using Cinemachine;
 using System;
-using Unity.VisualScripting;
-using UnityEngine.Rendering;
+using System.Collections;
 
 public class HogController : NetworkBehaviour
 {
     [Header("Hog Params")]
+    [SerializeField] public bool canMove = true;
     [SerializeField] private float maxTorque = 500f; // Maximum torque applied to wheels
     [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
     [SerializeField] private Vector3 centerOfMass;
@@ -40,10 +40,10 @@ public class HogController : NetworkBehaviour
     [SerializeField] public AK.Wwise.Event CarExplosion;
     [SerializeField] public AK.Wwise.RTPC rpm;
 
-
     private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
     private float currentTorque;
     private float localVelocityX;
+    private bool collisionForceOnCooldown = false;
 
     void Start()
     {
@@ -89,6 +89,7 @@ public class HogController : NetworkBehaviour
     [ServerRpc]
     private void SendClientInputServerRpc(ClientInput input)
     {
+        if (!canMove) return;
         ApplyMotorTorque(input.moveInput, input.brakeInput);
         ApplySteering(input.steeringAngle);
         isDrifting.Value = localVelocityX > .25f ? true : false;
@@ -117,10 +118,10 @@ public class HogController : NetworkBehaviour
         {
             // rb.linearVelocity = rb.linearVelocity * (1f / (1f + (0.025f * decelerationMultiplier)));
             // If the magnitude of the car's velocity is less than 0.25f (very slow velocity), then stop the car completely and
-            if (rb.linearVelocity.magnitude < 0.25f)
-            {
-                rb.linearVelocity = Vector3.zero;
-            }
+            // if (rb.linearVelocity.magnitude < 0.25f)
+            // {
+            //     rb.linearVelocity = Vector3.zero;
+            // }
         }
     }
 
@@ -156,21 +157,29 @@ public class HogController : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        collision.gameObject.TryGetComponent<HogController>(out HogController collisionTarget);
-        if (IsServer && collisionTarget != null)
+        if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
         {
-            // Get the NetworkRigidbody components
-            Rigidbody rb1 = rb;
-            Rigidbody rb2 = collision.gameObject.GetComponent<Rigidbody>();
-
+            collisionForceOnCooldown = true;
             ulong player1Id = GetComponent<NetworkObject>().OwnerClientId;
             ulong player2Id = collision.gameObject.GetComponent<NetworkObject>().OwnerClientId;
 
+            var relativeVelocity = collision.gameObject.GetComponent<Rigidbody>().linearVelocity; 
+
+            if (Vector3.Dot(relativeVelocity, rb.linearVelocity) < 0) relativeVelocity = -1 * relativeVelocity;
+            
+            rb.AddForce(collision.gameObject.GetComponent<Rigidbody>().linearVelocity * 300f, ForceMode.Impulse);
             Debug.Log(message:
-                "Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
-                 + " and " + ConnectionManager.instance.GetClientUsername(player2Id)
+            "Head-On Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
+             + " and " + ConnectionManager.instance.GetClientUsername(player2Id)
             );
+            StartCoroutine(CollisionForceDebounce());
         }
+    }
+
+    private IEnumerator CollisionForceDebounce()
+    {
+        yield return new WaitForSeconds(.5f);
+        collisionForceOnCooldown = false;
     }
 
     public void DriftCarPS()

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -5,8 +6,13 @@ using UnityEngine;
 public class GameManager : NetworkBehaviour
 {
     [SerializeField] public float gameTime;
-    public GameState state { get; private set; } = GameState.Pending;
+    [SerializeField] public float betweenRoundLength = 5f;
+    [SerializeField] public GameState state { get; private set; } = GameState.Pending;
+    
+    [Header("References")]
+    [SerializeField] public MenuManager menuManager;
     public static GameManager instance;
+    private ulong roundWinnerClientId;
 
     public void Start()
     {
@@ -54,18 +60,41 @@ public class GameManager : NetworkBehaviour
 
     private void OnEndingEnter()
     {
+       // Change camera to player who won.
+       state = GameState.Ending;
+       ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
 
+       menuManager.DisplayWinnerClientRpc(roundWinner.username);
+       roundWinner.score++;
+       ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
+       StartCoroutine(BetweenRoundTimer()); 
     }
 
     private void OnPlayingEnter()
     {
-        gameTime = 0f;
-        if (ConnectionManager.instance.GetAlivePlayers().Count > 1)
+        if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
-            // RespawnAllPlayers();
-            // StartRound();
+            LockPlayerMovement();
+            gameTime = 0f;
+            RespawnAllPlayers();
+            menuManager.StartCountdownClientRpc();
+            StartCoroutine(RoundCountdown());
         }
     }
+
+    public IEnumerator RoundCountdown()
+    {
+        yield return new WaitForSeconds(3f);
+        UnlockPlayerMovement();
+        state = GameState.Playing;
+    }
+
+    public IEnumerator BetweenRoundTimer()
+    {
+        yield return new WaitForSeconds(betweenRoundLength);
+        TransitionToState(GameState.Playing);
+    }
+
 
     private void OnPendingEnter()
     {
@@ -75,23 +104,52 @@ public class GameManager : NetworkBehaviour
     public void CheckGameStatus()
     {
         if (state != GameState.Playing) return;
-        List<PlayerData> alivePlayers = ConnectionManager.instance.GetAlivePlayers();
 
-        if (alivePlayers.Count == 1)
+        List<ulong> alive = ConnectionManager.instance.GetAliveClients();
+        if (alive.Count == 1)
         {
+            roundWinnerClientId = alive[0];
             TransitionToState(GameState.Ending);
         }
     }
 
-    // [ServerRpc(RequireOwnership = false)]
     public void PlayerDied(ulong clientId)
     {
         if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData player))
         {
-            player.score++;
+            player.state = PlayerState.Dead;
             ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
         }
 
         CheckGameStatus();
+    }
+    private void RespawnAllPlayers()
+    {
+        Player[] players = FindObjectsByType<Player>(FindObjectsSortMode.None);
+
+        foreach (Player player in players)
+        {
+            player.Respawn();
+        }
+    }
+
+    private void LockPlayerMovement()
+    {
+        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+
+        foreach (HogController player in players)
+        {
+            player.canMove = false;
+        }
+    }
+
+    private void UnlockPlayerMovement()
+    {
+        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+
+        foreach (HogController player in players)
+        {
+            player.canMove = true;
+        }
     }
 }
