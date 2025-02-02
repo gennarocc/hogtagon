@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{CEF5B644-B308-CCF1-9CB5-2F8B3D3669A5}",
+    "Hash": "{AEBEE4E4-01B0-B0F0-2E8E-25B220FBCAFD}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -64,6 +64,14 @@
       "CachePath": "BF/{BF9E2490-01AC-9E10-254F-E8B71CC94531}.wem"
      },
      {
+      "Id": "90311213",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "ui-cancel.wav",
+      "CachePath": "FA/{FA79BAE6-9C46-C389-95C8-EDA7E0977145}.wem"
+     },
+     {
       "Id": "142434758",
       "Language": "SFX",
       "Streaming": "false",
@@ -72,12 +80,44 @@
       "CachePath": "CA/{CA9CDBAF-E748-08CB-D09E-D357C5E44CAA}.wem"
      },
      {
+      "Id": "191368066",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-3c.wav",
+      "CachePath": "D1/{D17A5C15-B3C4-6EED-CF08-3053C75DFFB4}.wem"
+     },
+     {
+      "Id": "299928938",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-1a.wav",
+      "CachePath": "23/{232D98DA-B920-7838-0D94-0CF126ACC5EC}.wem"
+     },
+     {
+      "Id": "331870255",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-3a.wav",
+      "CachePath": "8D/{8D3B7EEF-F0E1-86FC-F718-4AE98FB9AB6C}.wem"
+     },
+     {
       "Id": "348634209",
       "Language": "SFX",
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "Bounces\\car-explosion-4.wav",
       "CachePath": "04/{04464716-E5BF-C776-6E88-A982DF6C8D51}.wem"
+     },
+     {
+      "Id": "388733350",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-2b.wav",
+      "CachePath": "5F/{5F6DA9B3-93D6-980B-E180-A11C9C4D1BFE}.wem"
      },
      {
       "Id": "487559685",
@@ -93,7 +133,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "Bounces\\ui-confirmation.wav",
-      "CachePath": "E4/{E4FCE718-67AA-ABF1-5488-8645A10E3261}.wem"
+      "CachePath": "B6/{B6D2F97E-FE56-A469-F01A-2474DD17519C}.wem"
      },
      {
       "Id": "512876442",
@@ -102,6 +142,22 @@
       "Location": "Memory",
       "ShortName": "Bounces\\car-explosion-2.wav",
       "CachePath": "4B/{4B35B243-15D4-BF3F-5176-920C0187E28F}.wem"
+     },
+     {
+      "Id": "553553016",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "tire-screeching-1.wav",
+      "CachePath": "D8/{D8FE6E4D-ABB2-CDE5-E746-5F890A04AD0F}.wem"
+     },
+     {
+      "Id": "607401393",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-3b.wav",
+      "CachePath": "A3/{A3680B8E-FDCE-A51D-457C-7BECAE421E0B}.wem"
      },
      {
       "Id": "622663132",
@@ -120,12 +176,36 @@
       "CachePath": "10/{1073E8F7-C22A-4F8B-C5DE-1F83FF2B11F4}.wem"
      },
      {
+      "Id": "708298719",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-1b.wav",
+      "CachePath": "60/{60AA4B35-9D79-088C-65AB-57C1757AB8CE}.wem"
+     },
+     {
+      "Id": "729798953",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-1c.wav",
+      "CachePath": "F5/{F5772C2A-9AFE-2B93-336A-DAF6FE61A3E1}.wem"
+     },
+     {
       "Id": "762622656",
       "Language": "SFX",
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "Bounces\\gear-shift-4.wav",
       "CachePath": "3F/{3F3D6320-AAD6-85DB-F678-C2E5878F2537}.wem"
+     },
+     {
+      "Id": "783942544",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-2c.wav",
+      "CachePath": "23/{239E381F-A6FB-8313-DFE1-8E0B08894BC3}.wem"
      },
      {
       "Id": "808429037",
@@ -142,6 +222,22 @@
       "Location": "Memory",
       "ShortName": "Bounces\\gear-shift-2.wav",
       "CachePath": "0B/{0B0E7B9A-1BFF-21C3-CF92-BBFA9CEFE130}.wem"
+     },
+     {
+      "Id": "1032222109",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "impact-2a.wav",
+      "CachePath": "71/{71DC7EA8-0B0A-CF6A-8A5E-DA9386318B53}.wem"
+     },
+     {
+      "Id": "1040679246",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "tire-screeching-2.wav",
+      "CachePath": "0B/{0B280AAA-4D5D-4457-7759-4A3CC5B44236}.wem"
      },
      {
       "Id": "1057082725",
@@ -251,6 +347,106 @@
       ]
      },
      {
+      "Id": "2587421243",
+      "Name": "HogImpact",
+      "ObjectPath": "\\Events\\Default Work Unit\\HogImpact",
+      "GUID": "{350BE99D-610A-4072-B84D-C812854DA99F}",
+      "DurationType": "OneShot",
+      "DurationMin": "1.4613333",
+      "DurationMax": "4.101333",
+      "SwitchContainers": [
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "1449613434",
+         "Id": "545371365",
+         "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "299928938"
+         },
+         {
+          "Id": "708298719"
+         },
+         {
+          "Id": "729798953"
+         }
+        ]
+       },
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "1449613434",
+         "Id": "2849147824",
+         "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}",
+         "Default": "true"
+        },
+        "MediaRefs": [
+         {
+          "Id": "388733350"
+         },
+         {
+          "Id": "783942544"
+         },
+         {
+          "Id": "1032222109"
+         }
+        ]
+       },
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "1449613434",
+         "Id": "3550808449",
+         "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "191368066"
+         },
+         {
+          "Id": "331870255"
+         },
+         {
+          "Id": "607401393"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "Id": "3266676374",
+      "Name": "TireScreech",
+      "ObjectPath": "\\Events\\Default Work Unit\\TireScreech",
+      "GUID": "{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}",
+      "DurationType": "OneShot",
+      "DurationMin": "1.5131875",
+      "DurationMax": "1.5152708",
+      "MediaRefs": [
+       {
+        "Id": "553553016"
+       },
+       {
+        "Id": "1040679246"
+       }
+      ]
+     },
+     {
+      "Id": "1933252553",
+      "Name": "uiCancel",
+      "ObjectPath": "\\Events\\Default Work Unit\\uiCancel",
+      "GUID": "{DEE1CE85-2F7B-4EFB-8925-B4F06E40F8B4}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.53066665",
+      "DurationMax": "0.53066665",
+      "MediaRefs": [
+       {
+        "Id": "90311213"
+       }
+      ]
+     },
+     {
       "Id": "3164408517",
       "Name": "uiClick",
       "ObjectPath": "\\Events\\Default Work Unit\\uiClick",
@@ -286,9 +482,37 @@
       "ObjectPath": "\\Game Parameters\\Default Work Unit\\RPM",
       "GUID": "{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}"
      }
+    ],
+    "SwitchGroups": [
+     {
+      "Id": "1449613434",
+      "Name": "hog_impact",
+      "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact",
+      "GUID": "{1852736A-60BA-4755-8E71-0B73A1839A7C}",
+      "Switches": [
+       {
+        "Id": "545371365",
+        "Name": "low",
+        "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\low",
+        "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}"
+       },
+       {
+        "Id": "2849147824",
+        "Name": "medium",
+        "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\medium",
+        "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"
+       },
+       {
+        "Id": "3550808449",
+        "Name": "high",
+        "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\high",
+        "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"
+       }
+      ]
+     }
     ]
    }
   ],
-  "FileHash": "{18E04A64-3C2F-BB36-BB3E-5CB705B70503}"
+  "FileHash": "{16E89473-270B-39BC-2C28-9318160310EC}"
  }
 }

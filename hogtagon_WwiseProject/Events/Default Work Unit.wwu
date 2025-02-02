@@ -8,7 +8,7 @@
 						<Action Name="" ID="{E46648B5-0D63-45CA-B95B-9393E654654E}" ShortID="578991552">
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="ui-navigation-click_bip" ID="{235667B5-CF67-42F9-AD99-813C1AFDA597}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+									<ObjectRef Name="ui-navigation-click" ID="{235667B5-CF67-42F9-AD99-813C1AFDA597}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
@@ -56,6 +56,39 @@
 							<ReferenceList>
 								<Reference Name="Target">
 									<ObjectRef Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="uiCancel" ID="{DEE1CE85-2F7B-4EFB-8925-B4F06E40F8B4}">
+					<ChildrenList>
+						<Action Name="" ID="{4AEE087D-3D4C-43E0-BA6D-3D29A8D120F2}" ShortID="117311235">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="ui-cancel" ID="{31960501-88EF-40BB-923A-E47804E4B070}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="TireScreech" ID="{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}">
+					<ChildrenList>
+						<Action Name="" ID="{1BE45A1A-E12D-4EEA-812D-5AC8B262EB43}" ShortID="279783700">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="HogImpact" ID="{350BE99D-610A-4072-B84D-C812854DA99F}">
+					<ChildrenList>
+						<Action Name="" ID="{F7B1ED56-2602-452C-AD1C-3CCCBE10C4AD}" ShortID="795912132">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog-impact" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>

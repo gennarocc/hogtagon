@@ -565,7 +565,7 @@
 				</RandomSequenceContainer>
 				<Folder Name="UI" ID="{C93ACA2F-7165-40EC-A44C-52B221D246D4}" ShortID="104603125">
 					<ChildrenList>
-						<Sound Name="ui-navigation-click_bip" ID="{235667B5-CF67-42F9-AD99-813C1AFDA597}" ShortID="746056272">
+						<Sound Name="ui-navigation-click" ID="{235667B5-CF67-42F9-AD99-813C1AFDA597}" ShortID="746056272">
 							<PropertyList>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 							</PropertyList>
@@ -593,6 +593,7 @@
 						<Sound Name="ui-confirmation" ID="{9C694329-3F27-4946-B6A0-C6C99A7F7A00}" ShortID="519042925">
 							<PropertyList>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+								<Property Name="LoudnessNormalizationTarget" Type="Real64" Value="-15"/>
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
@@ -615,8 +616,380 @@
 								<ActiveSource Name="ui-confirmation" ID="{D0B233EB-430E-4652-A919-1B65BC56D013}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
+						<Sound Name="ui-cancel" ID="{31960501-88EF-40BB-923A-E47804E4B070}" ShortID="885483893">
+							<PropertyList>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="GUI" ID="{B1608F7D-8FDA-4E46-B256-DE3079938C48}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="ui-cancel" ID="{D96E6BB9-92D7-40A0-88E9-C54A3469E392}">
+									<Language>SFX</Language>
+									<AudioFile>ui-cancel.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="90311213"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="ui-cancel" ID="{D96E6BB9-92D7-40A0-88E9-C54A3469E392}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
 					</ChildrenList>
 				</Folder>
+				<RandomSequenceContainer Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
+					<PropertyList>
+						<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+					</PropertyList>
+					<ReferenceList>
+						<Reference Name="Conversion">
+							<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+						</Reference>
+						<Reference Name="OutputBus">
+							<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+						</Reference>
+					</ReferenceList>
+					<ChildrenList>
+						<Sound Name="tire-screeching-1" ID="{6A1129E9-3713-4EBE-809F-AFED50C0F7AE}" ShortID="358674658">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}">
+									<Language>SFX</Language>
+									<AudioFile>tire-screeching-1.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="553553016"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+						<Sound Name="tire-screeching-2" ID="{B0A882FC-AEE9-4E4D-BF86-85EEDC46FB84}" ShortID="36804933">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}">
+									<Language>SFX</Language>
+									<AudioFile>tire-screeching-2.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="1040679246"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+					</ChildrenList>
+				</RandomSequenceContainer>
+				<SwitchContainer Name="hog-impact" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" ShortID="736143456">
+					<PropertyList>
+						<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+					</PropertyList>
+					<ReferenceList>
+						<Reference Name="Conversion">
+							<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+						</Reference>
+						<Reference Name="DefaultSwitchOrState">
+							<ObjectRef Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
+						</Reference>
+						<Reference Name="OutputBus">
+							<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+						</Reference>
+						<Reference Name="SwitchGroupOrStateGroup">
+							<ObjectRef Name="hog_impact" ID="{1852736A-60BA-4755-8E71-0B73A1839A7C}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
+						</Reference>
+					</ReferenceList>
+					<ChildrenList>
+						<RandomSequenceContainer Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}" ShortID="864689547">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<Sound Name="impact-1a" ID="{640862C0-8DF9-4892-8A81-EBE1F50E3E24}" ShortID="150314775">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-1a" ID="{4DA63113-481F-4364-AB5C-DF9E05DDBE10}">
+											<Language>SFX</Language>
+											<AudioFile>impact-1a.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="299928938"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-1a" ID="{4DA63113-481F-4364-AB5C-DF9E05DDBE10}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="impact-1b" ID="{01E5F03C-D460-4563-97E4-AF380EC85A43}" ShortID="76995078">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-1b" ID="{9B80E03A-2E65-4504-AFAD-58B100923FA5}">
+											<Language>SFX</Language>
+											<AudioFile>impact-1b.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="708298719"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-1b" ID="{9B80E03A-2E65-4504-AFAD-58B100923FA5}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="impact-1c" ID="{0D48731F-125C-4DFC-94E3-F852130038B0}" ShortID="706885308">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-1c" ID="{BBDA03DF-CBC5-40CA-9FBC-436946DEDFAC}">
+											<Language>SFX</Language>
+											<AudioFile>impact-1c.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="729798953"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-1c" ID="{BBDA03DF-CBC5-40CA-9FBC-436946DEDFAC}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+							</ChildrenList>
+						</RandomSequenceContainer>
+						<RandomSequenceContainer Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}" ShortID="1020244753">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<Sound Name="impact-2a" ID="{700FA17E-B0FB-4114-8BC7-D4C8F5EBD0B6}" ShortID="9017672">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-2a" ID="{8CF25923-E9FB-4735-BD13-4493DCE9D2B5}">
+											<Language>SFX</Language>
+											<AudioFile>impact-2a.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="1032222109"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-2a" ID="{8CF25923-E9FB-4735-BD13-4493DCE9D2B5}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="impact-2b" ID="{D3CB3181-0951-47FC-BA8C-8C87B4939318}" ShortID="698888499">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-2b" ID="{1EB464BB-CCF3-419F-B72C-932460AEC57C}">
+											<Language>SFX</Language>
+											<AudioFile>impact-2b.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="388733350"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-2b" ID="{1EB464BB-CCF3-419F-B72C-932460AEC57C}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="impact-2c" ID="{A2AA3711-EE9F-4426-A9C2-B754F5EDA7AE}" ShortID="875078479">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-2c" ID="{09682844-451D-46F4-97E0-CDCBDFA4B6F4}">
+											<Language>SFX</Language>
+											<AudioFile>impact-2c.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="783942544"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-2c" ID="{09682844-451D-46F4-97E0-CDCBDFA4B6F4}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+							</ChildrenList>
+						</RandomSequenceContainer>
+						<RandomSequenceContainer Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}" ShortID="11654586">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<Sound Name="impact-3a" ID="{00634E22-471D-4426-9D12-C6E6F27CEE55}" ShortID="698561937">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-3a" ID="{6480A6F8-1469-4C52-AD45-31AC4BFA18F3}">
+											<Language>SFX</Language>
+											<AudioFile>impact-3a.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="331870255"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-3a" ID="{6480A6F8-1469-4C52-AD45-31AC4BFA18F3}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="impact-3b" ID="{C90B29FF-532E-41F0-9CEF-81DFAD0FE383}" ShortID="999322436">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-3b" ID="{19DEB4A9-C122-4AE5-856F-95A7CC4BED80}">
+											<Language>SFX</Language>
+											<AudioFile>impact-3b.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="607401393"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-3b" ID="{19DEB4A9-C122-4AE5-856F-95A7CC4BED80}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="impact-3c" ID="{1D290357-CC93-45A9-9B74-C094694EEE9E}" ShortID="721559842">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="impact-3c" ID="{7C52D149-B266-440A-9EBF-9D261FCCC1F3}">
+											<Language>SFX</Language>
+											<AudioFile>impact-3c.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="191368066"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="impact-3c" ID="{7C52D149-B266-440A-9EBF-9D261FCCC1F3}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+							</ChildrenList>
+						</RandomSequenceContainer>
+					</ChildrenList>
+					<GroupingInfo>
+						<GroupingBehaviorList>
+							<GroupingBehavior>
+								<ItemRef Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}"/>
+							</GroupingBehavior>
+							<GroupingBehavior>
+								<ItemRef Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}"/>
+							</GroupingBehavior>
+							<GroupingBehavior>
+								<ItemRef Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}"/>
+							</GroupingBehavior>
+						</GroupingBehaviorList>
+						<GroupingList>
+							<Grouping>
+								<SwitchRef Name="low" ID="{C5B2DF45-9977-4C78-B474-13B3170D136D}"/>
+								<ItemList>
+									<ItemRef Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}"/>
+								</ItemList>
+							</Grouping>
+							<Grouping>
+								<SwitchRef Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"/>
+								<ItemList>
+									<ItemRef Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}"/>
+								</ItemList>
+							</Grouping>
+							<Grouping>
+								<SwitchRef Name="high" ID="{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"/>
+								<ItemList>
+									<ItemRef Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}"/>
+								</ItemList>
+							</Grouping>
+						</GroupingList>
+					</GroupingInfo>
+				</SwitchContainer>
 			</ChildrenList>
 		</WorkUnit>
 	</AudioObjects>
