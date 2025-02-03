@@ -1,7 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
-
 using System.Text.RegularExpressions;
 
 public class ConnectionManager : NetworkBehaviour
@@ -37,6 +36,7 @@ public class ConnectionManager : NetworkBehaviour
         Debug.Log(message: "New player connecting...");
         // The client identifier to be authenticated
         var clientId = request.ClientNetworkId;
+        response.Approved = false;
 
         // Set player username
         string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
@@ -45,26 +45,34 @@ public class ConnectionManager : NetworkBehaviour
             decodedUsername = "Player" + (GetPlayerCount() + 1);
         }
 
-        response.Approved = false;
-
-        if (CheckUsernameAvailability(decodedUsername) && GetPlayerCount() <= 8)
+        if (!CheckUsernameAvailability(decodedUsername))
         {
-            var sp = SpawnPointManager.instance.AssignSpawnPoint(clientId);
-            var player = new PlayerData()
-            {
-                username = decodedUsername,
-                score = 0,
-                color = Random.ColorHSV(),
-                state = PlayerState.Alive,
-                spawnPoint = sp,
-                isLobbyLeader = clientDataDictionary.Count == 0
-            };
-            pendingPlayerData.Add(clientId, player);
-            response.Approved = true;
-            response.Position = sp;
-            response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - sp);
-            response.CreatePlayerObject = true;
+            response.Reason = "Invalid Driver Name";
+            return;
         }
+
+        if (GetPlayerCount() >= 8)
+        {
+            response.Reason = "Lobby Full";
+            return;
+        }
+
+        var sp = SpawnPointManager.instance.AssignSpawnPoint(clientId);
+        var player = new PlayerData()
+        {
+            username = decodedUsername,
+            score = 0,
+            color = Random.ColorHSV(),
+            state = PlayerState.Alive,
+            spawnPoint = sp,
+            isLobbyLeader = clientDataDictionary.Count == 0
+        };
+        pendingPlayerData.Add(clientId, player);
+        response.Approved = true;
+        response.Position = sp;
+        response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - sp);
+        response.CreatePlayerObject = true;
+
     }
 
     private void OnClientConnectedCallback(ulong clientId)
@@ -81,15 +89,7 @@ public class ConnectionManager : NetworkBehaviour
         if (clientDataDictionary.ContainsKey(clientId))
         {
             clientDataDictionary.Remove(clientId);
-        }
-
-        // Renable UI and send to menu.
-        if (IsOwner)
-        {
-            Cursor.visible = Cursor.visible;
-            Cursor.lockState = CursorLockMode.None;
-            isConnected = false;
-            menuManager.MainMenu();
+            RemovePlayerClientRpc(clientId);
         }
     }
 
@@ -115,18 +115,21 @@ public class ConnectionManager : NetworkBehaviour
         if (NetworkManager.Singleton.LocalClientId == clientId)
         {
             Debug.Log(message: "ClientDataList Recieved");
+            // Purge any existing data.
+            if (clientDataDictionary.Count > 0) clientDataDictionary = new Dictionary<ulong, PlayerData>();
+            // Deserialize data.
             Dictionary<ulong, PlayerData> clientData = DictionaryExtensions.ConvertSerializableListToDictionary(serializedList);
-            foreach (var data in clientData)
+            foreach (var data in clientData) // Add data to local dictionary
             {
                 clientDataDictionary.Add(data.Key, data.Value);
-                Debug.Log("Adding existing player - : " + data.Value.username);
+                Debug.Log(message: "Adding existing player - : " + data.Value.username);
             }
             AddPlayerServerRpc(clientId);
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void AddPlayerServerRpc(ulong clientId)
+    private void AddPlayerServerRpc(ulong clientId)
     {
         PlayerData playerData = pendingPlayerData[clientId];
         Debug.Log(message: "Player conneted - " + playerData.username);
@@ -142,7 +145,14 @@ public class ConnectionManager : NetworkBehaviour
         pendingPlayerData.Remove(clientId);
     }
 
-    [ClientRpc]
+    [ClientRpc(Delivery = RpcDelivery.Reliable)]
+    private void RemovePlayerClientRpc(ulong clientId)
+    {
+        Debug.Log(message: "Removing Client - " + clientId);
+        clientDataDictionary.Remove(clientId);
+    }
+
+    [ClientRpc(Delivery = RpcDelivery.Reliable)]
     public void UpdatePlayerDataClientRpc(ulong clientId, PlayerData player)
     {
         if (clientDataDictionary.ContainsKey(clientId))

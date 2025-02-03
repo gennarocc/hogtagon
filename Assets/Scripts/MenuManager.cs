@@ -154,10 +154,23 @@ public class MenuManager : NetworkBehaviour
 
     public void Disconnect()
     {
-        if (!IsOwner) return;
-        NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);
+        // if (!IsOwner) return;
+        DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
         MainMenu();
+        Cursor.visible = Cursor.visible;
+        Cursor.lockState = CursorLockMode.None;
+        ConnectionManager.instance.isConnected = false;
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void DisconnectRequestServerRpc(ulong clientId)
+    {
+
+        Debug.Log(message: "Disconnecting Client - " + clientId + " [" + ConnectionManager.instance.GetClientUsername(clientId) + "]");
+        NetworkManager.Singleton.DisconnectClient(clientId);
+        // Destroy(NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject);
+    }
+
 
     public void QuitGame()
     {
