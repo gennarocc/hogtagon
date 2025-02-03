@@ -10,6 +10,7 @@ public class MenuManager : NetworkBehaviour
     public bool gameIsPaused = false;
 
     [Header("UI Components")]
+    [SerializeField] public GameObject mainMenu;
     [SerializeField] public GameObject pauseMenuUI;
     [SerializeField] public GameObject settingsMenuUI;
     [SerializeField] public GameObject scoreboardUI;
@@ -19,6 +20,9 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public Slider cameraSensitivity;
     [SerializeField] public TextMeshProUGUI countdownText;
     [SerializeField] public TextMeshProUGUI winnerText;
+
+    [Header("References")]
+    [SerializeField] public Camera startCamera;
     private int countdownTime;
 
     private void Update()
@@ -39,18 +43,18 @@ public class MenuManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) scoreboardUI.SetActive(true);
         if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
         // Start Game Button (Host only)
-        if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton.interactable = true;
+        // if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton. = false;
         // Set join code.
         if (ConnectionManager.instance.joinCode != null) joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
     }
 
     public void Resume()
     {
-        Cursor.lockState = CursorLockMode.Locked;
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
         gameIsPaused = false;
         Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Pause()
@@ -134,9 +138,25 @@ public class MenuManager : NetworkBehaviour
 
     public IEnumerator BetweenRoundTime()
     {
-        yield return new WaitForSeconds(7f);        
+        yield return new WaitForSeconds(7f);
         winnerText.text = "";
         tempUI.SetActive(false);
+    }
+
+    public void MainMenu()
+    {
+        Resume();
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        mainMenu.SetActive(true);
+        startCamera.gameObject.SetActive(true);
+    }
+
+    public void Disconnect()
+    {
+        if (!IsOwner) return;
+        NetworkManager.Singleton.DisconnectClient(NetworkManager.Singleton.LocalClientId);
+        MainMenu();
     }
 
     public void QuitGame()
