@@ -16,9 +16,28 @@ namespace AK
         static const AkUniqueID CAREXPLOSION = 144991338U;
         static const AkUniqueID ENGINEOFF = 2388455330U;
         static const AkUniqueID ENGINEON = 2439330724U;
+        static const AkUniqueID HOGIMPACT = 2587421243U;
+        static const AkUniqueID TIRESCREECH = 3266676374U;
+        static const AkUniqueID UICANCEL = 1933252553U;
         static const AkUniqueID UICLICK = 3164408517U;
         static const AkUniqueID UICONFIRM = 685626117U;
     } // namespace EVENTS
+
+    namespace SWITCHES
+    {
+        namespace HOG_IMPACT
+        {
+            static const AkUniqueID GROUP = 1449613434U;
+
+            namespace SWITCH
+            {
+                static const AkUniqueID HIGH = 3550808449U;
+                static const AkUniqueID LOW = 545371365U;
+                static const AkUniqueID MEDIUM = 2849147824U;
+            } // namespace SWITCH
+        } // namespace HOG_IMPACT
+
+    } // namespace SWITCHES
 
     namespace GAME_PARAMETERS
     {
@@ -33,6 +52,7 @@ namespace AK
         static const AkUniqueID SS_AIR_STORM = 3715662592U;
         static const AkUniqueID SS_AIR_TIMEOFDAY = 3203397129U;
         static const AkUniqueID SS_AIR_TURBULENCE = 4160247818U;
+        static const AkUniqueID VELOCITY = 3519441192U;
     } // namespace GAME_PARAMETERS
 
     namespace BANKS

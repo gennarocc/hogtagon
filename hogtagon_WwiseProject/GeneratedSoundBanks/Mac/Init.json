@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
     "Language": "SFX",
-    "Hash": "{16714E54-1C1D-7F93-6BA1-2EBE53845C14}",
+    "Hash": "{63404AD4-7506-C85A-9813-6F669A3A1C7E}",
     "ObjectPath": "Init",
     "ShortName": "Init",
     "Path": "Init.bnk",
@@ -116,6 +116,12 @@
       "GUID": "{536FA72C-8C7E-4C8B-AE03-EF34FDADC314}"
      },
      {
+      "Id": "3519441192",
+      "Name": "Velocity",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\Velocity",
+      "GUID": "{C5C85801-0015-4048-BCE3-C517C066CEA9}"
+     },
+     {
       "Id": "3715662592",
       "Name": "SS_Air_Storm",
       "ObjectPath": "\\Game Parameters\\Factory Soundseed Air Game Syncs\\SS_Air_Storm",
@@ -132,6 +138,34 @@
       "Name": "SS_Air_Turbulence",
       "ObjectPath": "\\Game Parameters\\Factory Soundseed Air Game Syncs\\SS_Air_Turbulence",
       "GUID": "{EDA87B19-73AA-40A0-9F19-2073606DB710}"
+     }
+    ],
+    "SwitchGroups": [
+     {
+      "Id": "1449613434",
+      "Name": "hog_impact",
+      "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact",
+      "GUID": "{1852736A-60BA-4755-8E71-0B73A1839A7C}",
+      "Switches": [
+       {
+        "Id": "545371365",
+        "Name": "low",
+        "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\low",
+        "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}"
+       },
+       {
+        "Id": "2849147824",
+        "Name": "medium",
+        "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\medium",
+        "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"
+       },
+       {
+        "Id": "3550808449",
+        "Name": "high",
+        "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\high",
+        "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"
+       }
+      ]
      }
     ],
     "AcousticTextures": [
@@ -613,6 +647,6 @@
     ]
    }
   ],
-  "FileHash": "{3558D8EF-BF8B-9772-4BEC-D9283C994176}"
+  "FileHash": "{51A749EB-FCA7-25AD-1EAC-01AE83095639}"
  }
 }
