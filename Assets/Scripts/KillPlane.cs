@@ -12,7 +12,16 @@ public class KillPlane : MonoBehaviour
 
             if (networkObject != null)
             {
+
+                // If game has not started just respawn the player.
+                if (GameManager.instance.state == GameState.Pending) 
+                {
+                    player.Respawn();
+                    return;
+                }
+                
                 GameManager.instance.PlayerDied(networkObject.OwnerClientId);
+
             } else {
                 Debug.Log("No Network Object found");
             }

@@ -33,6 +33,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] public ParticleSystem RRWParticleSystem;
     [SerializeField] public TrailRenderer RLWTireSkid;
     [SerializeField] public TrailRenderer RRWTireSkid;
+    [SerializeField] public GameObject Explosion;
 
     [Header("Wwise")]
     [SerializeField] public AK.Wwise.Event EngineOn;
@@ -200,9 +201,13 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    public void ExplodeCarFX()
+
+    [ClientRpc]
+    public void ExplodeCarClientRpc()
     {
-        CarExplosion.Post(gameObject); // Audio Event;
+        Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform); // Explosion Particles
+        CarExplosion.Post(gameObject); // Wwise audio event
+        canMove = false;
     }
 
     private struct ClientInput : INetworkSerializable

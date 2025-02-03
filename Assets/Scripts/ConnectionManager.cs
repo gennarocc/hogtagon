@@ -6,11 +6,15 @@ using System.Text.RegularExpressions;
 
 public class ConnectionManager : NetworkBehaviour
 {
+    [Header("Connection Status")]
     [SerializeField] public string joinCode;
     [SerializeField] public bool isConnected = false;
+    [Header("References")]
+    [SerializeField] private MenuManager menuManager;
     private Dictionary<ulong, PlayerData> clientDataDictionary = new Dictionary<ulong, PlayerData>();
     private Dictionary<ulong, PlayerData> pendingPlayerData = new Dictionary<ulong, PlayerData>();
     public static ConnectionManager instance;
+
 
     private void Start()
     {
@@ -71,9 +75,21 @@ public class ConnectionManager : NetworkBehaviour
 
     private void OnClientDisconnectCallback(ulong clientId)
     {
+        // Unassign Spawn Point
+        if (IsServer) SpawnPointManager.instance.UnassignSpawnPoint(clientId);
+        // Remove Data from Client Dictonary/List
         if (clientDataDictionary.ContainsKey(clientId))
         {
             clientDataDictionary.Remove(clientId);
+        }
+
+        // Renable UI and send to menu.
+        if (IsOwner)
+        {
+            Cursor.visible = Cursor.visible;
+            Cursor.lockState = CursorLockMode.None;
+            isConnected = false;
+            menuManager.MainMenu();
         }
     }
 

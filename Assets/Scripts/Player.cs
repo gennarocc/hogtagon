@@ -77,10 +77,5 @@ public class Player : NetworkBehaviour
     public void Destory()
     {
         if (IsServer) SpawnPointManager.instance.UnassignSpawnPoint(clientId);
-        if (IsOwner)
-        {
-            Cursor.visible = Cursor.visible;
-            Cursor.lockState = CursorLockMode.None;
-        }
     }
 }

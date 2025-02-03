@@ -7,12 +7,14 @@ using Unity.Services.Core;
 using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
+using UnityEngine.UI;
 
 public class ConnectToGame : MonoBehaviour
 {
-    [SerializeField] public Camera startCamera;
-    [SerializeField] public TMP_InputField usernameInput;
-    [SerializeField] public TMP_InputField joinCodeInput;
+    [SerializeField] private Camera startCamera;
+    [SerializeField] private TMP_InputField usernameInput;
+    [SerializeField] private TMP_InputField joinCodeInput;
+    [SerializeField] private Button joinLobby;
 
     private async void Start()
     {
@@ -21,9 +23,19 @@ public class ConnectToGame : MonoBehaviour
         await UnityServices.InitializeAsync();
         AuthenticationService.Instance.SignedIn += () =>
         {
-           Debug.Log(message: "Signed in " + AuthenticationService.Instance.PlayerId);
+            Debug.Log(message: "Signed in " + AuthenticationService.Instance.PlayerId);
         };
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
+    }
+
+    private void Update()
+    {
+
+        joinLobby.interactable = false;
+        if (joinCodeInput.text.Length == 6)
+        {
+            joinLobby.interactable = true;
+        }
     }
 
     private async void CreateRelay()
@@ -72,4 +84,5 @@ public class ConnectToGame : MonoBehaviour
         CreateRelay();
         startCamera.gameObject.SetActive(false);
     }
+
 }
