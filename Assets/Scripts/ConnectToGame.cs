@@ -14,11 +14,13 @@ public class ConnectToGame : MonoBehaviour
     [SerializeField] private Camera startCamera;
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField joinCodeInput;
+    [SerializeField] private Button hostLobby;
     [SerializeField] private Button joinLobby;
 
     private async void Start()
     {
         startCamera.cullingMask = 31;
+        joinLobby.interactable = false;
         // Start Relay Service.
         await UnityServices.InitializeAsync();
         AuthenticationService.Instance.SignedIn += () =>
@@ -28,13 +30,22 @@ public class ConnectToGame : MonoBehaviour
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
     }
 
-    private void Update()
+    public void OnInputFieldValueChanged()
     {
-
-        joinLobby.interactable = false;
         if (joinCodeInput.text.Length == 6)
         {
             joinLobby.interactable = true;
+        } else {
+            joinLobby.interactable = false;
+        }
+        
+        if (usernameInput.text.Length <= 10)
+        {
+            hostLobby.interactable = true;
+        } else 
+        {
+            joinLobby.interactable = false;
+            hostLobby.interactable = false;
         }
     }
 
