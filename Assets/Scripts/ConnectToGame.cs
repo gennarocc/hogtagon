@@ -16,6 +16,7 @@ public class ConnectToGame : MonoBehaviour
     [SerializeField] private TMP_InputField joinCodeInput;
     [SerializeField] private Button hostLobby;
     [SerializeField] private Button joinLobby;
+    [SerializeField] private GameObject connectionPending;
 
     private async void Start()
     {
@@ -44,8 +45,8 @@ public class ConnectToGame : MonoBehaviour
             hostLobby.interactable = true;
         } else 
         {
-            joinLobby.interactable = false;
-            hostLobby.interactable = false;
+            // joinLobby.interactable = false;
+            // hostLobby.interactable = false;
         }
     }
 
@@ -87,13 +88,14 @@ public class ConnectToGame : MonoBehaviour
         // Configure connection with username as payload;
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
         JoinRelay(joinCodeInput.text);
-        startCamera.gameObject.SetActive(false);
+        connectionPending.SetActive(true);
     }
+    
     public void StartHost()
     {
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
         CreateRelay();
-        startCamera.gameObject.SetActive(false);
+        connectionPending.SetActive(true);
     }
 
 }
