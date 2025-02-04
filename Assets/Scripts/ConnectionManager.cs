@@ -91,6 +91,12 @@ public class ConnectionManager : NetworkBehaviour
             clientDataDictionary.Remove(clientId);
             RemovePlayerClientRpc(clientId);
         }
+
+        if (!IsServer && NetworkManager.Singleton.DisconnectReason != string.Empty)
+        {
+            menuManager.MainMenu();
+            menuManager.DisplayConnectionError();
+        }
     }
 
     public bool CheckUsernameAvailability(string username)

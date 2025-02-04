@@ -11,12 +11,18 @@ public class Player : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] public TextMeshProUGUI floatingUsername;
+    [SerializeField] private MenuManager menuManager;
+
     private Canvas worldspaceCanvas;
 
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
 
+    private void Awake()
+    {
+        menuManager = GameObject.Find("Menus").GetComponent<MenuManager>(); // ugh...
+    }
 
     private void Start()
     {
@@ -27,6 +33,8 @@ public class Player : NetworkBehaviour
 
         if (IsOwner)
         {
+            menuManager.startCamera.gameObject.SetActive(false);
+            menuManager.connectionPending.SetActive(false);
             audioListener.enabled = true;
             mainCamera.Priority = 1;
         }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using TMPro;
 using Unity.Netcode;
@@ -20,6 +21,8 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public Slider cameraSensitivity;
     [SerializeField] public TextMeshProUGUI countdownText;
     [SerializeField] public TextMeshProUGUI winnerText;
+    [SerializeField] public TextMeshProUGUI connectionRefusedReasonText;
+    [SerializeField] public GameObject connectionPending;
 
     [Header("References")]
     [SerializeField] public Camera startCamera;
@@ -43,10 +46,12 @@ public class MenuManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) scoreboardUI.SetActive(true);
         if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
         // Start Game Button (Host only)
-        // if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton. = false;
+        if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton.interactable = true;
+        else startGameButton.interactable = false;
         // Set join code.
         if (ConnectionManager.instance.joinCode != null) joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
     }
+
 
     public void Resume()
     {
@@ -176,5 +181,10 @@ public class MenuManager : NetworkBehaviour
     {
         Debug.Log("Quitting Game");
         Application.Quit();
+    }
+
+    public void DisplayConnectionError()
+    {
+        connectionRefusedReasonText.text = NetworkManager.Singleton.DisconnectReason;
     }
 }

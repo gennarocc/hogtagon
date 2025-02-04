@@ -49,7 +49,7 @@ public class HogController : NetworkBehaviour
     void Start()
     {
         rb.centerOfMass = centerOfMass;
-        if (IsOwner) EngineOn.Post(gameObject);
+        EngineOn.Post(gameObject);
     }
 
     private void Update()
@@ -164,10 +164,10 @@ public class HogController : NetworkBehaviour
             ulong player1Id = GetComponent<NetworkObject>().OwnerClientId;
             ulong player2Id = collision.gameObject.GetComponent<NetworkObject>().OwnerClientId;
 
-            var relativeVelocity = collision.gameObject.GetComponent<Rigidbody>().linearVelocity; 
+            var relativeVelocity = collision.gameObject.GetComponent<Rigidbody>().linearVelocity;
 
             if (Vector3.Dot(relativeVelocity, rb.linearVelocity) < 0) relativeVelocity = -1 * relativeVelocity;
-            
+
             rb.AddForce(collision.gameObject.GetComponent<Rigidbody>().linearVelocity * 300f, ForceMode.Impulse);
             Debug.Log(message:
             "Head-On Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
