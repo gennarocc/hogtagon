@@ -36,11 +36,11 @@ public class Player : NetworkBehaviour
             menuManager.startCamera.gameObject.SetActive(false);
             menuManager.connectionPending.SetActive(false);
             audioListener.enabled = true;
-            mainCamera.Priority = 1;
+            mainCamera.Priority = 2;
         }
         else
         {
-            mainCamera.Priority = 0;
+            mainCamera.Priority = 1;
         }
         clientId = gameObject.GetComponent<NetworkObject>().OwnerClientId;
     }
@@ -49,6 +49,11 @@ public class Player : NetworkBehaviour
     {
         floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
+
+        if (IsOwner && playerData.state == PlayerState.Dead) 
+        {
+            mainCamera.Priority = 0;
+        }
     }
 
     public void Respawn()

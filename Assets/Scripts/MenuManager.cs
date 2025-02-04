@@ -86,17 +86,6 @@ public class MenuManager : NetworkBehaviour
         pauseMenuUI.SetActive(!pauseMenuUI.activeSelf);
     }
 
-    public void ReloadScene()
-    {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-
-    public void LoadNextLevel()
-    {
-        if (SceneManager.GetActiveScene().buildIndex + 1 == SceneManager.sceneCountInBuildSettings) { Application.Quit(); }
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-    }
-
     public void CopyJoinCode()
     {
         GUIUtility.systemCopyBuffer = ConnectionManager.instance.joinCode;
@@ -155,10 +144,10 @@ public class MenuManager : NetworkBehaviour
     public void MainMenu()
     {
         Resume();
+        connectionPending.SetActive(false);
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         mainMenu.SetActive(true);
-        startCamera.gameObject.SetActive(true);
     }
 
     public void Disconnect()
@@ -174,10 +163,8 @@ public class MenuManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void DisconnectRequestServerRpc(ulong clientId)
     {
-
         Debug.Log(message: "Disconnecting Client - " + clientId + " [" + ConnectionManager.instance.GetClientUsername(clientId) + "]");
         NetworkManager.Singleton.DisconnectClient(clientId);
-        // Destroy(NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject);
     }
 
     public void QuitGame()

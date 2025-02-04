@@ -54,7 +54,7 @@ public class HogController : NetworkBehaviour
 
     private void Update()
     {
-        rpm.SetGlobalValue((2 * Mathf.PI * frontLeftWheelCollider.radius * frontLeftWheelCollider.rpm * 60) / 1000);
+        rpm.SetGlobalValue(frontLeftWheelCollider.rpm);
         // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
 

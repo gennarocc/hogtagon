@@ -3899,9 +3899,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 1508066503}
-        m_TargetAssemblyTypeName: ConnectToGame, Assembly-CSharp
-        m_MethodName: ButtonClickAudio
+      - m_Target: {fileID: 1935665467}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: ButtonConfirmAudio
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6744,14 +6744,14 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: cf387bb394c5bd54f97eb9dfb3756d92, type: 2}
+  m_sharedMaterial: {fileID: 9161978363173052032, guid: cf387bb394c5bd54f97eb9dfb3756d92, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4278190335
   m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -7019,10 +7019,6 @@ MonoBehaviour:
   hostLobby: {fileID: 912466048}
   joinLobby: {fileID: 1958642195}
   connectionPending: {fileID: 426899498}
-  uiConfirm:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 48af205587f718240b144393ab35a700, type: 2}
 --- !u!1 &1510916405
 GameObject:
   m_ObjectHideFlags: 0
@@ -9260,9 +9256,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 1508066503}
-        m_TargetAssemblyTypeName: ConnectToGame, Assembly-CSharp
-        m_MethodName: ButtonClickAudio
+      - m_Target: {fileID: 1935665467}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: ButtonConfirmAudio
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
