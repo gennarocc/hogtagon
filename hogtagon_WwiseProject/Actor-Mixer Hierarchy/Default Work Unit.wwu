@@ -310,7 +310,7 @@
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="LayerCrossFadeControlInput">
-									<ObjectRef Name="RPM" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
+									<ObjectRef Name="rpm" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
 								</Reference>
 							</ReferenceList>
 							<BlendTrackAssocList>
@@ -385,7 +385,7 @@
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="LayerCrossFadeControlInput">
-									<ObjectRef Name="RPM" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
+									<ObjectRef Name="rpm" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
 								</Reference>
 							</ReferenceList>
 							<BlendTrackAssocList>

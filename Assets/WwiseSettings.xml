@@ -10,7 +10,7 @@
   <LoadSoundEngineInEditMode>true</LoadSoundEngineInEditMode>
   <ShowMissingRigidBodyWarning>true</ShowMissingRigidBodyWarning>
   <ShowSpatialAudioWarningMsg>true</ShowSpatialAudioWarningMsg>
-  <WwiseInstallationPathMac>/Users/danielramirez/Library/Audio/Wwise2024.1.1.8691/Wwise.app</WwiseInstallationPathMac>
+  <WwiseInstallationPathMac>/Users/danielramirez/Applications/Wwise.app</WwiseInstallationPathMac>
   <WwiseInstallationPathWindows />
   <WwiseProjectPath>../../hogtagon/hogtagon_WwiseProject/hogtagon_WwiseProject.wproj</WwiseProjectPath>
   <UseWaapi>true</UseWaapi>

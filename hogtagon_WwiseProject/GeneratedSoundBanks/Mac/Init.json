@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
     "Language": "SFX",
-    "Hash": "{63404AD4-7506-C85A-9813-6F669A3A1C7E}",
+    "Hash": "{72CD9DF8-01C3-4EFC-05A1-D5742452C86D}",
     "ObjectPath": "Init",
     "ShortName": "Init",
     "Path": "Init.bnk",
@@ -69,8 +69,8 @@
     "GameParameters": [
      {
       "Id": "796049864",
-      "Name": "RPM",
-      "ObjectPath": "\\Game Parameters\\Default Work Unit\\RPM",
+      "Name": "rpm",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\rpm",
       "GUID": "{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}"
      },
      {
@@ -117,8 +117,8 @@
      },
      {
       "Id": "3519441192",
-      "Name": "Velocity",
-      "ObjectPath": "\\Game Parameters\\Default Work Unit\\Velocity",
+      "Name": "velocity",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\velocity",
       "GUID": "{C5C85801-0015-4048-BCE3-C517C066CEA9}"
      },
      {
@@ -647,6 +647,6 @@
     ]
    }
   ],
-  "FileHash": "{51A749EB-FCA7-25AD-1EAC-01AE83095639}"
+  "FileHash": "{FE4A4387-56F1-B60D-CDBD-D801BCA41F33}"
  }
 }

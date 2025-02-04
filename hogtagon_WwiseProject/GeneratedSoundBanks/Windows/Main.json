@@ -478,8 +478,8 @@
     "GameParameters": [
      {
       "Id": "796049864",
-      "Name": "RPM",
-      "ObjectPath": "\\Game Parameters\\Default Work Unit\\RPM",
+      "Name": "rpm",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\rpm",
       "GUID": "{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}"
      }
     ],
@@ -513,6 +513,6 @@
     ]
    }
   ],
-  "FileHash": "{16E89473-270B-39BC-2C28-9318160310EC}"
+  "FileHash": "{5CBF0B20-050E-F9AB-B1D5-0205C32E54E1}"
  }
 }
