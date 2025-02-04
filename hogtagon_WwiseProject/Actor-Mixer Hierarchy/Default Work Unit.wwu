@@ -37,9 +37,16 @@
 										<MediaID ID="27220251"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="6k-rpm-loop_01" ID="{CC5AE48B-F1EC-4470-A6F2-BFD042417AB4}">
+									<Language>SFX</Language>
+									<AudioFile>6k-rpm-loop.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="178975780"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="6k-rpm-loop" ID="{DBD34488-968E-4932-88C7-5E2D1B6BACF8}" Platform="Linked"/>
+								<ActiveSource Name="6k-rpm-loop_01" ID="{CC5AE48B-F1EC-4470-A6F2-BFD042417AB4}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="5k-rpm-loop" ID="{BEAF2C32-C0D2-4BBA-BF3A-38B18A25AB85}" ShortID="891023393">
@@ -62,9 +69,16 @@
 										<MediaID ID="487559685"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="5k-rpm-loop_01" ID="{787DC09A-2B79-47EF-97AD-F00C2207567B}">
+									<Language>SFX</Language>
+									<AudioFile>5k-rpm-loop.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="386328575"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="5k-rpm-loop" ID="{CE6FE787-F9DC-4A39-B85C-ED1A965B646D}" Platform="Linked"/>
+								<ActiveSource Name="5k-rpm-loop_01" ID="{787DC09A-2B79-47EF-97AD-F00C2207567B}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="4k-rpm-loop" ID="{8B84B576-6A98-45E3-97A5-EF94126A72DE}" ShortID="865612351">
@@ -87,9 +101,16 @@
 										<MediaID ID="1062246044"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="4k-rpm-loop_01" ID="{7D8B4492-4C27-415F-AEDA-81FFD2BA6969}">
+									<Language>SFX</Language>
+									<AudioFile>4k-rpm-loop.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="811391391"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="4k-rpm-loop" ID="{09F0BA34-3AE1-4DFC-8B4B-4BDF0A0A9998}" Platform="Linked"/>
+								<ActiveSource Name="4k-rpm-loop_01" ID="{7D8B4492-4C27-415F-AEDA-81FFD2BA6969}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="3k-rpm-loop" ID="{3CFA26C8-55E7-497D-AD05-C3F162F167F3}" ShortID="188010965">
@@ -112,9 +133,16 @@
 										<MediaID ID="808429037"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="3k-rpm-loop_01" ID="{0F444D27-5144-4EBE-A98F-D019842862F6}">
+									<Language>SFX</Language>
+									<AudioFile>3k-rpm-loop.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="758309002"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="3k-rpm-loop" ID="{5333A76C-AF07-4F1E-A6F5-0DE5900E400F}" Platform="Linked"/>
+								<ActiveSource Name="3k-rpm-loop_01" ID="{0F444D27-5144-4EBE-A98F-D019842862F6}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="2k-rpm-loop" ID="{9ECD291E-CC54-47DD-A483-19F5D26A64CE}" ShortID="260304537">
@@ -137,9 +165,16 @@
 										<MediaID ID="1057082725"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="2k-rpm-loop_01" ID="{0803735F-9B16-4A22-9043-16A4294CFE3F}">
+									<Language>SFX</Language>
+									<AudioFile>2k-rpm-loop.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="796949936"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="2k-rpm-loop" ID="{60A1A897-FE5A-4765-9998-857781D5D191}" Platform="Linked"/>
+								<ActiveSource Name="2k-rpm-loop_01" ID="{0803735F-9B16-4A22-9043-16A4294CFE3F}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="1k-rpm-loop" ID="{7E67A8EA-236B-4C76-8861-25E5EF8735EB}" ShortID="688273669">
@@ -162,9 +197,16 @@
 										<MediaID ID="142434758"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="1k-rpm-loop_01" ID="{E96A0CD5-E19D-4470-9368-40AD9A2BF218}">
+									<Language>SFX</Language>
+									<AudioFile>1k-rpm-loop.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="330055359"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="1k-rpm-loop" ID="{E8D1910F-E242-4A47-9DC2-67BD33A73DC1}" Platform="Linked"/>
+								<ActiveSource Name="1k-rpm-loop_01" ID="{E96A0CD5-E19D-4470-9368-40AD9A2BF218}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-1" ID="{BA6FEB59-71CA-4E50-9CBF-2A6490EE285F}" ShortID="237781142">
@@ -184,9 +226,16 @@
 										<MediaID ID="59074654"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="gear-shift-1_01" ID="{14C62247-827E-4E81-BC6E-E522DEDB0B26}">
+									<Language>SFX</Language>
+									<AudioFile>gear-shift-1.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="307100629"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-1" ID="{B013F7C8-1982-44AA-815E-F7D107C4D4AA}" Platform="Linked"/>
+								<ActiveSource Name="gear-shift-1_01" ID="{14C62247-827E-4E81-BC6E-E522DEDB0B26}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-2" ID="{AAF057FF-BDCC-4E0C-8D2B-6BE88BAA498B}" ShortID="435362373">
@@ -206,9 +255,16 @@
 										<MediaID ID="1016150173"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="gear-shift-2_01" ID="{0BD6B5EA-C39D-44E3-A248-56B8EC2E4A7D}">
+									<Language>SFX</Language>
+									<AudioFile>gear-shift-2.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="595717928"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-2" ID="{4814DCF3-A620-453F-95B7-4D64B9F0EEE6}" Platform="Linked"/>
+								<ActiveSource Name="gear-shift-2_01" ID="{0BD6B5EA-C39D-44E3-A248-56B8EC2E4A7D}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-3" ID="{31335CA0-BA45-4864-A882-B6165C6E7E5C}" ShortID="333338748">
@@ -228,9 +284,16 @@
 										<MediaID ID="58965652"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="gear-shift-3_01" ID="{CFB432E0-4651-48AF-8D1E-7300A34EA14E}">
+									<Language>SFX</Language>
+									<AudioFile>gear-shift-3.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="842752452"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-3" ID="{B067CBB5-877C-4BD0-BF29-389510D3DC03}" Platform="Linked"/>
+								<ActiveSource Name="gear-shift-3_01" ID="{CFB432E0-4651-48AF-8D1E-7300A34EA14E}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-4" ID="{6A357843-9EC9-4EB4-974F-1C8ACD316389}" ShortID="88516859">
@@ -250,9 +313,16 @@
 										<MediaID ID="762622656"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="gear-shift-4_01" ID="{0D7E9891-13BF-4EA9-8ED2-D0A66B4184D1}">
+									<Language>SFX</Language>
+									<AudioFile>gear-shift-4.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="526038726"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-4" ID="{845B105D-6CF5-4B56-BD7F-9873832BB945}" Platform="Linked"/>
+								<ActiveSource Name="gear-shift-4_01" ID="{0D7E9891-13BF-4EA9-8ED2-D0A66B4184D1}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-5" ID="{5B013149-F91B-4E2B-8E03-AD9EFF66C844}" ShortID="1028955023">
@@ -272,9 +342,16 @@
 										<MediaID ID="24408083"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="gear-shift-5_01" ID="{E174ABE1-287D-4BCA-A121-2A22868266B7}">
+									<Language>SFX</Language>
+									<AudioFile>gear-shift-5.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="344684111"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-5" ID="{07EEB93D-8ED7-461E-8DBB-B1018583E7A2}" Platform="Linked"/>
+								<ActiveSource Name="gear-shift-5_01" ID="{E174ABE1-287D-4BCA-A121-2A22868266B7}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="idle-rpm-loop" ID="{9CDAD714-598C-4BCC-BB36-CC306FFEA96B}" ShortID="96525429">
@@ -297,9 +374,16 @@
 										<MediaID ID="632899163"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="idle-rpm-loop_01" ID="{ADE87524-599A-4FE0-884D-582F55359BDD}">
+									<Language>SFX</Language>
+									<AudioFile>idle-rpm-loop.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="71018915"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="idle-rpm-loop" ID="{8EB7E7C0-9E29-49F4-B8C2-43CBA51DD9B1}" Platform="Linked"/>
+								<ActiveSource Name="idle-rpm-loop_01" ID="{ADE87524-599A-4FE0-884D-582F55359BDD}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 					</ChildrenList>
@@ -468,9 +552,16 @@
 										<MediaID ID="6024752"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="car-explosion-1_01" ID="{47BCE956-BFA0-4BAB-83BB-F22D39550A47}">
+									<Language>SFX</Language>
+									<AudioFile>car-explosion-1.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="179866252"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-1" ID="{08A9F8F8-B8C5-482C-B999-981034F3C934}" Platform="Linked"/>
+								<ActiveSource Name="car-explosion-1_01" ID="{47BCE956-BFA0-4BAB-83BB-F22D39550A47}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="car-explosion-3" ID="{4DE90B50-AD05-44CA-A80C-E5EA44DE5F48}" ShortID="629348079">
@@ -490,9 +581,30 @@
 										<MediaID ID="1069524030"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="car-explosion-3_01" ID="{332A6646-CC13-42E3-97C6-EF1569DDC2B8}">
+									<Language>SFX</Language>
+									<AudioFile>car-explosion-3.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="629780468"/>
+									</MediaIDList>
+								</AudioFileSource>
+								<AudioFileSource Name="car-explosion-4" ID="{D4191559-6375-4D96-9BC2-4D570CC54EF2}">
+									<Language>SFX</Language>
+									<AudioFile>car-explosion-4.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="536878760"/>
+									</MediaIDList>
+								</AudioFileSource>
+								<AudioFileSource Name="car-explosion-5" ID="{90E62D85-5F1F-48CB-8173-1BA96285159A}">
+									<Language>SFX</Language>
+									<AudioFile>car-explosion-5.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="464858496"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-3" ID="{3C38E22F-EAAC-4C02-8D70-A4260DD30998}" Platform="Linked"/>
+								<ActiveSource Name="car-explosion-5" ID="{90E62D85-5F1F-48CB-8173-1BA96285159A}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="car-explosion-2" ID="{9AD2ADAD-7912-49A3-96E9-D07F7A4A4D0C}" ShortID="951847489">
@@ -512,9 +624,16 @@
 										<MediaID ID="512876442"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="car-explosion-2_01" ID="{DCD839E8-6D24-426C-8317-ABE62148B97E}">
+									<Language>SFX</Language>
+									<AudioFile>car-explosion-2.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="862707693"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-2" ID="{29504B08-6A8E-4F0D-A6CE-F3DD487F6BCE}" Platform="Linked"/>
+								<ActiveSource Name="car-explosion-2_01" ID="{DCD839E8-6D24-426C-8317-ABE62148B97E}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="car-explosion-4" ID="{25F8D5B9-F9C1-45CB-B9DD-45DDF8D8093A}" ShortID="978200803">
@@ -534,9 +653,16 @@
 										<MediaID ID="348634209"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="car-explosion-4_01" ID="{DF40E606-6924-461E-9BBF-906D1B0E5D90}">
+									<Language>SFX</Language>
+									<AudioFile>car-explosion-4.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="536878760"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-4" ID="{D34E9240-DD74-4DA3-AD7E-B5A4FFB7FA84}" Platform="Linked"/>
+								<ActiveSource Name="car-explosion-4_01" ID="{DF40E606-6924-461E-9BBF-906D1B0E5D90}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="car-explosion-5" ID="{38464B84-1A26-4E96-8DCB-19086F57C90E}" ShortID="310848679">
@@ -556,9 +682,16 @@
 										<MediaID ID="622663132"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="car-explosion-5_01" ID="{ABF24C79-7FE3-46B3-A88E-A47B7A21ECDA}">
+									<Language>SFX</Language>
+									<AudioFile>car-explosion-5.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="464858496"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-5" ID="{CEF1B7B1-89CD-4C70-90C6-FEBC116EC8F0}" Platform="Linked"/>
+								<ActiveSource Name="car-explosion-5_01" ID="{ABF24C79-7FE3-46B3-A88E-A47B7A21ECDA}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 					</ChildrenList>
@@ -585,9 +718,16 @@
 										<MediaID ID="12516876"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="ui-navigation-click" ID="{66973A6F-BB45-4768-84A4-F13328CC8157}">
+									<Language>SFX</Language>
+									<AudioFile>ui-navigation-click.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="1060462459"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="ui-navigation-click_bip" ID="{32A6CA5B-445C-454A-87A0-A25CAC1BFE47}" Platform="Linked"/>
+								<ActiveSource Name="ui-navigation-click" ID="{66973A6F-BB45-4768-84A4-F13328CC8157}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="ui-confirmation" ID="{9C694329-3F27-4946-B6A0-C6C99A7F7A00}" ShortID="519042925">
@@ -611,9 +751,16 @@
 										<MediaID ID="509400112"/>
 									</MediaIDList>
 								</AudioFileSource>
+								<AudioFileSource Name="ui-confirmation_01" ID="{D6D54C94-5868-4BD4-904C-4AB5D954C09E}">
+									<Language>SFX</Language>
+									<AudioFile>ui-confirmation.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="157986807"/>
+									</MediaIDList>
+								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="ui-confirmation" ID="{D0B233EB-430E-4652-A919-1B65BC56D013}" Platform="Linked"/>
+								<ActiveSource Name="ui-confirmation_01" ID="{D6D54C94-5868-4BD4-904C-4AB5D954C09E}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="ui-cancel" ID="{31960501-88EF-40BB-923A-E47804E4B070}" ShortID="885483893">

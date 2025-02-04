@@ -26,6 +26,11 @@ public class MenuManager : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] public Camera startCamera;
+
+    [Header("Reference")]
+    [SerializeField] private AK.Wwise.Event uiClick;
+    [SerializeField] private AK.Wwise.Event uiConfirm;
+    [SerializeField] private AK.Wwise.Event uiCancel;
     private int countdownTime;
 
     private void Update()
@@ -51,7 +56,6 @@ public class MenuManager : NetworkBehaviour
         // Set join code.
         if (ConnectionManager.instance.joinCode != null) joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
     }
-
 
     public void Resume()
     {
@@ -176,7 +180,6 @@ public class MenuManager : NetworkBehaviour
         // Destroy(NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject);
     }
 
-
     public void QuitGame()
     {
         Debug.Log("Quitting Game");
@@ -186,5 +189,21 @@ public class MenuManager : NetworkBehaviour
     public void DisplayConnectionError()
     {
         connectionRefusedReasonText.text = NetworkManager.Singleton.DisconnectReason;
+        uiCancel.Post(gameObject);
+    }
+
+    public void ButtonClickAudio()
+    {
+        uiClick.Post(gameObject);
+    }
+
+    public void ButtonConfirmAudio()
+    {
+        uiConfirm.Post(gameObject);
+    }
+
+    public void ButtonCancelAudio()
+    {
+        uiCancel.Post(gameObject);
     }
 }

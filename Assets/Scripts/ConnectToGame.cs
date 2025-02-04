@@ -18,6 +18,9 @@ public class ConnectToGame : MonoBehaviour
     [SerializeField] private Button joinLobby;
     [SerializeField] private GameObject connectionPending;
 
+    [Header("Wwise")]
+    [SerializeField] private AK.Wwise.Event uiConfirm;
+
     private async void Start()
     {
         startCamera.cullingMask = 31;
@@ -98,4 +101,8 @@ public class ConnectToGame : MonoBehaviour
         connectionPending.SetActive(true);
     }
 
+    public void ButtonClickAudio()
+    {
+        uiConfirm.Post(gameObject);
+    }
 }
