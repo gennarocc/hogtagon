@@ -8,6 +8,7 @@ public class ConnectionManager : NetworkBehaviour
     [Header("Connection Status")]
     [SerializeField] public string joinCode;
     [SerializeField] public bool isConnected = false;
+
     [Header("References")]
     [SerializeField] private MenuManager menuManager;
     private Dictionary<ulong, PlayerData> clientDataDictionary = new Dictionary<ulong, PlayerData>();
@@ -164,12 +165,15 @@ public class ConnectionManager : NetworkBehaviour
         if (clientDataDictionary.ContainsKey(clientId))
         {
             clientDataDictionary[clientId] = player;
+            
+            Debug.Log(message: "Updating " + player.username + ",  State:  " + player.state);
         }
         else
         {
             clientDataDictionary.Add(clientId, player);
             Debug.Log(message: "Player conneted - " + player.username);
         }
+
     }
 
     public string GetClientUsername(ulong clientId)
@@ -182,7 +186,6 @@ public class ConnectionManager : NetworkBehaviour
     {
         return clientDataDictionary.Count;
     }
-
 
     public string PrintPlayers()
     {

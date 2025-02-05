@@ -23,11 +23,19 @@ public class ConnectToGame : MonoBehaviour
         startCamera.cullingMask = 31;
         joinLobby.interactable = false;
         // Start Relay Service.
+        InitializationOptions hostOptions = new InitializationOptions().SetProfile("host");
+        InitializationOptions clientOptions = new InitializationOptions().SetProfile("client");
         await UnityServices.InitializeAsync();
         AuthenticationService.Instance.SignedIn += () =>
         {
             Debug.Log(message: "Signed in " + AuthenticationService.Instance.PlayerId);
         };
+        if (AuthenticationService.Instance.IsAuthorized)
+        {
+            Debug.Log("Authorized");
+            AuthenticationService.Instance.SignOut();
+            await UnityServices.InitializeAsync(clientOptions);
+        }
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
     }
 
@@ -36,14 +44,17 @@ public class ConnectToGame : MonoBehaviour
         if (joinCodeInput.text.Length == 6)
         {
             joinLobby.interactable = true;
-        } else {
+        }
+        else
+        {
             joinLobby.interactable = false;
         }
-        
+
         if (usernameInput.text.Length <= 10)
         {
             hostLobby.interactable = true;
-        } else 
+        }
+        else
         {
             // joinLobby.interactable = false;
             // hostLobby.interactable = false;
@@ -90,7 +101,7 @@ public class ConnectToGame : MonoBehaviour
         JoinRelay(joinCodeInput.text);
         connectionPending.SetActive(true);
     }
-    
+
     public void StartHost()
     {
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);

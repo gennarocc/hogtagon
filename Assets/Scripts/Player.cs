@@ -7,10 +7,10 @@ public class Player : NetworkBehaviour
 {
     [Header("PlayerInfo")]
     [SerializeField] public ulong clientId;
-    [SerializeField] public PlayerData playerData;
 
     [Header("References")]
     [SerializeField] public TextMeshProUGUI floatingUsername;
+    [SerializeField] private GameObject carBody;
     [SerializeField] private MenuManager menuManager;
 
     private Canvas worldspaceCanvas;
@@ -18,6 +18,7 @@ public class Player : NetworkBehaviour
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
+    [SerializeField] public Transform cameraTarget;
 
     private void Awake()
     {
@@ -36,11 +37,11 @@ public class Player : NetworkBehaviour
             menuManager.startCamera.gameObject.SetActive(false);
             menuManager.connectionPending.SetActive(false);
             audioListener.enabled = true;
-            mainCamera.Priority = 2;
+            mainCamera.Priority = 1;
         }
         else
         {
-            mainCamera.Priority = 1;
+            mainCamera.Priority = 0;
         }
         clientId = gameObject.GetComponent<NetworkObject>().OwnerClientId;
     }
@@ -49,15 +50,20 @@ public class Player : NetworkBehaviour
     {
         floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
-
-        if (IsOwner && playerData.state == PlayerState.Dead) 
+        
+        ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
+        if (playerData.state != PlayerState.Alive)
         {
-            mainCamera.Priority = 0;
+            // Player player = ConnectionManager.instance.GetPlayer(ConnectionManager.instance.GetAliveClients()[0]);
+            // mainCamera.Follow = player.transform;
+            // mainCamera.LookAt = player.cameraTarget;
         }
     }
 
     public void Respawn()
     {
+        // Get updated playerData from connectionManager.
+        ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
         if (!IsServer) return;
         Debug.Log("Respawning Player");
         transform.position = playerData.spawnPoint;
@@ -65,6 +71,7 @@ public class Player : NetworkBehaviour
         gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
         
+        // Set player state to alive and update clients
         if (playerData.state != PlayerState.Alive)
         {
             playerData.state = PlayerState.Alive;
@@ -74,8 +81,6 @@ public class Player : NetworkBehaviour
 
     public void SetPlayerData(PlayerData playerData)
     {
-        this.playerData = playerData;
-
         // Floating Name Text
         worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
         floatingUsername.text = playerData.username;
@@ -85,10 +90,5 @@ public class Player : NetworkBehaviour
         var playerIndicator = transform.Find("PlayerIndicator").gameObject;
         playerIndicator.SetActive(clientId != gameObject.GetComponent<NetworkObject>().OwnerClientId);
         playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
-    }
-
-    public void Destory()
-    {
-        if (IsServer) SpawnPointManager.instance.UnassignSpawnPoint(clientId);
     }
 }

@@ -6231,9 +6231,11 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   clientId: 0
   floatingUsername: {fileID: 8114381944568008645}
+  carBody: {fileID: 6146581023260744245}
   menuManager: {fileID: 0}
   mainCamera: {fileID: 1233816499970886941}
   audioListener: {fileID: 8617747637764013386}
+  cameraTarget: {fileID: 3661188709929093751}
 --- !u!114 &3932241477310159655
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12587,7 +12589,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 64c9a5ba660136449934ef77c2aea54d, type: 2}
     - target: {fileID: 919132149155446097, guid: 488e438abaa6161448617c8df5e11ce6, type: 3}
       propertyPath: m_Name
-      value: Body
+      value: CarBody
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 488e438abaa6161448617c8df5e11ce6, type: 3}
       propertyPath: m_IsActive
@@ -12672,6 +12674,11 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 2959467708922500008, guid: 488e438abaa6161448617c8df5e11ce6, type: 3}
+--- !u!1 &6146581023260744245 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 488e438abaa6161448617c8df5e11ce6, type: 3}
+  m_PrefabInstance: {fileID: 6452641278140098404}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6775342878763597967 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 488e438abaa6161448617c8df5e11ce6, type: 3}

@@ -51,7 +51,7 @@ public class MenuManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) scoreboardUI.SetActive(true);
         if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
         // Start Game Button (Host only)
-        if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton.interactable = true;
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton.interactable = true;
         else startGameButton.interactable = false;
         // Set join code.
         if (ConnectionManager.instance.joinCode != null) joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
@@ -152,8 +152,14 @@ public class MenuManager : NetworkBehaviour
 
     public void Disconnect()
     {
-        // if (!IsOwner) return;
-        DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
+        if (IsServer)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+        else
+        {
+            DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
+        }
         MainMenu();
         Cursor.visible = Cursor.visible;
         Cursor.lockState = CursorLockMode.None;
