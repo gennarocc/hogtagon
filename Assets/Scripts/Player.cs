@@ -2,23 +2,27 @@ using Unity.Netcode;
 using UnityEngine;
 using Cinemachine;
 using TMPro;
+using System.Collections.Generic;
 
 public class Player : NetworkBehaviour
 {
     [Header("PlayerInfo")]
     [SerializeField] public ulong clientId;
+    [SerializeField] public bool isSpectating;
 
     [Header("References")]
     [SerializeField] public TextMeshProUGUI floatingUsername;
     [SerializeField] private GameObject carBody;
-    [SerializeField] private MenuManager menuManager;
-
-    private Canvas worldspaceCanvas;
 
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
     [SerializeField] public Transform cameraTarget;
+
+    private Canvas worldspaceCanvas;
+    private MenuManager menuManager;
+    private int spectatingPlayerIndex = 0;
+
 
     private void Awake()
     {
@@ -50,14 +54,24 @@ public class Player : NetworkBehaviour
     {
         floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
-        
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
         if (playerData.state != PlayerState.Alive)
         {
-            // Player player = ConnectionManager.instance.GetPlayer(ConnectionManager.instance.GetAliveClients()[0]);
-            // mainCamera.Follow = player.transform;
-            // mainCamera.LookAt = player.cameraTarget;
+            List<ulong> aliveClients = ConnectionManager.instance.GetAliveClients();
+            if (spectatingPlayerIndex > aliveClients.Count) spectatingPlayerIndex = 0;
+            Player spectatePlayer = ConnectionManager.instance.GetPlayer(ConnectionManager.instance.GetAliveClients()[spectatingPlayerIndex]);
+            mainCamera.Follow = spectatePlayer.transform;
+            mainCamera.LookAt = spectatePlayer.cameraTarget;
+            if (Input.GetKey(KeyCode.Mouse0))
+            {
+                spectatingPlayerIndex++;
+            }
+        } else 
+        {
+            mainCamera.Follow = transform;
+            mainCamera.LookAt = cameraTarget;
         }
+
     }
 
     public void Respawn()
@@ -70,7 +84,7 @@ public class Player : NetworkBehaviour
         transform.LookAt(SpawnPointManager.instance.transform);
         gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-        
+
         // Set player state to alive and update clients
         if (playerData.state != PlayerState.Alive)
         {
