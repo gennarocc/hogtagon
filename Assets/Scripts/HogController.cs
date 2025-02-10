@@ -15,6 +15,7 @@ public class HogController : NetworkBehaviour
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .8f;
     [SerializeField] public float additionalCollisionForce = 1000f; // Customizable variable for additional force
     [SerializeField] private float decelerationMultiplier = 0.95f;
+    [SerializeField] private float frontLeftRpm;
 
     [Header("References")]
     [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
@@ -54,6 +55,7 @@ public class HogController : NetworkBehaviour
 
     private void Update()
     {
+        frontLeftRpm = frontLeftWheelCollider.rpm;
         rpm.SetGlobalValue(frontLeftWheelCollider.rpm);
         // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
