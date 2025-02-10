@@ -12,7 +12,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
-    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .8f;
+    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
     [SerializeField] public float additionalCollisionForce = 1000f; // Customizable variable for additional force
     [SerializeField] private float decelerationMultiplier = 0.95f;
 
