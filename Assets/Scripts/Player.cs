@@ -55,14 +55,15 @@ public class Player : NetworkBehaviour
         floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
+        // Set camera to spectator if dead
         if (playerData.state != PlayerState.Alive)
         {
             List<ulong> aliveClients = ConnectionManager.instance.GetAliveClients();
-            if (spectatingPlayerIndex > aliveClients.Count) spectatingPlayerIndex = 0;
+            if (spectatingPlayerIndex >= aliveClients.Count) spectatingPlayerIndex = 0;
             Player spectatePlayer = ConnectionManager.instance.GetPlayer(ConnectionManager.instance.GetAliveClients()[spectatingPlayerIndex]);
             mainCamera.Follow = spectatePlayer.transform;
             mainCamera.LookAt = spectatePlayer.cameraTarget;
-            if (Input.GetKey(KeyCode.Mouse0))
+            if (Input.GetKeyDown(KeyCode.Mouse0))
             {
                 spectatingPlayerIndex++;
             }
@@ -71,7 +72,6 @@ public class Player : NetworkBehaviour
             mainCamera.Follow = transform;
             mainCamera.LookAt = cameraTarget;
         }
-
     }
 
     public void Respawn()
