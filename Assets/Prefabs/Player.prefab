@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4787610901247262577}
   m_Layer: 0
   m_Name: Body.008
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -399,7 +399,7 @@ GameObject:
   - component: {fileID: 2534823719322095306}
   m_Layer: 0
   m_Name: Body.003
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -918,7 +918,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1485275310011129279}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.14695512, y: 0.093782425, z: -0.09204546, w: 0.9803758}
+  m_LocalRotation: {x: 0.14695407, y: 0.09378122, z: -0.092045195, w: 0.9803761}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1093,7 +1093,7 @@ GameObject:
   - component: {fileID: 8456282627546290521}
   m_Layer: 0
   m_Name: Suspension Front
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1179,7 +1179,7 @@ GameObject:
   - component: {fileID: 3798590103263568460}
   m_Layer: 0
   m_Name: Seats
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1265,7 +1265,7 @@ GameObject:
   - component: {fileID: 8650317876769157658}
   m_Layer: 0
   m_Name: Body.004
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1437,7 +1437,7 @@ GameObject:
   - component: {fileID: 2913171334602444280}
   m_Layer: 0
   m_Name: Steering Wheel
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1824,7 +1824,7 @@ GameObject:
   - component: {fileID: 2372208583660715904}
   m_Layer: 0
   m_Name: Body.005
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6949,7 +6949,7 @@ GameObject:
   - component: {fileID: 2513074227899650122}
   m_Layer: 0
   m_Name: Totally not a Warthog
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7253,6 +7253,7 @@ MonoBehaviour:
   steeringSpeed: 0.8
   additionalCollisionForce: 1000
   decelerationMultiplier: 3
+  frontLeftRpm: 0
   rb: {fileID: 851041150604046976}
   freeLookCamera: {fileID: 1233816499970886941}
   frontLeftWheelCollider: {fileID: 7947942277690021792}
@@ -7295,7 +7296,7 @@ GameObject:
   - component: {fileID: 4720890600952979840}
   m_Layer: 0
   m_Name: Hog
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7341,7 +7342,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5629968131305222426}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.1291461, y: 0.09544004, z: -0.09032937, w: 0.98288006}
+  m_LocalRotation: {x: 0.12914445, y: 0.09543563, z: -0.09032872, w: 0.9828808}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -12624,7 +12625,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7371482914322440477}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.1647623, y: 0.092091456, z: -0.0937358, w: 0.97754085}
+  m_LocalRotation: {x: 0.16476232, y: 0.09209145, z: -0.093735814, w: 0.97754085}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -12959,7 +12960,7 @@ GameObject:
   - component: {fileID: 4431683817197093679}
   m_Layer: 0
   m_Name: Body.002
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
