@@ -42,14 +42,33 @@ public class Player : NetworkBehaviour
             menuManager.connectionPending.SetActive(false);
             audioListener.enabled = true;
             mainCamera.Priority = 1;
-            cameraTarget.SetParent(transform);
-            cameraTarget.localPosition = Vector3.zero; // Or offset if desired
-            cameraTarget.localRotation = Quaternion.identity;
 
+            // Create an empty GameObject at the root of the scene
+            GameObject cameraParent = new GameObject("CameraRotationOverride");
+
+            // Store our world position and rotation
+            Vector3 cameraPos = mainCamera.transform.position;
+            Quaternion cameraRot = mainCamera.transform.rotation;
+
+            // Change our parent but keep world position/rotation
+            mainCamera.transform.SetParent(cameraParent.transform, true);
+
+            // Ensure we maintain our exact position/rotation
+            // mainCamera.transform.position = cameraPos;
+            // mainCamera.transform.rotation = cameraRot;
+
+            Vector3 targetPos = cameraTarget.position;
+            Quaternion targetRot= cameraTarget.rotation;
+            cameraTarget.SetParent(cameraParent.transform, true);
+            
+            cameraTarget.position = targetPos;
+            cameraTarget.rotation = Quaternion.identity;
+
+            // Set up FreeLook camera targets
             if (mainCamera != null)
             {
                 mainCamera.Follow = cameraTarget;
-                mainCamera.LookAt = cameraTarget;
+                mainCamera.LookAt = transform;
             }
         }
         else
@@ -63,6 +82,7 @@ public class Player : NetworkBehaviour
     {
         floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
+        cameraTarget.position = gameObject.transform.position;
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
         // Set camera to spectator if dead
         if (playerData.state != PlayerState.Alive)
@@ -79,8 +99,8 @@ public class Player : NetworkBehaviour
         }
         else
         {
-            mainCamera.Follow = transform;
-            mainCamera.LookAt = cameraTarget;
+            mainCamera.Follow = cameraTarget;
+            mainCamera.LookAt = transform;
         }
     }
 
