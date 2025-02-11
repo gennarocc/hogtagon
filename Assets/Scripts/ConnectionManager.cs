@@ -64,13 +64,14 @@ public class ConnectionManager : NetworkBehaviour
             username = decodedUsername,
             score = 0,
             color = Random.ColorHSV(),
-            state = PlayerState.Alive,
+            state = GameManager.instance.state == GameState.Playing ? PlayerState.Dead : PlayerState.Alive,
             spawnPoint = sp,
             isLobbyLeader = clientDataDictionary.Count == 0
         };
+
         pendingPlayerData.Add(clientId, player);
         response.Approved = true;
-        response.Position = sp;
+        response.Position = GameManager.instance.state == GameState.Playing ? new Vector3(0,0,0) : sp;
         response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - sp);
         response.CreatePlayerObject = true;
 
@@ -165,7 +166,7 @@ public class ConnectionManager : NetworkBehaviour
         if (clientDataDictionary.ContainsKey(clientId))
         {
             clientDataDictionary[clientId] = player;
-            
+
             Debug.Log(message: "Updating " + player.username + ",  State:  " + player.state);
         }
         else

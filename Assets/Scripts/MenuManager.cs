@@ -1,9 +1,7 @@
-using System;
 using System.Collections;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MenuManager : NetworkBehaviour
@@ -18,7 +16,6 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public GameObject tempUI;
     [SerializeField] public Button startGameButton;
     [SerializeField] public TextMeshProUGUI joinCodeText;
-    [SerializeField] public Slider cameraSensitivity;
     [SerializeField] public TextMeshProUGUI countdownText;
     [SerializeField] public TextMeshProUGUI winnerText;
     [SerializeField] public TextMeshProUGUI connectionRefusedReasonText;
@@ -27,7 +24,7 @@ public class MenuManager : NetworkBehaviour
     [Header("References")]
     [SerializeField] public Camera startCamera;
 
-    [Header("Reference")]
+    [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event uiClick;
     [SerializeField] private AK.Wwise.Event uiConfirm;
     [SerializeField] private AK.Wwise.Event uiCancel;
@@ -92,15 +89,6 @@ public class MenuManager : NetworkBehaviour
         Debug.Log(message: "Join Code Copied");
     }
 
-    public void SetCameraSensitivty()
-    {
-        var player = ConnectionManager.instance.GetPlayer(NetworkManager.Singleton.LocalClientId);
-        if (player != null && player.mainCamera != null)
-        {
-            player.mainCamera.m_XAxis.m_MaxSpeed = cameraSensitivity.value * 300f;
-            player.mainCamera.m_YAxis.m_MaxSpeed = cameraSensitivity.value * 2f;
-        }
-    }
 
     [ClientRpc]
     public void StartCountdownClientRpc()
