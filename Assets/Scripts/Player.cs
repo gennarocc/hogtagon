@@ -42,6 +42,15 @@ public class Player : NetworkBehaviour
             menuManager.connectionPending.SetActive(false);
             audioListener.enabled = true;
             mainCamera.Priority = 1;
+            cameraTarget.SetParent(transform);
+            cameraTarget.localPosition = Vector3.zero; // Or offset if desired
+            cameraTarget.localRotation = Quaternion.identity;
+
+            if (mainCamera != null)
+            {
+                mainCamera.Follow = cameraTarget;
+                mainCamera.LookAt = cameraTarget;
+            }
         }
         else
         {
@@ -67,7 +76,8 @@ public class Player : NetworkBehaviour
             {
                 spectatingPlayerIndex++;
             }
-        } else 
+        }
+        else
         {
             mainCamera.Follow = transform;
             mainCamera.LookAt = cameraTarget;
