@@ -72,20 +72,19 @@ public class HogController : NetworkBehaviour
 
     private void ClientMove()
     {
-        Vector3 cameraVector = transform.position - freeLookCamera.State.FinalPosition;
+        Vector3 cameraVector = rb.position - freeLookCamera.transform.position;
         cameraVector.y = 0; // We only care about the horizontal axis.
-        Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
-        cameraAngle = Vector3.Angle(carDirection, cameraVector);
+        Vector3 carDirection = new Vector3(rb.transform.forward.x, 0, rb.transform.forward.z);
+        cameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
         // Use dot product to determine if camera is looking left or right. 
-        float cameraOrientation = Vector3.Dot(cameraVector, transform.right);
-
+        Debug.DrawLine(freeLookCamera.transform.position, transform.position, Color.red);
         // Gather client input
         float move = 0;
         if (Input.GetKey(KeyCode.W)) move = 1f;
         if (Input.GetKey(KeyCode.S)) move = -1f;
         float brake = 0f;
         if (Input.GetKey(KeyCode.Space)) brake = 1f;
-        float steering = cameraAngle * Math.Sign(cameraOrientation);
+        float steering = cameraAngle;
 
         ClientInput input = new ClientInput
         {
