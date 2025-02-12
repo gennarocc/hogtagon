@@ -12,7 +12,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
-    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .8f;
+    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
     [SerializeField] public float additionalCollisionForce = 1000f; // Customizable variable for additional force
     [SerializeField] private float decelerationMultiplier = 0.95f;
     [SerializeField] public float cameraAngle;
@@ -43,6 +43,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] public AK.Wwise.Event CarExplosion;
     [SerializeField] public AK.Wwise.RTPC rpm;
 
+    private bool isUsingController = false;
     private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
     private float currentTorque;
     private float localVelocityX;
@@ -86,6 +87,51 @@ public class HogController : NetworkBehaviour
         if (Input.GetKey(KeyCode.Space)) brake = 1f;
         float steering = cameraAngle;
 
+        // Keyboard input
+        if (Input.GetKey(KeyCode.W))
+        {
+            move = 1f;
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            move = -1f;
+        }
+        if (Input.GetKey(KeyCode.Space))
+        {
+            brake = 1f;
+        }
+
+        // Controller input (if controller is connected)
+        if (Input.GetJoystickNames().Length > 0)
+        {
+            // Right trigger for forward, Left trigger for reverse
+            float rightTrigger = Input.GetAxis("XRI_Right_Trigger");
+            float leftTrigger = Input.GetAxis("XRI_Left_Trigger");
+
+            if (rightTrigger != 0)
+            {
+                move = -rightTrigger;
+            }
+            if (leftTrigger != 0)
+            {
+                move = leftTrigger;
+            }
+
+            // Camera control with right stick
+            float rightStickX = Input.GetAxis("XRI_Right_Primary2DAxis_Horizontal");
+            float rightStickY = Input.GetAxis("XRI_Right_Primary2DAxis_Vertical");
+
+            if (rightStickX != 0)
+            {
+                freeLookCamera.m_XAxis.Value += rightStickX;
+            }
+            if (rightStickY != 0)
+            {
+                freeLookCamera.m_YAxis.Value += rightStickY;
+            }
+        }
+
+        // Send input to server
         ClientInput input = new ClientInput
         {
             clientId = OwnerClientId,
