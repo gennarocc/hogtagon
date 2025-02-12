@@ -18,7 +18,7 @@ public class Player : NetworkBehaviour
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
     [SerializeField] public Transform cameraTarget;
-    [SerializeField] public Vector3 offset = new Vector3(0, 1f, 0f);
+    [SerializeField] private Transform cameraOffset;
 
     private Canvas worldspaceCanvas;
     private MenuManager menuManager;
@@ -62,9 +62,10 @@ public class Player : NetworkBehaviour
 
     private void Update()
     {
-        floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
-        floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
-        cameraTarget.position = rb.gameObject.transform.position + offset;
+        // floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
+        // floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
+
+        cameraTarget.position = cameraOffset.position;
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
         // Set camera to spectator if dead
         if (playerData.state != PlayerState.Alive)
@@ -92,11 +93,10 @@ public class Player : NetworkBehaviour
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
         if (!IsServer) return;
         Debug.Log("Respawning Player");
-        transform.position = playerData.spawnPoint;
-        transform.LookAt(SpawnPointManager.instance.transform);
-
-        // gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
-        // gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+        rb.position = playerData.spawnPoint;
+        rb.transform.LookAt(SpawnPointManager.instance.transform);
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
 
         // Set player state to alive and update clients
         if (playerData.state != PlayerState.Alive)
