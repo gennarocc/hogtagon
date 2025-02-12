@@ -48,7 +48,7 @@ public class KillBall : NetworkBehaviour
             // Set player to dead
             if (GameManager.instance.state == GameState.Playing) GameManager.instance.PlayerDied(clientId);
             // FX
-            client.PlayerObject.GetComponent<HogController>().ExplodeCarClientRpc();
+            // client.PlayerObject.GetComponent<HogController>().ExplodeCarClientRpc();
         }
     }
 

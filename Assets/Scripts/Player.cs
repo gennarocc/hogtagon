@@ -12,12 +12,13 @@ public class Player : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] public TextMeshProUGUI floatingUsername;
-    [SerializeField] private GameObject carBody;
+    [SerializeField] private Rigidbody rb;
 
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
     [SerializeField] public Transform cameraTarget;
+    [SerializeField] public Vector3 offset = new Vector3(0, 1f, 0f);
 
     private Canvas worldspaceCanvas;
     private MenuManager menuManager;
@@ -42,14 +43,14 @@ public class Player : NetworkBehaviour
             menuManager.connectionPending.SetActive(false);
             audioListener.enabled = true;
             mainCamera.Priority = 1;
-            cameraTarget.SetParent(transform);
-            cameraTarget.localPosition = Vector3.zero; // Or offset if desired
-            cameraTarget.localRotation = Quaternion.identity;
+            
+            cameraTarget.rotation = Quaternion.identity;
 
+            // Set up FreeLook camera targets
             if (mainCamera != null)
             {
                 mainCamera.Follow = cameraTarget;
-                mainCamera.LookAt = cameraTarget;
+                mainCamera.LookAt = transform;
             }
         }
         else
@@ -63,6 +64,7 @@ public class Player : NetworkBehaviour
     {
         floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
         floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
+        cameraTarget.position = rb.gameObject.transform.position + offset;
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
         // Set camera to spectator if dead
         if (playerData.state != PlayerState.Alive)
@@ -79,7 +81,7 @@ public class Player : NetworkBehaviour
         }
         else
         {
-            mainCamera.Follow = transform;
+            mainCamera.Follow = cameraTarget;
             mainCamera.LookAt = cameraTarget;
         }
     }
@@ -92,8 +94,9 @@ public class Player : NetworkBehaviour
         Debug.Log("Respawning Player");
         transform.position = playerData.spawnPoint;
         transform.LookAt(SpawnPointManager.instance.transform);
-        gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
-        gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+
+        // gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+        // gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
 
         // Set player state to alive and update clients
         if (playerData.state != PlayerState.Alive)
@@ -111,8 +114,8 @@ public class Player : NetworkBehaviour
         floatingUsername.transform.SetParent(worldspaceCanvas.transform);
 
         // Player Indicator
-        var playerIndicator = transform.Find("PlayerIndicator").gameObject;
-        playerIndicator.SetActive(clientId != gameObject.GetComponent<NetworkObject>().OwnerClientId);
-        playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
+        // var playerIndicator = transform.Find("PlayerIndicator").gameObject;
+        // playerIndicator.SetActive(clientId != gameObject.GetComponent<NetworkObject>().OwnerClientId);
+        // playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
     }
 }

@@ -15,6 +15,7 @@ public class HogController : NetworkBehaviour
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
     [SerializeField] public float additionalCollisionForce = 1000f; // Customizable variable for additional force
     [SerializeField] private float decelerationMultiplier = 0.95f;
+    [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
 
     [Header("References")]
@@ -72,9 +73,19 @@ public class HogController : NetworkBehaviour
 
     private void ClientMove()
     {
-        float move = 0f;
+        Vector3 cameraVector = rb.position - freeLookCamera.transform.position;
+        cameraVector.y = 0; // We only care about the horizontal axis.
+        Vector3 carDirection = new Vector3(rb.transform.forward.x, 0, rb.transform.forward.z);
+        cameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
+        // Use dot product to determine if camera is looking left or right. 
+        Debug.DrawLine(freeLookCamera.transform.position, transform.position, Color.red);
+        // Gather client input
+        float move = 0;
+        if (Input.GetKey(KeyCode.W)) move = 1f;
+        if (Input.GetKey(KeyCode.S)) move = -1f;
         float brake = 0f;
-        float steering = freeLookCamera.m_XAxis.Value;
+        if (Input.GetKey(KeyCode.Space)) brake = 1f;
+        float steering = cameraAngle;
 
         // Keyboard input
         if (Input.GetKey(KeyCode.W))
