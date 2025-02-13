@@ -17,6 +17,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float decelerationMultiplier = 0.95f;
     [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
+    [SerializeField] private float velocity;
 
     [Header("References")]
     [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
@@ -38,12 +39,14 @@ public class HogController : NetworkBehaviour
     [SerializeField] public GameObject Explosion;
 
     [Header("Wwise")]
-    [SerializeField] public AK.Wwise.Event EngineOn;
-    [SerializeField] public AK.Wwise.Event EngineOff;
-    [SerializeField] public AK.Wwise.Event CarExplosion;
-    [SerializeField] public AK.Wwise.RTPC rpm;
+    [SerializeField] private AK.Wwise.Event EngineOn;
+    [SerializeField] private AK.Wwise.Event EngineOff;
+    [SerializeField] private AK.Wwise.Event CarExplosion;
+    [SerializeField] private AK.Wwise.RTPC rpm;
+    [SerializeField] private AK.Wwise.Event TireScreech;
+    [SerializeField] private AK.Wwise.Event HogImpact;
+    [SerializeField] private AK.Wwise.State ImpactLevel;
 
-    private bool isUsingController = false;
     private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
     private float currentTorque;
     private float localVelocityX;
@@ -59,6 +62,7 @@ public class HogController : NetworkBehaviour
     {
         frontLeftRpm = frontLeftWheelCollider.rpm;
         rpm.SetGlobalValue(frontLeftWheelCollider.rpm);
+        velocity = rb.linearVelocity.magnitude;
         // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
 
@@ -73,18 +77,14 @@ public class HogController : NetworkBehaviour
 
     private void ClientMove()
     {
-        Vector3 cameraVector = rb.position - freeLookCamera.transform.position;
-        cameraVector.y = 0; // We only care about the horizontal axis.
-        Vector3 carDirection = new Vector3(rb.transform.forward.x, 0, rb.transform.forward.z);
+        // Determine camera angle to car
+        Vector3 cameraVector = transform.position - freeLookCamera.transform.position;
+        cameraVector.y = 0;
+        Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
         cameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
-        // Use dot product to determine if camera is looking left or right. 
-        Debug.DrawLine(freeLookCamera.transform.position, transform.position, Color.red);
-        // Gather client input
+
         float move = 0;
-        if (Input.GetKey(KeyCode.W)) move = 1f;
-        if (Input.GetKey(KeyCode.S)) move = -1f;
         float brake = 0f;
-        if (Input.GetKey(KeyCode.Space)) brake = 1f;
         float steering = cameraAngle;
 
         // Keyboard input
@@ -231,6 +231,28 @@ public class HogController : NetworkBehaviour
             );
             StartCoroutine(CollisionForceDebounce());
         }
+        PlayImpactAudio();
+    }
+
+    private void PlayImpactAudio()
+    {
+        switch (velocity)
+        {
+            case float v when v < 8f:
+                Debug.Log("Low velocity");
+                // ImpactLevel.SetValue("low");
+                break;
+            case float v when v >= 8f && v < 15f:
+                Debug.Log("Medium velocity");
+                break;
+            case float v when v >= 15f:
+                Debug.Log("High velocity");
+                break;
+            default:
+                Debug.Log("Velocity out of range");
+                break;
+        }
+        HogImpact.Post(gameObject);
     }
 
     private IEnumerator CollisionForceDebounce()

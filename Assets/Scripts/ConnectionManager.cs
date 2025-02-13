@@ -229,7 +229,7 @@ public class ConnectionManager : NetworkBehaviour
     {
         if (!clientDataDictionary.ContainsKey(clientId))
         {
-            Debug.Log(message: "Client Id - " + clientId + "does not exist.");
+            Debug.Log(message: "Client Id - " + clientId + " does not exist.");
             player = new PlayerData() { };
             return false;
         }

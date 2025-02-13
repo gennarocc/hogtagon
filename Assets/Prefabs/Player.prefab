@@ -7356,6 +7356,7 @@ MonoBehaviour:
   decelerationMultiplier: 3
   cameraAngle: 0
   frontLeftRpm: 0
+  velocity: 0
   rb: {fileID: 2725043071608973344}
   freeLookCamera: {fileID: 1233816499970886941}
   frontLeftWheelCollider: {fileID: 7947942277690021792}
@@ -7387,6 +7388,20 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: 6f55246155700064bafd21a7a4a31cfc, type: 2}
+  TireScreech:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 3b5e6672c5ed26e4eb2f6d93faf139f8, type: 2}
+  HogImpact:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: a3a89f555b1962c42afa2229b28255a1, type: 2}
+  ImpactLevel:
+    idInternal: 0
+    valueGuidInternal: 
+    groupIdInternal: 0
+    groupGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
 --- !u!1 &5629968131305222426
 GameObject:
   m_ObjectHideFlags: 3

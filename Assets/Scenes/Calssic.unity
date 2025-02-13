@@ -2531,7 +2531,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Deaths
+  m_text: Score
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: bcb3fcc26b2e3554a9b1c1553379131b, type: 2}
   m_sharedMaterial: {fileID: 7710025971265816084, guid: bcb3fcc26b2e3554a9b1c1553379131b, type: 2}
