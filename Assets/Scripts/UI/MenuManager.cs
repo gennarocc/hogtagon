@@ -8,12 +8,20 @@ public class MenuManager : NetworkBehaviour
 {
     public bool gameIsPaused = false;
 
-    [Header("UI Components")]
-    [SerializeField] public GameObject mainMenu;
-    [SerializeField] public GameObject pauseMenuUI;
-    [SerializeField] public GameObject settingsMenuUI;
-    [SerializeField] public GameObject scoreboardUI;
-    [SerializeField] public GameObject tempUI;
+    [Header("Menu Panels")]
+    [SerializeField] private GameObject mainMenuPanel;    // New main menu
+    [SerializeField] private GameObject playMenuPanel;    // Your existing menu for game setup
+    [SerializeField] private GameObject pauseMenuUI;
+    [SerializeField] private GameObject settingsMenuUI;
+    [SerializeField] private GameObject scoreboardUI;
+    [SerializeField] private GameObject tempUI;
+
+    [Header("Main Menu Components")]
+    [SerializeField] private Button playButton;           // New main menu buttons
+    [SerializeField] private Button optionsButton;
+    [SerializeField] private Button quitButton;
+
+    [Header("Game Menu Components")]
     [SerializeField] public Button startGameButton;
     [SerializeField] public TextMeshProUGUI joinCodeText;
     [SerializeField] public TextMeshProUGUI countdownText;
@@ -30,28 +38,73 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private AK.Wwise.Event uiCancel;
     private int countdownTime;
 
+    private void Start()
+    {
+        // Initialize main menu
+        ShowMainMenu();
+        
+        // Set up main menu button listeners
+        playButton.onClick.AddListener(OnPlayClicked);
+        optionsButton.onClick.AddListener(OnOptionsClicked);
+        quitButton.onClick.AddListener(QuitGame);
+    }
+
     private void Update()
     {
-        // Pause Menu
-        if (Input.GetKeyDown(KeyCode.Escape) && ConnectionManager.instance.isConnected)
+        if (!mainMenuPanel.activeSelf)  // Only check these when not in main menu
         {
-            if (gameIsPaused)
+            // Pause Menu
+            if (Input.GetKeyDown(KeyCode.Escape) && ConnectionManager.instance.isConnected)
             {
-                Resume();
+                if (gameIsPaused) Resume();
+                else Pause();
             }
-            else
-            {
-                Pause();
-            }
+            
+            // Scoreboard
+            if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) 
+                scoreboardUI.SetActive(true);
+            if (Input.GetKeyUp(KeyCode.Tab)) 
+                scoreboardUI.SetActive(false);
+                
+            // Start Game Button (Host only)
+            if (NetworkManager.Singleton != null && 
+                NetworkManager.Singleton.IsServer && 
+                NetworkManager.Singleton.ConnectedClients.Count > 1) 
+                startGameButton.interactable = true;
+            else 
+                startGameButton.interactable = false;
+                
+            // Set join code
+            if (ConnectionManager.instance.joinCode != null) 
+                joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
         }
-        // Scoreboard
-        if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) scoreboardUI.SetActive(true);
-        if (Input.GetKeyUp(KeyCode.Tab)) scoreboardUI.SetActive(false);
-        // Start Game Button (Host only)
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count > 1) startGameButton.interactable = true;
-        else startGameButton.interactable = false;
-        // Set join code.
-        if (ConnectionManager.instance.joinCode != null) joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
+    }
+
+    public void ShowMainMenu()
+    {
+        mainMenuPanel.SetActive(true);
+        playMenuPanel.SetActive(false);
+        pauseMenuUI.SetActive(false);
+        settingsMenuUI.SetActive(false);
+        scoreboardUI.SetActive(false);
+        tempUI.SetActive(false);
+        connectionPending.SetActive(false);
+        
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    public void OnPlayClicked()
+    {
+        ButtonConfirmAudio();
+        mainMenuPanel.SetActive(false);
+        playMenuPanel.SetActive(true);
+    }
+
+    public void OnOptionsClicked()
+    {
+        ButtonClickAudio();
+        settingsMenuUI.SetActive(true);
     }
 
     public void Resume()
@@ -135,7 +188,7 @@ public class MenuManager : NetworkBehaviour
         connectionPending.SetActive(false);
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-        mainMenu.SetActive(true);
+        playMenuPanel.SetActive(true);
     }
 
     public void Disconnect()
