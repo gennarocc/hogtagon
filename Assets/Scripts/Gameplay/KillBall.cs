@@ -44,7 +44,8 @@ public class KillBall : NetworkBehaviour
             var client = NetworkManager.Singleton.ConnectedClients[clientId];
             Debug.Log(message: clientId + " - Add blow up force to " + client.PlayerObject.name);
             // Launch the car in a random angle with a lot of force.
-            client.PlayerObject.GetComponent<Rigidbody>().AddForce(new Vector3(Random.Range(-.6f, -.6f), 1, Random.Range(-.6f, .6f)) * blowupForce * 10000, ForceMode.Impulse);
+            client.PlayerObject.GetComponentInChildren<Rigidbody>().AddForce
+                (new Vector3(Random.Range(-.6f, -.6f), 1, Random.Range(-.6f, .6f)) * blowupForce * 10000, ForceMode.Impulse);
             // Set player to dead
             if (GameManager.instance.state == GameState.Playing) GameManager.instance.PlayerDied(clientId);
             // FX

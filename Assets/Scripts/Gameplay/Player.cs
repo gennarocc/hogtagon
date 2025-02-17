@@ -43,20 +43,19 @@ public class Player : NetworkBehaviour
             menuManager.connectionPending.SetActive(false);
             audioListener.enabled = true;
             mainCamera.Priority = 1;
-            
-            cameraTarget.rotation = Quaternion.identity;
-
             // Set up FreeLook camera targets
             if (mainCamera != null)
             {
                 mainCamera.Follow = cameraTarget;
-                mainCamera.LookAt = transform;
+                mainCamera.LookAt = cameraTarget;
             }
         }
         else
         {
             mainCamera.Priority = 0;
         }
+
+        cameraTarget.rotation = Quaternion.identity;
         clientId = gameObject.GetComponent<NetworkObject>().OwnerClientId;
     }
 

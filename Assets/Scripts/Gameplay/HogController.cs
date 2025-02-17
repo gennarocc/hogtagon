@@ -153,15 +153,19 @@ public class HogController : NetworkBehaviour
     [ServerRpc]
     private void SendInputServerRpc(ClientInput input)
     {
-        inputBuffer.AddInput(input);
-    }
-
-    private void ProcessInput(ClientInput input)
-    {
         if (!canMove) return;
         ApplyMotorTorque(input.moveInput, input.brakeInput);
         ApplySteering(input.steeringAngle);
         isDrifting.Value = localVelocityX > .25f ? true : false;
+        // inputBuffer.AddInput(input);
+    }
+
+    private void ProcessInput(ClientInput input)
+    {
+        // if (!canMove) return;
+        // ApplyMotorTorque(input.moveInput, input.brakeInput);
+        // ApplySteering(input.steeringAngle);
+        // isDrifting.Value = localVelocityX > .25f ? true : false;
     }
 
     private void ApplyMotorTorque(float moveInput, float brakeInput)
