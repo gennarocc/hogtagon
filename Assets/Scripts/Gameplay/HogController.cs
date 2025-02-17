@@ -51,6 +51,7 @@ public class HogController : NetworkBehaviour
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
+    private InputBuffer inputBuffer = new InputBuffer();
 
     void Start()
     {
@@ -73,6 +74,12 @@ public class HogController : NetworkBehaviour
 
         UpdateWheelPositions();
         DriftCarPS();
+
+        if (IsServer && inputBuffer.HasInput())
+        {
+            ClientInput bufferedInput = inputBuffer.GetNextInput();
+            ProcessInput(bufferedInput);
+        }
     }
 
     private void ClientMove()
@@ -140,11 +147,16 @@ public class HogController : NetworkBehaviour
             steeringAngle = steering,
         };
 
-        SendClientInputServerRpc(input);
+        SendInputServerRpc(input);
     }
 
     [ServerRpc]
-    private void SendClientInputServerRpc(ClientInput input)
+    private void SendInputServerRpc(ClientInput input)
+    {
+        inputBuffer.AddInput(input);
+    }
+
+    private void ProcessInput(ClientInput input)
     {
         if (!canMove) return;
         ApplyMotorTorque(input.moveInput, input.brakeInput);
@@ -286,21 +298,5 @@ public class HogController : NetworkBehaviour
         Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform); // Explosion Particles
         CarExplosion.Post(gameObject); // Wwise audio event
         canMove = false;
-    }
-
-    private struct ClientInput : INetworkSerializable
-    {
-        public ulong clientId;
-        public float moveInput;
-        public float brakeInput;
-        public float steeringAngle;
-
-        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-        {
-            serializer.SerializeValue(ref clientId);
-            serializer.SerializeValue(ref moveInput);
-            serializer.SerializeValue(ref brakeInput);
-            serializer.SerializeValue(ref steeringAngle);
-        }
     }
 }
