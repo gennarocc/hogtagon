@@ -876,13 +876,13 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.6
   m_SuspensionSpring:
-    spring: 7000
-    damper: 1250
+    spring: 5000
+    damper: 2500
     targetPosition: 0.1
   m_SuspensionDistance: 0.2
   m_ForceAppPointDistance: 0.1
-  m_Mass: 10
-  m_WheelDampingRate: 2
+  m_Mass: 20
+  m_WheelDampingRate: 5
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -890,11 +890,11 @@ WheelCollider:
     m_AsymptoteValue: 1
     m_Stiffness: 1.5
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.6
+    m_ExtremumSlip: 0.4
     m_ExtremumValue: 1.5
     m_AsymptoteSlip: 1
     m_AsymptoteValue: 1
-    m_Stiffness: 1.5
+    m_Stiffness: 2
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -921,9 +921,9 @@ MonoBehaviour:
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
-  SyncPositionX: 0
-  SyncPositionY: 0
-  SyncPositionZ: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
@@ -7237,7 +7237,7 @@ MonoBehaviour:
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
-  SlerpPosition: 0
+  SlerpPosition: 1
 --- !u!114 &8065868344176151203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7252,7 +7252,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkRigidbodyBaseExpanded: 0
-  UseRigidBodyForMotion: 0
+  UseRigidBodyForMotion: 1
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
 --- !u!114 &7500573832422394504
@@ -7271,9 +7271,9 @@ MonoBehaviour:
   canMove: 1
   maxTorque: 650
   brakeTorque: 300
-  centerOfMass: {x: 0, y: 0.18, z: 0}
-  maxSteeringAngle: 35
-  steeringSpeed: 0.5
+  centerOfMass: {x: 0, y: 0.2, z: 0}
+  maxSteeringAngle: 45
+  steeringSpeed: 0.8
   additionalCollisionForce: 1000
   decelerationMultiplier: 3
   cameraAngle: 0
@@ -7447,13 +7447,13 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.6
   m_SuspensionSpring:
-    spring: 7000
-    damper: 1250
+    spring: 5000
+    damper: 2500
     targetPosition: 0.1
   m_SuspensionDistance: 0.2
   m_ForceAppPointDistance: 0.1
-  m_Mass: 10
-  m_WheelDampingRate: 2
+  m_Mass: 20
+  m_WheelDampingRate: 5
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -7461,11 +7461,11 @@ WheelCollider:
     m_AsymptoteValue: 1
     m_Stiffness: 1.5
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.6
+    m_ExtremumSlip: 0.4
     m_ExtremumValue: 1.5
     m_AsymptoteSlip: 1
     m_AsymptoteValue: 1
-    m_Stiffness: 1.5
+    m_Stiffness: 2
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -7492,9 +7492,9 @@ MonoBehaviour:
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
-  SyncPositionX: 0
-  SyncPositionY: 0
-  SyncPositionZ: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
@@ -12512,13 +12512,13 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.6
   m_SuspensionSpring:
-    spring: 7000
-    damper: 1250
+    spring: 5000
+    damper: 2500
     targetPosition: 0.1
   m_SuspensionDistance: 0.2
   m_ForceAppPointDistance: 0.1
-  m_Mass: 10
-  m_WheelDampingRate: 2
+  m_Mass: 20
+  m_WheelDampingRate: 5
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -12526,7 +12526,7 @@ WheelCollider:
     m_AsymptoteValue: 1
     m_Stiffness: 1.5
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.6
+    m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
     m_AsymptoteSlip: 1
     m_AsymptoteValue: 1
@@ -12557,9 +12557,9 @@ MonoBehaviour:
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
-  SyncPositionX: 0
-  SyncPositionY: 0
-  SyncPositionZ: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
@@ -13021,13 +13021,13 @@ WheelCollider:
   m_Center: {x: 0, y: 0, z: 0}
   m_Radius: 0.6
   m_SuspensionSpring:
-    spring: 7000
-    damper: 1250
+    spring: 5000
+    damper: 2500
     targetPosition: 0.1
   m_SuspensionDistance: 0.2
   m_ForceAppPointDistance: 0.1
-  m_Mass: 10
-  m_WheelDampingRate: 2
+  m_Mass: 20
+  m_WheelDampingRate: 5
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -13035,7 +13035,7 @@ WheelCollider:
     m_AsymptoteValue: 1
     m_Stiffness: 1.5
   m_SidewaysFriction:
-    m_ExtremumSlip: 0.6
+    m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
     m_AsymptoteSlip: 1
     m_AsymptoteValue: 1
@@ -13066,9 +13066,9 @@ MonoBehaviour:
   AuthorityMode: 0
   TickSyncChildren: 0
   UseUnreliableDeltas: 0
-  SyncPositionX: 0
-  SyncPositionY: 0
-  SyncPositionZ: 0
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1

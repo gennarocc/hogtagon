@@ -51,15 +51,15 @@ public class HogController : NetworkBehaviour
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
-    private InputBuffer inputBuffer = new InputBuffer();
 
     void Start()
     {
         rb.centerOfMass = centerOfMass;
         EngineOn.Post(gameObject);
+        // GetComponent<WheelSyncManager>().enabled = true;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         frontLeftRpm = frontLeftWheelCollider.rpm;
         rpm.SetGlobalValue(frontLeftWheelCollider.rpm);
@@ -74,12 +74,6 @@ public class HogController : NetworkBehaviour
 
         UpdateWheelPositions();
         DriftCarPS();
-
-        if (IsServer && inputBuffer.HasInput())
-        {
-            ClientInput bufferedInput = inputBuffer.GetNextInput();
-            ProcessInput(bufferedInput);
-        }
     }
 
     private void ClientMove()
@@ -157,15 +151,6 @@ public class HogController : NetworkBehaviour
         ApplyMotorTorque(input.moveInput, input.brakeInput);
         ApplySteering(input.steeringAngle);
         isDrifting.Value = localVelocityX > .25f ? true : false;
-        // inputBuffer.AddInput(input);
-    }
-
-    private void ProcessInput(ClientInput input)
-    {
-        // if (!canMove) return;
-        // ApplyMotorTorque(input.moveInput, input.brakeInput);
-        // ApplySteering(input.steeringAngle);
-        // isDrifting.Value = localVelocityX > .25f ? true : false;
     }
 
     private void ApplyMotorTorque(float moveInput, float brakeInput)
@@ -174,37 +159,28 @@ public class HogController : NetworkBehaviour
         currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * 3f); // Adjust 100f to control how fast it reaches maxTorque
 
         float motorTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
-        float appliedBrakeTorque = brakeInput > 0 ? brakeTorque : 0;
 
         frontLeftWheelCollider.motorTorque = motorTorque;
         frontRightWheelCollider.motorTorque = motorTorque;
         rearLeftWheelCollider.motorTorque = motorTorque;
         rearRightWheelCollider.motorTorque = motorTorque;
 
-        frontLeftWheelCollider.brakeTorque = appliedBrakeTorque;
-        frontRightWheelCollider.brakeTorque = appliedBrakeTorque;
-        rearLeftWheelCollider.brakeTorque = appliedBrakeTorque;
-        rearRightWheelCollider.brakeTorque = appliedBrakeTorque;
-
-        // Decelerate the car on no input
-        if (moveInput == 0 && brakeInput == 0)
-        {
-            // rb.linearVelocity = rb.linearVelocity * (1f / (1f + (0.025f * decelerationMultiplier)));
-            // If the magnitude of the car's velocity is less than 0.25f (very slow velocity), then stop the car completely and
-            // if (rb.linearVelocity.magnitude < 0.25f)
-            // {
-            //     rb.linearVelocity = Vector3.zero;
-            // }
-        }
     }
 
     private void ApplySteering(float cameraAngle)
     {
-        float steeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
-        frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, steeringAngle, steeringSpeed);
-        frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, steeringAngle, steeringSpeed);
-        rearLeftWheelCollider.steerAngle = Mathf.Lerp(rearLeftWheelCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
-        rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, -1 * steeringAngle, steeringSpeed);
+        if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
+
+        float frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
+        // Use only 30% of steering angle for rear wheels
+        // Calculate rear steering with speed dependency
+        // float speedFactor = Mathf.Clamp01(1f - (rb.linearVelocity.magnitude / 10f));
+        float rearSteeringAngle = frontSteeringAngle * -0.3f ;
+
+        frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
+        frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
+        rearLeftWheelCollider.steerAngle = Mathf.Lerp(rearLeftWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
+        rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
     }
 
     private void UpdateWheelPositions()
@@ -256,7 +232,6 @@ public class HogController : NetworkBehaviour
         {
             case float v when v < 8f:
                 Debug.Log("Low velocity");
-                // ImpactLevel.SetValue("low");
                 break;
             case float v when v >= 8f && v < 15f:
                 Debug.Log("Medium velocity");
