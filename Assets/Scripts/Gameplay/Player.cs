@@ -57,6 +57,7 @@ public class Player : NetworkBehaviour
 
         cameraTarget.rotation = Quaternion.identity;
         clientId = gameObject.GetComponent<NetworkObject>().OwnerClientId;
+        
     }
 
     private void Update()

@@ -7280,6 +7280,7 @@ MonoBehaviour:
   frontLeftRpm: 0
   velocity: 0
   rb: {fileID: 2725043071608973344}
+  body: {fileID: 789030245080448831}
   freeLookCamera: {fileID: 1233816499970886941}
   frontLeftWheelCollider: {fileID: 7947942277690021792}
   frontRightWheelCollider: {fileID: 4296994293568657065}

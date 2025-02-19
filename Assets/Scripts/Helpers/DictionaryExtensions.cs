@@ -12,7 +12,7 @@ public static class DictionaryExtensions
                 clientId = kvp.Key,
                 username = kvp.Value.username,
                 score = kvp.Value.score,
-                color = kvp.Value.color,
+                colorIndex = kvp.Value.colorIndex,
                 state = kvp.Value.state,
                 isLobbyLeader = kvp.Value.isLobbyLeader
             });
@@ -29,7 +29,7 @@ public static class DictionaryExtensions
             {
                 username = item.username,
                 score = item.score,
-                color = item.color,
+                colorIndex = item.colorIndex,
                 state = item.state,
                 isLobbyLeader = item.isLobbyLeader
             };

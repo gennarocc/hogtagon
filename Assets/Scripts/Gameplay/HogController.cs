@@ -21,6 +21,7 @@ public class HogController : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
+    [SerializeField] private GameObject body; // Used to set color texture
     [SerializeField] private CinemachineFreeLook freeLookCamera; // Reference to the CinemachineFreeLook camera
     [SerializeField] private WheelCollider frontLeftWheelCollider;
     [SerializeField] private WheelCollider frontRightWheelCollider;
@@ -56,7 +57,8 @@ public class HogController : NetworkBehaviour
     {
         rb.centerOfMass = centerOfMass;
         EngineOn.Post(gameObject);
-        // GetComponent<WheelSyncManager>().enabled = true;
+        var colorIndex = ConnectionManager.instance.GetPlayerColorIndex(OwnerClientId);
+        body.GetComponent<Renderer>().material = ConnectionManager.instance.hogTextures[colorIndex];
     }
 
     private void FixedUpdate()

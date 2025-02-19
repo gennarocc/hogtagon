@@ -5565,6 +5565,15 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   joinCode: 
   isConnected: 0
+  hogTextures:
+  - {fileID: 2100000, guid: ad254a46f1ac9354a89e7b9161986974, type: 2}
+  - {fileID: 2100000, guid: e3ec262faf763514b9db46bbf53b86d1, type: 2}
+  - {fileID: 2100000, guid: df57f43cfeabd12439b54a33996d62b1, type: 2}
+  - {fileID: 2100000, guid: 32a442d75d74cd64894db14abf2818ff, type: 2}
+  - {fileID: 2100000, guid: 5936c68a76cafaa408306ea71c707b9d, type: 2}
+  - {fileID: 2100000, guid: d9fbdfcdd14491a43a8264bb252fecdd, type: 2}
+  - {fileID: 2100000, guid: 1b5f5227dfc41e942b50f383c13bdd21, type: 2}
+  - {fileID: 2100000, guid: b3eb15158c63e2544b2eedc3ecce26fa, type: 2}
   menuManager: {fileID: 1935665467}
 --- !u!1 &868202359
 GameObject:

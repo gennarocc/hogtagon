@@ -9,6 +9,10 @@ public class ConnectionManager : NetworkBehaviour
     [SerializeField] public string joinCode;
     [SerializeField] public bool isConnected = false;
 
+    [Header("Player Colors")]
+    [SerializeField] public Material[] hogTextures;
+    private static List<int> assignedTextures = new List<int>();
+
     [Header("References")]
     [SerializeField] private MenuManager menuManager;
     private Dictionary<ulong, PlayerData> clientDataDictionary = new Dictionary<ulong, PlayerData>();
@@ -63,7 +67,7 @@ public class ConnectionManager : NetworkBehaviour
         {
             username = decodedUsername,
             score = 0,
-            color = Random.ColorHSV(),
+            colorIndex = GetAvailableTextureIndex(),
             state = GameManager.instance.state == GameState.Playing ? PlayerState.Dead : PlayerState.Alive,
             spawnPoint = sp,
             isLobbyLeader = clientDataDictionary.Count == 0
@@ -210,9 +214,9 @@ public class ConnectionManager : NetworkBehaviour
         return str;
     }
 
-    public Color GetPlayerColor(ulong client)
+    public int GetPlayerColorIndex(ulong client)
     {
-        return clientDataDictionary[client].color;
+        return clientDataDictionary[client].colorIndex;
     }
 
     public List<ulong> GetAliveClients()
@@ -249,13 +253,31 @@ public class ConnectionManager : NetworkBehaviour
         Debug.Log(message: "GetPlayer() could not find requested player - " + clientId);
         return null;
     }
+
+    private int GetAvailableTextureIndex()
+    {
+        List<int> availableIndices = new List<int>();
+        for (int i = 0; i < hogTextures.Length; i++)
+        {
+            if (!assignedTextures.Contains(i))
+            {
+                availableIndices.Add(i);
+            }
+        }
+
+        if (availableIndices.Count > 0)
+        {
+            return availableIndices[Random.Range(0, availableIndices.Count)];
+        }
+        return -1; // No available textures
+    }
 }
 
 public struct PlayerData : INetworkSerializable
 {
     public string username;
     public int score;
-    public Color color;
+    public int colorIndex;
     public PlayerState state;
     public Vector3 spawnPoint;
     public bool isLobbyLeader;
@@ -264,7 +286,7 @@ public struct PlayerData : INetworkSerializable
     {
         serializer.SerializeValue(ref username);
         serializer.SerializeValue(ref score);
-        serializer.SerializeValue(ref color);
+        serializer.SerializeValue(ref colorIndex);
         serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref state);
         serializer.SerializeValue(ref isLobbyLeader);
@@ -276,7 +298,7 @@ public struct ClientData : INetworkSerializable
     public ulong clientId;
     public string username;
     public int score;
-    public Color color;
+    public int colorIndex;
     public Vector3 spawnPoint;
     public PlayerState state;
     public bool isLobbyLeader;
@@ -286,7 +308,7 @@ public struct ClientData : INetworkSerializable
         serializer.SerializeValue(ref clientId);
         serializer.SerializeValue(ref username);
         serializer.SerializeValue(ref score);
-        serializer.SerializeValue(ref color);
+        serializer.SerializeValue(ref colorIndex);
         serializer.SerializeValue(ref state);
         serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref isLobbyLeader);
