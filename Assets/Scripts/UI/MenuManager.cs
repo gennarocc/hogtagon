@@ -3,6 +3,7 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
+using Cinemachine;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -38,15 +39,29 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private AK.Wwise.Event uiCancel;
     private int countdownTime;
 
+    [SerializeField] private CinemachineVirtualCamera virtualCamera;
+    [SerializeField] private float rotationSpeed = 0.01f;
+    private CinemachineOrbitalTransposer orbitalTransposer;
+
     private void Start()
     {
         // Initialize main menu
         ShowMainMenu();
+
+        startCamera.cullingMask = 31;
+
+        // Get camera reference if not set
+        if (virtualCamera == null)
+        {
+            virtualCamera = GetComponent<CinemachineVirtualCamera>();
+        }
+
+        // Get the orbital transposer
+        orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
         
-        // Set up main menu button listeners
-        playButton.onClick.AddListener(OnPlayClicked);
-        optionsButton.onClick.AddListener(OnOptionsClicked);
-        quitButton.onClick.AddListener(QuitGame);
+        // Directly set the Input Axis Value
+        orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
+
     }
 
     private void Update()
