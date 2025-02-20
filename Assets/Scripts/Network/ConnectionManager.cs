@@ -75,7 +75,7 @@ public class ConnectionManager : NetworkBehaviour
 
         pendingPlayerData.Add(clientId, player);
         response.Approved = true;
-        response.Position = GameManager.instance.state == GameState.Playing ? new Vector3(0,0,0) : sp;
+        response.Position = GameManager.instance.state == GameState.Playing ? new Vector3(0, 0, 0) : sp;
         response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - sp);
         response.CreatePlayerObject = true;
 
@@ -144,16 +144,21 @@ public class ConnectionManager : NetworkBehaviour
     private void AddPlayerServerRpc(ulong clientId)
     {
         PlayerData playerData = pendingPlayerData[clientId];
-        Debug.Log(message: "Player conneted - " + playerData.username);
+        Debug.Log(message: "Player connected - " + playerData.username);
         clientDataDictionary.Add(clientId, playerData);
-        UpdatePlayerDataClientRpc(clientId, playerData);
+
+        // Find and set the player's NetworkVariable
         foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
         {
             if (player.clientId == clientId)
             {
-                player.SetPlayerData(playerData);
+                player.SetPlayerData(playerData);  // This will update the NetworkVariable
+                break;
             }
         }
+
+        // Still notify all clients about the new player for the client dictionary
+        UpdatePlayerDataClientRpc(clientId, playerData);
         pendingPlayerData.Remove(clientId);
     }
 
@@ -164,21 +169,21 @@ public class ConnectionManager : NetworkBehaviour
         clientDataDictionary.Remove(clientId);
     }
 
+
     [ClientRpc(Delivery = RpcDelivery.Reliable)]
     public void UpdatePlayerDataClientRpc(ulong clientId, PlayerData player)
     {
+        // Update the client dictionary
         if (clientDataDictionary.ContainsKey(clientId))
         {
             clientDataDictionary[clientId] = player;
-
             Debug.Log(message: "Updating " + player.username + ",  State:  " + player.state);
         }
         else
         {
             clientDataDictionary.Add(clientId, player);
-            Debug.Log(message: "Player conneted - " + player.username);
+            Debug.Log(message: "Player connected - " + player.username);
         }
-
     }
 
     public string GetClientUsername(ulong clientId)
@@ -256,6 +261,13 @@ public class ConnectionManager : NetworkBehaviour
 
     private int GetAvailableTextureIndex()
     {
+        assignedTextures.Clear();
+        foreach (var playerData in clientDataDictionary.Values)
+        {
+            assignedTextures.Add(playerData.colorIndex);
+        }
+
+        // Find available texture
         List<int> availableIndices = new List<int>();
         for (int i = 0; i < hogTextures.Length; i++)
         {
@@ -267,7 +279,9 @@ public class ConnectionManager : NetworkBehaviour
 
         if (availableIndices.Count > 0)
         {
-            return availableIndices[Random.Range(0, availableIndices.Count)];
+            int selectedIndex = availableIndices[Random.Range(0, availableIndices.Count)];
+            assignedTextures.Add(selectedIndex);
+            return selectedIndex;
         }
         return -1; // No available textures
     }
@@ -284,11 +298,12 @@ public struct PlayerData : INetworkSerializable
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
+        // Ensure order matches the field declarations above
         serializer.SerializeValue(ref username);
         serializer.SerializeValue(ref score);
-        serializer.SerializeValue(ref colorIndex);
-        serializer.SerializeValue(ref spawnPoint);
+        serializer.SerializeValue(ref colorIndex);      // Make sure colorIndex is serialized
         serializer.SerializeValue(ref state);
+        serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref isLobbyLeader);
     }
 }

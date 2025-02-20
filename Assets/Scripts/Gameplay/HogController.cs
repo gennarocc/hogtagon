@@ -13,15 +13,13 @@ public class HogController : NetworkBehaviour
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
-    [SerializeField] public float additionalCollisionForce = 1000f; // Customizable variable for additional force
-    [SerializeField] private float decelerationMultiplier = 0.95f;
+    [SerializeField] public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
     [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
 
     [Header("References")]
     [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
-    [SerializeField] private GameObject body; // Used to set color texture
     [SerializeField] private CinemachineFreeLook freeLookCamera; // Reference to the CinemachineFreeLook camera
     [SerializeField] private WheelCollider frontLeftWheelCollider;
     [SerializeField] private WheelCollider frontRightWheelCollider;
@@ -52,14 +50,37 @@ public class HogController : NetworkBehaviour
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
+    private float driftingAxis;
+    private bool isTractionLocked = true;
+
+    // Wheel references
+    private WheelFrictionCurve FLwheelFriction;
+    private float FLWextremumSlip;
+    private WheelFrictionCurve FRwheelFriction;
+    private float FRWextremumSlip;
+    private WheelFrictionCurve RLwheelFriction;
+    private float RLWextremumSlip;
+    private WheelFrictionCurve RRwheelFriction;
+    private float RRWextremumSlip;
 
     void Start()
     {
-        rb.centerOfMass = centerOfMass;
+        if (IsServer || IsOwner)
+        {
+            // Full physics setup on server and owning client
+            rb.centerOfMass = centerOfMass;
+            InitializeWheelFriction();
+        }
+        else
+        {
+            rb.isKinematic = true;
+            DisableWheelColliderPhysics();
+        }
+
         EngineOn.Post(gameObject);
-        var colorIndex = ConnectionManager.instance.GetPlayerColorIndex(OwnerClientId);
-        body.GetComponent<Renderer>().material = ConnectionManager.instance.hogTextures[colorIndex];
+        // Set player color
     }
+
 
     private void FixedUpdate()
     {
@@ -74,7 +95,7 @@ public class HogController : NetworkBehaviour
             ClientMove();
         }
 
-        UpdateWheelPositions();
+        AnimateWheels();
         DriftCarPS();
     }
 
@@ -89,6 +110,7 @@ public class HogController : NetworkBehaviour
         float move = 0;
         float brake = 0f;
         float steering = cameraAngle;
+        bool handbrakeOn = false;
 
         // Keyboard input
         if (Input.GetKey(KeyCode.W))
@@ -101,7 +123,7 @@ public class HogController : NetworkBehaviour
         }
         if (Input.GetKey(KeyCode.Space))
         {
-            brake = 1f;
+            handbrakeOn = true;
         }
 
         // Controller input (if controller is connected)
@@ -140,6 +162,7 @@ public class HogController : NetworkBehaviour
             clientId = OwnerClientId,
             moveInput = move,
             brakeInput = brake,
+            handbrake = handbrakeOn,
             steeringAngle = steering,
         };
 
@@ -153,6 +176,22 @@ public class HogController : NetworkBehaviour
         ApplyMotorTorque(input.moveInput, input.brakeInput);
         ApplySteering(input.steeringAngle);
         isDrifting.Value = localVelocityX > .25f ? true : false;
+        if (input.handbrake)
+        {
+            Handbrake();
+            isDrifting.Value = true;
+        }
+
+        if (input.handbrake)
+        {
+            Handbrake();
+            isDrifting.Value = true;
+        }
+        else if (!input.handbrake && !isTractionLocked)
+        {
+            // Only call RecoverTraction once when handbrake is released
+            RecoverTraction();
+        }
     }
 
     private void ApplyMotorTorque(float moveInput, float brakeInput)
@@ -177,7 +216,7 @@ public class HogController : NetworkBehaviour
         // Use only 30% of steering angle for rear wheels
         // Calculate rear steering with speed dependency
         // float speedFactor = Mathf.Clamp01(1f - (rb.linearVelocity.magnitude / 10f));
-        float rearSteeringAngle = frontSteeringAngle * -0.3f ;
+        float rearSteeringAngle = frontSteeringAngle * -0.35f;
 
         frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
         frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
@@ -185,27 +224,138 @@ public class HogController : NetworkBehaviour
         rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
     }
 
-    private void UpdateWheelPositions()
+
+    private void AnimateWheels()
     {
-        // Update wheel transform positions and rotations to match colliders
-        UpdateWheelTransform(frontLeftWheelCollider, frontLeftWheelTransform);
-        UpdateWheelTransform(frontRightWheelCollider, frontRightWheelTransform);
-        UpdateWheelTransform(rearLeftWheelCollider, rearLeftWheelTransform);
-        UpdateWheelTransform(rearRightWheelCollider, rearRightWheelTransform);
+        if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
+        float frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
+        // Use only 30% of steering angle for rear wheels
+        // Calculate rear steering with speed dependency
+        float rearSteeringAngle = frontSteeringAngle * -0.5f;
+        var steeringAngle = -1 * Math.Clamp(cameraAngle, 0, maxSteeringAngle);
+        // Convert angle to Quaternion
+        frontLeftWheelTransform.localRotation = Quaternion.Euler(0, frontSteeringAngle, 0);
+        frontRightWheelTransform.localRotation = Quaternion.Euler(0, frontSteeringAngle, 0);
+        rearLeftWheelTransform.localRotation = Quaternion.Euler(0, rearSteeringAngle, 0);
+        rearRightWheelTransform.localRotation = Quaternion.Euler(0, rearSteeringAngle, 0);
     }
 
-    private void UpdateWheelTransform(WheelCollider collider, Transform transform)
+    public void Handbrake()
     {
-        Vector3 pos;
-        Quaternion rot;
-        collider.GetWorldPose(out pos, out rot);
+        CancelInvoke("RecoverTraction");
+        isTractionLocked = false;
+        // We are going to start losing traction smoothly, there is were our 'driftingAxis' variable takes
+        // place. This variable will start from 0 and will reach a top value of 1, which means that the maximum
+        // drifting value has been reached. It will increase smoothly by using the variable Time.deltaTime.
+        driftingAxis = driftingAxis + Time.deltaTime;
+        float secureStartingPoint = driftingAxis * FLWextremumSlip * handbrakeDriftMultiplier;
 
-        transform.position = pos;
-        transform.rotation = rot;
+        if (secureStartingPoint < FLWextremumSlip)
+        {
+            driftingAxis = FLWextremumSlip / (FLWextremumSlip * handbrakeDriftMultiplier);
+        }
+        if (driftingAxis > 1f)
+        {
+            driftingAxis = 1f;
+        }
+        if (driftingAxis < 1f)
+        {
+            FLwheelFriction.extremumSlip = FLWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
+            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
 
-        transform.localRotation = Quaternion.Euler(transform.localRotation.eulerAngles + new Vector3(collider.rpm / 60 * 360 * Time.deltaTime, 0, 0));
+            FRwheelFriction.extremumSlip = FRWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
+            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
+
+            RLwheelFriction.extremumSlip = RLWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
+            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
+
+            RRwheelFriction.extremumSlip = RRWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
+            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
+        }
     }
 
+    public void RecoverTraction()
+    {
+        driftingAxis = driftingAxis - (Time.deltaTime / 1.5f);
+        if (driftingAxis < 0f)
+        {
+            driftingAxis = 0f;
+        }
+
+        if (driftingAxis > 0f)
+        {
+            // Calculate new slip values
+            float newFLSlip = Mathf.Max(FLWextremumSlip, FLWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
+            float newFRSlip = Mathf.Max(FRWextremumSlip, FRWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
+            float newRLSlip = Mathf.Max(RLWextremumSlip, RLWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
+            float newRRSlip = Mathf.Max(RRWextremumSlip, RRWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
+
+            // Apply new slip values
+            FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
+            FLwheelFriction.extremumSlip = newFLSlip;
+            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
+
+            FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
+            FRwheelFriction.extremumSlip = newFRSlip;
+            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
+
+            RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
+            RLwheelFriction.extremumSlip = newRLSlip;
+            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
+
+            RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
+            RRwheelFriction.extremumSlip = newRRSlip;
+            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
+
+            // Continue recovery in the next frame
+            Invoke("RecoverTraction", Time.deltaTime);
+        }
+        else
+        {
+            // Reset to original values when recovery is complete
+            FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
+            FLwheelFriction.extremumSlip = FLWextremumSlip;
+            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
+
+            FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
+            FRwheelFriction.extremumSlip = FRWextremumSlip;
+            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
+
+            RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
+            RLwheelFriction.extremumSlip = RLWextremumSlip;
+            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
+
+            RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
+            RRwheelFriction.extremumSlip = RRWextremumSlip;
+            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
+
+            driftingAxis = 0f;
+            isTractionLocked = true; // Only set to true when fully recovered
+        }
+    }
+
+    private void InitializeWheelFriction()
+    {
+        FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
+        FLWextremumSlip = FLwheelFriction.extremumSlip;
+
+        FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
+        FRWextremumSlip = FRwheelFriction.extremumSlip;
+
+        RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
+        RLWextremumSlip = RLwheelFriction.extremumSlip;
+
+        RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
+        RRWextremumSlip = RRwheelFriction.extremumSlip;
+    }
+
+    private void DisableWheelColliderPhysics()
+    {
+        frontLeftWheelCollider.enabled = false;
+        frontRightWheelCollider.enabled = false;
+        rearLeftWheelCollider.enabled = false;
+        rearRightWheelCollider.enabled = false;
+    }
     private void OnCollisionEnter(Collision collision)
     {
         if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")

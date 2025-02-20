@@ -59,7 +59,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 2
-  m_FollowOffset: {x: 0, y: 8.94562, z: -14.737287}
+  m_FollowOffset: {x: 0, y: 6.4640956, z: -14.737287}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -204,7 +204,7 @@ MonoBehaviour:
   m_YAxis:
     Value: 0.9742441
     m_SpeedMode: 0
-    m_MaxSpeed: 40
+    m_MaxSpeed: 20
     m_AccelTime: 0.2
     m_DecelTime: 0.1
     m_InputAxisName: Mouse Y
@@ -256,9 +256,9 @@ MonoBehaviour:
   m_BindingMode: 2
   m_SplineCurvature: 0.079
   m_Orbits:
-  - m_Height: 9
-    m_Radius: 14.7
   - m_Height: 6.5
+    m_Radius: 14.7
+  - m_Height: 5
     m_Radius: 15
   - m_Height: 4
     m_Radius: 14.7
@@ -280,7 +280,7 @@ GameObject:
   - component: {fileID: 701980476227806279}
   - component: {fileID: 9219601071739233625}
   m_Layer: 0
-  m_Name: Body.005
+  m_Name: Body
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -452,7 +452,7 @@ GameObject:
   - component: {fileID: 362347677443509517}
   m_Layer: 0
   m_Name: LeftTireSkid
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -626,7 +626,7 @@ GameObject:
   - component: {fileID: 2553562073284689455}
   m_Layer: 0
   m_Name: RightTireSkid
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -842,10 +842,9 @@ GameObject:
   m_Component:
   - component: {fileID: 8994045424437793236}
   - component: {fileID: 6832065672850586991}
-  - component: {fileID: 2371556561713591175}
   m_Layer: 0
   m_Name: RearRightWheel
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -877,12 +876,12 @@ WheelCollider:
   m_Radius: 0.6
   m_SuspensionSpring:
     spring: 5000
-    damper: 2500
+    damper: 2000
     targetPosition: 0.1
-  m_SuspensionDistance: 0.2
+  m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0.1
   m_Mass: 20
-  m_WheelDampingRate: 5
+  m_WheelDampingRate: 4
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -894,7 +893,7 @@ WheelCollider:
     m_ExtremumValue: 1.5
     m_AsymptoteSlip: 1
     m_AsymptoteValue: 1
-    m_Stiffness: 2
+    m_Stiffness: 1.8
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -904,42 +903,6 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
---- !u!114 &2371556561713591175
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1580290537661507892}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!1 &1681574283606302254
 GameObject:
   m_ObjectHideFlags: 0
@@ -1284,7 +1247,7 @@ GameObject:
   - component: {fileID: 3120187301465190269}
   - component: {fileID: 7405183568773331293}
   m_Layer: 0
-  m_Name: Body.003
+  m_Name: Bumpers
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1401,7 +1364,7 @@ GameObject:
   - component: {fileID: 3678560601214998898}
   - component: {fileID: 7505519493020409115}
   m_Layer: 0
-  m_Name: Body.008
+  m_Name: Windshield
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1488,7 +1451,7 @@ GameObject:
   - component: {fileID: 2077668940201031422}
   m_Layer: 0
   m_Name: RightTireSmoke_PS
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6448,7 +6411,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 2
-  m_FollowOffset: {x: 0, y: 8.94562, z: -14.737287}
+  m_FollowOffset: {x: 0, y: 6.4640956, z: -14.737287}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -6652,7 +6615,7 @@ GameObject:
   - component: {fileID: 458102318861975023}
   - component: {fileID: 6846373815372823347}
   m_Layer: 0
-  m_Name: Suspension Front
+  m_Name: Suspension
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6738,7 +6701,7 @@ GameObject:
   - component: {fileID: 962007269087046139}
   - component: {fileID: 5932910653615919216}
   m_Layer: 0
-  m_Name: Body.004
+  m_Name: Head Lights
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6994,7 +6957,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2000249020178976820}
   - component: {fileID: 6289993635504125903}
-  - component: {fileID: 3932241477310159655}
   - component: {fileID: 943554702886911015}
   m_Layer: 0
   m_Name: Player
@@ -7046,42 +7008,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &3932241477310159655
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4860473420482358805}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!114 &943554702886911015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7097,8 +7023,10 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   clientId: 0
   isSpectating: 0
+  colorIndex: 0
   floatingUsername: {fileID: 8114381944568008645}
   rb: {fileID: 2725043071608973344}
+  body: {fileID: 789030245080448831}
   mainCamera: {fileID: 1233816499970886941}
   audioListener: {fileID: 8617747637764013386}
   cameraTarget: {fileID: 3661188709929093751}
@@ -7272,15 +7200,13 @@ MonoBehaviour:
   maxTorque: 650
   brakeTorque: 300
   centerOfMass: {x: 0, y: 0.2, z: 0}
-  maxSteeringAngle: 45
+  maxSteeringAngle: 65
   steeringSpeed: 0.8
-  additionalCollisionForce: 1000
-  decelerationMultiplier: 3
+  handbrakeDriftMultiplier: 8
   cameraAngle: 0
   frontLeftRpm: 0
   velocity: 0
   rb: {fileID: 2725043071608973344}
-  body: {fileID: 789030245080448831}
   freeLookCamera: {fileID: 1233816499970886941}
   frontLeftWheelCollider: {fileID: 7947942277690021792}
   frontRightWheelCollider: {fileID: 4296994293568657065}
@@ -7414,10 +7340,9 @@ GameObject:
   m_Component:
   - component: {fileID: 6547566562786020341}
   - component: {fileID: 7945259627787905534}
-  - component: {fileID: 3488281933660398539}
   m_Layer: 0
   m_Name: RearLeftWheel
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7449,12 +7374,12 @@ WheelCollider:
   m_Radius: 0.6
   m_SuspensionSpring:
     spring: 5000
-    damper: 2500
+    damper: 2000
     targetPosition: 0.1
-  m_SuspensionDistance: 0.2
+  m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0.1
   m_Mass: 20
-  m_WheelDampingRate: 5
+  m_WheelDampingRate: 4
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -7466,7 +7391,7 @@ WheelCollider:
     m_ExtremumValue: 1.5
     m_AsymptoteSlip: 1
     m_AsymptoteValue: 1
-    m_Stiffness: 2
+    m_Stiffness: 1.8
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -7476,42 +7401,6 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
---- !u!114 &3488281933660398539
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5661535585461093603}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!1 &5879576936777991904
 GameObject:
   m_ObjectHideFlags: 0
@@ -7571,7 +7460,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BindingMode: 2
-  m_FollowOffset: {x: 0, y: 8.94562, z: -14.737287}
+  m_FollowOffset: {x: 0, y: 6.4640956, z: -14.737287}
   m_XDamping: 1
   m_YDamping: 1
   m_ZDamping: 1
@@ -7652,7 +7541,7 @@ GameObject:
   - component: {fileID: 6906638998894907252}
   m_Layer: 0
   m_Name: LeftTireSmoke_PS
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12479,10 +12368,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3907938134206226615}
   - component: {fileID: 4296994293568657065}
-  - component: {fileID: 7631804056005667572}
   m_Layer: 0
   m_Name: FrontRightWheel
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12514,12 +12402,12 @@ WheelCollider:
   m_Radius: 0.6
   m_SuspensionSpring:
     spring: 5000
-    damper: 2500
+    damper: 2000
     targetPosition: 0.1
-  m_SuspensionDistance: 0.2
+  m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0.1
   m_Mass: 20
-  m_WheelDampingRate: 5
+  m_WheelDampingRate: 4
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -12541,42 +12429,6 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
---- !u!114 &7631804056005667572
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6600226431226378828}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!1 &6772574596560693690
 GameObject:
   m_ObjectHideFlags: 0
@@ -12589,7 +12441,7 @@ GameObject:
   - component: {fileID: 7082956007007520895}
   - component: {fileID: 1718532802686771525}
   m_Layer: 0
-  m_Name: Body.002
+  m_Name: Tail Lights
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12988,10 +12840,9 @@ GameObject:
   m_Component:
   - component: {fileID: 5175821132257396233}
   - component: {fileID: 7947942277690021792}
-  - component: {fileID: 7904588087146912507}
   m_Layer: 0
   m_Name: FrontLeftWheel
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13023,12 +12874,12 @@ WheelCollider:
   m_Radius: 0.6
   m_SuspensionSpring:
     spring: 5000
-    damper: 2500
+    damper: 2000
     targetPosition: 0.1
-  m_SuspensionDistance: 0.2
+  m_SuspensionDistance: 0.3
   m_ForceAppPointDistance: 0.1
   m_Mass: 20
-  m_WheelDampingRate: 5
+  m_WheelDampingRate: 4
   m_ForwardFriction:
     m_ExtremumSlip: 0.3
     m_ExtremumValue: 1.5
@@ -13050,42 +12901,6 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
---- !u!114 &7904588087146912507
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9130804952858522382}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!1001 &3558120070692369491
 PrefabInstance:
   m_ObjectHideFlags: 0

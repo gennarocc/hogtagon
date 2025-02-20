@@ -9,10 +9,12 @@ public class Player : NetworkBehaviour
     [Header("PlayerInfo")]
     [SerializeField] public ulong clientId;
     [SerializeField] public bool isSpectating;
+    [SerializeField] public int colorIndex;
 
     [Header("References")]
     [SerializeField] public TextMeshProUGUI floatingUsername;
     [SerializeField] private Rigidbody rb;
+    [SerializeField] private GameObject body; // Used to set color texture
 
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
@@ -20,10 +22,34 @@ public class Player : NetworkBehaviour
     [SerializeField] public Transform cameraTarget;
     [SerializeField] private Transform cameraOffset;
 
+    private NetworkVariable<PlayerData> networkPlayerData = new NetworkVariable<PlayerData>(
+         new PlayerData
+         {
+             username = "",
+             score = 0,
+             colorIndex = 0,
+             state = PlayerState.Alive,
+             spawnPoint = Vector3.zero,
+             isLobbyLeader = false
+         },
+         NetworkVariableReadPermission.Everyone,
+         NetworkVariableWritePermission.Server
+     );
+
     private Canvas worldspaceCanvas;
     private MenuManager menuManager;
     private int spectatingPlayerIndex = 0;
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        networkPlayerData.OnValueChanged += OnPlayerDataChanged;
+        clientId = OwnerClientId;
+        if (networkPlayerData.Value.username != "")
+        {
+            ApplyPlayerData(networkPlayerData.Value);
+        }
+    }
 
     private void Awake()
     {
@@ -34,7 +60,6 @@ public class Player : NetworkBehaviour
     {
         Cursor.visible = !Cursor.visible; // toggle visibility
         Cursor.lockState = CursorLockMode.Locked;
-
         ConnectionManager.instance.isConnected = true;
 
         if (IsOwner)
@@ -56,14 +81,12 @@ public class Player : NetworkBehaviour
         }
 
         cameraTarget.rotation = Quaternion.identity;
-        clientId = gameObject.GetComponent<NetworkObject>().OwnerClientId;
-        
     }
 
     private void Update()
     {
-        // floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
-        // floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
+        floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
+        floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
 
         cameraTarget.position = cameraOffset.position;
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
@@ -106,16 +129,32 @@ public class Player : NetworkBehaviour
         }
     }
 
-    public void SetPlayerData(PlayerData playerData)
+    private void OnPlayerDataChanged(PlayerData previousValue, PlayerData newValue)
     {
-        // Floating Name Text
-        worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
+        ApplyPlayerData(newValue);
+    }
+
+    private void ApplyPlayerData(PlayerData playerData)
+    {
+        if (body != null && ConnectionManager.instance != null)
+        {
+            body.GetComponent<Renderer>().material = ConnectionManager.instance.hogTextures[playerData.colorIndex];
+        }
+
+        // Update floating username
+        if (worldspaceCanvas == null)
+        {
+            worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
+        }
         floatingUsername.text = playerData.username;
         floatingUsername.transform.SetParent(worldspaceCanvas.transform);
+    }
 
-        // Player Indicator
-        // var playerIndicator = transform.Find("PlayerIndicator").gameObject;
-        // playerIndicator.SetActive(clientId != gameObject.GetComponent<NetworkObject>().OwnerClientId);
-        // playerIndicator.GetComponent<Renderer>().material.color = playerData.color;
+    public void SetPlayerData(PlayerData playerData)
+    {
+        if (IsServer)
+        {
+            networkPlayerData.Value = playerData;
+        }
     }
 }
