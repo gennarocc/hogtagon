@@ -281,7 +281,7 @@ GameObject:
   - component: {fileID: 9219601071739233625}
   m_Layer: 0
   m_Name: Body.005
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1285,7 +1285,7 @@ GameObject:
   - component: {fileID: 7405183568773331293}
   m_Layer: 0
   m_Name: Body.003
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1402,7 +1402,7 @@ GameObject:
   - component: {fileID: 7505519493020409115}
   m_Layer: 0
   m_Name: Body.008
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6653,7 +6653,7 @@ GameObject:
   - component: {fileID: 6846373815372823347}
   m_Layer: 0
   m_Name: Suspension Front
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6739,7 +6739,7 @@ GameObject:
   - component: {fileID: 5932910653615919216}
   m_Layer: 0
   m_Name: Body.004
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6825,7 +6825,7 @@ GameObject:
   - component: {fileID: 2228922393621413926}
   m_Layer: 0
   m_Name: Seats
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12590,7 +12590,7 @@ GameObject:
   - component: {fileID: 1718532802686771525}
   m_Layer: 0
   m_Name: Body.002
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
