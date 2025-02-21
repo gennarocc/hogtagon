@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using Unity.Netcode;
 
 public class Scoreboard : MonoBehaviour
 {
@@ -7,9 +8,30 @@ public class Scoreboard : MonoBehaviour
     [SerializeField] public TextMeshProUGUI players;
     [SerializeField] public TextMeshProUGUI score;
 
-    private void OnEnable()
+    private void Update()
     {
-        players.text = ConnectionManager.instance.PrintPlayers();
+        UpdatePlayerList();
         score.text = ConnectionManager.instance.PrintScore();
+    }
+
+    private void UpdatePlayerList()
+    {
+        string playerList = "";
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+            // Format player name based on state
+                if (playerData.state != PlayerState.Alive)
+                {
+                    playerList += $"<color=#808080>{playerData.username}</color>\n";
+                }
+                else
+                {
+                    playerList += $"{playerData.username}\n";
+                }
+            }
+        }
+        players.text = playerList;
     }
 }
