@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{4994E182-78E4-8E10-FCC3-C62AA1793353}",
+    "Hash": "{5D858A64-D877-B929-4557-45E7866FD200}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -349,7 +349,9 @@
          "GroupType": "Switch",
          "GroupId": "1449613434",
          "Id": "545371365",
-         "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}"
+         "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}",
+         "Color": "2",
+         "Default": "true"
         },
         "MediaRefs": [
          {
@@ -369,7 +371,7 @@
          "GroupId": "1449613434",
          "Id": "2849147824",
          "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}",
-         "Default": "true"
+         "Color": "2"
         },
         "MediaRefs": [
          {
@@ -388,7 +390,8 @@
          "GroupType": "Switch",
          "GroupId": "1449613434",
          "Id": "3550808449",
-         "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"
+         "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}",
+         "Color": "2"
         },
         "MediaRefs": [
          {
@@ -483,25 +486,28 @@
         "Id": "545371365",
         "Name": "low",
         "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\low",
-        "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}"
+        "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}",
+        "Color": "2"
        },
        {
         "Id": "2849147824",
         "Name": "medium",
         "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\medium",
-        "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"
+        "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}",
+        "Color": "2"
        },
        {
         "Id": "3550808449",
         "Name": "high",
         "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\high",
-        "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"
+        "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}",
+        "Color": "2"
        }
       ]
      }
     ]
    }
   ],
-  "FileHash": "{37B0158A-3725-8CE7-E911-F5023ED4F291}"
+  "FileHash": "{9854DA9F-AC51-0E76-43DD-CB3E1DF79C00}"
  }
 }
