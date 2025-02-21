@@ -10,11 +10,29 @@
     "Type": "User",
     "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
     "Language": "SFX",
-    "Hash": "{41FF6D48-9B95-F0C2-8FF9-52A5BC1526C9}",
+    "Hash": "{AE060F7B-F674-62B8-7B0F-96085674ACEA}",
     "ObjectPath": "Init",
     "ShortName": "Init",
     "Path": "Init.bnk",
     "Plugins": {
+     "ShareSets": [
+      {
+       "Id": "506891147",
+       "Name": "Plate_Small",
+       "ObjectPath": "\\Effects\\Factory Effects\\RoomVerb\\Plates\\Plate_Small",
+       "GUID": "{5681977F-CD7F-4D09-AA58-118BEFA48C8C}",
+       "LibName": "Wwise RoomVerb",
+       "LibId": "7733251"
+      },
+      {
+       "Id": "2513915904",
+       "Name": "Hall_Large",
+       "ObjectPath": "\\Effects\\Factory Effects\\RoomVerb\\Halls\\Hall_Large",
+       "GUID": "{6D154498-FF6D-4823-96FC-56841B70E079}",
+       "LibName": "Wwise RoomVerb",
+       "LibId": "7733251"
+      }
+     ],
      "AudioDevices": [
       {
        "Id": "2317455096",
@@ -45,13 +63,29 @@
       "Id": "915214414",
       "Name": "GUI",
       "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX\\GUI",
-      "GUID": "{B1608F7D-8FDA-4E46-B256-DE3079938C48}"
+      "GUID": "{B1608F7D-8FDA-4E46-B256-DE3079938C48}",
+      "AuxBusRefs": [
+       {
+        "Id": "1431427514",
+        "Name": "gui_verb",
+        "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX\\GUI\\gui_verb",
+        "GUID": "{97E94E47-7E27-41EB-BA5B-0777D6240C09}"
+       }
+      ]
      },
      {
       "Id": "2609808943",
       "Name": "World",
       "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX\\World",
-      "GUID": "{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}"
+      "GUID": "{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}",
+      "AuxBusRefs": [
+       {
+        "Id": "2667095749",
+        "Name": "world_verb",
+        "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX\\World\\world_verb",
+        "GUID": "{CE2A0EED-EFC4-405A-8E44-3AFF50B556A3}"
+       }
+      ]
      },
      {
       "Id": "3803692087",
@@ -64,6 +98,34 @@
       "Name": "Music",
       "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\Music",
       "GUID": "{5EF84C62-E229-4AE1-9A1D-4CFEC7C94548}"
+     }
+    ],
+    "AuxBusses": [
+     {
+      "Id": "1431427514",
+      "Name": "gui_verb",
+      "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX\\GUI\\gui_verb",
+      "GUID": "{97E94E47-7E27-41EB-BA5B-0777D6240C09}",
+      "PluginRefs": {
+       "ShareSets": [
+        {
+         "Id": "506891147"
+        }
+       ]
+      }
+     },
+     {
+      "Id": "2667095749",
+      "Name": "world_verb",
+      "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus\\SFX\\World\\world_verb",
+      "GUID": "{CE2A0EED-EFC4-405A-8E44-3AFF50B556A3}",
+      "PluginRefs": {
+       "ShareSets": [
+        {
+         "Id": "2513915904"
+        }
+       ]
+      }
      }
     ],
     "GameParameters": [
@@ -80,6 +142,12 @@
       "GUID": "{A34890AB-B9D5-4526-A64D-5290C43EF2DC}"
      },
      {
+      "Id": "988953028",
+      "Name": "SfxVolume",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\SfxVolume",
+      "GUID": "{9D098066-06B5-4547-859D-95440437DD1B}"
+     },
+     {
       "Id": "1029930033",
       "Name": "SS_Air_Fury",
       "ObjectPath": "\\Game Parameters\\Factory Soundseed Air Game Syncs\\SS_Air_Fury",
@@ -92,10 +160,22 @@
       "GUID": "{F72E0659-4346-4E1C-A1B1-DAB46A05101E}"
      },
      {
+      "Id": "2346531308",
+      "Name": "MusicVolume",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\MusicVolume",
+      "GUID": "{C5FDB3A3-2BFE-445C-8D3D-5BADF0690317}"
+     },
+     {
       "Id": "2648548617",
       "Name": "SS_Air_Month",
       "ObjectPath": "\\Game Parameters\\Factory Soundseed Air Game Syncs\\SS_Air_Month",
       "GUID": "{09E2B445-C4A3-447F-B3CA-818A1D925EF7}"
+     },
+     {
+      "Id": "2918011349",
+      "Name": "MasterVolume",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\MasterVolume",
+      "GUID": "{72389EF8-18FD-4055-8F30-1EB642CF307A}"
      },
      {
       "Id": "3002758120",
@@ -151,19 +231,22 @@
         "Id": "545371365",
         "Name": "low",
         "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\low",
-        "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}"
+        "GUID": "{C5B2DF45-9977-4C78-B474-13B3170D136D}",
+        "Color": "2"
        },
        {
         "Id": "2849147824",
         "Name": "medium",
         "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\medium",
-        "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"
+        "GUID": "{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}",
+        "Color": "2"
        },
        {
         "Id": "3550808449",
         "Name": "high",
         "ObjectPath": "\\Switches\\Default Work Unit\\hog_impact\\high",
-        "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"
+        "GUID": "{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}",
+        "Color": "2"
        }
       ]
      }
@@ -647,6 +730,6 @@
     ]
    }
   ],
-  "FileHash": "{C5C4DF53-85E7-0B50-15F4-B863E375005D}"
+  "FileHash": "{CB9A7FEB-5C9C-94E5-FA42-54E78BF73BCB}"
  }
 }

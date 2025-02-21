@@ -3,10 +3,14 @@
 	<AudioObjects>
 		<WorkUnit Name="Default Work Unit" ID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}" PersistMode="Standalone">
 			<ChildrenList>
-				<Folder Name="Bounces" ID="{93002775-B36B-4D97-B54D-ED46B928A147}" ShortID="1016248429"/>
 				<BlendContainer Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" ShortID="821123812">
 					<PropertyList>
 						<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+						<Property Name="OutputBusHighpass" Type="int16">
+							<ValueList>
+								<Value>15</Value>
+							</ValueList>
+						</Property>
 					</PropertyList>
 					<ReferenceList>
 						<Reference Name="Conversion">
@@ -210,6 +214,13 @@
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-1" ID="{BA6FEB59-71CA-4E50-9CBF-2A6490EE285F}" ShortID="237781142">
+							<PropertyList>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-10</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -239,6 +250,13 @@
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-2" ID="{AAF057FF-BDCC-4E0C-8D2B-6BE88BAA498B}" ShortID="435362373">
+							<PropertyList>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-10</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -268,6 +286,13 @@
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-3" ID="{31335CA0-BA45-4864-A882-B6165C6E7E5C}" ShortID="333338748">
+							<PropertyList>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-5</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -297,6 +322,13 @@
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-4" ID="{6A357843-9EC9-4EB4-974F-1C8ACD316389}" ShortID="88516859">
+							<PropertyList>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-5</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -326,6 +358,13 @@
 							</ActiveSourceList>
 						</Sound>
 						<Sound Name="gear-shift-5" ID="{5B013149-F91B-4E2B-8E03-AD9EFF66C844}" ShortID="1028955023">
+							<PropertyList>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-5</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -858,7 +897,7 @@
 							<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 						</Reference>
 						<Reference Name="DefaultSwitchOrState">
-							<ObjectRef Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
+							<ObjectRef Name="low" ID="{C5B2DF45-9977-4C78-B474-13B3170D136D}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
 						</Reference>
 						<Reference Name="OutputBus">
 							<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
@@ -869,12 +908,15 @@
 					</ReferenceList>
 					<ChildrenList>
 						<RandomSequenceContainer Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}" ShortID="864689547">
+							<PropertyList>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 								</Reference>
 								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 								</Reference>
 							</ReferenceList>
 							<ChildrenList>
@@ -945,14 +987,27 @@
 									</ActiveSourceList>
 								</Sound>
 							</ChildrenList>
+							<StateInfo>
+								<StatePropertyList>
+									<Property Name="Highpass"/>
+									<Property Name="Lowpass"/>
+									<Property Name="MakeUpGain"/>
+									<Property Name="Pitch"/>
+									<Property Name="Priority"/>
+									<Property Name="Volume"/>
+								</StatePropertyList>
+							</StateInfo>
 						</RandomSequenceContainer>
 						<RandomSequenceContainer Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}" ShortID="1020244753">
+							<PropertyList>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 								</Reference>
 								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 								</Reference>
 							</ReferenceList>
 							<ChildrenList>
@@ -1023,14 +1078,27 @@
 									</ActiveSourceList>
 								</Sound>
 							</ChildrenList>
+							<StateInfo>
+								<StatePropertyList>
+									<Property Name="Highpass"/>
+									<Property Name="Lowpass"/>
+									<Property Name="MakeUpGain"/>
+									<Property Name="Pitch"/>
+									<Property Name="Priority"/>
+									<Property Name="Volume"/>
+								</StatePropertyList>
+							</StateInfo>
 						</RandomSequenceContainer>
 						<RandomSequenceContainer Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}" ShortID="11654586">
+							<PropertyList>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 								</Reference>
 								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 								</Reference>
 							</ReferenceList>
 							<ChildrenList>
@@ -1101,8 +1169,28 @@
 									</ActiveSourceList>
 								</Sound>
 							</ChildrenList>
+							<StateInfo>
+								<StatePropertyList>
+									<Property Name="Highpass"/>
+									<Property Name="Lowpass"/>
+									<Property Name="MakeUpGain"/>
+									<Property Name="Pitch"/>
+									<Property Name="Priority"/>
+									<Property Name="Volume"/>
+								</StatePropertyList>
+							</StateInfo>
 						</RandomSequenceContainer>
 					</ChildrenList>
+					<StateInfo>
+						<StatePropertyList>
+							<Property Name="Highpass"/>
+							<Property Name="Lowpass"/>
+							<Property Name="MakeUpGain"/>
+							<Property Name="Pitch"/>
+							<Property Name="Priority"/>
+							<Property Name="Volume"/>
+						</StatePropertyList>
+					</StateInfo>
 					<GroupingInfo>
 						<GroupingBehaviorList>
 							<GroupingBehavior>

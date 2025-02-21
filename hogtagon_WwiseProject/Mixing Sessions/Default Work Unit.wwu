@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <WwiseDocument Type="WorkUnit" ID="{633CFEEE-F609-4E17-96FE-88094FE85CE8}" SchemaVersion="123">
 	<MixingSessions>
-		<WorkUnit Name="Default Work Unit" ID="{633CFEEE-F609-4E17-96FE-88094FE85CE8}" PersistMode="Standalone"/>
+		<WorkUnit Name="Default Work Unit" ID="{633CFEEE-F609-4E17-96FE-88094FE85CE8}" PersistMode="Standalone">
+			<ChildrenList>
+				<MixingSession Name="HOG" ID="{3C5C2B27-9F1D-4898-9C34-EA7BB550B04F}">
+					<ObjectList>
+						<ObjectRef Name="car-explosion" ID="{38FA73A5-FE29-42E2-9DEF-149CD7526467}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+						<ObjectRef Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+						<ObjectRef Name="hog-impact" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+						<ObjectRef Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+						<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+						<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+					</ObjectList>
+				</MixingSession>
+			</ChildrenList>
+		</WorkUnit>
 	</MixingSessions>
 </WwiseDocument>
