@@ -424,10 +424,24 @@ public class HogController : NetworkBehaviour
 
 
     [ClientRpc]
-    public void ExplodeCarClientRpc()
+public void ExplodeCarClientRpc()
+{
+    // Store reference to instantiated explosion
+    GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
+    CarExplosion.Post(gameObject); //Wwise audio event
+    canMove = false;
+    StartCoroutine(ResetAfterExplosion(explosionInstance));
+}
+
+private IEnumerator ResetAfterExplosion(GameObject explosionInstance)
+{
+    yield return new WaitForSeconds(3f);
+    
+    // Reset movement and destroy explosion
+    canMove = true;
+    if (explosionInstance != null)
     {
-        Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform); // Explosion Particles
-        CarExplosion.Post(gameObject); // Wwise audio event
-        canMove = false;
+        Destroy(explosionInstance);
     }
+}
 }

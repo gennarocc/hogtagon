@@ -38,18 +38,36 @@ public class KillBall : NetworkBehaviour
     [ServerRpc]
     private void NotifyPlayerCollisionServerRpc(CollisionData data)
     {
-        var clientId = data.id;
-        if (NetworkManager.ConnectedClients.ContainsKey(clientId))
+    var clientId = data.id;
+    if (NetworkManager.ConnectedClients.ContainsKey(clientId))
+    {
+        var client = NetworkManager.Singleton.ConnectedClients[clientId];
+        Debug.Log(message: clientId + " - Add blow up force to " + client.PlayerObject.name);
+        
+        // Get the rigidbody
+        Rigidbody rb = client.PlayerObject.GetComponentInChildren<Rigidbody>();
+        
+        // Launch the car in a random angle with a lot of force
+        rb.AddForce(new Vector3(Random.Range(-.6f, -.6f), 1, Random.Range(-.6f, .6f)) 
+            * blowupForce * 10000, ForceMode.Impulse);
+            
+        // Add random rotational force
+        Vector3 randomTorque = new Vector3(
+            Random.Range(-1f, 1f),
+            Random.Range(-1f, 1f),
+            Random.Range(-1f, 1f)
+        ).normalized * 1000f; // Adjust this multiplier as needed
+        rb.AddTorque(randomTorque, ForceMode.Impulse);
+        
+        // Set player to dead
+        if (GameManager.instance.state == GameState.Playing) 
         {
-            var client = NetworkManager.Singleton.ConnectedClients[clientId];
-            Debug.Log(message: clientId + " - Add blow up force to " + client.PlayerObject.name);
-            // Launch the car in a random angle with a lot of force.
-            client.PlayerObject.GetComponentInChildren<Rigidbody>().AddForce
-                (new Vector3(Random.Range(-.6f, -.6f), 1, Random.Range(-.6f, .6f)) * blowupForce * 10000, ForceMode.Impulse);
-            // Set player to dead
-            if (GameManager.instance.state == GameState.Playing) GameManager.instance.PlayerDied(clientId);
-            // FX
-            // client.PlayerObject.GetComponent<HogController>().ExplodeCarClientRpc();
+            GameManager.instance.PlayerDied(clientId);
+        }    
+
+        // FX
+        client.PlayerObject.GetComponentInChildren<HogController>().ExplodeCarClientRpc();
+        
         }
     }
 
