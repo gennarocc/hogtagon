@@ -7073,9 +7073,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4720890600952979840}
   - component: {fileID: 2725043071608973344}
-  - component: {fileID: 7268821278262247900}
-  - component: {fileID: 8065868344176151203}
-  - component: {fileID: 7500573832422394504}
+  - component: {fileID: 6205574874647026685}
   m_Layer: 0
   m_Name: Hog
   m_TagString: Player
@@ -7130,60 +7128,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &7268821278262247900
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5388601285324323642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 1
---- !u!114 &8065868344176151203
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5388601285324323642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkRigidbodyBaseExpanded: 0
-  UseRigidBodyForMotion: 1
-  AutoUpdateKinematicState: 1
-  AutoSetKinematicOnDespawn: 1
---- !u!114 &7500573832422394504
+--- !u!114 &6205574874647026685
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -7197,15 +7142,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   canMove: 1
-  maxTorque: 650
+  maxTorque: 500
   brakeTorque: 300
-  centerOfMass: {x: 0, y: 0.2, z: 0}
-  maxSteeringAngle: 65
-  steeringSpeed: 0.8
-  handbrakeDriftMultiplier: 8
+  centerOfMass: {x: 0, y: 0, z: 0}
+  maxSteeringAngle: 60
+  steeringSpeed: 0.7
+  handbrakeDriftMultiplier: 5
   cameraAngle: 0
   frontLeftRpm: 0
   velocity: 0
+  positionLerpSpeed: 10
+  rotationLerpSpeed: 10
+  tickRate: 60
+  bufferSize: 10
   rb: {fileID: 2725043071608973344}
   freeLookCamera: {fileID: 1233816499970886941}
   frontLeftWheelCollider: {fileID: 7947942277690021792}
@@ -7224,27 +7173,27 @@ MonoBehaviour:
   EngineOn:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: ad9bafa82afe869438b5285241574cfc, type: 2}
+    WwiseObjectReference: {fileID: 0}
   EngineOff:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 26fba088fe0a84240abad565212f06cb, type: 2}
+    WwiseObjectReference: {fileID: 0}
   CarExplosion:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
+    WwiseObjectReference: {fileID: 0}
   rpm:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 6f55246155700064bafd21a7a4a31cfc, type: 2}
+    WwiseObjectReference: {fileID: 0}
   TireScreech:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 3b5e6672c5ed26e4eb2f6d93faf139f8, type: 2}
+    WwiseObjectReference: {fileID: 0}
   HogImpact:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: a3a89f555b1962c42afa2229b28255a1, type: 2}
+    WwiseObjectReference: {fileID: 0}
   ImpactLevel:
     idInternal: 0
     valueGuidInternal: 

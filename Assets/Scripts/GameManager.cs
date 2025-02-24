@@ -135,21 +135,21 @@ public class GameManager : NetworkBehaviour
 
     private void LockPlayerMovement()
     {
-        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+        // HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
 
-        foreach (HogController player in players)
-        {
-            player.canMove = false;
-        }
+        // foreach (HogController player in players)
+        // {
+        //     player.canMove = false;
+        // }
     }
 
     private void UnlockPlayerMovement()
     {
-        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+        // HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
 
-        foreach (HogController player in players)
-        {
-            player.canMove = true;
-        }
+        // foreach (HogController player in players)
+        // {
+        //     player.canMove = true;
+        // }
     }
 }
