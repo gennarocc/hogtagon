@@ -8,10 +8,12 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
+using UnityEditor;
 
 public class ConnectToGame : MonoBehaviour
 {
     [SerializeField] private Camera startCamera;
+    [SerializeField] private MenuManager menuManager;
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField joinCodeInput;
     [SerializeField] private Button hostLobby;
@@ -37,6 +39,7 @@ public class ConnectToGame : MonoBehaviour
             await UnityServices.InitializeAsync(clientOptions);
         }
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
+
     }
 
     public void OnInputFieldValueChanged()
@@ -61,6 +64,7 @@ public class ConnectToGame : MonoBehaviour
         }
     }
 
+
     private async void CreateRelay()
     {
         try
@@ -74,7 +78,10 @@ public class ConnectToGame : MonoBehaviour
         }
         catch (RelayServiceException e)
         {
-            Debug.Log(e);
+            Debug.Log("Error creating lobby");
+            connectionPending.SetActive(false);
+            menuManager.DisplayConnectionError(e.Message);
+            menuManager.MainMenu();
         }
     }
 
@@ -90,6 +97,9 @@ public class ConnectToGame : MonoBehaviour
         catch (RelayServiceException e)
         {
             Debug.Log(e);
+            connectionPending.SetActive(false);
+            menuManager.DisplayConnectionError("No lobby found");
+            menuManager.MainMenu();
         }
 
     }
@@ -108,4 +118,6 @@ public class ConnectToGame : MonoBehaviour
         CreateRelay();
         connectionPending.SetActive(true);
     }
+
+
 }

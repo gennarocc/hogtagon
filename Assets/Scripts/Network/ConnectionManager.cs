@@ -25,6 +25,8 @@ public class ConnectionManager : NetworkBehaviour
         NetworkManager.Singleton.ConnectionApprovalCallback += ConnectionApprovalCallback;
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
         NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
+        NetworkManager.Singleton.OnTransportFailure += OnTransportFailure;
+
         if (instance == null)
         {
             instance = this;
@@ -101,10 +103,16 @@ public class ConnectionManager : NetworkBehaviour
         if (!IsServer && NetworkManager.Singleton.DisconnectReason != string.Empty)
         {
             menuManager.MainMenu();
-            menuManager.DisplayConnectionError();
+            menuManager.DisplayConnectionError(NetworkManager.Singleton.DisconnectReason);
         }
     }
 
+    private void OnTransportFailure()
+    {
+        menuManager.connectionPending.SetActive(false);
+        menuManager.DisplayConnectionError("Connection Timeout");
+        menuManager.MainMenu();
+    }
     public bool CheckUsernameAvailability(string username)
     {
         // Check length. 

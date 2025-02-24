@@ -167,9 +167,9 @@ public class MenuManager : NetworkBehaviour
         Application.Quit();
     }
 
-    public void DisplayConnectionError()
+    public void DisplayConnectionError(string error)
     {
-        connectionRefusedReasonText.text = NetworkManager.Singleton.DisconnectReason;
+        connectionRefusedReasonText.text = error;
         uiCancel.Post(gameObject);
     }
 
