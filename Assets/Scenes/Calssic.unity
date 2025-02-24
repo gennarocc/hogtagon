@@ -4972,27 +4972,27 @@ MonoBehaviour:
   MasterVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 8e1ef461f2cda0e478847bfba655176e, type: 2}
   MusicVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 275a2ac0b2ccdc544bcdf73f4bb63ae8, type: 2}
   SfxVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 887ce1eb840c60c40b7585e97601c7b4, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: aea576d8c070a6b48901a2b64568f58e, type: 2}
   uiConfirm:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 48af205587f718240b144393ab35a700, type: 2}
   uiCancel:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: a44cab77c37739a49ac20c92c3390560, type: 2}
 --- !u!1 &761765017
 GameObject:
   m_ObjectHideFlags: 0
