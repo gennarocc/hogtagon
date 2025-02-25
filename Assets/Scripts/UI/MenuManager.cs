@@ -114,6 +114,12 @@ public class MenuManager : NetworkBehaviour
         ButtonConfirmAudio();
         mainMenuPanel.SetActive(false);
         playMenuPanel.SetActive(true);
+
+        // Lower the priority of the menu camera
+    if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
+    {
+        virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
+    }
     }
 
     public void OnOptionsClicked()
