@@ -8,12 +8,13 @@ public class HogController : NetworkBehaviour
 {
     [Header("Hog Params")]
     [SerializeField] public bool canMove = true;
-    [SerializeField] private float maxTorque = 500f; // Maximum torque applied to wheels
+    [SerializeField] private float maxTorque = 500f; // Maximum torque plied to wheels
     [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
-    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
-        [SerializeField] public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
+    [SerializeField, Range(0.1f, 1f)]
+    private float steeringSpeed = .7f;
+    [SerializeField] public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
     [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
@@ -174,7 +175,7 @@ public class HogController : NetworkBehaviour
     {
         if (!canMove) return;
         ApplyMotorTorque(input.moveInput, input.brakeInput);
-        ApplySteering(input.steeringAngle);
+        ApplySteering(input.steeringAngle, input.moveInput);
         isDrifting.Value = localVelocityX > .25f ? true : false;
         if (input.handbrake)
         {
@@ -208,36 +209,116 @@ public class HogController : NetworkBehaviour
 
     }
 
-    private void ApplySteering(float cameraAngle)
+    private void ApplySteering(float cameraAngle, float moveInput)
     {
+        // If camera angle is small, treat it as zero
         if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
 
-        float frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
-        // Use only 30% of steering angle for rear wheels
-        // Calculate rear steering with speed dependency
-        // float speedFactor = Mathf.Clamp01(1f - (rb.linearVelocity.magnitude / 10f));
+        // Check if car is actually moving in reverse (based on velocity, not just input)
+        // We use the dot product to check if velocity is in the opposite direction of the car's forward
+        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
+        bool isMovingInReverse = forwardVelocity < -0.5f; // Threshold to detect actual reverse movement
+
+        // Only apply reverse steering when both moving in reverse and pressing reverse
+        bool shouldUseReverseControls = isMovingInReverse && moveInput < 0;
+
+        // For reverse, invert the steering direction to make car drive toward camera
+        if (shouldUseReverseControls)
+        {
+            cameraAngle = -cameraAngle;
+        }
+
+        // Check if camera is behind the car (angle near 180 or -180 degrees)
+        bool isCameraBehind = Mathf.Abs(cameraAngle) > 160f;
+
+        float frontSteeringAngle;
+        if (isCameraBehind)
+        {
+            // When looking backwards, gradually straighten wheels as angle approaches 180/-180
+            float behindFactor = (180f - Mathf.Abs(cameraAngle)) / 20f; // 0 at 180, 1 at 160
+            frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle) * behindFactor;
+        }
+        else
+        {
+            // Normal steering
+            frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
+        }
+
+        // Use only 35% of steering angle for rear wheels (in opposite direction)
         float rearSteeringAngle = frontSteeringAngle * -0.35f;
 
+        // Apply smoothed steering to wheel colliders
         frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
         frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
         rearLeftWheelCollider.steerAngle = Mathf.Lerp(rearLeftWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
         rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
     }
 
-
     private void AnimateWheels()
     {
+        // Apply steering rotation
         if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
-        float frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
-        // Use only 30% of steering angle for rear wheels
-        // Calculate rear steering with speed dependency
+
+        // Check actual car movement direction
+        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
+        bool isMovingInReverse = forwardVelocity < -0.5f;
+
+        // Get current input direction
+        bool isPressingReverse = false;
+        if (IsOwner)
+        {
+            isPressingReverse = Input.GetKey(KeyCode.S) || (Input.GetJoystickNames().Length > 0 && Input.GetAxis("XRI_Right_Trigger") != 0);
+        }
+
+        // Only use reverse controls when both moving in reverse and pressing reverse
+        bool shouldUseReverseControls = isMovingInReverse && isPressingReverse;
+
+        // For reverse, invert the steering direction
+        float adjustedCameraAngle = shouldUseReverseControls ? -cameraAngle : cameraAngle;
+
+        // Check if camera is behind the car (angle near 180 or -180 degrees)
+        bool isCameraBehind = Mathf.Abs(adjustedCameraAngle) > 160f;
+
+        float frontSteeringAngle;
+        if (isCameraBehind)
+        {
+            // When looking backwards, gradually straighten wheels as angle approaches 180/-180
+            float behindFactor = (180f - Mathf.Abs(adjustedCameraAngle)) / 20f; // 0 at 180, 1 at 160
+            frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, maxSteeringAngle * -1, maxSteeringAngle) * behindFactor;
+        }
+        else
+        {
+            // Normal steering
+            frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
+        }
+
+        // Use 50% of steering angle for rear wheels (in opposite direction)
         float rearSteeringAngle = frontSteeringAngle * -0.5f;
-        var steeringAngle = -1 * Math.Clamp(cameraAngle, 0, maxSteeringAngle);
-        // Convert angle to Quaternion
+
+        // Calculate wheel rotation based on car speed
+        // Get the magnitude of velocity along the car's forward axis
+        float speedForRotation = Mathf.Abs(forwardVelocity);
+
+        // Convert speed to rotation - adjust the multiplier to get desired rotation speed
+        float rotationAngle = speedForRotation * 15f; // Adjust this multiplier as needed
+
+        // Create rotation amount for this frame
+        float rotationThisFrame = rotationAngle * Time.deltaTime * 60f; // Normalized for framerate
+
+        // Direction of rotation (opposite when in reverse)
+        float rotationDirection = forwardVelocity >= 0 ? 1f : -1f;
+
+        // Apply steering angle to wheel transforms
         frontLeftWheelTransform.localRotation = Quaternion.Euler(0, frontSteeringAngle, 0);
         frontRightWheelTransform.localRotation = Quaternion.Euler(0, frontSteeringAngle, 0);
         rearLeftWheelTransform.localRotation = Quaternion.Euler(0, rearSteeringAngle, 0);
         rearRightWheelTransform.localRotation = Quaternion.Euler(0, rearSteeringAngle, 0);
+
+        // Rotate wheels around their axes based on speed
+        frontLeftWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
+        frontRightWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
+        rearLeftWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
+        rearRightWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
     }
 
     public void Handbrake()
@@ -424,24 +505,24 @@ public class HogController : NetworkBehaviour
 
 
     [ClientRpc]
-public void ExplodeCarClientRpc()
-{
-    // Store reference to instantiated explosion
-    GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
-    CarExplosion.Post(gameObject); //Wwise audio event
-    canMove = false;
-    StartCoroutine(ResetAfterExplosion(explosionInstance));
-}
-
-private IEnumerator ResetAfterExplosion(GameObject explosionInstance)
-{
-    yield return new WaitForSeconds(3f);
-    
-    // Reset movement and destroy explosion
-    canMove = true;
-    if (explosionInstance != null)
+    public void ExplodeCarClientRpc()
     {
-        Destroy(explosionInstance);
+        // Store reference to instantiated explosion
+        GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
+        CarExplosion.Post(gameObject); //Wwise audio event
+        canMove = false;
+        StartCoroutine(ResetAfterExplosion(explosionInstance));
     }
-}
+
+    private IEnumerator ResetAfterExplosion(GameObject explosionInstance)
+    {
+        yield return new WaitForSeconds(3f);
+
+        // Reset movement and destroy explosion
+        canMove = true;
+        if (explosionInstance != null)
+        {
+            Destroy(explosionInstance);
+        }
+    }
 }
