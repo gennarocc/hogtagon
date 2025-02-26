@@ -4,21 +4,22 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using Cinemachine;
+using Unity.VisualScripting;
 
 public class MenuManager : NetworkBehaviour
 {
     public bool gameIsPaused = false;
 
     [Header("Menu Panels")]
-    [SerializeField] private GameObject mainMenuPanel;    // New main menu
-    [SerializeField] private GameObject playMenuPanel;    // Your existing menu for game setup
+    [SerializeField] private GameObject mainMenuPanel;    
+    [SerializeField] private GameObject playMenuPanel;    
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
     [SerializeField] private GameObject scoreboardUI;
     [SerializeField] private GameObject tempUI;
 
     [Header("Main Menu Components")]
-    [SerializeField] private Button playButton;           // New main menu buttons
+    [SerializeField] private Button playButton;           
     [SerializeField] private Button optionsButton;
     [SerializeField] private Button quitButton;
 
@@ -74,6 +75,15 @@ public class MenuManager : NetworkBehaviour
                 if (gameIsPaused) Resume();
                 else Pause();
             }
+
+            //Back Up Menu
+            if (Input.GetKeyDown(KeyCode.Escape) && playMenuPanel.activeSelf)
+            {
+                // Reset button states before disabling menus
+                mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+                
+                ShowMainMenu();
+            }
             
             // Scoreboard
             if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) 
@@ -97,6 +107,7 @@ public class MenuManager : NetworkBehaviour
 
     public void ShowMainMenu()
     {
+       
         mainMenuPanel.SetActive(true);
         playMenuPanel.SetActive(false);
         pauseMenuUI.SetActive(false);
@@ -107,8 +118,8 @@ public class MenuManager : NetworkBehaviour
         
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 100;
     }
-
     public void OnPlayClicked()
     {
         ButtonConfirmAudio();
@@ -130,6 +141,17 @@ public class MenuManager : NetworkBehaviour
 
     public void Resume()
     {
+        // Reset button states before disabling menus
+        if (pauseMenuUI.activeSelf)
+        {
+            pauseMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+        }
+        if (settingsMenuUI.activeSelf)
+        {
+            settingsMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+        }
+
+
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
         gameIsPaused = false;
@@ -153,8 +175,16 @@ public class MenuManager : NetworkBehaviour
 
     public void Settings()
     {
-        settingsMenuUI.SetActive(!settingsMenuUI.activeSelf);
-        pauseMenuUI.SetActive(!pauseMenuUI.activeSelf);
+        if (gameIsPaused)
+        {
+            settingsMenuUI.SetActive(!settingsMenuUI.activeSelf);
+            pauseMenuUI.SetActive(!pauseMenuUI.activeSelf);
+        }
+        else
+        {
+            ShowMainMenu();    
+        }
+        
     }
 
     public void CopyJoinCode()
@@ -209,7 +239,7 @@ public class MenuManager : NetworkBehaviour
         connectionPending.SetActive(false);
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-        playMenuPanel.SetActive(true);
+        ShowMainMenu();  
     }
 
     public void Disconnect()
