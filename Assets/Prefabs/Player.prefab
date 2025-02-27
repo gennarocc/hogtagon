@@ -7200,7 +7200,7 @@ MonoBehaviour:
   maxTorque: 650
   brakeTorque: 300
   centerOfMass: {x: 0, y: 0.2, z: 0}
-  maxSteeringAngle: 65
+  maxSteeringAngle: 55
   steeringSpeed: 0.8
   handbrakeDriftMultiplier: 8
   cameraAngle: 0
@@ -7229,28 +7229,14 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: 26fba088fe0a84240abad565212f06cb, type: 2}
-  CarExplosion:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
-  rpm:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 6f55246155700064bafd21a7a4a31cfc, type: 2}
   TireScreech:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: 3b5e6672c5ed26e4eb2f6d93faf139f8, type: 2}
-  HogImpact:
+  rpm:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: a3a89f555b1962c42afa2229b28255a1, type: 2}
-  ImpactLevel:
-    idInternal: 0
-    valueGuidInternal: 
-    groupIdInternal: 0
-    groupGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 6f55246155700064bafd21a7a4a31cfc, type: 2}
 --- !u!1 &5629968131305222426
 GameObject:
   m_ObjectHideFlags: 3

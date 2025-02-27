@@ -3,6 +3,7 @@ using Unity.Netcode;
 using Cinemachine;
 using System;
 using System.Collections;
+using TMPro;
 
 public class HogController : NetworkBehaviour
 {
@@ -41,11 +42,9 @@ public class HogController : NetworkBehaviour
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event EngineOn;
     [SerializeField] private AK.Wwise.Event EngineOff;
-    [SerializeField] private AK.Wwise.Event CarExplosion;
-    [SerializeField] private AK.Wwise.RTPC rpm;
     [SerializeField] private AK.Wwise.Event TireScreech;
-    [SerializeField] private AK.Wwise.Event HogImpact;
-    [SerializeField] private AK.Wwise.State ImpactLevel;
+    [SerializeField] private AK.Wwise.RTPC rpm;
+
 
     private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
     private float currentTorque;
@@ -82,6 +81,16 @@ public class HogController : NetworkBehaviour
         // Set player color
     }
 
+    private void Update()
+    {
+        if (!IsOwner) return;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            // Play Horn Sound
+            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
+        }
+    }
 
     private void FixedUpdate()
     {
@@ -95,6 +104,9 @@ public class HogController : NetworkBehaviour
         {
             ClientMove();
         }
+
+
+
 
         AnimateWheels();
         DriftCarPS();
@@ -126,6 +138,7 @@ public class HogController : NetworkBehaviour
         {
             handbrakeOn = true;
         }
+
 
         // Controller input (if controller is connected)
         if (Input.GetJoystickNames().Length > 0)
@@ -214,34 +227,82 @@ public class HogController : NetworkBehaviour
         // If camera angle is small, treat it as zero
         if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
 
-        // Check if car is actually moving in reverse (based on velocity, not just input)
-        // We use the dot product to check if velocity is in the opposite direction of the car's forward
-        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
-        bool isMovingInReverse = forwardVelocity < -0.5f; // Threshold to detect actual reverse movement
+        // Get the original camera angle before applying any adjustments
+        float originalCameraAngle = cameraAngle;
 
-        // Only apply reverse steering when both moving in reverse and pressing reverse
+        // Check if car is actually moving in reverse (based on velocity, not just input)
+        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
+        bool isMovingInReverse = forwardVelocity < -0.5f;
+
+        // Determine if we should apply reverse steering logic
         bool shouldUseReverseControls = isMovingInReverse && moveInput < 0;
 
-        // For reverse, invert the steering direction to make car drive toward camera
+        // For reverse, we invert the steering direction
         if (shouldUseReverseControls)
         {
             cameraAngle = -cameraAngle;
+
+            // Add hysteresis - if angle is around 90 degrees, maintain the current steering angle
+            // This prevents rapid changes when looking from the side
+            if (Mathf.Abs(originalCameraAngle) > 70f && Mathf.Abs(originalCameraAngle) < 110f)
+            {
+                // Get the current steering angle and maintain it with some smoothing
+                float currentSteeringAverage = (frontLeftWheelCollider.steerAngle + frontRightWheelCollider.steerAngle) / 2f;
+
+                // Only make small adjustments when in this "stability zone"
+                cameraAngle = Mathf.Lerp(cameraAngle, currentSteeringAverage, 0.8f);
+            }
         }
 
-        // Check if camera is behind the car (angle near 180 or -180 degrees)
-        bool isCameraBehind = Mathf.Abs(cameraAngle) > 160f;
+        // Check if camera is behind the car based on maxSteeringAngle
+        // Camera is behind if it's in the region: (180-maxSteeringAngle) to (-180+maxSteeringAngle)
+        bool isCameraBehind = Mathf.Abs(cameraAngle) > (180f - maxSteeringAngle);
 
         float frontSteeringAngle;
         if (isCameraBehind)
         {
-            // When looking backwards, gradually straighten wheels as angle approaches 180/-180
-            float behindFactor = (180f - Mathf.Abs(cameraAngle)) / 20f; // 0 at 180, 1 at 160
-            frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle) * behindFactor;
+            // When camera is in the "behind" region, calculate how far into that region
+            float behindFactor;
+
+            if (cameraAngle > 0)
+            {
+                // Positive angle (right side behind region)
+                behindFactor = (180f - cameraAngle) / maxSteeringAngle;
+            }
+            else
+            {
+                // Negative angle (left side behind region)
+                behindFactor = (180f + cameraAngle) / maxSteeringAngle;
+            }
+
+            behindFactor = Mathf.Clamp01(behindFactor);
+
+            // Calculate steering angle that decreases as we go deeper into behind region
+            if (cameraAngle > 0)
+            {
+                frontSteeringAngle = maxSteeringAngle * behindFactor;
+            }
+            else
+            {
+                frontSteeringAngle = -maxSteeringAngle * behindFactor;
+            }
         }
         else
         {
-            // Normal steering
-            frontSteeringAngle = Mathf.Clamp(cameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
+            // Normal steering - within normal range
+            frontSteeringAngle = Mathf.Clamp(cameraAngle, -maxSteeringAngle, maxSteeringAngle);
+        }
+
+        // Apply additional stability for side views
+        if (shouldUseReverseControls && Mathf.Abs(originalCameraAngle) > 70f && Mathf.Abs(originalCameraAngle) < 110f)
+        {
+            // Increase steering smoothing factor when in reverse and looking from the side
+            steeringSpeed = 0.1f; // Much slower steering response
+        }
+        else
+        {
+            // Normal steering response in other cases
+            steeringSpeed = 0.7f; // Original steering speed
         }
 
         // Use only 35% of steering angle for rear wheels (in opposite direction)
@@ -256,7 +317,7 @@ public class HogController : NetworkBehaviour
 
     private void AnimateWheels()
     {
-        // Apply steering rotation
+        // If camera angle is small, treat it as zero
         if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
 
         // Check actual car movement direction
@@ -276,50 +337,88 @@ public class HogController : NetworkBehaviour
         // For reverse, invert the steering direction
         float adjustedCameraAngle = shouldUseReverseControls ? -cameraAngle : cameraAngle;
 
-        // Check if camera is behind the car (angle near 180 or -180 degrees)
-        bool isCameraBehind = Mathf.Abs(adjustedCameraAngle) > 160f;
+        // Check if camera is behind - same logic as in ApplySteering
+        bool isCameraBehind = Mathf.Abs(adjustedCameraAngle) > (180f - maxSteeringAngle);
 
         float frontSteeringAngle;
         if (isCameraBehind)
         {
-            // When looking backwards, gradually straighten wheels as angle approaches 180/-180
-            float behindFactor = (180f - Mathf.Abs(adjustedCameraAngle)) / 20f; // 0 at 180, 1 at 160
-            frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, maxSteeringAngle * -1, maxSteeringAngle) * behindFactor;
+            // Calculate how far into the behind region
+            float behindFactor;
+
+            if (adjustedCameraAngle > 0)
+            {
+                // Positive angle (right side behind region)
+                behindFactor = (180f - adjustedCameraAngle) / maxSteeringAngle;
+            }
+            else
+            {
+                // Negative angle (left side behind region)
+                behindFactor = (180f + adjustedCameraAngle) / maxSteeringAngle;
+            }
+
+            behindFactor = Mathf.Clamp01(behindFactor);
+
+            // Calculate steering angle
+            if (adjustedCameraAngle > 0)
+            {
+                frontSteeringAngle = maxSteeringAngle * behindFactor;
+            }
+            else
+            {
+                frontSteeringAngle = -maxSteeringAngle * behindFactor;
+            }
         }
         else
         {
-            // Normal steering
-            frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, maxSteeringAngle * -1, maxSteeringAngle);
+            // Normal steering - within normal range
+            frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, -maxSteeringAngle, maxSteeringAngle);
         }
 
         // Use 50% of steering angle for rear wheels (in opposite direction)
         float rearSteeringAngle = frontSteeringAngle * -0.5f;
 
-        // Calculate wheel rotation based on car speed
-        // Get the magnitude of velocity along the car's forward axis
-        float speedForRotation = Mathf.Abs(forwardVelocity);
+        // Store current rotation to preserve roll angles
+        Quaternion flCurrentRotation = frontLeftWheelTransform.localRotation;
+        Quaternion frCurrentRotation = frontRightWheelTransform.localRotation;
+        Quaternion rlCurrentRotation = rearLeftWheelTransform.localRotation;
+        Quaternion rrCurrentRotation = rearRightWheelTransform.localRotation;
 
-        // Convert speed to rotation - adjust the multiplier to get desired rotation speed
-        float rotationAngle = speedForRotation * 15f; // Adjust this multiplier as needed
+        // Apply steering rotation to wheel transforms (preserving any current X rotation)
+        frontLeftWheelTransform.localRotation = Quaternion.Euler(flCurrentRotation.eulerAngles.x, frontSteeringAngle, 0);
+        frontRightWheelTransform.localRotation = Quaternion.Euler(frCurrentRotation.eulerAngles.x, frontSteeringAngle, 0);
+        rearLeftWheelTransform.localRotation = Quaternion.Euler(rlCurrentRotation.eulerAngles.x, rearSteeringAngle, 0);
+        rearRightWheelTransform.localRotation = Quaternion.Euler(rrCurrentRotation.eulerAngles.x, rearSteeringAngle, 0);
 
-        // Create rotation amount for this frame
-        float rotationThisFrame = rotationAngle * Time.deltaTime * 60f; // Normalized for framerate
+        // Calculate wheel rotation using the precise physics-based approach
 
-        // Direction of rotation (opposite when in reverse)
-        float rotationDirection = forwardVelocity >= 0 ? 1f : -1f;
+        // Front Left Wheel
+        float flCircumference = 2f * Mathf.PI * frontLeftWheelCollider.radius;
+        float flDistanceTraveled = frontLeftWheelCollider.rpm * Time.deltaTime * flCircumference / 60f;
+        float flRotationDegrees = (flDistanceTraveled / flCircumference) * 360f;
 
-        // Apply steering angle to wheel transforms
-        frontLeftWheelTransform.localRotation = Quaternion.Euler(0, frontSteeringAngle, 0);
-        frontRightWheelTransform.localRotation = Quaternion.Euler(0, frontSteeringAngle, 0);
-        rearLeftWheelTransform.localRotation = Quaternion.Euler(0, rearSteeringAngle, 0);
-        rearRightWheelTransform.localRotation = Quaternion.Euler(0, rearSteeringAngle, 0);
+        // Front Right Wheel
+        float frCircumference = 2f * Mathf.PI * frontRightWheelCollider.radius;
+        float frDistanceTraveled = frontRightWheelCollider.rpm * Time.deltaTime * frCircumference / 60f;
+        float frRotationDegrees = (frDistanceTraveled / frCircumference) * 360f;
 
-        // Rotate wheels around their axes based on speed
-        frontLeftWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
-        frontRightWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
-        rearLeftWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
-        rearRightWheelTransform.Rotate(Vector3.right * rotationThisFrame * rotationDirection, Space.Self);
+        // Rear Left Wheel
+        float rlCircumference = 2f * Mathf.PI * rearLeftWheelCollider.radius;
+        float rlDistanceTraveled = rearLeftWheelCollider.rpm * Time.deltaTime * rlCircumference / 60f;
+        float rlRotationDegrees = (rlDistanceTraveled / rlCircumference) * 360f;
+
+        // Rear Right Wheel
+        float rrCircumference = 2f * Mathf.PI * rearRightWheelCollider.radius;
+        float rrDistanceTraveled = rearRightWheelCollider.rpm * Time.deltaTime * rrCircumference / 60f;
+        float rrRotationDegrees = (rrDistanceTraveled / rrCircumference) * 360f;
+
+        // Apply rotation to wheel models around their X axis (roll)
+        frontLeftWheelTransform.Rotate(flRotationDegrees, 0f, 0f, Space.Self);
+        frontRightWheelTransform.Rotate(frRotationDegrees, 0f, 0f, Space.Self);
+        rearLeftWheelTransform.Rotate(rlRotationDegrees, 0f, 0f, Space.Self);
+        rearRightWheelTransform.Rotate(rrRotationDegrees, 0f, 0f, Space.Self);
     }
+
 
     public void Handbrake()
     {
@@ -437,6 +536,7 @@ public class HogController : NetworkBehaviour
         rearLeftWheelCollider.enabled = false;
         rearRightWheelCollider.enabled = false;
     }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
@@ -454,29 +554,14 @@ public class HogController : NetworkBehaviour
             "Head-On Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
              + " and " + ConnectionManager.instance.GetClientUsername(player2Id)
             );
+
+            float currentVelocity = rb.linearVelocity.magnitude;
+
+
             StartCoroutine(CollisionForceDebounce());
         }
-        PlayImpactAudio();
-    }
 
-    private void PlayImpactAudio()
-    {
-        switch (velocity)
-        {
-            case float v when v < 8f:
-                Debug.Log("Low velocity");
-                break;
-            case float v when v >= 8f && v < 15f:
-                Debug.Log("Medium velocity");
-                break;
-            case float v when v >= 15f:
-                Debug.Log("High velocity");
-                break;
-            default:
-                Debug.Log("Velocity out of range");
-                break;
-        }
-        HogImpact.Post(gameObject);
+        HogSoundManager.instance.PlayNetworkedSound(gameObject, HogSoundManager.SoundEffectType.HogImpact);
     }
 
     private IEnumerator CollisionForceDebounce()
@@ -503,13 +588,12 @@ public class HogController : NetworkBehaviour
         }
     }
 
-
     [ClientRpc]
     public void ExplodeCarClientRpc()
     {
         // Store reference to instantiated explosion
         GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
-        CarExplosion.Post(gameObject); //Wwise audio event
+        HogSoundManager.instance.PlayNetworkedSound(gameObject, HogSoundManager.SoundEffectType.CarExplosion); // Play Explosion Sound.
         canMove = false;
         StartCoroutine(ResetAfterExplosion(explosionInstance));
     }
