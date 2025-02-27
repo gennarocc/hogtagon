@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{5D858A64-D877-B929-4557-45E7866FD200}",
+    "Hash": "{A8B29E66-5C0B-4F28-2B31-2E8B3E64A93D}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -118,6 +118,14 @@
       "Location": "Memory",
       "ShortName": "impact-2b.wav",
       "CachePath": "5F/{5F6DA9B3-93D6-980B-E180-A11C9C4D1BFE}.wem"
+     },
+     {
+      "Id": "439209459",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "4_heavy.wav",
+      "CachePath": "6E/{6E7FD06B-86AF-36D8-A61A-B2D1728379C4}.wem"
      },
      {
       "Id": "464858496",
@@ -336,6 +344,20 @@
       ]
      },
      {
+      "Id": "3567623486",
+      "Name": "HogHorn",
+      "ObjectPath": "\\Events\\Default Work Unit\\HogHorn",
+      "GUID": "{843DE572-F748-474E-8539-31E2EA518E00}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.38804168",
+      "DurationMax": "0.38804168",
+      "MediaRefs": [
+       {
+        "Id": "439209459"
+       }
+      ]
+     },
+     {
       "Id": "2587421243",
       "Name": "HogImpact",
       "ObjectPath": "\\Events\\Default Work Unit\\HogImpact",
@@ -508,6 +530,6 @@
     ]
    }
   ],
-  "FileHash": "{15E1CDAB-0EBB-8BB7-4954-DE06F26D3A82}"
+  "FileHash": "{8C87B001-4037-E807-736D-CFEEF7DDC21C}"
  }
 }

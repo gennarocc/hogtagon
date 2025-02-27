@@ -94,6 +94,17 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="HogHorn" ID="{843DE572-F748-474E-8539-31E2EA518E00}">
+					<ChildrenList>
+						<Action Name="" ID="{881AD87F-6E56-481E-BD16-5C6F17AF1DDB}" ShortID="944155528">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog-horn" ID="{3234C638-EC12-4DED-A9FD-21091CED2672}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>
