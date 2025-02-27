@@ -101,6 +101,7 @@
 					<ChildrenList>
 						<RandomSequenceContainer Name="car-explosion" ID="{38FA73A5-FE29-42E2-9DEF-149CD7526467}" ShortID="689776898">
 							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 							</PropertyList>
 							<ReferenceList>
@@ -275,6 +276,7 @@
 						</RandomSequenceContainer>
 						<Sound Name="hog-horn" ID="{3234C638-EC12-4DED-A9FD-21091CED2672}" ShortID="198109562">
 							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="2"/>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 							</PropertyList>
 							<ReferenceList>
@@ -300,6 +302,7 @@
 						</Sound>
 						<BlendContainer Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" ShortID="821123812">
 							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 								<Property Name="OutputBusHighpass" Type="int16">
 									<ValueList>
@@ -858,6 +861,7 @@
 						</BlendContainer>
 						<SwitchContainer Name="hog-impact" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" ShortID="736143456">
 							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 							</PropertyList>
 							<ReferenceList>
@@ -1195,6 +1199,7 @@
 						</SwitchContainer>
 						<RandomSequenceContainer Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
 							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 							</PropertyList>
 							<ReferenceList>
