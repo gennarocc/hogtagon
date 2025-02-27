@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using System.Linq;
 
 public class HogSoundManager : NetworkBehaviour
 {
@@ -75,7 +76,6 @@ public class HogSoundManager : NetworkBehaviour
         if (soundEffectMap.TryGetValue(effectType, out AK.Wwise.Event audioEvent))
         {
             audioEvent.Post(soundObject);
-            Debug.Log("Hit");
         }
         else
         {
@@ -86,25 +86,29 @@ public class HogSoundManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void PlaySoundServerRpc(byte effectType, ulong networkObjectId, ServerRpcParams serverRpcParams = default)
     {
-        // Get the client ID that sent the request
+        // Get the client ID that sent the RPC
         ulong senderClientId = serverRpcParams.Receive.SenderClientId;
 
-        // Create client RPC params to exclude the sender
+        // Create client RPC params that exclude the sender
         ClientRpcParams clientRpcParams = new ClientRpcParams
         {
             Send = new ClientRpcSendParams
             {
-                TargetClientIds = new ulong[] { }  // Empty array means broadcast to all except specified clients
+                TargetClientIds = NetworkManager.Singleton.ConnectedClientsIds
+                    .Where(id => id != senderClientId)
+                    .ToArray()
             }
         };
 
-        // Broadcast to all other clients
+        // Send the ClientRPC with the filtered client list
         PlaySoundClientRpc(effectType, networkObjectId, clientRpcParams);
     }
+
 
     [ClientRpc]
     private void PlaySoundClientRpc(byte effectType, ulong networkObjectId, ClientRpcParams clientRpcParams = default)
     {
+        Debug.Log("Playing client SFX");
         // Find the NetworkObject with the given ID
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject networkObject))
         {

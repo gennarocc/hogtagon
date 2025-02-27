@@ -10,7 +10,6 @@ public class KillBall : NetworkBehaviour
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event CarExplosion;
 
-
     private void Update()
     {
         if (GameManager.instance.state == GameState.Pending)
@@ -21,7 +20,6 @@ public class KillBall : NetworkBehaviour
         float scaleLerp = Mathf.Clamp01(GameManager.instance.gameTime / duration);
         transform.localScale = Vector3.Lerp(initialSize, targetSize, scaleLerp);
     }
-
 
     private void OnTriggerEnter(Collider col)
     {
@@ -38,41 +36,36 @@ public class KillBall : NetworkBehaviour
     [ServerRpc]
     private void NotifyPlayerCollisionServerRpc(CollisionData data)
     {
-    var clientId = data.id;
-    if (NetworkManager.ConnectedClients.ContainsKey(clientId))
-    {
-        var client = NetworkManager.Singleton.ConnectedClients[clientId];
-        Debug.Log(message: clientId + " - Add blow up force to " + client.PlayerObject.name);
-        
-        // Get the rigidbody
-        Rigidbody rb = client.PlayerObject.GetComponentInChildren<Rigidbody>();
-        
-        // Launch the car in a random angle with a lot of force
-        rb.AddForce(new Vector3(Random.Range(-.6f, -.6f), 1, Random.Range(-.6f, .6f)) 
-            * blowupForce * 10000, ForceMode.Impulse);
-            
-        // Add random rotational force
-        Vector3 randomTorque = new Vector3(
-            Random.Range(-1f, 1f),
-            Random.Range(-1f, 1f),
-            Random.Range(-1f, 1f)
-        ).normalized * 1000f; // Adjust this multiplier as needed
-        rb.AddTorque(randomTorque, ForceMode.Impulse);
-        
-        // Set player to dead
-        if (GameManager.instance.state == GameState.Playing) 
+        var clientId = data.id;
+        if (NetworkManager.ConnectedClients.ContainsKey(clientId))
         {
-            GameManager.instance.PlayerDied(clientId);
-        }    
+            var client = NetworkManager.Singleton.ConnectedClients[clientId];
+            Debug.Log(message: clientId + " - Add blow up force to " + client.PlayerObject.name);
 
-        // FX
-        client.PlayerObject.GetComponentInChildren<HogController>().ExplodeCarClientRpc();
-        
+            // Get the rigidbody
+            Rigidbody rb = client.PlayerObject.GetComponentInChildren<Rigidbody>();
+
+            // Launch the car in a random angle with a lot of force
+            rb.AddForce(new Vector3(Random.Range(-.6f, -.6f), 1, Random.Range(-.6f, .6f))
+                * blowupForce * 10000, ForceMode.Impulse);
+
+            // Add random rotational force
+            Vector3 randomTorque = new Vector3(
+                Random.Range(-1f, 1f),
+                Random.Range(-1f, 1f),
+                Random.Range(-1f, 1f)
+            ).normalized * 1000f; // Adjust this multiplier as needed
+            rb.AddTorque(randomTorque, ForceMode.Impulse);
+
+            // Set player to dead
+            if (GameManager.instance.state == GameState.Playing)
+            {
+                GameManager.instance.PlayerDied(clientId);
+            }
+            // FX
+            client.PlayerObject.GetComponentInChildren<HogController>().ExplodeCarClientRpc();
         }
     }
-
-
-
 
     struct CollisionData : INetworkSerializable
     {

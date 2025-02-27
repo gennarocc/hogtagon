@@ -6463,7 +6463,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1935665467}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ButtonConfirmAudio
+        m_MethodName: ButtonClickAudio
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -12699,7 +12699,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1935665467}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ButtonConfirmAudio
+        m_MethodName: ButtonClickAudio
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

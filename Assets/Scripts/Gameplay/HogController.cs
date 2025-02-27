@@ -63,7 +63,7 @@ public class HogController : NetworkBehaviour
     private WheelFrictionCurve RRwheelFriction;
     private float RRWextremumSlip;
 
-    void Start()
+    private void Start()
     {
         if (IsServer || IsOwner)
         {
@@ -85,13 +85,11 @@ public class HogController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.JoystickButton0))
+        if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0))
         {
             // Play Horn Sound
             HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
-            Debug.Log("honk");
         }
-
     }
 
     private void FixedUpdate()
@@ -106,9 +104,6 @@ public class HogController : NetworkBehaviour
         {
             ClientMove();
         }
-
-
-
 
         AnimateWheels();
         DriftCarPS();
@@ -221,7 +216,6 @@ public class HogController : NetworkBehaviour
         frontRightWheelCollider.motorTorque = motorTorque;
         rearLeftWheelCollider.motorTorque = motorTorque;
         rearRightWheelCollider.motorTorque = motorTorque;
-
     }
 
     private void ApplySteering(float cameraAngle, float moveInput)
@@ -595,8 +589,10 @@ public class HogController : NetworkBehaviour
     {
         // Store reference to instantiated explosion
         GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
-        HogSoundManager.instance.PlayNetworkedSound(gameObject, HogSoundManager.SoundEffectType.CarExplosion); // Play Explosion Sound.
+        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.CarExplosion); // Play Explosion Sound.
         canMove = false;
+
+        Debug.Log("Exploding car for player - " + ConnectionManager.instance.GetClientUsername(OwnerClientId));
         StartCoroutine(ResetAfterExplosion(explosionInstance));
     }
 
