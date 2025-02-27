@@ -7199,7 +7199,7 @@ MonoBehaviour:
   canMove: 1
   maxTorque: 650
   brakeTorque: 300
-  centerOfMass: {x: 0, y: 0.2, z: 0}
+  centerOfMass: {x: 0, y: 0.3, z: 0}
   maxSteeringAngle: 55
   steeringSpeed: 0.8
   handbrakeDriftMultiplier: 8
@@ -7233,6 +7233,10 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: 3b5e6672c5ed26e4eb2f6d93faf139f8, type: 2}
+  HogImpact:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
   rpm:
     idInternal: 0
     valueGuidInternal: 
