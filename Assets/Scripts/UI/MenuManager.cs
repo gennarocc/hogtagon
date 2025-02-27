@@ -11,15 +11,15 @@ public class MenuManager : NetworkBehaviour
     public bool gameIsPaused = false;
 
     [Header("Menu Panels")]
-    [SerializeField] private GameObject mainMenuPanel;    
-    [SerializeField] private GameObject playMenuPanel;    
+    [SerializeField] private GameObject mainMenuPanel;
+    [SerializeField] private GameObject playMenuPanel;
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
     [SerializeField] private GameObject scoreboardUI;
     [SerializeField] private GameObject tempUI;
 
     [Header("Main Menu Components")]
-    [SerializeField] private Button playButton;           
+    [SerializeField] private Button playButton;
     [SerializeField] private Button optionsButton;
     [SerializeField] private Button quitButton;
 
@@ -59,7 +59,7 @@ public class MenuManager : NetworkBehaviour
 
         // Get the orbital transposer
         orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
-        
+
         // Directly set the Input Axis Value
         orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
 
@@ -81,33 +81,33 @@ public class MenuManager : NetworkBehaviour
             {
                 // Reset button states before disabling menus
                 mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-                
+
                 ShowMainMenu();
             }
-            
+
             // Scoreboard
-            if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected) 
+            if (Input.GetKeyDown(KeyCode.Tab) && ConnectionManager.instance.isConnected)
                 scoreboardUI.SetActive(true);
-            if (Input.GetKeyUp(KeyCode.Tab)) 
+            if (Input.GetKeyUp(KeyCode.Tab))
                 scoreboardUI.SetActive(false);
-                
+
             // Start Game Button (Host only)
-            if (NetworkManager.Singleton != null && 
-                NetworkManager.Singleton.IsServer && 
-                NetworkManager.Singleton.ConnectedClients.Count > 1) 
+            if (NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.IsServer &&
+                NetworkManager.Singleton.ConnectedClients.Count > 1)
                 startGameButton.interactable = true;
-            else 
+            else
                 startGameButton.interactable = false;
-                
+
             // Set join code
-            if (ConnectionManager.instance.joinCode != null) 
+            if (ConnectionManager.instance.joinCode != null)
                 joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
         }
     }
 
     public void ShowMainMenu()
     {
-       
+
         mainMenuPanel.SetActive(true);
         playMenuPanel.SetActive(false);
         pauseMenuUI.SetActive(false);
@@ -115,22 +115,21 @@ public class MenuManager : NetworkBehaviour
         scoreboardUI.SetActive(false);
         tempUI.SetActive(false);
         connectionPending.SetActive(false);
-        
+
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 100;
     }
     public void OnPlayClicked()
     {
-        ButtonConfirmAudio();
         mainMenuPanel.SetActive(false);
         playMenuPanel.SetActive(true);
 
         // Lower the priority of the menu camera
-    if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
-    {
-        virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
-    }
+        if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
+        {
+            virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
+        }
     }
 
     public void OnOptionsClicked()
@@ -182,9 +181,9 @@ public class MenuManager : NetworkBehaviour
         }
         else
         {
-            ShowMainMenu();    
+            ShowMainMenu();
         }
-        
+
     }
 
     public void CopyJoinCode()
@@ -239,7 +238,7 @@ public class MenuManager : NetworkBehaviour
         connectionPending.SetActive(false);
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-        ShowMainMenu();  
+        ShowMainMenu();
     }
 
     public void Disconnect()

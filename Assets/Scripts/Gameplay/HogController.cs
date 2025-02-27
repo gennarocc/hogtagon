@@ -43,6 +43,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private AK.Wwise.Event EngineOn;
     [SerializeField] private AK.Wwise.Event EngineOff;
     [SerializeField] private AK.Wwise.Event TireScreech;
+    [SerializeField] private AK.Wwise.Event HogImpact;
     [SerializeField] private AK.Wwise.RTPC rpm;
 
 
@@ -537,27 +538,27 @@ public class HogController : NetworkBehaviour
     {
         if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
         {
-            collisionForceOnCooldown = true;
-            ulong player1Id = GetComponent<NetworkObject>().OwnerClientId;
-            ulong player2Id = collision.gameObject.GetComponent<NetworkObject>().OwnerClientId;
+            // collisionForceOnCooldown = true;
+            // ulong player1Id = GetComponent<NetworkObject>().OwnerClientId;
+            // ulong player2Id = collision.gameObject.GetComponent<NetworkObject>().OwnerClientId;
 
-            var relativeVelocity = collision.gameObject.GetComponent<Rigidbody>().linearVelocity;
+            // var relativeVelocity = collision.gameObject.GetComponent<Rigidbody>().linearVelocity;
 
-            if (Vector3.Dot(relativeVelocity, rb.linearVelocity) < 0) relativeVelocity = -1 * relativeVelocity;
+            // if (Vector3.Dot(relativeVelocity, rb.linearVelocity) < 0) relativeVelocity = -1 * relativeVelocity;
 
-            rb.AddForce(collision.gameObject.GetComponent<Rigidbody>().linearVelocity * 300f, ForceMode.Impulse);
-            Debug.Log(message:
-            "Head-On Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
-             + " and " + ConnectionManager.instance.GetClientUsername(player2Id)
-            );
+            // rb.AddForce(collision.gameObject.GetComponent<Rigidbody>().linearVelocity * 300f, ForceMode.Impulse);
+            // Debug.Log(message:
+            // "Head-On Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
+            //  + " and " + ConnectionManager.instance.GetClientUsername(player2Id)
+            // );
 
-            float currentVelocity = rb.linearVelocity.magnitude;
-
-
+            // float currentVelocity = rb.linearVelocity.magnitude;
+             
             StartCoroutine(CollisionForceDebounce());
         }
 
-        HogSoundManager.instance.PlayNetworkedSound(gameObject, HogSoundManager.SoundEffectType.HogImpact);
+        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
+        // HogImpact.Post(gameObject);
     }
 
     private IEnumerator CollisionForceDebounce()
