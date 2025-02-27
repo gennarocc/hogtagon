@@ -16,6 +16,7 @@ namespace AK
         static const AkUniqueID CAREXPLOSION = 144991338U;
         static const AkUniqueID ENGINEOFF = 2388455330U;
         static const AkUniqueID ENGINEON = 2439330724U;
+        static const AkUniqueID HOGHORN = 3567623486U;
         static const AkUniqueID HOGIMPACT = 2587421243U;
         static const AkUniqueID TIRESCREECH = 3266676374U;
         static const AkUniqueID UICANCEL = 1933252553U;
