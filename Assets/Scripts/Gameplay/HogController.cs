@@ -85,11 +85,13 @@ public class HogController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.JoystickButton0))
         {
             // Play Horn Sound
             HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
+            Debug.Log("honk");
         }
+
     }
 
     private void FixedUpdate()
@@ -162,7 +164,7 @@ public class HogController : NetworkBehaviour
 
             if (rightStickX != 0)
             {
-                freeLookCamera.m_XAxis.Value += rightStickX;
+                freeLookCamera.m_XAxis.Value += rightStickX*5/2;
             }
             if (rightStickY != 0)
             {
