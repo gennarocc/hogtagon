@@ -1311,7 +1311,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
+    rgba: 4278386432
   m_fontColor: {r: 0, g: 1, b: 0.007843138, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1724,7 +1724,19 @@ MonoBehaviour:
   m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 748281887}
+        m_TargetAssemblyTypeName: Settings, Assembly-CSharp
+        m_MethodName: SetCameraSensitivty
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &251977924
 GameObject:
   m_ObjectHideFlags: 0
@@ -6848,7 +6860,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
+    rgba: 4278386432
   m_fontColor: {r: 0, g: 1, b: 0.007843138, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -9365,13 +9377,25 @@ MonoBehaviour:
   m_FillRect: {fileID: 390566403}
   m_HandleRect: {fileID: 776944197}
   m_Direction: 0
-  m_MinValue: 0.01
-  m_MaxValue: 3
+  m_MinValue: -80
+  m_MaxValue: 0
   m_WholeNumbers: 0
-  m_Value: 1
+  m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 748281887}
+        m_TargetAssemblyTypeName: Settings, Assembly-CSharp
+        m_MethodName: SetSfxVolume
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1287420931
 GameObject:
   m_ObjectHideFlags: 0
@@ -12953,13 +12977,25 @@ MonoBehaviour:
   m_FillRect: {fileID: 358282075}
   m_HandleRect: {fileID: 626058055}
   m_Direction: 0
-  m_MinValue: 0.01
-  m_MaxValue: 3
+  m_MinValue: -80
+  m_MaxValue: -10
   m_WholeNumbers: 0
-  m_Value: 1
+  m_Value: -10
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 748281887}
+        m_TargetAssemblyTypeName: Settings, Assembly-CSharp
+        m_MethodName: SetMusicVolume
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1766989626
 GameObject:
   m_ObjectHideFlags: 0
@@ -13458,8 +13494,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Code: AAAAA'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 99b2b6770ae9dd6429bc5408c0e5290c, type: 2}
-  m_sharedMaterial: {fileID: 3349479934605434792, guid: 99b2b6770ae9dd6429bc5408c0e5290c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: cf387bb394c5bd54f97eb9dfb3756d92, type: 2}
+  m_sharedMaterial: {fileID: 9161978363173052032, guid: cf387bb394c5bd54f97eb9dfb3756d92, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -13992,13 +14028,25 @@ MonoBehaviour:
   m_FillRect: {fileID: 906883640}
   m_HandleRect: {fileID: 706639717}
   m_Direction: 0
-  m_MinValue: 0.01
-  m_MaxValue: 3
+  m_MinValue: -80
+  m_MaxValue: 0
   m_WholeNumbers: 0
-  m_Value: 1
+  m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 748281887}
+        m_TargetAssemblyTypeName: Settings, Assembly-CSharp
+        m_MethodName: SetMasterVolume
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1935665460
 GameObject:
   m_ObjectHideFlags: 0
