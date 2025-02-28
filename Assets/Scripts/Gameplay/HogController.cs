@@ -160,7 +160,7 @@ public class HogController : NetworkBehaviour
 
             if (rightStickX != 0)
             {
-                freeLookCamera.m_XAxis.Value += rightStickX*5/2;
+                freeLookCamera.m_XAxis.Value += rightStickX * 5 / 2;
             }
             if (rightStickY != 0)
             {
@@ -184,7 +184,6 @@ public class HogController : NetworkBehaviour
     [ServerRpc]
     private void SendInputServerRpc(ClientInput input)
     {
-        if (!canMove) return;
         ApplyMotorTorque(input.moveInput, input.brakeInput);
         ApplySteering(input.steeringAngle, input.moveInput);
         isDrifting.Value = localVelocityX > .25f ? true : false;
@@ -208,6 +207,15 @@ public class HogController : NetworkBehaviour
 
     private void ApplyMotorTorque(float moveInput, float brakeInput)
     {
+        if (!canMove)
+        {
+            frontLeftWheelCollider.motorTorque = 0;
+            frontRightWheelCollider.motorTorque = 0;
+            rearLeftWheelCollider.motorTorque = 0;
+            rearRightWheelCollider.motorTorque = 0;
+            return;
+        }
+
         float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
         currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * 3f); // Adjust 100f to control how fast it reaches maxTorque
 
@@ -416,7 +424,6 @@ public class HogController : NetworkBehaviour
         rearRightWheelTransform.Rotate(rrRotationDegrees, 0f, 0f, Space.Self);
     }
 
-
     public void Handbrake()
     {
         CancelInvoke("RecoverTraction");
@@ -553,7 +560,7 @@ public class HogController : NetworkBehaviour
             // );
 
             // float currentVelocity = rb.linearVelocity.magnitude;
-             
+
             StartCoroutine(CollisionForceDebounce());
         }
 
