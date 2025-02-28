@@ -204,7 +204,6 @@ public class HogController : NetworkBehaviour
             RecoverTraction();
         }
     }
-
     private void ApplyMotorTorque(float moveInput, float brakeInput)
     {
         if (!canMove)
@@ -218,7 +217,6 @@ public class HogController : NetworkBehaviour
 
         float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
         currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * 3f); // Adjust 100f to control how fast it reaches maxTorque
-
         float motorTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
 
         frontLeftWheelCollider.motorTorque = motorTorque;

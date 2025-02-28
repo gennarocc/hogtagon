@@ -96,7 +96,7 @@ public class Player : NetworkBehaviour
             List<ulong> aliveClients = ConnectionManager.instance.GetAliveClients();
             if (spectatingPlayerIndex >= aliveClients.Count) spectatingPlayerIndex = 0;
             Player spectatePlayer = ConnectionManager.instance.GetPlayer(ConnectionManager.instance.GetAliveClients()[spectatingPlayerIndex]);
-            mainCamera.Follow = spectatePlayer.transform;
+            mainCamera.Follow = spectatePlayer.cameraTarget;
             mainCamera.LookAt = spectatePlayer.cameraTarget;
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
