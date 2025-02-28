@@ -3,6 +3,8 @@ using Unity.Netcode;
 using Cinemachine;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 
 public class HogController : NetworkBehaviour
@@ -19,6 +21,17 @@ public class HogController : NetworkBehaviour
     [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
+    
+    [Header("Input Smoothing Settings")]
+    [SerializeField, Range(1, 10)] public int steeringBufferSize = 5; // Number of frames to average for inputs
+    [SerializeField, Range(0f, 20f)] public float minDeadzone = 3f; // Minimum deadzone at low speeds
+    [SerializeField, Range(0f, 30f)] public float maxDeadzone = 10f; // Maximum deadzone at high speeds
+    [SerializeField, Range(10f, 50f)] public float maxSpeedForSteering = 20f; // Speed at which steering responsiveness is at minimum
+    [SerializeField, Range(0.1f, 1f)] public float minSteeringResponse = 0.6f; // Minimum steering response at high speeds (lower = less responsive)
+    [SerializeField, Range(0.5f, 1f)] public float maxSteeringResponse = 1.0f; // Maximum steering response at low speeds
+    [SerializeField] public enum WeightingMethod { Exponential, Logarithmic, Linear }
+    [SerializeField] public WeightingMethod inputWeightingMethod = WeightingMethod.Linear;
+    [SerializeField, Range(0.1f, 3f)] public float weightingFactor = 1.0f; // Controls drop-off rate (higher = steeper drop-off)
 
     [Header("References")]
     [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
@@ -46,8 +59,14 @@ public class HogController : NetworkBehaviour
     [SerializeField] private AK.Wwise.Event HogImpact;
     [SerializeField] private AK.Wwise.RTPC rpm;
 
-
+    // Input Smoothing
+    private Queue<float> _recentSteeringInputs;
+    private List<float> _steeringInputsList = new List<float>();
+    
+    // Network variables
     private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    
+    // Physics and control variables
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
@@ -64,8 +83,30 @@ public class HogController : NetworkBehaviour
     private WheelFrictionCurve RRwheelFriction;
     private float RRWextremumSlip;
 
+    // Struct to send input data to server
+    public struct ClientInput : INetworkSerializable
+    {
+        public ulong clientId;
+        public float moveInput;
+        public float brakeInput;
+        public bool handbrake;
+        public float rawCameraAngle; // Changed to raw camera angle instead of processed steering
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref clientId);
+            serializer.SerializeValue(ref moveInput);
+            serializer.SerializeValue(ref brakeInput);
+            serializer.SerializeValue(ref handbrake);
+            serializer.SerializeValue(ref rawCameraAngle);
+        }
+    }
+
     private void Start()
     {
+        // Initialize steering input buffer
+        _recentSteeringInputs = new Queue<float>(steeringBufferSize);
+        
         if (IsServer || IsOwner)
         {
             // Full physics setup on server and owning client
@@ -112,15 +153,34 @@ public class HogController : NetworkBehaviour
 
     private void ClientMove()
     {
-        // Determine camera angle to car
+        // Calculate raw camera angle relative to car
         Vector3 cameraVector = transform.position - freeLookCamera.transform.position;
         cameraVector.y = 0;
         Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
-        cameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
+        float rawCameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
+        
+        // Add to input buffer for smoothing using weighted average
+        _recentSteeringInputs.Enqueue(rawCameraAngle);
+        if (_recentSteeringInputs.Count > steeringBufferSize)
+            _recentSteeringInputs.Dequeue();
+        
+        // Convert queue to list for weighted processing
+        _steeringInputsList.Clear();
+        _steeringInputsList.AddRange(_recentSteeringInputs);
+        
+        // Store current angle for visualization/debugging
+        // We'll use the weighted average for our displayed value
+        if (_steeringInputsList.Count > 0)
+        {
+            cameraAngle = CalculateWeightedAverage(_steeringInputsList, weightingFactor);
+        }
+        else
+        {
+            cameraAngle = rawCameraAngle;
+        }
 
         float move = 0;
         float brake = 0f;
-        float steering = cameraAngle;
         bool handbrakeOn = false;
 
         // Keyboard input
@@ -136,7 +196,6 @@ public class HogController : NetworkBehaviour
         {
             handbrakeOn = true;
         }
-
 
         // Controller input (if controller is connected)
         if (Input.GetJoystickNames().Length > 0)
@@ -168,31 +227,73 @@ public class HogController : NetworkBehaviour
             }
         }
 
-        // Send input to server
+        // Send raw inputs to server instead of processed steering
         ClientInput input = new ClientInput
         {
             clientId = OwnerClientId,
             moveInput = move,
             brakeInput = brake,
             handbrake = handbrakeOn,
-            steeringAngle = steering,
+            rawCameraAngle = _steeringInputsList.Count > 0 ? CalculateWeightedAverage(_steeringInputsList, weightingFactor) : rawCameraAngle,
         };
 
         SendInputServerRpc(input);
+    }
+    
+    // Calculate weighted average of inputs with more recent inputs having more weight
+    private float CalculateWeightedAverage(List<float> values, float weightingFactor)
+    {
+        if (values.Count == 0) return 0f;
+        if (values.Count == 1) return values[0];
+        
+        float total = 0f;
+        float weightSum = 0f;
+        
+        for (int i = 0; i < values.Count; i++)
+        {
+            // Position from most recent (0) to oldest (count-1)
+            int position = values.Count - 1 - i;
+            
+            // Calculate weight based on weighting method
+            float weight = 1.0f;
+            
+            switch (inputWeightingMethod)
+            {
+                case WeightingMethod.Exponential:
+                    // Exponential drop-off: weight = e^(-factor*position)
+                    weight = Mathf.Exp(-weightingFactor * position);
+                    break;
+                    
+                case WeightingMethod.Logarithmic:
+                    // Logarithmic drop-off: weight = 1 / (1 + factor*ln(position+1))
+                    weight = 1.0f / (1.0f + weightingFactor * Mathf.Log(position + 1));
+                    break;
+                    
+                case WeightingMethod.Linear:
+                    // Linear drop-off: weight = 1 - (position * factor / count)
+                    weight = Mathf.Max(0, 1.0f - (position * weightingFactor / values.Count));
+                    break;
+            }
+            
+            float angle = values[i];
+            total += angle * weight;
+            weightSum += weight;
+        }
+        
+        return total / weightSum;
     }
 
     [ServerRpc]
     private void SendInputServerRpc(ClientInput input)
     {
+        // Calculate steering angle server-side to ensure consistency
+        float steeringAngle = CalculateSteeringFromCameraAngle(input.rawCameraAngle, input.moveInput);
+        
         ApplyMotorTorque(input.moveInput, input.brakeInput);
-        ApplySteering(input.steeringAngle, input.moveInput);
+        ApplySteering(steeringAngle, input.moveInput);
+        
         isDrifting.Value = localVelocityX > .25f ? true : false;
-        if (input.handbrake)
-        {
-            Handbrake();
-            isDrifting.Value = true;
-        }
-
+        
         if (input.handbrake)
         {
             Handbrake();
@@ -204,34 +305,20 @@ public class HogController : NetworkBehaviour
             RecoverTraction();
         }
     }
-    private void ApplyMotorTorque(float moveInput, float brakeInput)
+
+    // New method to centralize steering angle calculation on the server
+    private float CalculateSteeringFromCameraAngle(float cameraAngle, float moveInput)
     {
-        if (!canMove)
-        {
-            frontLeftWheelCollider.motorTorque = 0;
-            frontRightWheelCollider.motorTorque = 0;
-            rearLeftWheelCollider.motorTorque = 0;
-            rearRightWheelCollider.motorTorque = 0;
-            return;
-        }
-
-        float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
-        currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * 3f); // Adjust 100f to control how fast it reaches maxTorque
-        float motorTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
-
-        frontLeftWheelCollider.motorTorque = motorTorque;
-        frontRightWheelCollider.motorTorque = motorTorque;
-        rearLeftWheelCollider.motorTorque = motorTorque;
-        rearRightWheelCollider.motorTorque = motorTorque;
-    }
-
-    private void ApplySteering(float cameraAngle, float moveInput)
-    {
+        // Apply adaptive deadzone - higher deadzone at higher speeds
+        float speedFactor = Mathf.Clamp01(rb.linearVelocity.magnitude / maxSpeedForSteering);
+        float deadzone = Mathf.Lerp(minDeadzone, maxDeadzone, speedFactor);
+        
+        if (cameraAngle < deadzone && cameraAngle > -deadzone)
+            cameraAngle = 0f;
+            
         // If camera angle is small, treat it as zero
-        if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
-
-        // Get the original camera angle before applying any adjustments
-        float originalCameraAngle = cameraAngle;
+        if (Math.Abs(cameraAngle) < 1f) 
+            cameraAngle = 0f;
 
         // Check if car is actually moving in reverse (based on velocity, not just input)
         float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
@@ -247,7 +334,7 @@ public class HogController : NetworkBehaviour
 
             // Add hysteresis - if angle is around 90 degrees, maintain the current steering angle
             // This prevents rapid changes when looking from the side
-            if (Mathf.Abs(originalCameraAngle) > 70f && Mathf.Abs(originalCameraAngle) < 110f)
+            if (Mathf.Abs(cameraAngle) > 70f && Mathf.Abs(cameraAngle) < 110f)
             {
                 // Get the current steering angle and maintain it with some smoothing
                 float currentSteeringAverage = (frontLeftWheelCollider.steerAngle + frontRightWheelCollider.steerAngle) / 2f;
@@ -261,7 +348,7 @@ public class HogController : NetworkBehaviour
         // Camera is behind if it's in the region: (180-maxSteeringAngle) to (-180+maxSteeringAngle)
         bool isCameraBehind = Mathf.Abs(cameraAngle) > (180f - maxSteeringAngle);
 
-        float frontSteeringAngle;
+        float finalSteeringAngle;
         if (isCameraBehind)
         {
             // When camera is in the "behind" region, calculate how far into that region
@@ -283,46 +370,61 @@ public class HogController : NetworkBehaviour
             // Calculate steering angle that decreases as we go deeper into behind region
             if (cameraAngle > 0)
             {
-                frontSteeringAngle = maxSteeringAngle * behindFactor;
+                finalSteeringAngle = maxSteeringAngle * behindFactor;
             }
             else
             {
-                frontSteeringAngle = -maxSteeringAngle * behindFactor;
+                finalSteeringAngle = -maxSteeringAngle * behindFactor;
             }
         }
         else
         {
             // Normal steering - within normal range
-            frontSteeringAngle = Mathf.Clamp(cameraAngle, -maxSteeringAngle, maxSteeringAngle);
+            finalSteeringAngle = Mathf.Clamp(cameraAngle, -maxSteeringAngle, maxSteeringAngle);
+        }
+        
+        // Progressive steering response - less responsive at higher speeds
+        float steeringResponse = Mathf.Lerp(maxSteeringResponse, minSteeringResponse, speedFactor);
+        finalSteeringAngle *= steeringResponse;
+        
+        return finalSteeringAngle;
+    }
+
+    private void ApplyMotorTorque(float moveInput, float brakeInput)
+    {
+        if (!canMove)
+        {
+            frontLeftWheelCollider.motorTorque = 0;
+            frontRightWheelCollider.motorTorque = 0;
+            rearLeftWheelCollider.motorTorque = 0;
+            rearRightWheelCollider.motorTorque = 0;
+            return;
         }
 
-        // Apply additional stability for side views
-        if (shouldUseReverseControls && Mathf.Abs(originalCameraAngle) > 70f && Mathf.Abs(originalCameraAngle) < 110f)
-        {
-            // Increase steering smoothing factor when in reverse and looking from the side
-            steeringSpeed = 0.1f; // Much slower steering response
-        }
-        else
-        {
-            // Normal steering response in other cases
-            steeringSpeed = 0.7f; // Original steering speed
-        }
+        float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
+        currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * 3f); // Adjust 100f to control how fast it reaches maxTorque
+        float motorTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
 
+        frontLeftWheelCollider.motorTorque = motorTorque;
+        frontRightWheelCollider.motorTorque = motorTorque;
+        rearLeftWheelCollider.motorTorque = motorTorque;
+        rearRightWheelCollider.motorTorque = motorTorque;
+    }
+
+    private void ApplySteering(float steeringAngle, float moveInput)
+    {
         // Use only 35% of steering angle for rear wheels (in opposite direction)
-        float rearSteeringAngle = frontSteeringAngle * -0.35f;
+        float rearSteeringAngle = steeringAngle * -0.35f;
 
         // Apply smoothed steering to wheel colliders
-        frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
-        frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, frontSteeringAngle, steeringSpeed);
+        frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, steeringAngle, steeringSpeed);
+        frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, steeringAngle, steeringSpeed);
         rearLeftWheelCollider.steerAngle = Mathf.Lerp(rearLeftWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
         rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
     }
 
     private void AnimateWheels()
     {
-        // If camera angle is small, treat it as zero
-        if (cameraAngle < 1f && cameraAngle > -1f) cameraAngle = 0f;
-
         // Check actual car movement direction
         float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
         bool isMovingInReverse = forwardVelocity < -0.5f;
@@ -351,18 +453,15 @@ public class HogController : NetworkBehaviour
 
             if (adjustedCameraAngle > 0)
             {
-                // Positive angle (right side behind region)
                 behindFactor = (180f - adjustedCameraAngle) / maxSteeringAngle;
             }
             else
             {
-                // Negative angle (left side behind region)
                 behindFactor = (180f + adjustedCameraAngle) / maxSteeringAngle;
             }
 
             behindFactor = Mathf.Clamp01(behindFactor);
 
-            // Calculate steering angle
             if (adjustedCameraAngle > 0)
             {
                 frontSteeringAngle = maxSteeringAngle * behindFactor;
@@ -374,7 +473,6 @@ public class HogController : NetworkBehaviour
         }
         else
         {
-            // Normal steering - within normal range
             frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, -maxSteeringAngle, maxSteeringAngle);
         }
 
@@ -543,27 +641,10 @@ public class HogController : NetworkBehaviour
     {
         if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
         {
-            // collisionForceOnCooldown = true;
-            // ulong player1Id = GetComponent<NetworkObject>().OwnerClientId;
-            // ulong player2Id = collision.gameObject.GetComponent<NetworkObject>().OwnerClientId;
-
-            // var relativeVelocity = collision.gameObject.GetComponent<Rigidbody>().linearVelocity;
-
-            // if (Vector3.Dot(relativeVelocity, rb.linearVelocity) < 0) relativeVelocity = -1 * relativeVelocity;
-
-            // rb.AddForce(collision.gameObject.GetComponent<Rigidbody>().linearVelocity * 300f, ForceMode.Impulse);
-            // Debug.Log(message:
-            // "Head-On Collision detected between " + ConnectionManager.instance.GetClientUsername(player1Id)
-            //  + " and " + ConnectionManager.instance.GetClientUsername(player2Id)
-            // );
-
-            // float currentVelocity = rb.linearVelocity.magnitude;
-
             StartCoroutine(CollisionForceDebounce());
         }
 
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
-        // HogImpact.Post(gameObject);
     }
 
     private IEnumerator CollisionForceDebounce()
