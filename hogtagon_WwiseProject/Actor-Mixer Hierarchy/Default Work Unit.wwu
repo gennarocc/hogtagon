@@ -3,699 +3,6 @@
 	<AudioObjects>
 		<WorkUnit Name="Default Work Unit" ID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}" PersistMode="Standalone">
 			<ChildrenList>
-				<Folder Name="Bounces" ID="{93002775-B36B-4D97-B54D-ED46B928A147}" ShortID="1016248429"/>
-				<BlendContainer Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" ShortID="821123812">
-					<PropertyList>
-						<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
-					</PropertyList>
-					<ReferenceList>
-						<Reference Name="Conversion">
-							<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-						</Reference>
-						<Reference Name="OutputBus">
-							<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-						</Reference>
-					</ReferenceList>
-					<ChildrenList>
-						<Sound Name="6k-rpm-loop" ID="{C35F92CE-73FE-4DDE-9F5A-BEDD1620E0A4}" ShortID="365189167">
-							<PropertyList>
-								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="6k-rpm-loop" ID="{DBD34488-968E-4932-88C7-5E2D1B6BACF8}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\6k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="27220251"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="6k-rpm-loop_01" ID="{CC5AE48B-F1EC-4470-A6F2-BFD042417AB4}">
-									<Language>SFX</Language>
-									<AudioFile>6k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="178975780"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="6k-rpm-loop_01" ID="{CC5AE48B-F1EC-4470-A6F2-BFD042417AB4}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="5k-rpm-loop" ID="{BEAF2C32-C0D2-4BBA-BF3A-38B18A25AB85}" ShortID="891023393">
-							<PropertyList>
-								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="5k-rpm-loop" ID="{CE6FE787-F9DC-4A39-B85C-ED1A965B646D}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\5k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="487559685"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="5k-rpm-loop_01" ID="{787DC09A-2B79-47EF-97AD-F00C2207567B}">
-									<Language>SFX</Language>
-									<AudioFile>5k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="386328575"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="5k-rpm-loop_01" ID="{787DC09A-2B79-47EF-97AD-F00C2207567B}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="4k-rpm-loop" ID="{8B84B576-6A98-45E3-97A5-EF94126A72DE}" ShortID="865612351">
-							<PropertyList>
-								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="4k-rpm-loop" ID="{09F0BA34-3AE1-4DFC-8B4B-4BDF0A0A9998}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\4k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="1062246044"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="4k-rpm-loop_01" ID="{7D8B4492-4C27-415F-AEDA-81FFD2BA6969}">
-									<Language>SFX</Language>
-									<AudioFile>4k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="811391391"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="4k-rpm-loop_01" ID="{7D8B4492-4C27-415F-AEDA-81FFD2BA6969}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="3k-rpm-loop" ID="{3CFA26C8-55E7-497D-AD05-C3F162F167F3}" ShortID="188010965">
-							<PropertyList>
-								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="3k-rpm-loop" ID="{5333A76C-AF07-4F1E-A6F5-0DE5900E400F}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\3k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="808429037"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="3k-rpm-loop_01" ID="{0F444D27-5144-4EBE-A98F-D019842862F6}">
-									<Language>SFX</Language>
-									<AudioFile>3k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="758309002"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="3k-rpm-loop_01" ID="{0F444D27-5144-4EBE-A98F-D019842862F6}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="2k-rpm-loop" ID="{9ECD291E-CC54-47DD-A483-19F5D26A64CE}" ShortID="260304537">
-							<PropertyList>
-								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="2k-rpm-loop" ID="{60A1A897-FE5A-4765-9998-857781D5D191}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\2k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="1057082725"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="2k-rpm-loop_01" ID="{0803735F-9B16-4A22-9043-16A4294CFE3F}">
-									<Language>SFX</Language>
-									<AudioFile>2k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="796949936"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="2k-rpm-loop_01" ID="{0803735F-9B16-4A22-9043-16A4294CFE3F}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="1k-rpm-loop" ID="{7E67A8EA-236B-4C76-8861-25E5EF8735EB}" ShortID="688273669">
-							<PropertyList>
-								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="1k-rpm-loop" ID="{E8D1910F-E242-4A47-9DC2-67BD33A73DC1}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\1k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="142434758"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="1k-rpm-loop_01" ID="{E96A0CD5-E19D-4470-9368-40AD9A2BF218}">
-									<Language>SFX</Language>
-									<AudioFile>1k-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="330055359"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="1k-rpm-loop_01" ID="{E96A0CD5-E19D-4470-9368-40AD9A2BF218}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="gear-shift-1" ID="{BA6FEB59-71CA-4E50-9CBF-2A6490EE285F}" ShortID="237781142">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="gear-shift-1" ID="{B013F7C8-1982-44AA-815E-F7D107C4D4AA}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\gear-shift-1.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="59074654"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="gear-shift-1_01" ID="{14C62247-827E-4E81-BC6E-E522DEDB0B26}">
-									<Language>SFX</Language>
-									<AudioFile>gear-shift-1.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="307100629"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-1_01" ID="{14C62247-827E-4E81-BC6E-E522DEDB0B26}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="gear-shift-2" ID="{AAF057FF-BDCC-4E0C-8D2B-6BE88BAA498B}" ShortID="435362373">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="gear-shift-2" ID="{4814DCF3-A620-453F-95B7-4D64B9F0EEE6}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\gear-shift-2.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="1016150173"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="gear-shift-2_01" ID="{0BD6B5EA-C39D-44E3-A248-56B8EC2E4A7D}">
-									<Language>SFX</Language>
-									<AudioFile>gear-shift-2.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="595717928"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-2_01" ID="{0BD6B5EA-C39D-44E3-A248-56B8EC2E4A7D}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="gear-shift-3" ID="{31335CA0-BA45-4864-A882-B6165C6E7E5C}" ShortID="333338748">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="gear-shift-3" ID="{B067CBB5-877C-4BD0-BF29-389510D3DC03}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\gear-shift-3.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="58965652"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="gear-shift-3_01" ID="{CFB432E0-4651-48AF-8D1E-7300A34EA14E}">
-									<Language>SFX</Language>
-									<AudioFile>gear-shift-3.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="842752452"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-3_01" ID="{CFB432E0-4651-48AF-8D1E-7300A34EA14E}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="gear-shift-4" ID="{6A357843-9EC9-4EB4-974F-1C8ACD316389}" ShortID="88516859">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="gear-shift-4" ID="{845B105D-6CF5-4B56-BD7F-9873832BB945}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\gear-shift-4.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="762622656"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="gear-shift-4_01" ID="{0D7E9891-13BF-4EA9-8ED2-D0A66B4184D1}">
-									<Language>SFX</Language>
-									<AudioFile>gear-shift-4.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="526038726"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-4_01" ID="{0D7E9891-13BF-4EA9-8ED2-D0A66B4184D1}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="gear-shift-5" ID="{5B013149-F91B-4E2B-8E03-AD9EFF66C844}" ShortID="1028955023">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="gear-shift-5" ID="{07EEB93D-8ED7-461E-8DBB-B1018583E7A2}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\gear-shift-5.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="24408083"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="gear-shift-5_01" ID="{E174ABE1-287D-4BCA-A121-2A22868266B7}">
-									<Language>SFX</Language>
-									<AudioFile>gear-shift-5.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="344684111"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="gear-shift-5_01" ID="{E174ABE1-287D-4BCA-A121-2A22868266B7}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="idle-rpm-loop" ID="{9CDAD714-598C-4BCC-BB36-CC306FFEA96B}" ShortID="96525429">
-							<PropertyList>
-								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="idle-rpm-loop" ID="{8EB7E7C0-9E29-49F4-B8C2-43CBA51DD9B1}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\idle-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="632899163"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="idle-rpm-loop_01" ID="{ADE87524-599A-4FE0-884D-582F55359BDD}">
-									<Language>SFX</Language>
-									<AudioFile>idle-rpm-loop.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="71018915"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="idle-rpm-loop_01" ID="{ADE87524-599A-4FE0-884D-582F55359BDD}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-					</ChildrenList>
-					<BlendTrackList>
-						<BlendTrack Name="RPM" ID="{97D23B11-3DB6-4377-A9E0-F9C6DDF6C213}" ShortID="521178152">
-							<PropertyList>
-								<Property Name="EnableCrossFading" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="LayerCrossFadeControlInput">
-									<ObjectRef Name="RPM" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
-								</Reference>
-							</ReferenceList>
-							<BlendTrackAssocList>
-								<BlendTrackAssoc>
-									<ItemRef Name="idle-rpm-loop" ID="{9CDAD714-598C-4BCC-BB36-CC306FFEA96B}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>0</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>16.5584415584416</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="1k-rpm-loop" ID="{7E67A8EA-236B-4C76-8861-25E5EF8735EB}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>9.56543456543456</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>33.1168831168831</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="2k-rpm-loop" ID="{9ECD291E-CC54-47DD-A483-19F5D26A64CE}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>25.4245754245754</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>48.4515484515485</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="3k-rpm-loop" ID="{3CFA26C8-55E7-497D-AD05-C3F162F167F3}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>39.7102897102897</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>62.2127872127872</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="4k-rpm-loop" ID="{8B84B576-6A98-45E3-97A5-EF94126A72DE}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>49.975024975025</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>78.5964035964036</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="5k-rpm-loop" ID="{BEAF2C32-C0D2-4BBA-BF3A-38B18A25AB85}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>64.0859140859141</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>99.9995</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="6k-rpm-loop" ID="{C35F92CE-73FE-4DDE-9F5A-BEDD1620E0A4}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>82.7422577422577</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>100</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-							</BlendTrackAssocList>
-						</BlendTrack>
-						<BlendTrack Name="transmission_shift" ID="{1B4D6E40-8CB8-40E3-906A-0AE609982D08}" ShortID="569619912">
-							<PropertyList>
-								<Property Name="EnableCrossFading" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="LayerCrossFadeControlInput">
-									<ObjectRef Name="RPM" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
-								</Reference>
-							</ReferenceList>
-							<BlendTrackAssocList>
-								<BlendTrackAssoc>
-									<ItemRef Name="gear-shift-1" ID="{BA6FEB59-71CA-4E50-9CBF-2A6490EE285F}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>9.61538461538461</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>17.2027972027972</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="gear-shift-2" ID="{AAF057FF-BDCC-4E0C-8D2B-6BE88BAA498B}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>25.9440559440559</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>33.8811188811189</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="gear-shift-3" ID="{31335CA0-BA45-4864-A882-B6165C6E7E5C}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>41.3986013986014</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>46.8881118881119</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="gear-shift-4" ID="{6A357843-9EC9-4EB4-974F-1C8ACD316389}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>55.2797202797203</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>61.4685314685315</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-								<BlendTrackAssoc>
-									<ItemRef Name="gear-shift-5" ID="{5B013149-F91B-4E2B-8E03-AD9EFF66C844}"/>
-									<CrossfadingInfo>
-										<LeftEdgePos>68.2867132867133</LeftEdgePos>
-										<LeftFadingMode>Automatic</LeftFadingMode>
-										<RightEdgePos>74.4755244755245</RightEdgePos>
-										<RightFadingMode>Automatic</RightFadingMode>
-									</CrossfadingInfo>
-								</BlendTrackAssoc>
-							</BlendTrackAssocList>
-						</BlendTrack>
-					</BlendTrackList>
-				</BlendContainer>
-				<RandomSequenceContainer Name="car-explosion" ID="{38FA73A5-FE29-42E2-9DEF-149CD7526467}" ShortID="689776898">
-					<PropertyList>
-						<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
-					</PropertyList>
-					<ReferenceList>
-						<Reference Name="Conversion">
-							<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-						</Reference>
-						<Reference Name="OutputBus">
-							<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-						</Reference>
-					</ReferenceList>
-					<ChildrenList>
-						<Sound Name="car-explosion-1" ID="{B0C5F28C-5312-4714-BEC5-0FDFDCCC625E}" ShortID="93795801">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="car-explosion-1" ID="{08A9F8F8-B8C5-482C-B999-981034F3C934}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\car-explosion-1.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="6024752"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="car-explosion-1_01" ID="{47BCE956-BFA0-4BAB-83BB-F22D39550A47}">
-									<Language>SFX</Language>
-									<AudioFile>car-explosion-1.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="179866252"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-1_01" ID="{47BCE956-BFA0-4BAB-83BB-F22D39550A47}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="car-explosion-3" ID="{4DE90B50-AD05-44CA-A80C-E5EA44DE5F48}" ShortID="629348079">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="car-explosion-3" ID="{3C38E22F-EAAC-4C02-8D70-A4260DD30998}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\car-explosion-3.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="1069524030"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="car-explosion-3_01" ID="{332A6646-CC13-42E3-97C6-EF1569DDC2B8}">
-									<Language>SFX</Language>
-									<AudioFile>car-explosion-3.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="629780468"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="car-explosion-4" ID="{D4191559-6375-4D96-9BC2-4D570CC54EF2}">
-									<Language>SFX</Language>
-									<AudioFile>car-explosion-4.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="536878760"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="car-explosion-5" ID="{90E62D85-5F1F-48CB-8173-1BA96285159A}">
-									<Language>SFX</Language>
-									<AudioFile>car-explosion-5.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="464858496"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-5" ID="{90E62D85-5F1F-48CB-8173-1BA96285159A}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="car-explosion-2" ID="{9AD2ADAD-7912-49A3-96E9-D07F7A4A4D0C}" ShortID="951847489">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="car-explosion-2" ID="{29504B08-6A8E-4F0D-A6CE-F3DD487F6BCE}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\car-explosion-2.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="512876442"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="car-explosion-2_01" ID="{DCD839E8-6D24-426C-8317-ABE62148B97E}">
-									<Language>SFX</Language>
-									<AudioFile>car-explosion-2.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="862707693"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-2_01" ID="{DCD839E8-6D24-426C-8317-ABE62148B97E}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="car-explosion-4" ID="{25F8D5B9-F9C1-45CB-B9DD-45DDF8D8093A}" ShortID="978200803">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="car-explosion-4" ID="{D34E9240-DD74-4DA3-AD7E-B5A4FFB7FA84}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\car-explosion-4.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="348634209"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="car-explosion-4_01" ID="{DF40E606-6924-461E-9BBF-906D1B0E5D90}">
-									<Language>SFX</Language>
-									<AudioFile>car-explosion-4.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="536878760"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-4_01" ID="{DF40E606-6924-461E-9BBF-906D1B0E5D90}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-						<Sound Name="car-explosion-5" ID="{38464B84-1A26-4E96-8DCB-19086F57C90E}" ShortID="310848679">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<AudioFileSource Name="car-explosion-5" ID="{CEF1B7B1-89CD-4C70-90C6-FEBC116EC8F0}">
-									<Language>SFX</Language>
-									<AudioFile>Bounces\car-explosion-5.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="622663132"/>
-									</MediaIDList>
-								</AudioFileSource>
-								<AudioFileSource Name="car-explosion-5_01" ID="{ABF24C79-7FE3-46B3-A88E-A47B7A21ECDA}">
-									<Language>SFX</Language>
-									<AudioFile>car-explosion-5.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="464858496"/>
-									</MediaIDList>
-								</AudioFileSource>
-							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="car-explosion-5_01" ID="{ABF24C79-7FE3-46B3-A88E-A47B7A21ECDA}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
-					</ChildrenList>
-				</RandomSequenceContainer>
 				<Folder Name="UI" ID="{C93ACA2F-7165-40EC-A44C-52B221D246D4}" ShortID="104603125">
 					<ChildrenList>
 						<Sound Name="ui-navigation-click" ID="{235667B5-CF67-42F9-AD99-813C1AFDA597}" ShortID="746056272">
@@ -790,353 +97,1168 @@
 						</Sound>
 					</ChildrenList>
 				</Folder>
-				<RandomSequenceContainer Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
-					<PropertyList>
-						<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
-					</PropertyList>
-					<ReferenceList>
-						<Reference Name="Conversion">
-							<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-						</Reference>
-						<Reference Name="OutputBus">
-							<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-						</Reference>
-					</ReferenceList>
+				<Folder Name="warthog" ID="{FF6480D1-DAB5-477F-945D-AB5917691776}" ShortID="487777051">
 					<ChildrenList>
-						<Sound Name="tire-screeching-1" ID="{6A1129E9-3713-4EBE-809F-AFED50C0F7AE}" ShortID="358674658">
+						<RandomSequenceContainer Name="car-explosion" ID="{38FA73A5-FE29-42E2-9DEF-149CD7526467}" ShortID="689776898">
+							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 								</Reference>
 								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 								</Reference>
 							</ReferenceList>
 							<ChildrenList>
-								<AudioFileSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}">
+								<Sound Name="car-explosion-1" ID="{B0C5F28C-5312-4714-BEC5-0FDFDCCC625E}" ShortID="93795801">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="car-explosion-1" ID="{08A9F8F8-B8C5-482C-B999-981034F3C934}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\car-explosion-1.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="6024752"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="car-explosion-1_01" ID="{47BCE956-BFA0-4BAB-83BB-F22D39550A47}">
+											<Language>SFX</Language>
+											<AudioFile>car-explosion-1.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="179866252"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="car-explosion-1_01" ID="{47BCE956-BFA0-4BAB-83BB-F22D39550A47}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="car-explosion-3" ID="{4DE90B50-AD05-44CA-A80C-E5EA44DE5F48}" ShortID="629348079">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="car-explosion-3" ID="{3C38E22F-EAAC-4C02-8D70-A4260DD30998}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\car-explosion-3.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="1069524030"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="car-explosion-3_01" ID="{332A6646-CC13-42E3-97C6-EF1569DDC2B8}">
+											<Language>SFX</Language>
+											<AudioFile>car-explosion-3.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="629780468"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="car-explosion-4" ID="{D4191559-6375-4D96-9BC2-4D570CC54EF2}">
+											<Language>SFX</Language>
+											<AudioFile>car-explosion-4.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="536878760"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="car-explosion-5" ID="{90E62D85-5F1F-48CB-8173-1BA96285159A}">
+											<Language>SFX</Language>
+											<AudioFile>car-explosion-5.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="464858496"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="car-explosion-5" ID="{90E62D85-5F1F-48CB-8173-1BA96285159A}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="car-explosion-2" ID="{9AD2ADAD-7912-49A3-96E9-D07F7A4A4D0C}" ShortID="951847489">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="car-explosion-2" ID="{29504B08-6A8E-4F0D-A6CE-F3DD487F6BCE}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\car-explosion-2.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="512876442"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="car-explosion-2_01" ID="{DCD839E8-6D24-426C-8317-ABE62148B97E}">
+											<Language>SFX</Language>
+											<AudioFile>car-explosion-2.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="862707693"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="car-explosion-2_01" ID="{DCD839E8-6D24-426C-8317-ABE62148B97E}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="car-explosion-4" ID="{25F8D5B9-F9C1-45CB-B9DD-45DDF8D8093A}" ShortID="978200803">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="car-explosion-4" ID="{D34E9240-DD74-4DA3-AD7E-B5A4FFB7FA84}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\car-explosion-4.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="348634209"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="car-explosion-4_01" ID="{DF40E606-6924-461E-9BBF-906D1B0E5D90}">
+											<Language>SFX</Language>
+											<AudioFile>car-explosion-4.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="536878760"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="car-explosion-4_01" ID="{DF40E606-6924-461E-9BBF-906D1B0E5D90}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="car-explosion-5" ID="{38464B84-1A26-4E96-8DCB-19086F57C90E}" ShortID="310848679">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="car-explosion-5" ID="{CEF1B7B1-89CD-4C70-90C6-FEBC116EC8F0}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\car-explosion-5.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="622663132"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="car-explosion-5_01" ID="{ABF24C79-7FE3-46B3-A88E-A47B7A21ECDA}">
+											<Language>SFX</Language>
+											<AudioFile>car-explosion-5.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="464858496"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="car-explosion-5_01" ID="{ABF24C79-7FE3-46B3-A88E-A47B7A21ECDA}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+							</ChildrenList>
+						</RandomSequenceContainer>
+						<Sound Name="hog-horn" ID="{3234C638-EC12-4DED-A9FD-21091CED2672}" ShortID="198109562">
+							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="2"/>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="4_heavy" ID="{43107289-E7D2-4135-8D72-21C55D22B4E8}">
 									<Language>SFX</Language>
-									<AudioFile>tire-screeching-1.wav</AudioFile>
+									<AudioFile>4_heavy.wav</AudioFile>
 									<MediaIDList>
-										<MediaID ID="553553016"/>
+										<MediaID ID="439209459"/>
 									</MediaIDList>
 								</AudioFileSource>
 							</ChildrenList>
 							<ActiveSourceList>
-								<ActiveSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}" Platform="Linked"/>
+								<ActiveSource Name="4_heavy" ID="{43107289-E7D2-4135-8D72-21C55D22B4E8}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
-						<Sound Name="tire-screeching-2" ID="{B0A882FC-AEE9-4E4D-BF86-85EEDC46FB84}" ShortID="36804933">
+						<BlendContainer Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" ShortID="821123812">
+							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+								<Property Name="OutputBusHighpass" Type="int16">
+									<ValueList>
+										<Value>15</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 								</Reference>
 								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 								</Reference>
 							</ReferenceList>
 							<ChildrenList>
-								<AudioFileSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}">
-									<Language>SFX</Language>
-									<AudioFile>tire-screeching-2.wav</AudioFile>
-									<MediaIDList>
-										<MediaID ID="1040679246"/>
-									</MediaIDList>
-								</AudioFileSource>
+								<Sound Name="6k-rpm-loop" ID="{C35F92CE-73FE-4DDE-9F5A-BEDD1620E0A4}" ShortID="365189167">
+									<PropertyList>
+										<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="6k-rpm-loop" ID="{DBD34488-968E-4932-88C7-5E2D1B6BACF8}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\6k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="27220251"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="6k-rpm-loop_01" ID="{CC5AE48B-F1EC-4470-A6F2-BFD042417AB4}">
+											<Language>SFX</Language>
+											<AudioFile>6k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="178975780"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="6k-rpm-loop_01" ID="{CC5AE48B-F1EC-4470-A6F2-BFD042417AB4}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="5k-rpm-loop" ID="{BEAF2C32-C0D2-4BBA-BF3A-38B18A25AB85}" ShortID="891023393">
+									<PropertyList>
+										<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="5k-rpm-loop" ID="{CE6FE787-F9DC-4A39-B85C-ED1A965B646D}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\5k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="487559685"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="5k-rpm-loop_01" ID="{787DC09A-2B79-47EF-97AD-F00C2207567B}">
+											<Language>SFX</Language>
+											<AudioFile>5k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="386328575"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="5k-rpm-loop_01" ID="{787DC09A-2B79-47EF-97AD-F00C2207567B}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="4k-rpm-loop" ID="{8B84B576-6A98-45E3-97A5-EF94126A72DE}" ShortID="865612351">
+									<PropertyList>
+										<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="4k-rpm-loop" ID="{09F0BA34-3AE1-4DFC-8B4B-4BDF0A0A9998}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\4k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="1062246044"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="4k-rpm-loop_01" ID="{7D8B4492-4C27-415F-AEDA-81FFD2BA6969}">
+											<Language>SFX</Language>
+											<AudioFile>4k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="811391391"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="4k-rpm-loop_01" ID="{7D8B4492-4C27-415F-AEDA-81FFD2BA6969}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="3k-rpm-loop" ID="{3CFA26C8-55E7-497D-AD05-C3F162F167F3}" ShortID="188010965">
+									<PropertyList>
+										<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="3k-rpm-loop" ID="{5333A76C-AF07-4F1E-A6F5-0DE5900E400F}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\3k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="808429037"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="3k-rpm-loop_01" ID="{0F444D27-5144-4EBE-A98F-D019842862F6}">
+											<Language>SFX</Language>
+											<AudioFile>3k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="758309002"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="3k-rpm-loop_01" ID="{0F444D27-5144-4EBE-A98F-D019842862F6}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="2k-rpm-loop" ID="{9ECD291E-CC54-47DD-A483-19F5D26A64CE}" ShortID="260304537">
+									<PropertyList>
+										<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="2k-rpm-loop" ID="{60A1A897-FE5A-4765-9998-857781D5D191}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\2k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="1057082725"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="2k-rpm-loop_01" ID="{0803735F-9B16-4A22-9043-16A4294CFE3F}">
+											<Language>SFX</Language>
+											<AudioFile>2k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="796949936"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="2k-rpm-loop_01" ID="{0803735F-9B16-4A22-9043-16A4294CFE3F}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="1k-rpm-loop" ID="{7E67A8EA-236B-4C76-8861-25E5EF8735EB}" ShortID="688273669">
+									<PropertyList>
+										<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="1k-rpm-loop" ID="{E8D1910F-E242-4A47-9DC2-67BD33A73DC1}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\1k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="142434758"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="1k-rpm-loop_01" ID="{E96A0CD5-E19D-4470-9368-40AD9A2BF218}">
+											<Language>SFX</Language>
+											<AudioFile>1k-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="330055359"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="1k-rpm-loop_01" ID="{E96A0CD5-E19D-4470-9368-40AD9A2BF218}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="gear-shift-1" ID="{BA6FEB59-71CA-4E50-9CBF-2A6490EE285F}" ShortID="237781142">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-10</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="gear-shift-1" ID="{B013F7C8-1982-44AA-815E-F7D107C4D4AA}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\gear-shift-1.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="59074654"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="gear-shift-1_01" ID="{14C62247-827E-4E81-BC6E-E522DEDB0B26}">
+											<Language>SFX</Language>
+											<AudioFile>gear-shift-1.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="307100629"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="gear-shift-1_01" ID="{14C62247-827E-4E81-BC6E-E522DEDB0B26}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="gear-shift-2" ID="{AAF057FF-BDCC-4E0C-8D2B-6BE88BAA498B}" ShortID="435362373">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-10</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="gear-shift-2" ID="{4814DCF3-A620-453F-95B7-4D64B9F0EEE6}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\gear-shift-2.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="1016150173"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="gear-shift-2_01" ID="{0BD6B5EA-C39D-44E3-A248-56B8EC2E4A7D}">
+											<Language>SFX</Language>
+											<AudioFile>gear-shift-2.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="595717928"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="gear-shift-2_01" ID="{0BD6B5EA-C39D-44E3-A248-56B8EC2E4A7D}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="gear-shift-3" ID="{31335CA0-BA45-4864-A882-B6165C6E7E5C}" ShortID="333338748">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-5</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="gear-shift-3" ID="{B067CBB5-877C-4BD0-BF29-389510D3DC03}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\gear-shift-3.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="58965652"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="gear-shift-3_01" ID="{CFB432E0-4651-48AF-8D1E-7300A34EA14E}">
+											<Language>SFX</Language>
+											<AudioFile>gear-shift-3.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="842752452"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="gear-shift-3_01" ID="{CFB432E0-4651-48AF-8D1E-7300A34EA14E}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="gear-shift-4" ID="{6A357843-9EC9-4EB4-974F-1C8ACD316389}" ShortID="88516859">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-5</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="gear-shift-4" ID="{845B105D-6CF5-4B56-BD7F-9873832BB945}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\gear-shift-4.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="762622656"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="gear-shift-4_01" ID="{0D7E9891-13BF-4EA9-8ED2-D0A66B4184D1}">
+											<Language>SFX</Language>
+											<AudioFile>gear-shift-4.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="526038726"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="gear-shift-4_01" ID="{0D7E9891-13BF-4EA9-8ED2-D0A66B4184D1}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="gear-shift-5" ID="{5B013149-F91B-4E2B-8E03-AD9EFF66C844}" ShortID="1028955023">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-5</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="gear-shift-5" ID="{07EEB93D-8ED7-461E-8DBB-B1018583E7A2}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\gear-shift-5.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="24408083"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="gear-shift-5_01" ID="{E174ABE1-287D-4BCA-A121-2A22868266B7}">
+											<Language>SFX</Language>
+											<AudioFile>gear-shift-5.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="344684111"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="gear-shift-5_01" ID="{E174ABE1-287D-4BCA-A121-2A22868266B7}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="idle-rpm-loop" ID="{9CDAD714-598C-4BCC-BB36-CC306FFEA96B}" ShortID="96525429">
+									<PropertyList>
+										<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="idle-rpm-loop" ID="{8EB7E7C0-9E29-49F4-B8C2-43CBA51DD9B1}">
+											<Language>SFX</Language>
+											<AudioFile>Bounces\idle-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="632899163"/>
+											</MediaIDList>
+										</AudioFileSource>
+										<AudioFileSource Name="idle-rpm-loop_01" ID="{ADE87524-599A-4FE0-884D-582F55359BDD}">
+											<Language>SFX</Language>
+											<AudioFile>idle-rpm-loop.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="71018915"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="idle-rpm-loop_01" ID="{ADE87524-599A-4FE0-884D-582F55359BDD}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
 							</ChildrenList>
-							<ActiveSourceList>
-								<ActiveSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}" Platform="Linked"/>
-							</ActiveSourceList>
-						</Sound>
+							<BlendTrackList>
+								<BlendTrack Name="RPM" ID="{97D23B11-3DB6-4377-A9E0-F9C6DDF6C213}" ShortID="521178152">
+									<PropertyList>
+										<Property Name="EnableCrossFading" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="LayerCrossFadeControlInput">
+											<ObjectRef Name="RPM" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
+										</Reference>
+									</ReferenceList>
+									<BlendTrackAssocList>
+										<BlendTrackAssoc>
+											<ItemRef Name="idle-rpm-loop" ID="{9CDAD714-598C-4BCC-BB36-CC306FFEA96B}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>0</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>16.5584415584416</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="1k-rpm-loop" ID="{7E67A8EA-236B-4C76-8861-25E5EF8735EB}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>9.56543456543456</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>33.1168831168831</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="2k-rpm-loop" ID="{9ECD291E-CC54-47DD-A483-19F5D26A64CE}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>25.4245754245754</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>48.4515484515485</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="3k-rpm-loop" ID="{3CFA26C8-55E7-497D-AD05-C3F162F167F3}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>39.7102897102897</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>62.2127872127872</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="4k-rpm-loop" ID="{8B84B576-6A98-45E3-97A5-EF94126A72DE}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>49.975024975025</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>78.5964035964036</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="5k-rpm-loop" ID="{BEAF2C32-C0D2-4BBA-BF3A-38B18A25AB85}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>64.0859140859141</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>99.9995</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="6k-rpm-loop" ID="{C35F92CE-73FE-4DDE-9F5A-BEDD1620E0A4}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>82.7422577422577</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>100</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+									</BlendTrackAssocList>
+								</BlendTrack>
+								<BlendTrack Name="transmission_shift" ID="{1B4D6E40-8CB8-40E3-906A-0AE609982D08}" ShortID="569619912">
+									<PropertyList>
+										<Property Name="EnableCrossFading" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="LayerCrossFadeControlInput">
+											<ObjectRef Name="RPM" ID="{AC7C998C-BFF2-4DF1-AECD-F4E8ECF6A132}" WorkUnitID="{B8A5728E-C73C-49C7-BA92-B3057D953094}"/>
+										</Reference>
+									</ReferenceList>
+									<BlendTrackAssocList>
+										<BlendTrackAssoc>
+											<ItemRef Name="gear-shift-1" ID="{BA6FEB59-71CA-4E50-9CBF-2A6490EE285F}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>9.61538461538461</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>17.2027972027972</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="gear-shift-2" ID="{AAF057FF-BDCC-4E0C-8D2B-6BE88BAA498B}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>25.9440559440559</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>33.8811188811189</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="gear-shift-3" ID="{31335CA0-BA45-4864-A882-B6165C6E7E5C}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>41.3986013986014</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>46.8881118881119</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="gear-shift-4" ID="{6A357843-9EC9-4EB4-974F-1C8ACD316389}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>55.2797202797203</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>61.4685314685315</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+										<BlendTrackAssoc>
+											<ItemRef Name="gear-shift-5" ID="{5B013149-F91B-4E2B-8E03-AD9EFF66C844}"/>
+											<CrossfadingInfo>
+												<LeftEdgePos>68.2867132867133</LeftEdgePos>
+												<LeftFadingMode>Automatic</LeftFadingMode>
+												<RightEdgePos>74.4755244755245</RightEdgePos>
+												<RightFadingMode>Automatic</RightFadingMode>
+											</CrossfadingInfo>
+										</BlendTrackAssoc>
+									</BlendTrackAssocList>
+								</BlendTrack>
+							</BlendTrackList>
+						</BlendContainer>
+						<SwitchContainer Name="hog-impact" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" ShortID="736143456">
+							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="DefaultSwitchOrState">
+									<ObjectRef Name="low" ID="{C5B2DF45-9977-4C78-B474-13B3170D136D}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+								<Reference Name="SwitchGroupOrStateGroup">
+									<ObjectRef Name="hog_impact" ID="{1852736A-60BA-4755-8E71-0B73A1839A7C}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<RandomSequenceContainer Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}" ShortID="864689547">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<Sound Name="impact-1a" ID="{640862C0-8DF9-4892-8A81-EBE1F50E3E24}" ShortID="150314775">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-1a" ID="{4DA63113-481F-4364-AB5C-DF9E05DDBE10}">
+													<Language>SFX</Language>
+													<AudioFile>impact-1a.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="299928938"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-1a" ID="{4DA63113-481F-4364-AB5C-DF9E05DDBE10}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="impact-1b" ID="{01E5F03C-D460-4563-97E4-AF380EC85A43}" ShortID="76995078">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-1b" ID="{9B80E03A-2E65-4504-AFAD-58B100923FA5}">
+													<Language>SFX</Language>
+													<AudioFile>impact-1b.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="708298719"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-1b" ID="{9B80E03A-2E65-4504-AFAD-58B100923FA5}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="impact-1c" ID="{0D48731F-125C-4DFC-94E3-F852130038B0}" ShortID="706885308">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-1c" ID="{BBDA03DF-CBC5-40CA-9FBC-436946DEDFAC}">
+													<Language>SFX</Language>
+													<AudioFile>impact-1c.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="729798953"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-1c" ID="{BBDA03DF-CBC5-40CA-9FBC-436946DEDFAC}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+									</ChildrenList>
+									<StateInfo>
+										<StatePropertyList>
+											<Property Name="Highpass"/>
+											<Property Name="Lowpass"/>
+											<Property Name="MakeUpGain"/>
+											<Property Name="Pitch"/>
+											<Property Name="Priority"/>
+											<Property Name="Volume"/>
+										</StatePropertyList>
+									</StateInfo>
+								</RandomSequenceContainer>
+								<RandomSequenceContainer Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}" ShortID="1020244753">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<Sound Name="impact-2a" ID="{700FA17E-B0FB-4114-8BC7-D4C8F5EBD0B6}" ShortID="9017672">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-2a" ID="{8CF25923-E9FB-4735-BD13-4493DCE9D2B5}">
+													<Language>SFX</Language>
+													<AudioFile>impact-2a.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="1032222109"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-2a" ID="{8CF25923-E9FB-4735-BD13-4493DCE9D2B5}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="impact-2b" ID="{D3CB3181-0951-47FC-BA8C-8C87B4939318}" ShortID="698888499">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-2b" ID="{1EB464BB-CCF3-419F-B72C-932460AEC57C}">
+													<Language>SFX</Language>
+													<AudioFile>impact-2b.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="388733350"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-2b" ID="{1EB464BB-CCF3-419F-B72C-932460AEC57C}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="impact-2c" ID="{A2AA3711-EE9F-4426-A9C2-B754F5EDA7AE}" ShortID="875078479">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-2c" ID="{09682844-451D-46F4-97E0-CDCBDFA4B6F4}">
+													<Language>SFX</Language>
+													<AudioFile>impact-2c.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="783942544"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-2c" ID="{09682844-451D-46F4-97E0-CDCBDFA4B6F4}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+									</ChildrenList>
+									<StateInfo>
+										<StatePropertyList>
+											<Property Name="Highpass"/>
+											<Property Name="Lowpass"/>
+											<Property Name="MakeUpGain"/>
+											<Property Name="Pitch"/>
+											<Property Name="Priority"/>
+											<Property Name="Volume"/>
+										</StatePropertyList>
+									</StateInfo>
+								</RandomSequenceContainer>
+								<RandomSequenceContainer Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}" ShortID="11654586">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<Sound Name="impact-3a" ID="{00634E22-471D-4426-9D12-C6E6F27CEE55}" ShortID="698561937">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-3a" ID="{6480A6F8-1469-4C52-AD45-31AC4BFA18F3}">
+													<Language>SFX</Language>
+													<AudioFile>impact-3a.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="331870255"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-3a" ID="{6480A6F8-1469-4C52-AD45-31AC4BFA18F3}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="impact-3b" ID="{C90B29FF-532E-41F0-9CEF-81DFAD0FE383}" ShortID="999322436">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-3b" ID="{19DEB4A9-C122-4AE5-856F-95A7CC4BED80}">
+													<Language>SFX</Language>
+													<AudioFile>impact-3b.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="607401393"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-3b" ID="{19DEB4A9-C122-4AE5-856F-95A7CC4BED80}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="impact-3c" ID="{1D290357-CC93-45A9-9B74-C094694EEE9E}" ShortID="721559842">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="impact-3c" ID="{7C52D149-B266-440A-9EBF-9D261FCCC1F3}">
+													<Language>SFX</Language>
+													<AudioFile>impact-3c.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="191368066"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="impact-3c" ID="{7C52D149-B266-440A-9EBF-9D261FCCC1F3}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+									</ChildrenList>
+									<StateInfo>
+										<StatePropertyList>
+											<Property Name="Highpass"/>
+											<Property Name="Lowpass"/>
+											<Property Name="MakeUpGain"/>
+											<Property Name="Pitch"/>
+											<Property Name="Priority"/>
+											<Property Name="Volume"/>
+										</StatePropertyList>
+									</StateInfo>
+								</RandomSequenceContainer>
+							</ChildrenList>
+							<StateInfo>
+								<StatePropertyList>
+									<Property Name="Highpass"/>
+									<Property Name="Lowpass"/>
+									<Property Name="MakeUpGain"/>
+									<Property Name="Pitch"/>
+									<Property Name="Priority"/>
+									<Property Name="Volume"/>
+								</StatePropertyList>
+							</StateInfo>
+							<GroupingInfo>
+								<GroupingBehaviorList>
+									<GroupingBehavior>
+										<ItemRef Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}"/>
+									</GroupingBehavior>
+									<GroupingBehavior>
+										<ItemRef Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}"/>
+									</GroupingBehavior>
+									<GroupingBehavior>
+										<ItemRef Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}"/>
+									</GroupingBehavior>
+								</GroupingBehaviorList>
+								<GroupingList>
+									<Grouping>
+										<SwitchRef Name="low" ID="{C5B2DF45-9977-4C78-B474-13B3170D136D}"/>
+										<ItemList>
+											<ItemRef Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}"/>
+										</ItemList>
+									</Grouping>
+									<Grouping>
+										<SwitchRef Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"/>
+										<ItemList>
+											<ItemRef Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}"/>
+										</ItemList>
+									</Grouping>
+									<Grouping>
+										<SwitchRef Name="high" ID="{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"/>
+										<ItemList>
+											<ItemRef Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}"/>
+										</ItemList>
+									</Grouping>
+								</GroupingList>
+							</GroupingInfo>
+						</SwitchContainer>
+						<RandomSequenceContainer Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
+							<PropertyList>
+								<Property Name="3DSpatialization" Type="int16" Value="1"/>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<Sound Name="tire-screeching-1" ID="{6A1129E9-3713-4EBE-809F-AFED50C0F7AE}" ShortID="358674658">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}">
+											<Language>SFX</Language>
+											<AudioFile>tire-screeching-1.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="553553016"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="tire-screeching-2" ID="{B0A882FC-AEE9-4E4D-BF86-85EEDC46FB84}" ShortID="36804933">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}">
+											<Language>SFX</Language>
+											<AudioFile>tire-screeching-2.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="1040679246"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+							</ChildrenList>
+						</RandomSequenceContainer>
 					</ChildrenList>
-				</RandomSequenceContainer>
-				<SwitchContainer Name="hog-impact" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" ShortID="736143456">
-					<PropertyList>
-						<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
-					</PropertyList>
-					<ReferenceList>
-						<Reference Name="Conversion">
-							<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-						</Reference>
-						<Reference Name="DefaultSwitchOrState">
-							<ObjectRef Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
-						</Reference>
-						<Reference Name="OutputBus">
-							<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-						</Reference>
-						<Reference Name="SwitchGroupOrStateGroup">
-							<ObjectRef Name="hog_impact" ID="{1852736A-60BA-4755-8E71-0B73A1839A7C}" WorkUnitID="{0EB21017-17DD-4F77-A51B-B62103FF3283}"/>
-						</Reference>
-					</ReferenceList>
-					<ChildrenList>
-						<RandomSequenceContainer Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}" ShortID="864689547">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<Sound Name="impact-1a" ID="{640862C0-8DF9-4892-8A81-EBE1F50E3E24}" ShortID="150314775">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-1a" ID="{4DA63113-481F-4364-AB5C-DF9E05DDBE10}">
-											<Language>SFX</Language>
-											<AudioFile>impact-1a.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="299928938"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-1a" ID="{4DA63113-481F-4364-AB5C-DF9E05DDBE10}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="impact-1b" ID="{01E5F03C-D460-4563-97E4-AF380EC85A43}" ShortID="76995078">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-1b" ID="{9B80E03A-2E65-4504-AFAD-58B100923FA5}">
-											<Language>SFX</Language>
-											<AudioFile>impact-1b.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="708298719"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-1b" ID="{9B80E03A-2E65-4504-AFAD-58B100923FA5}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="impact-1c" ID="{0D48731F-125C-4DFC-94E3-F852130038B0}" ShortID="706885308">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-1c" ID="{BBDA03DF-CBC5-40CA-9FBC-436946DEDFAC}">
-											<Language>SFX</Language>
-											<AudioFile>impact-1c.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="729798953"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-1c" ID="{BBDA03DF-CBC5-40CA-9FBC-436946DEDFAC}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-							</ChildrenList>
-						</RandomSequenceContainer>
-						<RandomSequenceContainer Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}" ShortID="1020244753">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<Sound Name="impact-2a" ID="{700FA17E-B0FB-4114-8BC7-D4C8F5EBD0B6}" ShortID="9017672">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-2a" ID="{8CF25923-E9FB-4735-BD13-4493DCE9D2B5}">
-											<Language>SFX</Language>
-											<AudioFile>impact-2a.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="1032222109"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-2a" ID="{8CF25923-E9FB-4735-BD13-4493DCE9D2B5}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="impact-2b" ID="{D3CB3181-0951-47FC-BA8C-8C87B4939318}" ShortID="698888499">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-2b" ID="{1EB464BB-CCF3-419F-B72C-932460AEC57C}">
-											<Language>SFX</Language>
-											<AudioFile>impact-2b.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="388733350"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-2b" ID="{1EB464BB-CCF3-419F-B72C-932460AEC57C}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="impact-2c" ID="{A2AA3711-EE9F-4426-A9C2-B754F5EDA7AE}" ShortID="875078479">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-2c" ID="{09682844-451D-46F4-97E0-CDCBDFA4B6F4}">
-											<Language>SFX</Language>
-											<AudioFile>impact-2c.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="783942544"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-2c" ID="{09682844-451D-46F4-97E0-CDCBDFA4B6F4}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-							</ChildrenList>
-						</RandomSequenceContainer>
-						<RandomSequenceContainer Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}" ShortID="11654586">
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<Sound Name="impact-3a" ID="{00634E22-471D-4426-9D12-C6E6F27CEE55}" ShortID="698561937">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-3a" ID="{6480A6F8-1469-4C52-AD45-31AC4BFA18F3}">
-											<Language>SFX</Language>
-											<AudioFile>impact-3a.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="331870255"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-3a" ID="{6480A6F8-1469-4C52-AD45-31AC4BFA18F3}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="impact-3b" ID="{C90B29FF-532E-41F0-9CEF-81DFAD0FE383}" ShortID="999322436">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-3b" ID="{19DEB4A9-C122-4AE5-856F-95A7CC4BED80}">
-											<Language>SFX</Language>
-											<AudioFile>impact-3b.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="607401393"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-3b" ID="{19DEB4A9-C122-4AE5-856F-95A7CC4BED80}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="impact-3c" ID="{1D290357-CC93-45A9-9B74-C094694EEE9E}" ShortID="721559842">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="impact-3c" ID="{7C52D149-B266-440A-9EBF-9D261FCCC1F3}">
-											<Language>SFX</Language>
-											<AudioFile>impact-3c.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="191368066"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="impact-3c" ID="{7C52D149-B266-440A-9EBF-9D261FCCC1F3}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-							</ChildrenList>
-						</RandomSequenceContainer>
-					</ChildrenList>
-					<GroupingInfo>
-						<GroupingBehaviorList>
-							<GroupingBehavior>
-								<ItemRef Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}"/>
-							</GroupingBehavior>
-							<GroupingBehavior>
-								<ItemRef Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}"/>
-							</GroupingBehavior>
-							<GroupingBehavior>
-								<ItemRef Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}"/>
-							</GroupingBehavior>
-						</GroupingBehaviorList>
-						<GroupingList>
-							<Grouping>
-								<SwitchRef Name="low" ID="{C5B2DF45-9977-4C78-B474-13B3170D136D}"/>
-								<ItemList>
-									<ItemRef Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}"/>
-								</ItemList>
-							</Grouping>
-							<Grouping>
-								<SwitchRef Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"/>
-								<ItemList>
-									<ItemRef Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}"/>
-								</ItemList>
-							</Grouping>
-							<Grouping>
-								<SwitchRef Name="high" ID="{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"/>
-								<ItemList>
-									<ItemRef Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}"/>
-								</ItemList>
-							</Grouping>
-						</GroupingList>
-					</GroupingInfo>
-				</SwitchContainer>
+				</Folder>
 			</ChildrenList>
 		</WorkUnit>
 	</AudioObjects>

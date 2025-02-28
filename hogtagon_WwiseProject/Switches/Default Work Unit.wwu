@@ -5,9 +5,24 @@
 			<ChildrenList>
 				<SwitchGroup Name="hog_impact" ID="{1852736A-60BA-4755-8E71-0B73A1839A7C}">
 					<ChildrenList>
-						<Switch Name="low" ID="{C5B2DF45-9977-4C78-B474-13B3170D136D}"/>
-						<Switch Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}"/>
-						<Switch Name="high" ID="{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}"/>
+						<Switch Name="low" ID="{C5B2DF45-9977-4C78-B474-13B3170D136D}">
+							<PropertyList>
+								<Property Name="Color" Type="int16" Value="2"/>
+								<Property Name="OverrideColor" Type="bool" Value="True"/>
+							</PropertyList>
+						</Switch>
+						<Switch Name="medium" ID="{C7EFD8D2-337A-4D10-89DE-AFB30BDA16E0}">
+							<PropertyList>
+								<Property Name="Color" Type="int16" Value="2"/>
+								<Property Name="OverrideColor" Type="bool" Value="True"/>
+							</PropertyList>
+						</Switch>
+						<Switch Name="high" ID="{6B1A37E8-A7B4-42AE-8CB8-A331AE80BB2F}">
+							<PropertyList>
+								<Property Name="Color" Type="int16" Value="2"/>
+								<Property Name="OverrideColor" Type="bool" Value="True"/>
+							</PropertyList>
+						</Switch>
 					</ChildrenList>
 				</SwitchGroup>
 			</ChildrenList>
