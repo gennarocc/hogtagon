@@ -574,15 +574,38 @@ public class HogController : NetworkBehaviour
 
     public void DriftCarPS()
     {
+        // Check if wheels are grounded and drifting
+        bool rearLeftGrounded = rearLeftWheelCollider.isGrounded;
+        bool rearRightGrounded = rearRightWheelCollider.isGrounded;
+
         if (isDrifting.Value)
         {
-            RLWParticleSystem.Play();
-            RRWParticleSystem.Play();
-            RLWTireSkid.emitting = true;
-            RRWTireSkid.emitting = true;
+            // Only play particle effects and skid marks if the wheels are grounded
+            if (rearLeftGrounded)
+            {
+                RLWParticleSystem.Play();
+                RLWTireSkid.emitting = true;
+            }
+            else
+            {
+                RLWParticleSystem.Stop();
+                RLWTireSkid.emitting = false;
+            }
+
+            if (rearRightGrounded)
+            {
+                RRWParticleSystem.Play();
+                RRWTireSkid.emitting = true;
+            }
+            else
+            {
+                RRWParticleSystem.Stop();
+                RRWTireSkid.emitting = false;
+            }
         }
         else if (!isDrifting.Value)
         {
+            // Not drifting, turn off all effects
             RLWParticleSystem.Stop();
             RRWParticleSystem.Stop();
             RLWTireSkid.emitting = false;
