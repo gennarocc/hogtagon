@@ -127,7 +127,7 @@ public class HogController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0))
+        if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0)) && !transform.root.gameObject.GetComponent<Player>().isSpectating)
         {
             // Play Horn Sound
             HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
