@@ -66,7 +66,10 @@ public class GameManager : NetworkBehaviour
 
        menuManager.DisplayWinnerClientRpc(roundWinner.username);
        roundWinner.score++;
+
        ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
+       ConnectionManager.instance.UpdateLobbyLeaderBasedOnScore();
+
        StartCoroutine(BetweenRoundTimer()); 
     }
 
@@ -95,7 +98,6 @@ public class GameManager : NetworkBehaviour
         TransitionToState(GameState.Playing);
     }
 
-
     private void OnPendingEnter()
     {
 
@@ -123,6 +125,7 @@ public class GameManager : NetworkBehaviour
 
         CheckGameStatus();
     }
+
     private void RespawnAllPlayers()
     {
         Player[] players = FindObjectsByType<Player>(FindObjectsSortMode.None);

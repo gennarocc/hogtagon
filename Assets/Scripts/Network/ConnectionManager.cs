@@ -73,7 +73,7 @@ public class ConnectionManager : NetworkBehaviour
             colorIndex = GetAvailableTextureIndex(),
             state = GameManager.instance.state == GameState.Playing ? PlayerState.Dead : PlayerState.Alive,
             spawnPoint = sp,
-            isLobbyLeader = clientDataDictionary.Count == 0
+            isLobbyLeader = false
         };
 
         pendingPlayerData.Add(clientId, player);
@@ -177,7 +177,6 @@ public class ConnectionManager : NetworkBehaviour
         Debug.Log(message: "Removing Client - " + clientId);
         clientDataDictionary.Remove(clientId);
     }
-
 
     [ClientRpc(Delivery = RpcDelivery.Reliable)]
     public void UpdatePlayerDataClientRpc(ulong clientId, PlayerData player)
@@ -295,6 +294,73 @@ public class ConnectionManager : NetworkBehaviour
             return selectedIndex;
         }
         return -1; // No available textures
+    }
+
+    public void UpdateLobbyLeaderBasedOnScore()
+    {
+        if (!IsServer)
+        {
+            Debug.LogWarning("UpdateLobbyLeaderBasedOnScore should only be called on the server.");
+            return;
+        }
+
+        // STEP 1: First, find the highest scoring player (without modifying anything)
+        ulong highestScoringClientId = 0;
+        int highestScore = -1;
+        bool foundAnyPlayer = false;
+
+        // Make a safe copy of the keys to iterate through
+        List<ulong> clientIds = new List<ulong>(clientDataDictionary.Keys);
+
+        foreach (ulong clientId in clientIds)
+        {
+            if (TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+                foundAnyPlayer = true;
+
+                if (playerData.score > highestScore ||
+                    (playerData.score == highestScore && playerData.isLobbyLeader))
+                {
+                    highestScore = playerData.score;
+                    highestScoringClientId = clientId;
+                }
+            }
+        }
+
+        if (!foundAnyPlayer)
+            return;
+
+        // STEP 2: Then update all player statuses (in a separate loop)
+        foreach (ulong clientId in clientIds)
+        {
+            if (TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+                bool shouldBeLobbyLeader = (clientId == highestScoringClientId);
+
+                if (playerData.isLobbyLeader != shouldBeLobbyLeader)
+                {
+                    playerData.isLobbyLeader = shouldBeLobbyLeader;
+
+                    // Update local dictionary
+                    clientDataDictionary[clientId] = playerData;
+
+                    // Find and update the player's NetworkVariable
+                    foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
+                    {
+                        if (player.clientId == clientId)
+                        {
+                            player.SetPlayerData(playerData);
+                            break;
+                        }
+                    }
+
+                    // Notify all clients about the updated player data
+                    UpdatePlayerDataClientRpc(clientId, playerData);
+                }
+            }
+        }
+
+        Debug.Log("Lobby leader updated. New leader: " + GetClientUsername(highestScoringClientId));
     }
 }
 

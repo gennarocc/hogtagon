@@ -15,6 +15,8 @@ public class Player : NetworkBehaviour
     [SerializeField] public TextMeshProUGUI floatingUsername;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private GameObject body; // Used to set color texture
+    [SerializeField] private GameObject playerIndicator; // Used to set color texture
+
 
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
@@ -117,6 +119,8 @@ public class Player : NetworkBehaviour
             mainCamera.Follow = cameraTarget;
             mainCamera.LookAt = cameraTarget;
         }
+
+        playerIndicator.SetActive(playerData.isLobbyLeader);
     }
 
     public void Respawn()
@@ -179,7 +183,5 @@ public class Player : NetworkBehaviour
         {
             networkPlayerData.Value = playerData;
         }
-
-
     }
 }
