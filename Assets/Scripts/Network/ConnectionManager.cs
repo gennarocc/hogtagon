@@ -15,6 +15,7 @@ public class ConnectionManager : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] private MenuManager menuManager;
+    [SerializeField] private Scoreboard scoreboard;
     private Dictionary<ulong, PlayerData> clientDataDictionary = new Dictionary<ulong, PlayerData>();
     private Dictionary<ulong, PlayerData> pendingPlayerData = new Dictionary<ulong, PlayerData>();
     public static ConnectionManager instance;
@@ -192,6 +193,8 @@ public class ConnectionManager : NetworkBehaviour
             clientDataDictionary.Add(clientId, player);
             Debug.Log(message: "Player connected - " + player.username);
         }
+
+        scoreboard.UpdatePlayerList();
     }
 
     public string GetClientUsername(ulong clientId)

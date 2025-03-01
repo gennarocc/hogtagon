@@ -39,6 +39,7 @@ public class Player : NetworkBehaviour
     private Canvas worldspaceCanvas;
     private MenuManager menuManager;
     private int spectatingPlayerIndex = 0;
+    private Transform localPlayerCameraTransform;
 
     public override void OnNetworkSpawn()
     {
@@ -81,12 +82,20 @@ public class Player : NetworkBehaviour
         }
 
         cameraTarget.rotation = Quaternion.identity;
+
+        Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
+        localPlayerCameraTransform = localPlayer.mainCamera.transform;
     }
 
     private void Update()
     {
-        floatingUsername.transform.position = transform.position + new Vector3(0, 3f, -1f);
-        floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - mainCamera.transform.position);
+        // Only update floating username position for non-local players
+        if (!IsOwner && localPlayerCameraTransform != null)
+        {
+            // Position the username above the player
+            floatingUsername.transform.position = rb.position + new Vector3(0, 3f, 0);
+            floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - localPlayerCameraTransform.transform.position);
+        }
 
         cameraTarget.position = cameraOffset.position;
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
@@ -141,13 +150,27 @@ public class Player : NetworkBehaviour
             body.GetComponent<Renderer>().material = ConnectionManager.instance.hogTextures[playerData.colorIndex];
         }
 
-        // Update floating username
-        if (worldspaceCanvas == null)
+        // Only display floating username for non-local players
+        if (!IsOwner)
         {
-            worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
+            // Update floating username
+            if (worldspaceCanvas == null)
+            {
+                worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
+            }
+
+            floatingUsername.text = playerData.username;
+            floatingUsername.transform.SetParent(worldspaceCanvas.transform);
+            floatingUsername.gameObject.SetActive(true);
         }
-        floatingUsername.text = playerData.username;
-        floatingUsername.transform.SetParent(worldspaceCanvas.transform);
+        else
+        {
+            // Hide username for local player
+            if (floatingUsername != null)
+            {
+                floatingUsername.gameObject.SetActive(false);
+            }
+        }
     }
 
     public void SetPlayerData(PlayerData playerData)
@@ -156,5 +179,7 @@ public class Player : NetworkBehaviour
         {
             networkPlayerData.Value = playerData;
         }
+
+
     }
 }

@@ -6195,6 +6195,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 1b5f5227dfc41e942b50f383c13bdd21, type: 2}
   - {fileID: 2100000, guid: b3eb15158c63e2544b2eedc3ecce26fa, type: 2}
   menuManager: {fileID: 1935665467}
+  scoreboard: {fileID: 1173365418}
 --- !u!1 &853980518
 GameObject:
   m_ObjectHideFlags: 0

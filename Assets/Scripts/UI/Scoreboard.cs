@@ -24,7 +24,7 @@ public class Scoreboard : MonoBehaviour
             // Format player name based on state
                 if (playerData.state != PlayerState.Alive)
                 {
-                    playerList += $"<color=#808080>{playerData.username}</color>\n";
+                    playerList += $"<color=#FF0000>{playerData.username}</color>\n";
                 }
                 else
                 {
