@@ -4,7 +4,6 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using Cinemachine;
-using Unity.VisualScripting;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -57,11 +56,7 @@ public class MenuManager : NetworkBehaviour
             virtualCamera = GetComponent<CinemachineVirtualCamera>();
         }
 
-        // Get the orbital transposer
-        orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
 
-        // Directly set the Input Axis Value
-        orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
 
     }
 
@@ -109,6 +104,12 @@ public class MenuManager : NetworkBehaviour
     {
 
         mainMenuPanel.SetActive(true);
+        startCamera.gameObject.SetActive(true);
+
+        // Rotate main menu camera;
+        orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
+        orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
+
         playMenuPanel.SetActive(false);
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
@@ -118,7 +119,6 @@ public class MenuManager : NetworkBehaviour
 
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-        virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 100;
     }
     public void OnPlayClicked()
     {

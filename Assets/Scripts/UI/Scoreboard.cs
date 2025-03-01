@@ -8,13 +8,12 @@ public class Scoreboard : MonoBehaviour
     [SerializeField] public TextMeshProUGUI players;
     [SerializeField] public TextMeshProUGUI score;
 
-    private void Update()
+    private void OnEnable()
     {
-        UpdatePlayerList();
         score.text = ConnectionManager.instance.PrintScore();
     }
 
-    private void UpdatePlayerList()
+    public void UpdatePlayerList()
     {
         string playerList = "";
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
@@ -33,5 +32,6 @@ public class Scoreboard : MonoBehaviour
             }
         }
         players.text = playerList;
+        score.text = ConnectionManager.instance.PrintScore();
     }
 }
