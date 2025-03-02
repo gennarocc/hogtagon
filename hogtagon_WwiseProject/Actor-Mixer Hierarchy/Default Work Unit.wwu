@@ -1210,7 +1210,7 @@
 								</GroupingList>
 							</GroupingInfo>
 						</SwitchContainer>
-						<Folder Name="tire-screec" ID="{5EACDD09-CCF6-4B96-B7AE-5503EE2B4AB4}" ShortID="17465897">
+						<Folder Name="tire-screech" ID="{5EACDD09-CCF6-4B96-B7AE-5503EE2B4AB4}" ShortID="17465897">
 							<ChildrenList>
 								<RandomSequenceContainer Name="tire-screech_one-shot" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
 									<PropertyList>
@@ -1293,6 +1293,23 @@
 									</ChildrenList>
 								</RandomSequenceContainer>
 								<RandomSequenceContainer Name="tire-screech-in" ID="{2C02B56A-E9A8-478D-B855-61F73C0C702A}" ShortID="983831287">
+									<PropertyList>
+										<Property Name="Lowpass" Type="int16">
+											<ValueList>
+												<Value>20</Value>
+											</ValueList>
+										</Property>
+										<Property Name="Pitch" Type="int32">
+											<ValueList>
+												<Value>-500</Value>
+											</ValueList>
+										</Property>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-1</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
 											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -1451,6 +1468,18 @@
 									</ChildrenList>
 								</RandomSequenceContainer>
 								<RandomSequenceContainer Name="tire-screech-out" ID="{F249177C-332C-49AD-9FEC-4E4609FB7C30}" ShortID="619368315">
+									<PropertyList>
+										<Property Name="Lowpass" Type="int16">
+											<ValueList>
+												<Value>20</Value>
+											</ValueList>
+										</Property>
+										<Property Name="Pitch" Type="int32">
+											<ValueList>
+												<Value>-500</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
 											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
