@@ -4,8 +4,6 @@ using Cinemachine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using TMPro;
 
 public class HogController : NetworkBehaviour
 {
@@ -21,7 +19,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
-    
+
     [Header("Input Smoothing Settings")]
     [SerializeField, Range(1, 10)] public int steeringBufferSize = 5; // Number of frames to average for inputs
     [SerializeField, Range(0f, 20f)] public float minDeadzone = 3f; // Minimum deadzone at low speeds
@@ -55,23 +53,22 @@ public class HogController : NetworkBehaviour
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event EngineOn;
     [SerializeField] private AK.Wwise.Event EngineOff;
-    [SerializeField] private AK.Wwise.Event TireScreech;
-    [SerializeField] private AK.Wwise.Event HogImpact;
     [SerializeField] private AK.Wwise.RTPC rpm;
 
     // Input Smoothing
     private Queue<float> _recentSteeringInputs;
     private List<float> _steeringInputsList = new List<float>();
-    
+
     // Network variables
     private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
-    
+
     // Physics and control variables
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
     private float driftingAxis;
     private bool isTractionLocked = true;
+    private bool driftingSoundOn = false;
 
     // Wheel references
     private WheelFrictionCurve FLwheelFriction;
@@ -106,7 +103,7 @@ public class HogController : NetworkBehaviour
     {
         // Initialize steering input buffer
         _recentSteeringInputs = new Queue<float>(steeringBufferSize);
-        
+
         if (IsServer || IsOwner)
         {
             // Full physics setup on server and owning client
@@ -148,7 +145,7 @@ public class HogController : NetworkBehaviour
         }
 
         AnimateWheels();
-        DriftCarPS();
+        DriftCarFX();
     }
 
     private void ClientMove()
@@ -158,16 +155,16 @@ public class HogController : NetworkBehaviour
         cameraVector.y = 0;
         Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
         float rawCameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
-        
+
         // Add to input buffer for smoothing using weighted average
         _recentSteeringInputs.Enqueue(rawCameraAngle);
         if (_recentSteeringInputs.Count > steeringBufferSize)
             _recentSteeringInputs.Dequeue();
-        
+
         // Convert queue to list for weighted processing
         _steeringInputsList.Clear();
         _steeringInputsList.AddRange(_recentSteeringInputs);
-        
+
         // Store current angle for visualization/debugging
         // We'll use the weighted average for our displayed value
         if (_steeringInputsList.Count > 0)
@@ -239,47 +236,47 @@ public class HogController : NetworkBehaviour
 
         SendInputServerRpc(input);
     }
-    
+
     // Calculate weighted average of inputs with more recent inputs having more weight
     private float CalculateWeightedAverage(List<float> values, float weightingFactor)
     {
         if (values.Count == 0) return 0f;
         if (values.Count == 1) return values[0];
-        
+
         float total = 0f;
         float weightSum = 0f;
-        
+
         for (int i = 0; i < values.Count; i++)
         {
             // Position from most recent (0) to oldest (count-1)
             int position = values.Count - 1 - i;
-            
+
             // Calculate weight based on weighting method
             float weight = 1.0f;
-            
+
             switch (inputWeightingMethod)
             {
                 case WeightingMethod.Exponential:
                     // Exponential drop-off: weight = e^(-factor*position)
                     weight = Mathf.Exp(-weightingFactor * position);
                     break;
-                    
+
                 case WeightingMethod.Logarithmic:
                     // Logarithmic drop-off: weight = 1 / (1 + factor*ln(position+1))
                     weight = 1.0f / (1.0f + weightingFactor * Mathf.Log(position + 1));
                     break;
-                    
+
                 case WeightingMethod.Linear:
                     // Linear drop-off: weight = 1 - (position * factor / count)
                     weight = Mathf.Max(0, 1.0f - (position * weightingFactor / values.Count));
                     break;
             }
-            
+
             float angle = values[i];
             total += angle * weight;
             weightSum += weight;
         }
-        
+
         return total / weightSum;
     }
 
@@ -288,12 +285,12 @@ public class HogController : NetworkBehaviour
     {
         // Calculate steering angle server-side to ensure consistency
         float steeringAngle = CalculateSteeringFromCameraAngle(input.rawCameraAngle, input.moveInput);
-        
+
         ApplyMotorTorque(input.moveInput, input.brakeInput);
         ApplySteering(steeringAngle, input.moveInput);
-        
+
         isDrifting.Value = localVelocityX > .25f ? true : false;
-        
+
         if (input.handbrake)
         {
             Handbrake();
@@ -312,12 +309,12 @@ public class HogController : NetworkBehaviour
         // Apply adaptive deadzone - higher deadzone at higher speeds
         float speedFactor = Mathf.Clamp01(rb.linearVelocity.magnitude / maxSpeedForSteering);
         float deadzone = Mathf.Lerp(minDeadzone, maxDeadzone, speedFactor);
-        
+
         if (cameraAngle < deadzone && cameraAngle > -deadzone)
             cameraAngle = 0f;
-            
+
         // If camera angle is small, treat it as zero
-        if (Math.Abs(cameraAngle) < 1f) 
+        if (Math.Abs(cameraAngle) < 1f)
             cameraAngle = 0f;
 
         // Check if car is actually moving in reverse (based on velocity, not just input)
@@ -382,11 +379,11 @@ public class HogController : NetworkBehaviour
             // Normal steering - within normal range
             finalSteeringAngle = Mathf.Clamp(cameraAngle, -maxSteeringAngle, maxSteeringAngle);
         }
-        
+
         // Progressive steering response - less responsive at higher speeds
         float steeringResponse = Mathf.Lerp(maxSteeringResponse, minSteeringResponse, speedFactor);
         finalSteeringAngle *= steeringResponse;
-        
+
         return finalSteeringAngle;
     }
 
@@ -653,7 +650,7 @@ public class HogController : NetworkBehaviour
         collisionForceOnCooldown = false;
     }
 
-    public void DriftCarPS()
+    public void DriftCarFX()
     {
         // Check if wheels are grounded and drifting
         bool rearLeftGrounded = rearLeftWheelCollider.isGrounded;
@@ -661,6 +658,13 @@ public class HogController : NetworkBehaviour
 
         if (isDrifting.Value)
         {
+            // Tire Screech SFX
+            if (!driftingSoundOn)
+            {
+                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
+                driftingSoundOn = true;
+            }
+
             // Only play particle effects and skid marks if the wheels are grounded
             if (rearLeftGrounded)
             {
@@ -691,6 +695,11 @@ public class HogController : NetworkBehaviour
             RRWParticleSystem.Stop();
             RLWTireSkid.emitting = false;
             RRWTireSkid.emitting = false;
+            if (driftingSoundOn)
+            {
+                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
+                driftingSoundOn = false;
+            }
         }
     }
 

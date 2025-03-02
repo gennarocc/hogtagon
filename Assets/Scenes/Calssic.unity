@@ -4551,12 +4551,22 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 11400000, guid: 82b2568a055007042a2b719c88ec8293, type: 2}
+  - type: 1
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 3b5e6672c5ed26e4eb2f6d93faf139f8, type: 2}
   - type: 2
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 11400000, guid: a3a89f555b1962c42afa2229b28255a1, type: 2}
+      WwiseObjectReference: {fileID: 11400000, guid: 1ae0768f84c1ad54390010a23c0723f5, type: 2}
   - type: 3
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: a3a89f555b1962c42afa2229b28255a1, type: 2}
+  - type: 4
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
@@ -7278,6 +7288,7 @@ GameObject:
   - component: {fileID: 965713141}
   - component: {fileID: 965713140}
   - component: {fileID: 965713142}
+  - component: {fileID: 965713143}
   m_Layer: 0
   m_Name: WwiseGlobal
   m_TagString: Untagged
@@ -7343,6 +7354,31 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: b72a17bf917851148800bdf17bfe1196, type: 2}
+  decodeBank: 0
+  overrideLoadSetting: 0
+  loadAsynchronous: 0
+  saveDecodedBank: 0
+  unloadTriggerList: 958ca0ea
+  bankNameInternal: 
+  valueGuidInternal: 
+--- !u!114 &965713143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 965713139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ada53273f67c9489288db10716250dc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  triggerList: f7e1664c
+  useOtherObject: 0
+  data:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 9a01da86b93011c4fa4f780351f60eae, type: 2}
   decodeBank: 0
   overrideLoadSetting: 0
   loadAsynchronous: 0
@@ -9379,9 +9415,9 @@ MonoBehaviour:
   m_HandleRect: {fileID: 776944197}
   m_Direction: 0
   m_MinValue: -80
-  m_MaxValue: 0
+  m_MaxValue: -30
   m_WholeNumbers: 0
-  m_Value: 0
+  m_Value: -60
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -11210,6 +11246,18 @@ MonoBehaviour:
   hostLobby: {fileID: 912466048}
   joinLobby: {fileID: 1958642195}
   connectionPending: {fileID: 426899498}
+  MenuMusicOff:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: ec30697fac339df489902cd644ef072e, type: 2}
+  LevelMusicOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: c8be56506c2a03e4ab23376ec02239f8, type: 2}
+  LevelMusicOff:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 5a0cc444fa38a2143b3d157bc6368e7e, type: 2}
 --- !u!114 &1508066504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12979,9 +13027,9 @@ MonoBehaviour:
   m_HandleRect: {fileID: 626058055}
   m_Direction: 0
   m_MinValue: -80
-  m_MaxValue: -10
+  m_MaxValue: -30
   m_WholeNumbers: 0
-  m_Value: -10
+  m_Value: -60
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -14212,6 +14260,10 @@ MonoBehaviour:
   connectionRefusedReasonText: {fileID: 1496238747}
   connectionPending: {fileID: 426899498}
   startCamera: {fileID: 1186665807}
+  MenuMusicOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 42f6c17292a660c49986c5ea2ed7f0e1, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 

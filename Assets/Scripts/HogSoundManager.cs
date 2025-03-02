@@ -13,9 +13,10 @@ public class HogSoundManager : NetworkBehaviour
     public enum SoundEffectType
     {
         HogHorn = 0,
-        TireScreech = 1,
-        HogImpact = 2,
-        CarExplosion = 3
+        TireScreechOn = 1,
+        TireScreechOff = 2,
+        HogImpact = 3,
+        CarExplosion = 4
         // Add other sound effects as needed
     }
 

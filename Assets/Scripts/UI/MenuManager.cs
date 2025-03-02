@@ -34,6 +34,9 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public Camera startCamera;
 
     [Header("Wwise")]
+
+    [SerializeField] private AK.Wwise.Event MenuMusicOn;
+
     [SerializeField] private AK.Wwise.Event uiClick;
     [SerializeField] private AK.Wwise.Event uiConfirm;
     [SerializeField] private AK.Wwise.Event uiCancel;
@@ -55,9 +58,6 @@ public class MenuManager : NetworkBehaviour
         {
             virtualCamera = GetComponent<CinemachineVirtualCamera>();
         }
-
-
-
     }
 
     private void Update()
@@ -105,6 +105,7 @@ public class MenuManager : NetworkBehaviour
 
         mainMenuPanel.SetActive(true);
         startCamera.gameObject.SetActive(true);
+        MenuMusicOn.Post(gameObject);
 
         // Rotate main menu camera;
         orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
@@ -120,6 +121,7 @@ public class MenuManager : NetworkBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
+
     public void OnPlayClicked()
     {
         mainMenuPanel.SetActive(false);

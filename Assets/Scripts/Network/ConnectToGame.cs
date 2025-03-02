@@ -20,6 +20,11 @@ public class ConnectToGame : MonoBehaviour
     [SerializeField] private Button joinLobby;
     [SerializeField] private GameObject connectionPending;
 
+    [Header("Wwise")]
+    [SerializeField] private AK.Wwise.Event MenuMusicOff;
+    [SerializeField] private AK.Wwise.Event LevelMusicOn;
+    [SerializeField] private AK.Wwise.Event LevelMusicOff;
+
     private async void Start()
     {
         startCamera.cullingMask = 31;
@@ -63,7 +68,6 @@ public class ConnectToGame : MonoBehaviour
             // hostLobby.interactable = false;
         }
     }
-
 
     private async void CreateRelay()
     {
@@ -110,6 +114,7 @@ public class ConnectToGame : MonoBehaviour
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
         JoinRelay(joinCodeInput.text);
         connectionPending.SetActive(true);
+        MenuMusicOff.Post(gameObject);
     }
 
     public void StartHost()
@@ -117,6 +122,7 @@ public class ConnectToGame : MonoBehaviour
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
         CreateRelay();
         connectionPending.SetActive(true);
+        MenuMusicOff.Post(gameObject);
     }
 
 
