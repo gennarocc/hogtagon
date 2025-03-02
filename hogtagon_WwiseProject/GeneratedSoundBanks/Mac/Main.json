@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{82490691-E3F4-E882-3624-5FFB4598CBE9}",
+    "Hash": "{72A4585D-1F94-F45A-82D6-C151A8446BC9}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -157,7 +157,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "1_tire-screeching-out.wav",
-      "CachePath": "FC/{FC4CD4FF-ABAA-3A58-7A97-F1BF9D84B83E}.wem"
+      "CachePath": "25/{254A146E-34A4-2ECC-2E79-E1F6672FEC35}.wem"
      },
      {
       "Id": "526038726",
@@ -277,7 +277,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "2_tire-screeching-out.wav",
-      "CachePath": "57/{57CADF7A-B95D-75DC-0EE3-9279DA262B9D}.wem"
+      "CachePath": "86/{863CAA2E-B5F3-D432-503C-CDBC70DB092E}.wem"
      },
      {
       "Id": "1032222109",
@@ -467,8 +467,8 @@
       "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOff",
       "GUID": "{ACB3BAB1-7C05-44D4-A485-F0FEB8411A3B}",
       "DurationType": "OneShot",
-      "DurationMin": "0.9319375",
-      "DurationMax": "0.94027084",
+      "DurationMin": "1.2439873",
+      "DurationMax": "1.255111",
       "MediaRefs": [
        {
         "Id": "485834373"
@@ -583,6 +583,6 @@
     ]
    }
   ],
-  "FileHash": "{35014E3D-F551-A550-6C4E-2FB597AC2146}"
+  "FileHash": "{0F290FB4-1D5A-CB92-39BD-D2A64C5CA4EF}"
  }
 }

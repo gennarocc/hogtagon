@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{F0049809-0D2F-467E-A817-D74CA9543625}",
     "Language": "SFX",
-    "Hash": "{A518371D-8251-364D-C57D-62C24BC806B4}",
+    "Hash": "{98DBA3B2-B514-CCA6-0A93-09DCADA31366}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Music",
     "ShortName": "Music",
     "Path": "Music.bnk",
@@ -69,7 +69,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "menu.wav",
-      "CachePath": "54/{5415ACEB-63BF-C55E-F2F5-30CEF3787E48}.wem"
+      "CachePath": "E7/{E7B97265-93C5-1793-7161-E9AD545922E1}.wem"
      },
      {
       "Id": "966578357",
@@ -157,6 +157,6 @@
     ]
    }
   ],
-  "FileHash": "{17C99B8E-454D-00DB-A8D3-32DFB6CFE732}"
+  "FileHash": "{416283EE-60AF-3F40-CDA8-C92CBF145E16}"
  }
 }
