@@ -18,7 +18,12 @@ namespace AK
         static const AkUniqueID ENGINEON = 2439330724U;
         static const AkUniqueID HOGHORN = 3567623486U;
         static const AkUniqueID HOGIMPACT = 2587421243U;
-        static const AkUniqueID TIRESCREECH = 3266676374U;
+        static const AkUniqueID LEVELMUSICOFF = 531512037U;
+        static const AkUniqueID LEVELMUSICON = 1021065561U;
+        static const AkUniqueID MENUMUSICOFF = 2510477776U;
+        static const AkUniqueID MENUMUSICON = 878061882U;
+        static const AkUniqueID TIRESCREECHOFF = 3010988261U;
+        static const AkUniqueID TIRESCREECHON = 3670274905U;
         static const AkUniqueID UICANCEL = 1933252553U;
         static const AkUniqueID UICLICK = 3164408517U;
         static const AkUniqueID UICONFIRM = 685626117U;
@@ -63,6 +68,7 @@ namespace AK
     {
         static const AkUniqueID INIT = 1355168291U;
         static const AkUniqueID MAIN = 3161908922U;
+        static const AkUniqueID MUSIC = 3991942870U;
     } // namespace BANKS
 
     namespace BUSSES

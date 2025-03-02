@@ -5,9 +5,10 @@ Event	ID	Name			Wwise Object Path	Notes
 	2388455330	EngineOff			\Default Work Unit\EngineOff	
 	2439330724	EngineOn			\Default Work Unit\EngineOn	
 	2587421243	HogImpact			\Default Work Unit\HogImpact	
+	3010988261	TireScreechOff			\Default Work Unit\TireScreechOff	
 	3164408517	uiClick			\Default Work Unit\uiClick	
-	3266676374	TireScreech			\Default Work Unit\TireScreech	
 	3567623486	HogHorn			\Default Work Unit\HogHorn	
+	3670274905	TireScreechOn			\Default Work Unit\TireScreechOn	
 
 Switch Group	ID	Name			Wwise Object Path	Notes
 	1449613434	hog_impact			\Default Work Unit\hog_impact	
@@ -34,11 +35,14 @@ In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	344684111	gear-shift-5	Y:\hogtagon\hogtagon_WwiseProject\.cache\5B\{5B1262CF-529A-BFFE-DB17-7837F76E91F8}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\gear-shift-5		118960
 	386328575	5k-rpm-loop	Y:\hogtagon\hogtagon_WwiseProject\.cache\E8\{E889B0D4-615A-2483-B1A6-89C48B846DD5}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\5k-rpm-loop		2688176
 	388733350	impact-2b	Y:\hogtagon\hogtagon_WwiseProject\.cache\5F\{5F6DA9B3-93D6-980B-E180-A11C9C4D1BFE}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\medium-impact\impact-2b		439776
+	391848353	2_tire-screeching-in	Y:\hogtagon\hogtagon_WwiseProject\.cache\AB\{AB905E16-CC82-6923-8EA3-8A528E82F94F}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screec\tire-screech-in\tire-screech2\2_tire-screeching-in		53492
+	424089907	2_tire-screeching-mid-loop	Y:\hogtagon\hogtagon_WwiseProject\.cache\E7\{E799795E-943D-E632-D9B9-9E44C20CED11}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screec\tire-screech-in\tire-screech2\2_tire-screeching-mid-loop		58828
 	439209459	hog-horn	Y:\hogtagon\hogtagon_WwiseProject\.cache\6E\{6E7FD06B-86AF-36D8-A61A-B2D1728379C4}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-horn		74680
 	464858496	car-explosion-5	Y:\hogtagon\hogtagon_WwiseProject\.cache\F1\{F1E346AF-5668-7DFE-D996-3FECF06B33FD}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\car-explosion\car-explosion-5		1075376
+	485834373	1_tire-screeching-out	Y:\hogtagon\hogtagon_WwiseProject\.cache\FC\{FC4CD4FF-ABAA-3A58-7A97-F1BF9D84B83E}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screec\tire-screech-out\1_tire-screeching-out		180692
 	526038726	gear-shift-4	Y:\hogtagon\hogtagon_WwiseProject\.cache\3F\{3F3D6320-AAD6-85DB-F678-C2E5878F2537}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\gear-shift-4		93360
 	536878760	car-explosion-4	Y:\hogtagon\hogtagon_WwiseProject\.cache\04\{04464716-E5BF-C776-6E88-A982DF6C8D51}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\car-explosion\car-explosion-4		5631152
-	553553016	tire-screeching-1	Y:\hogtagon\hogtagon_WwiseProject\.cache\D8\{D8FE6E4D-ABB2-CDE5-E746-5F890A04AD0F}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screech\tire-screeching-1		290708
+	572910791	1_tire-screeching-intro	Y:\hogtagon\hogtagon_WwiseProject\.cache\5E\{5EF61A5D-06D2-DD39-8155-0EEAA404E688}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screec\tire-screech-in\tire-screech1\1_tire-screeching-intro		45952
 	595717928	gear-shift-2	Y:\hogtagon\hogtagon_WwiseProject\.cache\0B\{0B0E7B9A-1BFF-21C3-CF92-BBFA9CEFE130}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\gear-shift-2		158896
 	607401393	impact-3b	Y:\hogtagon\hogtagon_WwiseProject\.cache\A3\{A3680B8E-FDCE-A51D-457C-7BECAE421E0B}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\high-impact\impact-3b		690352
 	708298719	impact-1b	Y:\hogtagon\hogtagon_WwiseProject\.cache\60\{60AA4B35-9D79-088C-65AB-57C1757AB8CE}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\low-impact\impact-1b		303280
@@ -49,7 +53,8 @@ In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	811391391	4k-rpm-loop	Y:\hogtagon\hogtagon_WwiseProject\.cache\B5\{B559CE53-BDB7-4A0C-3E98-8501CCCF27F3}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\4k-rpm-loop		1536176
 	842752452	gear-shift-3	Y:\hogtagon\hogtagon_WwiseProject\.cache\63\{631BF3EF-E5B1-AE4F-126C-64497A765ECB}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\gear-shift-3		124080
 	862707693	car-explosion-2	Y:\hogtagon\hogtagon_WwiseProject\.cache\4B\{4B35B243-15D4-BF3F-5176-920C0187E28F}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\car-explosion\car-explosion-2		1214640
+	959145839	1_tire-screeching-mid-loop	Y:\hogtagon\hogtagon_WwiseProject\.cache\B7\{B7BC3782-E67C-FC31-F965-8AAD6A642988}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screec\tire-screech-in\tire-screech1\1_tire-screeching-mid-loop		64296
+	1031122175	2_tire-screeching-out	Y:\hogtagon\hogtagon_WwiseProject\.cache\57\{57CADF7A-B95D-75DC-0EE3-9279DA262B9D}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screec\tire-screech-out\2_tire-screeching-out		179092
 	1032222109	impact-2a	Y:\hogtagon\hogtagon_WwiseProject\.cache\71\{71DC7EA8-0B0A-CF6A-8A5E-DA9386318B53}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\medium-impact\impact-2a		423096
-	1040679246	tire-screeching-2	Y:\hogtagon\hogtagon_WwiseProject\.cache\0B\{0B280AAA-4D5D-4457-7759-4A3CC5B44236}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screech\tire-screeching-2		291108
 	1060462459	ui-navigation-click	Y:\hogtagon\hogtagon_WwiseProject\.cache\EE\{EE3D3735-906C-E2D9-0762-C266C94EA5C2}.wem		\Actor-Mixer Hierarchy\Default Work Unit\UI\ui-navigation-click		32176
 

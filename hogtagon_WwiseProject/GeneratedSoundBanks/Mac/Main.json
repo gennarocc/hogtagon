@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{B271F964-A453-C5D6-F3FB-21E5B711ECB4}",
+    "Hash": "{82490691-E3F4-E882-3624-5FFB4598CBE9}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -120,6 +120,22 @@
       "CachePath": "5F/{5F6DA9B3-93D6-980B-E180-A11C9C4D1BFE}.wem"
      },
      {
+      "Id": "391848353",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "2_tire-screeching-in.wav",
+      "CachePath": "AB/{AB905E16-CC82-6923-8EA3-8A528E82F94F}.wem"
+     },
+     {
+      "Id": "424089907",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "2_tire-screeching-mid-loop.wav",
+      "CachePath": "E7/{E799795E-943D-E632-D9B9-9E44C20CED11}.wem"
+     },
+     {
       "Id": "439209459",
       "Language": "SFX",
       "Streaming": "false",
@@ -134,6 +150,14 @@
       "Location": "Memory",
       "ShortName": "car-explosion-5.wav",
       "CachePath": "F1/{F1E346AF-5668-7DFE-D996-3FECF06B33FD}.wem"
+     },
+     {
+      "Id": "485834373",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "1_tire-screeching-out.wav",
+      "CachePath": "FC/{FC4CD4FF-ABAA-3A58-7A97-F1BF9D84B83E}.wem"
      },
      {
       "Id": "526038726",
@@ -152,12 +176,12 @@
       "CachePath": "04/{04464716-E5BF-C776-6E88-A982DF6C8D51}.wem"
      },
      {
-      "Id": "553553016",
+      "Id": "572910791",
       "Language": "SFX",
       "Streaming": "false",
       "Location": "Memory",
-      "ShortName": "tire-screeching-1.wav",
-      "CachePath": "D8/{D8FE6E4D-ABB2-CDE5-E746-5F890A04AD0F}.wem"
+      "ShortName": "1_tire-screeching-intro.wav",
+      "CachePath": "5E/{5EF61A5D-06D2-DD39-8155-0EEAA404E688}.wem"
      },
      {
       "Id": "595717928",
@@ -240,20 +264,28 @@
       "CachePath": "4B/{4B35B243-15D4-BF3F-5176-920C0187E28F}.wem"
      },
      {
+      "Id": "959145839",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "1_tire-screeching-mid-loop.wav",
+      "CachePath": "B7/{B7BC3782-E67C-FC31-F965-8AAD6A642988}.wem"
+     },
+     {
+      "Id": "1031122175",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "2_tire-screeching-out.wav",
+      "CachePath": "57/{57CADF7A-B95D-75DC-0EE3-9279DA262B9D}.wem"
+     },
+     {
       "Id": "1032222109",
       "Language": "SFX",
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-2a.wav",
       "CachePath": "71/{71DC7EA8-0B0A-CF6A-8A5E-DA9386318B53}.wem"
-     },
-     {
-      "Id": "1040679246",
-      "Language": "SFX",
-      "Streaming": "false",
-      "Location": "Memory",
-      "ShortName": "tire-screeching-2.wav",
-      "CachePath": "0B/{0B280AAA-4D5D-4457-7759-4A3CC5B44236}.wem"
      },
      {
       "Id": "1060462459",
@@ -430,19 +462,40 @@
       ]
      },
      {
-      "Id": "3266676374",
-      "Name": "TireScreech",
-      "ObjectPath": "\\Events\\Default Work Unit\\TireScreech",
-      "GUID": "{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}",
+      "Id": "3010988261",
+      "Name": "TireScreechOff",
+      "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOff",
+      "GUID": "{ACB3BAB1-7C05-44D4-A485-F0FEB8411A3B}",
       "DurationType": "OneShot",
-      "DurationMin": "1.5131875",
-      "DurationMax": "1.5152708",
+      "DurationMin": "0.9319375",
+      "DurationMax": "0.94027084",
       "MediaRefs": [
        {
-        "Id": "553553016"
+        "Id": "485834373"
        },
        {
-        "Id": "1040679246"
+        "Id": "1031122175"
+       }
+      ]
+     },
+     {
+      "Id": "3670274905",
+      "Name": "TireScreechOn",
+      "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOn",
+      "GUID": "{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}",
+      "DurationType": "Infinite",
+      "MediaRefs": [
+       {
+        "Id": "391848353"
+       },
+       {
+        "Id": "424089907"
+       },
+       {
+        "Id": "572910791"
+       },
+       {
+        "Id": "959145839"
        }
       ]
      },
@@ -530,6 +583,6 @@
     ]
    }
   ],
-  "FileHash": "{6C422D8D-A46E-3FBD-7FDB-530B0EF71FBB}"
+  "FileHash": "{35014E3D-F551-A550-6C4E-2FB597AC2146}"
  }
 }
