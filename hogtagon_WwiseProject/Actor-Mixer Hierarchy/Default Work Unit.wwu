@@ -4,6 +4,10 @@
 		<WorkUnit Name="Default Work Unit" ID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}" PersistMode="Standalone">
 			<ChildrenList>
 				<Folder Name="UI" ID="{C93ACA2F-7165-40EC-A44C-52B221D246D4}" ShortID="104603125">
+					<PropertyList>
+						<Property Name="Color" Type="int16" Value="2"/>
+						<Property Name="OverrideColor" Type="bool" Value="True"/>
+					</PropertyList>
 					<ChildrenList>
 						<Sound Name="ui-navigation-click" ID="{235667B5-CF67-42F9-AD99-813C1AFDA597}" ShortID="746056272">
 							<PropertyList>
@@ -98,6 +102,10 @@
 					</ChildrenList>
 				</Folder>
 				<Folder Name="warthog" ID="{FF6480D1-DAB5-477F-945D-AB5917691776}" ShortID="487777051">
+					<PropertyList>
+						<Property Name="Color" Type="int16" Value="4"/>
+						<Property Name="OverrideColor" Type="bool" Value="True"/>
+					</PropertyList>
 					<ChildrenList>
 						<RandomSequenceContainer Name="car-explosion" ID="{38FA73A5-FE29-42E2-9DEF-149CD7526467}" ShortID="689776898">
 							<PropertyList>
@@ -307,6 +315,11 @@
 								<Property Name="OutputBusHighpass" Type="int16">
 									<ValueList>
 										<Value>15</Value>
+									</ValueList>
+								</Property>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-1</Value>
 									</ValueList>
 								</Property>
 							</PropertyList>
@@ -1197,66 +1210,313 @@
 								</GroupingList>
 							</GroupingInfo>
 						</SwitchContainer>
-						<RandomSequenceContainer Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
-							<PropertyList>
-								<Property Name="3DSpatialization" Type="int16" Value="1"/>
-								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
+						<Folder Name="tire-screec" ID="{5EACDD09-CCF6-4B96-B7AE-5503EE2B4AB4}" ShortID="17465897">
 							<ChildrenList>
-								<Sound Name="tire-screeching-1" ID="{6A1129E9-3713-4EBE-809F-AFED50C0F7AE}" ShortID="358674658">
+								<RandomSequenceContainer Name="tire-screech_one-shot" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
+									<PropertyList>
+										<Property Name="3DSpatialization" Type="int16" Value="1"/>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+										<Property Name="Inclusion" Type="bool">
+											<ValueList>
+												<Value>False</Value>
+											</ValueList>
+										</Property>
+										<Property Name="PlayMechanismStepOrContinuous" Type="int16" Value="0"/>
+									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
 											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 										</Reference>
 										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 										</Reference>
 									</ReferenceList>
 									<ChildrenList>
-										<AudioFileSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}">
-											<Language>SFX</Language>
-											<AudioFile>tire-screeching-1.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="553553016"/>
-											</MediaIDList>
-										</AudioFileSource>
+										<Sound Name="tire-screeching-1" ID="{6A1129E9-3713-4EBE-809F-AFED50C0F7AE}" ShortID="358674658">
+											<PropertyList>
+												<Property Name="Inclusion" Type="bool">
+													<ValueList>
+														<Value>False</Value>
+													</ValueList>
+												</Property>
+											</PropertyList>
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}">
+													<Language>SFX</Language>
+													<AudioFile>tire-screeching-1.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="553553016"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="tire-screeching-2" ID="{B0A882FC-AEE9-4E4D-BF86-85EEDC46FB84}" ShortID="36804933">
+											<PropertyList>
+												<Property Name="Inclusion" Type="bool">
+													<ValueList>
+														<Value>False</Value>
+													</ValueList>
+												</Property>
+											</PropertyList>
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}">
+													<Language>SFX</Language>
+													<AudioFile>tire-screeching-2.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="1040679246"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
 									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="tire-screeching-2" ID="{B0A882FC-AEE9-4E4D-BF86-85EEDC46FB84}" ShortID="36804933">
+								</RandomSequenceContainer>
+								<RandomSequenceContainer Name="tire-screech-in" ID="{2C02B56A-E9A8-478D-B855-61F73C0C702A}" ShortID="983831287">
 									<ReferenceList>
 										<Reference Name="Conversion">
 											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
 										</Reference>
 										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 										</Reference>
 									</ReferenceList>
 									<ChildrenList>
-										<AudioFileSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}">
-											<Language>SFX</Language>
-											<AudioFile>tire-screeching-2.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="1040679246"/>
-											</MediaIDList>
-										</AudioFileSource>
+										<RandomSequenceContainer Name="tire-screech1" ID="{B77CA2BC-B0E6-45CD-97EC-515CA98E807F}" ShortID="275638193">
+											<PropertyList>
+												<Property Name="PlayMechanismStepOrContinuous" Type="int16" Value="0"/>
+												<Property Name="RandomOrSequence" Type="int16" Value="0"/>
+											</PropertyList>
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<Sound Name="1_tire-screeching-intro" ID="{AE9F0240-E720-48BA-8E69-06C5981E5BF8}" ShortID="936226405">
+													<ReferenceList>
+														<Reference Name="Conversion">
+															<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+														</Reference>
+														<Reference Name="OutputBus">
+															<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+														</Reference>
+													</ReferenceList>
+													<ChildrenList>
+														<AudioFileSource Name="1_tire-screeching-intro" ID="{349C5E33-F36E-4362-BD7B-417E5A513FF9}">
+															<Language>SFX</Language>
+															<AudioFile>1_tire-screeching-intro.wav</AudioFile>
+															<MediaIDList>
+																<MediaID ID="572910791"/>
+															</MediaIDList>
+														</AudioFileSource>
+													</ChildrenList>
+													<ActiveSourceList>
+														<ActiveSource Name="1_tire-screeching-intro" ID="{349C5E33-F36E-4362-BD7B-417E5A513FF9}" Platform="Linked"/>
+													</ActiveSourceList>
+												</Sound>
+												<Sound Name="1_tire-screeching-mid-loop" ID="{B95C7D66-72F8-4BCA-AFFF-B501278AB500}" ShortID="797184403">
+													<PropertyList>
+														<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+													</PropertyList>
+													<ReferenceList>
+														<Reference Name="Conversion">
+															<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+														</Reference>
+														<Reference Name="OutputBus">
+															<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+														</Reference>
+													</ReferenceList>
+													<ChildrenList>
+														<AudioFileSource Name="1_tire-screeching-mid-loop" ID="{5D974A7E-07F7-46E6-8FAC-1B92DF824C8C}">
+															<Language>SFX</Language>
+															<AudioFile>1_tire-screeching-mid-loop.wav</AudioFile>
+															<MediaIDList>
+																<MediaID ID="959145839"/>
+															</MediaIDList>
+														</AudioFileSource>
+													</ChildrenList>
+													<ActiveSourceList>
+														<ActiveSource Name="1_tire-screeching-mid-loop" ID="{5D974A7E-07F7-46E6-8FAC-1B92DF824C8C}" Platform="Linked"/>
+													</ActiveSourceList>
+												</Sound>
+											</ChildrenList>
+											<ObjectLists>
+												<ObjectList Name="Playlist">
+													<Reference>
+														<ObjectRef Name="1_tire-screeching-intro" ID="{AE9F0240-E720-48BA-8E69-06C5981E5BF8}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+													</Reference>
+													<Reference>
+														<ObjectRef Name="1_tire-screeching-mid-loop" ID="{B95C7D66-72F8-4BCA-AFFF-B501278AB500}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+													</Reference>
+												</ObjectList>
+											</ObjectLists>
+										</RandomSequenceContainer>
+										<RandomSequenceContainer Name="tire-screech2" ID="{1CEE680D-AC1A-4490-95D5-7C052703EBAF}" ShortID="750827006">
+											<PropertyList>
+												<Property Name="PlayMechanismStepOrContinuous" Type="int16" Value="0"/>
+												<Property Name="RandomOrSequence" Type="int16" Value="0"/>
+											</PropertyList>
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<Sound Name="2_tire-screeching-in" ID="{8E9C74B3-5625-4A73-BC61-65A44827DD83}" ShortID="956137213">
+													<ReferenceList>
+														<Reference Name="Conversion">
+															<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+														</Reference>
+														<Reference Name="OutputBus">
+															<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+														</Reference>
+													</ReferenceList>
+													<ChildrenList>
+														<AudioFileSource Name="2_tire-screeching-in" ID="{49928D1F-5CF5-40DD-9815-A82A4E659E47}">
+															<Language>SFX</Language>
+															<AudioFile>2_tire-screeching-in.wav</AudioFile>
+															<MediaIDList>
+																<MediaID ID="391848353"/>
+															</MediaIDList>
+														</AudioFileSource>
+													</ChildrenList>
+													<ActiveSourceList>
+														<ActiveSource Name="2_tire-screeching-in" ID="{49928D1F-5CF5-40DD-9815-A82A4E659E47}" Platform="Linked"/>
+													</ActiveSourceList>
+												</Sound>
+												<Sound Name="2_tire-screeching-mid-loop" ID="{AEA779A0-00DE-4EA9-A349-35932FE90D5E}" ShortID="363738795">
+													<PropertyList>
+														<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+													</PropertyList>
+													<ReferenceList>
+														<Reference Name="Conversion">
+															<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+														</Reference>
+														<Reference Name="OutputBus">
+															<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+														</Reference>
+													</ReferenceList>
+													<ChildrenList>
+														<AudioFileSource Name="2_tire-screeching-mid-loop" ID="{D211E3CB-2598-44E4-B8DB-1A595D8A392F}">
+															<Language>SFX</Language>
+															<AudioFile>2_tire-screeching-mid-loop.wav</AudioFile>
+															<MediaIDList>
+																<MediaID ID="424089907"/>
+															</MediaIDList>
+														</AudioFileSource>
+													</ChildrenList>
+													<ActiveSourceList>
+														<ActiveSource Name="2_tire-screeching-mid-loop" ID="{D211E3CB-2598-44E4-B8DB-1A595D8A392F}" Platform="Linked"/>
+													</ActiveSourceList>
+												</Sound>
+											</ChildrenList>
+											<ObjectLists>
+												<ObjectList Name="Playlist">
+													<Reference>
+														<ObjectRef Name="2_tire-screeching-in" ID="{8E9C74B3-5625-4A73-BC61-65A44827DD83}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+													</Reference>
+													<Reference>
+														<ObjectRef Name="2_tire-screeching-mid-loop" ID="{AEA779A0-00DE-4EA9-A349-35932FE90D5E}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+													</Reference>
+												</ObjectList>
+											</ObjectLists>
+										</RandomSequenceContainer>
 									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
+								</RandomSequenceContainer>
+								<RandomSequenceContainer Name="tire-screech-out" ID="{F249177C-332C-49AD-9FEC-4E4609FB7C30}" ShortID="619368315">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<Sound Name="1_tire-screeching-out" ID="{F74A231E-A19E-49CC-871A-FE365B610899}" ShortID="570411191">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="1_tire-screeching-out" ID="{299569C2-FD7B-42FF-8E1A-880807C457A2}">
+													<PropertyList>
+														<Property Name="FadeOutDuration" Type="Real64" Value="0.662269472354115"/>
+														<Property Name="LoopBegin" Type="Real64" Value="0"/>
+														<Property Name="OverrideWavLoop" Type="bool" Value="True"/>
+													</PropertyList>
+													<Language>SFX</Language>
+													<AudioFile>1_tire-screeching-out.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="485834373"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="1_tire-screeching-out" ID="{299569C2-FD7B-42FF-8E1A-880807C457A2}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="2_tire-screeching-out" ID="{800D2799-1495-4B72-8864-4FA46887C712}" ShortID="661585833">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="2_tire-screeching-out" ID="{B295EDA9-EB6D-4EE1-BDF6-48DD202A5144}">
+													<PropertyList>
+														<Property Name="FadeOutDuration" Type="Real64" Value="0.636651562212936"/>
+														<Property Name="OverrideWavLoop" Type="bool" Value="True"/>
+													</PropertyList>
+													<Language>SFX</Language>
+													<AudioFile>2_tire-screeching-out.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="1031122175"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="2_tire-screeching-out" ID="{B295EDA9-EB6D-4EE1-BDF6-48DD202A5144}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+									</ChildrenList>
+								</RandomSequenceContainer>
 							</ChildrenList>
-						</RandomSequenceContainer>
+						</Folder>
 					</ChildrenList>
 				</Folder>
 			</ChildrenList>

@@ -72,12 +72,12 @@
 						</Action>
 					</ChildrenList>
 				</Event>
-				<Event Name="TireScreech" ID="{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}">
+				<Event Name="TireScreechOn" ID="{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}">
 					<ChildrenList>
 						<Action Name="" ID="{1BE45A1A-E12D-4EEA-812D-5AC8B262EB43}" ShortID="279783700">
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="tire-screech" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+									<ObjectRef Name="tire-screech-in" ID="{2C02B56A-E9A8-478D-B855-61F73C0C702A}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
@@ -100,6 +100,79 @@
 							<ReferenceList>
 								<Reference Name="Target">
 									<ObjectRef Name="hog-horn" ID="{3234C638-EC12-4DED-A9FD-21091CED2672}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="MenuMusicOn" ID="{806F1833-099F-4122-96FC-DD1370B7749B}">
+					<ChildrenList>
+						<Action Name="" ID="{9BE91404-06E3-4512-9440-D740087216BD}" ShortID="836324491">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="0_menu" ID="{4658E04F-CBE7-4E94-80FC-6776A72474C4}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="MenuMusicOff" ID="{F40744FD-0B0A-4B81-85F4-4AE146D35295}">
+					<ChildrenList>
+						<Action Name="" ID="{30F0BE56-C8D0-403B-9764-8536E30D342B}" ShortID="379536568">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="2"/>
+								<Property Name="FadeTime" Type="Real64" Value="1"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="0_menu" ID="{4658E04F-CBE7-4E94-80FC-6776A72474C4}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="LevelMusicOn" ID="{4154EC31-4EF5-4574-923D-FE49514754DD}">
+					<ChildrenList>
+						<Action Name="" ID="{3B175947-D5F6-4614-8F3B-A1FB37B1E212}" ShortID="529088533">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="3_plonky" ID="{7C6DA8E2-BADD-4688-BA04-1032115ADC99}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="LevelMusicOff" ID="{0A73D79A-CE04-47E5-8FBF-A3554A5508C2}">
+					<ChildrenList>
+						<Action Name="" ID="{D19944A1-AD69-4496-8D43-CAD2E8C4910B}" ShortID="753303765">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="2"/>
+								<Property Name="FadeTime" Type="Real64" Value="1"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="3_plonky" ID="{7C6DA8E2-BADD-4688-BA04-1032115ADC99}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="TireScreechOff" ID="{ACB3BAB1-7C05-44D4-A485-F0FEB8411A3B}">
+					<ChildrenList>
+						<Action Name="" ID="{64793052-F649-4249-9A56-AF5E5091F25D}" ShortID="88691881">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="2"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="tire-screech-in" ID="{2C02B56A-E9A8-478D-B855-61F73C0C702A}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+						<Action Name="" ID="{583553E9-40CA-4ECE-AA67-88CAD5B65CCE}" ShortID="1250466">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="tire-screech-out" ID="{F249177C-332C-49AD-9FEC-4E4609FB7C30}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>

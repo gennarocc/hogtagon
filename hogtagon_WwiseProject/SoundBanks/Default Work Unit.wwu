@@ -8,12 +8,23 @@
 						<ObjectRef Name="HogImpact" ID="{350BE99D-610A-4072-B84D-C812854DA99F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="CarExplosion" ID="{D3E88339-27D2-4421-BF62-7AF5F454891F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="EngineOff" ID="{7BBE8545-1595-449C-9FD0-2BDD92F52984}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
-						<ObjectRef Name="TireScreech" ID="{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="TireScreechOff" ID="{ACB3BAB1-7C05-44D4-A485-F0FEB8411A3B}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="TireScreechOn" ID="{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogHorn" ID="{843DE572-F748-474E-8539-31E2EA518E00}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="uiConfirm" ID="{35F72BE4-E30A-4D8A-98CC-897D16A1EC27}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="EngineOn" ID="{6DC496AD-3332-4DA5-8F13-711E68963147}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="uiClick" ID="{2043224E-8C2D-4E36-B5B2-AAD4DB5AC0DE}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="uiCancel" ID="{DEE1CE85-2F7B-4EFB-8925-B4F06E40F8B4}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="Music" ID="{F0049809-0D2F-467E-A817-D74CA9543625}">
+					<ObjectInclusionList>
+						<ObjectRef Name="MenuMusicOn" ID="{806F1833-099F-4122-96FC-DD1370B7749B}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="LevelMusicOn" ID="{4154EC31-4EF5-4574-923D-FE49514754DD}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="LevelMusicOff" ID="{0A73D79A-CE04-47E5-8FBF-A3554A5508C2}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="MenuMusicOff" ID="{F40744FD-0B0A-4B81-85F4-4AE146D35295}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 					</ObjectInclusionList>
 					<ObjectExclusionList/>
 					<GameSyncExclusionList/>
