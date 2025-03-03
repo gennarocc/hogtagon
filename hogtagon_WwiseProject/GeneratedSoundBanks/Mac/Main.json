@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{F3DF727A-0D78-9C87-72D8-63A9A14519E6}",
+    "Hash": "{612801B1-EF5C-3ED3-35EA-F8F494C03BCA}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -165,7 +165,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "tire-screeching-1.wav",
-      "CachePath": "E1/{E169A183-2F34-2503-3096-4DEF78E0C984}.wem"
+      "CachePath": "6F/{6FDAE740-EE66-D1D4-B61A-B397F770DBAF}.wem"
      },
      {
       "Id": "595717928",
@@ -269,7 +269,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "tire-screeching-2.wav",
-      "CachePath": "FE/{FED87297-BDB3-5898-213F-F429ECC884F3}.wem"
+      "CachePath": "94/{94609950-8CE5-78B2-6EED-99A0D91745B2}.wem"
      },
      {
       "Id": "1060462459",
@@ -583,6 +583,6 @@
     ]
    }
   ],
-  "FileHash": "{A7BB1426-45B8-83EC-8356-CF90BC652F1B}"
+  "FileHash": "{0A30F265-22F9-CA8A-13B0-2DF27672EEC9}"
  }
 }
