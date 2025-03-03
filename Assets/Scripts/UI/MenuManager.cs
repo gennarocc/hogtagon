@@ -14,7 +14,6 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private GameObject playMenuPanel;
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
-    [SerializeField] private GameObject scoreboardUI;
     [SerializeField] private GameObject tempUI;
 
     [Header("Main Menu Components")]
@@ -33,6 +32,10 @@ public class MenuManager : NetworkBehaviour
     [Header("References")]
     [SerializeField] public Camera startCamera;
 
+    [Header("Scoreboard")]
+    [SerializeField] private GameObject scoreboardUI; 
+    [SerializeField] private Scoreboard scoreboard; 
+
     [Header("Wwise")]
 
     [SerializeField] private AK.Wwise.Event MenuMusicOn;
@@ -45,6 +48,7 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private CinemachineVirtualCamera virtualCamera;
     [SerializeField] private float rotationSpeed = 0.01f;
     private CinemachineOrbitalTransposer orbitalTransposer;
+
 
     private void Start()
     {
@@ -227,11 +231,37 @@ public class MenuManager : NetworkBehaviour
         StartCoroutine(BetweenRoundTime());
     }
 
+
     public IEnumerator BetweenRoundTime()
     {
-        yield return new WaitForSeconds(7f);
+        yield return new WaitForSeconds(5f);
         winnerText.text = "";
         tempUI.SetActive(false);
+    }
+
+    // Force an update of the scoreboard data on the server
+    [ServerRpc(RequireOwnership = false)]
+    public void ForceScoreboardUpdateServerRpc()
+    {
+        // This method runs on the server to ensure all player data is up to date
+        ConnectionManager.instance.UpdateAllClientsClientRpc();
+    }
+
+    [ClientRpc]
+    public void ShowScoreboardClientRpc()
+    {
+        // Enable the scoreboard panel
+        scoreboardUI.SetActive(true);
+        
+        // Update the scoreboard data
+        scoreboard.UpdatePlayerList();
+    }
+
+    [ClientRpc]
+    public void HideScoreboardClientRpc()
+    {
+        // Disable the scoreboard panel
+        scoreboardUI.SetActive(false);
     }
 
     public void MainMenu()
