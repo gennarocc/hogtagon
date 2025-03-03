@@ -33,8 +33,8 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public Camera startCamera;
 
     [Header("Scoreboard")]
-    [SerializeField] private GameObject scoreboardUI; 
-    [SerializeField] private Scoreboard scoreboard; 
+    [SerializeField] private GameObject scoreboardUI;
+    [SerializeField] private Scoreboard scoreboard;
 
     [Header("Wwise")]
 
@@ -239,20 +239,13 @@ public class MenuManager : NetworkBehaviour
         tempUI.SetActive(false);
     }
 
-    // Force an update of the scoreboard data on the server
-    [ServerRpc(RequireOwnership = false)]
-    public void ForceScoreboardUpdateServerRpc()
-    {
-        // This method runs on the server to ensure all player data is up to date
-        ConnectionManager.instance.UpdateAllClientsClientRpc();
-    }
-
     [ClientRpc]
     public void ShowScoreboardClientRpc()
     {
+        scoreboard.UpdatePlayerList();
         // Enable the scoreboard panel
         scoreboardUI.SetActive(true);
-        
+
         // Update the scoreboard data
         scoreboard.UpdatePlayerList();
     }
