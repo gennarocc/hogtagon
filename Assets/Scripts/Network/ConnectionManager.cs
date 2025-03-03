@@ -296,6 +296,28 @@ public class ConnectionManager : NetworkBehaviour
         return -1; // No available textures
     }
 
+    [ClientRpc]
+    public void UpdateAllClientsClientRpc()
+    {
+        // This method is called to ensure all clients have the latest player data
+        Debug.Log("UpdateAllClientsClientRpc called - refreshing all client data");
+        
+        // If there's any UI that needs to be updated, do it here
+        GameObject menuManagerObj = GameObject.Find("Menus");
+        if (menuManagerObj != null)
+        {
+            MenuManager menuManager = menuManagerObj.GetComponent<MenuManager>();
+            if (menuManager != null)
+            {
+                // Find and refresh scoreboard if it exists - using the new non-deprecated method
+                Scoreboard[] scoreboards = FindObjectsByType<Scoreboard>(FindObjectsSortMode.None);
+                foreach (Scoreboard sb in scoreboards)
+                {
+                    sb.UpdatePlayerList();
+                }
+            }
+        }
+    }
     public void UpdateLobbyLeaderBasedOnScore()
     {
         if (!IsServer)

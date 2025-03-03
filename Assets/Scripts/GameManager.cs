@@ -8,7 +8,9 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public float gameTime;
     [SerializeField] public float betweenRoundLength = 5f;
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
-    
+
+    [SerializeField] private bool showScoreboardBetweenRounds = true;
+
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
     public static GameManager instance;
@@ -70,6 +72,13 @@ public class GameManager : NetworkBehaviour
        ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
        ConnectionManager.instance.UpdateLobbyLeaderBasedOnScore();
 
+            // Show scoreboard if enabled
+        if (showScoreboardBetweenRounds)
+        {
+            // First, update the scoreboard on server to ensure it's ready
+            menuManager.ForceScoreboardUpdateServerRpc();
+        }
+
        StartCoroutine(BetweenRoundTimer()); 
     }
 
@@ -92,11 +101,28 @@ public class GameManager : NetworkBehaviour
         state = GameState.Playing;
     }
 
-    public IEnumerator BetweenRoundTimer()
+   public IEnumerator BetweenRoundTimer()
     {
-        yield return new WaitForSeconds(betweenRoundLength);
-        TransitionToState(GameState.Playing);
+        // Configuration values
+        float showWinnerDuration = 2.0f;     // How long to show just the winner text
+        float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
+        
+        // Show the winner text first for a few seconds
+        yield return new WaitForSeconds(showWinnerDuration);
+        
+        // Now show the scoreboard
+        menuManager.ShowScoreboardClientRpc();
+        
+        // Show the scoreboard for specified duration
+        yield return new WaitForSeconds(showScoreboardDuration);
+
+        // Hide scoreboard when starting new round
+        menuManager.HideScoreboardClientRpc();
+        
+        // Transition to next round
+        OnPlayingEnter();
     }
+
 
     private void OnPendingEnter()
     {
