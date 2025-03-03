@@ -658,21 +658,24 @@ public class HogController : NetworkBehaviour
 
         if (isDrifting.Value)
         {
-            // Tire Screech SFX
-            if (!driftingSoundOn)
-            {
-                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
-                driftingSoundOn = true;
-            }
-
             // Only play particle effects and skid marks if the wheels are grounded
             if (rearLeftGrounded)
             {
+                if (!driftingSoundOn && canMove)
+                {
+                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
+                    driftingSoundOn = true;
+                }
                 RLWParticleSystem.Play();
                 RLWTireSkid.emitting = true;
             }
             else
             {
+                if (driftingSoundOn)
+                {
+                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
+                    driftingSoundOn = false;
+                }
                 RLWParticleSystem.Stop();
                 RLWTireSkid.emitting = false;
             }
@@ -710,6 +713,7 @@ public class HogController : NetworkBehaviour
         GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.CarExplosion); // Play Explosion Sound.
         canMove = false;
+        if (driftingSoundOn) HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
 
         Debug.Log("Exploding car for player - " + ConnectionManager.instance.GetClientUsername(OwnerClientId));
         StartCoroutine(ResetAfterExplosion(explosionInstance));
