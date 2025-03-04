@@ -1,12 +1,11 @@
 using Unity.Netcode;
-
 public struct ClientInput : INetworkSerializable
 {
     public ulong clientId;
     public float moveInput;
     public float brakeInput;
     public bool handbrake;
-    public float steeringAngle;
+    public float rawCameraAngle; // Changed to raw camera angle instead of processed steering
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
@@ -14,6 +13,6 @@ public struct ClientInput : INetworkSerializable
         serializer.SerializeValue(ref moveInput);
         serializer.SerializeValue(ref brakeInput);
         serializer.SerializeValue(ref handbrake);
-        serializer.SerializeValue(ref steeringAngle);
+        serializer.SerializeValue(ref rawCameraAngle);
     }
 }
