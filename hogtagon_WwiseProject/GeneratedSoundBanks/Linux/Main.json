@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{72A4585D-1F94-F45A-82D6-C151A8446BC9}",
+    "Hash": "{666B5571-7519-E5BF-2DB1-8939D2922B19}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -120,22 +120,6 @@
       "CachePath": "5F/{5F6DA9B3-93D6-980B-E180-A11C9C4D1BFE}.wem"
      },
      {
-      "Id": "391848353",
-      "Language": "SFX",
-      "Streaming": "false",
-      "Location": "Memory",
-      "ShortName": "2_tire-screeching-in.wav",
-      "CachePath": "AB/{AB905E16-CC82-6923-8EA3-8A528E82F94F}.wem"
-     },
-     {
-      "Id": "424089907",
-      "Language": "SFX",
-      "Streaming": "false",
-      "Location": "Memory",
-      "ShortName": "2_tire-screeching-mid-loop.wav",
-      "CachePath": "E7/{E799795E-943D-E632-D9B9-9E44C20CED11}.wem"
-     },
-     {
       "Id": "439209459",
       "Language": "SFX",
       "Streaming": "false",
@@ -176,12 +160,12 @@
       "CachePath": "04/{04464716-E5BF-C776-6E88-A982DF6C8D51}.wem"
      },
      {
-      "Id": "572910791",
+      "Id": "553553016",
       "Language": "SFX",
       "Streaming": "false",
       "Location": "Memory",
-      "ShortName": "1_tire-screeching-intro.wav",
-      "CachePath": "5E/{5EF61A5D-06D2-DD39-8155-0EEAA404E688}.wem"
+      "ShortName": "tire-screeching-1.wav",
+      "CachePath": "E1/{E169A183-2F34-2503-3096-4DEF78E0C984}.wem"
      },
      {
       "Id": "595717928",
@@ -264,14 +248,6 @@
       "CachePath": "4B/{4B35B243-15D4-BF3F-5176-920C0187E28F}.wem"
      },
      {
-      "Id": "959145839",
-      "Language": "SFX",
-      "Streaming": "false",
-      "Location": "Memory",
-      "ShortName": "1_tire-screeching-mid-loop.wav",
-      "CachePath": "B7/{B7BC3782-E67C-FC31-F965-8AAD6A642988}.wem"
-     },
-     {
       "Id": "1031122175",
       "Language": "SFX",
       "Streaming": "false",
@@ -286,6 +262,14 @@
       "Location": "Memory",
       "ShortName": "impact-2a.wav",
       "CachePath": "71/{71DC7EA8-0B0A-CF6A-8A5E-DA9386318B53}.wem"
+     },
+     {
+      "Id": "1040679246",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "tire-screeching-2.wav",
+      "CachePath": "FE/{FED87297-BDB3-5898-213F-F429ECC884F3}.wem"
      },
      {
       "Id": "1060462459",
@@ -381,8 +365,8 @@
       "ObjectPath": "\\Events\\Default Work Unit\\HogHorn",
       "GUID": "{843DE572-F748-474E-8539-31E2EA518E00}",
       "DurationType": "OneShot",
-      "DurationMin": "0.38804168",
-      "DurationMax": "0.38804168",
+      "DurationMin": "0.3858067",
+      "DurationMax": "0.3902896",
       "MediaRefs": [
        {
         "Id": "439209459"
@@ -483,19 +467,15 @@
       "Name": "TireScreechOn",
       "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOn",
       "GUID": "{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}",
-      "DurationType": "Infinite",
+      "DurationType": "OneShot",
+      "DurationMin": "0.5082519",
+      "DurationMax": "0.5708961",
       "MediaRefs": [
        {
-        "Id": "391848353"
+        "Id": "553553016"
        },
        {
-        "Id": "424089907"
-       },
-       {
-        "Id": "572910791"
-       },
-       {
-        "Id": "959145839"
+        "Id": "1040679246"
        }
       ]
      },
@@ -583,6 +563,6 @@
     ]
    }
   ],
-  "FileHash": "{3AF1F9F9-3BAB-43D7-28F1-23CFFB66079D}"
+  "FileHash": "{97161F1D-A2F8-E943-AED0-7D8250F4BE8A}"
  }
 }

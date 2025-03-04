@@ -286,6 +286,19 @@
 							<PropertyList>
 								<Property Name="3DSpatialization" Type="int16" Value="2"/>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+								<Property Name="Pitch" Type="int32">
+									<ModifierList>
+										<ModifierInfo>
+											<Modifier Name="" ID="{DD6D3FCD-BEBA-4D1D-8B17-7D7D3AF45F9E}">
+												<PropertyList>
+													<Property Name="Enabled" Type="bool" Value="True"/>
+													<Property Name="Max" Type="Real64" Value="10"/>
+													<Property Name="Min" Type="Real64" Value="-10"/>
+												</PropertyList>
+											</Modifier>
+										</ModifierInfo>
+									</ModifierList>
+								</Property>
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
@@ -1214,14 +1227,29 @@
 							<ChildrenList>
 								<RandomSequenceContainer Name="tire-screech_one-shot" ID="{8D8A6628-AE6D-48E7-BC8C-34D632356221}" ShortID="547172737">
 									<PropertyList>
-										<Property Name="3DSpatialization" Type="int16" Value="1"/>
+										<Property Name="3DSpatialization" Type="int16" Value="2"/>
 										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
-										<Property Name="Inclusion" Type="bool">
+										<Property Name="Lowpass" Type="int16">
 											<ValueList>
-												<Value>False</Value>
+												<Value>20</Value>
 											</ValueList>
 										</Property>
-										<Property Name="PlayMechanismStepOrContinuous" Type="int16" Value="0"/>
+										<Property Name="Pitch" Type="int32">
+											<ValueList>
+												<Value>-500</Value>
+											</ValueList>
+											<ModifierList>
+												<ModifierInfo>
+													<Modifier Name="" ID="{4C050AC2-5F6B-4E58-B5C5-57CA14589780}">
+														<PropertyList>
+															<Property Name="Enabled" Type="bool" Value="True"/>
+															<Property Name="Max" Type="Real64" Value="100"/>
+															<Property Name="Min" Type="Real64" Value="-100"/>
+														</PropertyList>
+													</Modifier>
+												</ModifierInfo>
+											</ModifierList>
+										</Property>
 									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
@@ -1233,13 +1261,6 @@
 									</ReferenceList>
 									<ChildrenList>
 										<Sound Name="tire-screeching-1" ID="{6A1129E9-3713-4EBE-809F-AFED50C0F7AE}" ShortID="358674658">
-											<PropertyList>
-												<Property Name="Inclusion" Type="bool">
-													<ValueList>
-														<Value>False</Value>
-													</ValueList>
-												</Property>
-											</PropertyList>
 											<ReferenceList>
 												<Reference Name="Conversion">
 													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -1250,6 +1271,11 @@
 											</ReferenceList>
 											<ChildrenList>
 												<AudioFileSource Name="tire-screeching-1" ID="{B44D8214-3DEA-44E8-8A63-A3F1B664BEDC}">
+													<PropertyList>
+														<Property Name="FadeOutDuration" Type="Real64" Value="0.244224914411141"/>
+														<Property Name="OverrideWavLoop" Type="bool" Value="True"/>
+														<Property Name="TrimEnd" Type="Real64" Value="0.403684498579054"/>
+													</PropertyList>
 													<Language>SFX</Language>
 													<AudioFile>tire-screeching-1.wav</AudioFile>
 													<MediaIDList>
@@ -1262,13 +1288,6 @@
 											</ActiveSourceList>
 										</Sound>
 										<Sound Name="tire-screeching-2" ID="{B0A882FC-AEE9-4E4D-BF86-85EEDC46FB84}" ShortID="36804933">
-											<PropertyList>
-												<Property Name="Inclusion" Type="bool">
-													<ValueList>
-														<Value>False</Value>
-													</ValueList>
-												</Property>
-											</PropertyList>
 											<ReferenceList>
 												<Reference Name="Conversion">
 													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -1279,6 +1298,11 @@
 											</ReferenceList>
 											<ChildrenList>
 												<AudioFileSource Name="tire-screeching-2" ID="{12C8B103-3061-47D9-966A-4EF31DECF852}">
+													<PropertyList>
+														<Property Name="FadeOutDuration" Type="Real64" Value="0.164721633881512"/>
+														<Property Name="OverrideWavLoop" Type="bool" Value="True"/>
+														<Property Name="TrimEnd" Type="Real64" Value="0.403399804633125"/>
+													</PropertyList>
 													<Language>SFX</Language>
 													<AudioFile>tire-screeching-2.wav</AudioFile>
 													<MediaIDList>
@@ -1294,6 +1318,7 @@
 								</RandomSequenceContainer>
 								<RandomSequenceContainer Name="tire-screech-in" ID="{2C02B56A-E9A8-478D-B855-61F73C0C702A}" ShortID="983831287">
 									<PropertyList>
+										<Property Name="3DSpatialization" Type="int16" Value="1"/>
 										<Property Name="Lowpass" Type="int16">
 											<ValueList>
 												<Value>20</Value>
@@ -1469,6 +1494,7 @@
 								</RandomSequenceContainer>
 								<RandomSequenceContainer Name="tire-screech-out" ID="{F249177C-332C-49AD-9FEC-4E4609FB7C30}" ShortID="619368315">
 									<PropertyList>
+										<Property Name="3DSpatialization" Type="int16" Value="1"/>
 										<Property Name="Lowpass" Type="int16">
 											<ValueList>
 												<Value>20</Value>
