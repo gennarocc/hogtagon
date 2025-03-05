@@ -4551,7 +4551,7 @@ MonoBehaviour:
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 11400000, guid: 82b2568a055007042a2b719c88ec8293, type: 2}
+      WwiseObjectReference: {fileID: 11400000, guid: b200eea1a6fae5f4ca59f63de35c8a99, type: 2}
   - type: 1
     audioEvent:
       idInternal: 0
@@ -4561,7 +4561,7 @@ MonoBehaviour:
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 11400000, guid: 1ae0768f84c1ad54390010a23c0723f5, type: 2}
+      WwiseObjectReference: {fileID: 11400000, guid: 49d4e7184a1a320499f6d72397dacc0a, type: 2}
   - type: 3
     audioEvent:
       idInternal: 0
@@ -4572,6 +4572,16 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
+  - type: 5
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: ad9bafa82afe869438b5285241574cfc, type: 2}
+  - type: 6
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 26fba088fe0a84240abad565212f06cb, type: 2}
 --- !u!1 &671304606
 GameObject:
   m_ObjectHideFlags: 0
@@ -7309,7 +7319,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 837142681dceb4545abd010bd7e26701, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InitializationSettings: {fileID: 11400000, guid: d2419cfea2e98bb41b39b5ebcdaacaad, type: 2}
+  InitializationSettings: {fileID: 11400000, guid: b02aad13107be364eb123bf1466bf750, type: 2}
   basePath: 
   language: 
   defaultPoolSize: 0

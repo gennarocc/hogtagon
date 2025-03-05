@@ -51,8 +51,6 @@ public class HogController : NetworkBehaviour
     [SerializeField] public GameObject Explosion;
 
     [Header("Wwise")]
-    [SerializeField] private AK.Wwise.Event EngineOn;
-    [SerializeField] private AK.Wwise.Event EngineOff;
     [SerializeField] private AK.Wwise.RTPC rpm;
 
     // Input Smoothing
@@ -116,8 +114,7 @@ public class HogController : NetworkBehaviour
             DisableWheelColliderPhysics();
         }
 
-        EngineOn.Post(gameObject);
-        // Set player color
+        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
     }
 
     private void Update()
@@ -671,11 +668,6 @@ public class HogController : NetworkBehaviour
             }
             else
             {
-                if (driftingSoundOn)
-                {
-                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-                    driftingSoundOn = false;
-                }
                 RLWParticleSystem.Stop();
                 RLWTireSkid.emitting = false;
             }
@@ -698,11 +690,7 @@ public class HogController : NetworkBehaviour
             RRWParticleSystem.Stop();
             RLWTireSkid.emitting = false;
             RRWTireSkid.emitting = false;
-            if (driftingSoundOn)
-            {
-                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-                driftingSoundOn = false;
-            }
+            if (driftingSoundOn) driftingSoundOn = false;
         }
     }
 
