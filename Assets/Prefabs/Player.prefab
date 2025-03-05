@@ -1051,8 +1051,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2121655961194616059}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.078459114, w: 0.99691737}
-  m_LocalPosition: {x: -3.7336378, y: 7.9801493, z: -14.5522}
+  m_LocalRotation: {x: 0.27059808, y: -0.65328145, z: 0.27059805, w: 0.6532815}
+  m_LocalPosition: {x: 40, y: 268, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1089,11 +1089,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.1
-  far clip plane: 5000
-  field of view: 40
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 90
   orthographic: 0
-  orthographic size: 10
+  orthographic size: 5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -7111,7 +7111,7 @@ Rigidbody:
   m_GameObject: {fileID: 5388601285324323642}
   serializedVersion: 4
   m_Mass: 600
-  m_Drag: 0
+  m_Drag: 0.01
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -7122,13 +7122,13 @@ Rigidbody:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_ImplicitCom: 1
+  m_ImplicitCom: 0
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!114 &7500573832422394504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7154,12 +7154,14 @@ MonoBehaviour:
   velocity: 0
   accelerationFactor: 2
   decelerationFactor: 2
-  positionCorrectionThreshold: 2
-  rotationCorrectionThreshold: 35
-  correctionLerpSpeed: 3
-  authoritySyncInterval: 0.05
-  applyVelocityCorrection: 0
+  positionCorrectionThreshold: 1
+  rotationCorrectionThreshold: 15
+  correctionLerpSpeed: 6
+  authoritySyncInterval: 0.02
+  applyVelocityCorrection: 1
+  emergencyThreshold: 3
   heightEmergencyThreshold: -10
+  debugMode: 0
   rb: {fileID: 2725043071608973344}
   freeLookCamera: {fileID: 1233816499970886941}
   frontLeftWheelCollider: {fileID: 7947942277690021792}

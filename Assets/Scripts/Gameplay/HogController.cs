@@ -18,19 +18,20 @@ public class HogController : NetworkBehaviour
     [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
-    
+
     [Header("Acceleration and Deceleration")]
     [SerializeField, Range(0.1f, 10f)] private float accelerationFactor = 2f; // How quickly the car reaches max torque
     [SerializeField, Range(0.1f, 5f)] private float decelerationFactor = 1f; // How quickly the car slows down with no input
 
     [Header("Networking and Synchronization")]
-    [SerializeField] private float positionCorrectionThreshold = 3.0f; // More lenient distance threshold
-    [SerializeField] private float rotationCorrectionThreshold = 60.0f; // More lenient rotation threshold
-    [SerializeField] private float correctionLerpSpeed = 2.5f; // Slower correction speed
-    [SerializeField] private float authoritySyncInterval = 0.2f; // Less frequent sync
-    [SerializeField] private bool applyVelocityCorrection = false; // Disable velocity correction by default
-    [SerializeField] private float heightEmergencyThreshold = -10f; // Only trigger emergency at severe heights
-
+    [SerializeField] private float positionCorrectionThreshold = 1.0f; // More strict threshold
+    [SerializeField] private float rotationCorrectionThreshold = 20.0f; // More strict threshold
+    [SerializeField] private float correctionLerpSpeed = 2.5f; // Correction speed
+    [SerializeField] private float authoritySyncInterval = 0.05f; // More frequent sync (20Hz)
+    [SerializeField] private bool applyVelocityCorrection = true; // Enable velocity correction by default
+    [SerializeField] private float emergencyThreshold = 3.0f; // Distance before hard correction
+    [SerializeField] private float heightEmergencyThreshold = -10f; // Height trigger for emergency reset
+    [SerializeField] private bool debugMode = false; // Enable debug visualization
     [Header("References")]
     [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
     [SerializeField] private CinemachineFreeLook freeLookCamera; // Reference to the CinemachineFreeLook camera
@@ -59,19 +60,19 @@ public class HogController : NetworkBehaviour
     private bool hasReceivedInitialSync = false;
     private NetworkVariable<bool> isReadyForSync = new NetworkVariable<bool>(false);
     private float lastAuthoritySyncTime;
-    
+
     // Network variables for position synchronization
     private NetworkVariable<Vector3> authorityPosition = new NetworkVariable<Vector3>();
     private NetworkVariable<Quaternion> authorityRotation = new NetworkVariable<Quaternion>();
     private NetworkVariable<Vector3> authorityVelocity = new NetworkVariable<Vector3>(Vector3.zero);
     private NetworkVariable<Vector3> authorityAngularVelocity = new NetworkVariable<Vector3>(Vector3.zero);
     private NetworkVariable<float> authoritySpeed = new NetworkVariable<float>(0f);
-    
+
     // Network variables for input synchronization
     private NetworkVariable<ClientInput> latestInput = new NetworkVariable<ClientInput>();
     private NetworkVariable<int> inputSequence = new NetworkVariable<int>(0);
     private int localInputSequence = 0;
-    
+
     // Correction control variables
     private bool receivedCorrection = false;
     private Vector3 correctionPositionTarget;
@@ -132,10 +133,10 @@ public class HogController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        
+
         // Make sure physics are properly initialized
         rb.isKinematic = false;
-        
+
         if (IsServer)
         {
             // Server sets initial authority position immediately
@@ -144,7 +145,7 @@ public class HogController : NetworkBehaviour
             authorityVelocity.Value = Vector3.zero;
             authorityAngularVelocity.Value = Vector3.zero;
             authoritySpeed.Value = 0f;
-            
+
             // Create an initial blank input
             ClientInput initialInput = new ClientInput
             {
@@ -156,9 +157,9 @@ public class HogController : NetworkBehaviour
                 sequence = 0,
                 timestamp = Time.time
             };
-            
+
             latestInput.Value = initialInput;
-            
+
             // Server is always ready
             hasReceivedInitialSync = true;
         }
@@ -167,7 +168,7 @@ public class HogController : NetworkBehaviour
             // Client notifies server it's ready for sync
             RequestInitialSyncServerRpc();
         }
-        
+
         // Ensure wheel colliders are properly enabled
         EnableWheelColliderPhysics();
     }
@@ -186,7 +187,7 @@ public class HogController : NetworkBehaviour
         // Wait for initial sync before processing input
         if (!hasReceivedInitialSync)
             return;
-            
+
         // Only the owner generates inputs
         if (IsOwner)
         {
@@ -195,11 +196,11 @@ public class HogController : NetworkBehaviour
                 // Play Horn Sound
                 HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
             }
-            
+
             // Generate player input only as owner
             GenerateInput();
         }
-        
+
         // Check for authority correction
         if (receivedCorrection)
         {
@@ -212,56 +213,68 @@ public class HogController : NetworkBehaviour
         // Wait for initial sync before processing physics
         if (!hasReceivedInitialSync)
             return;
-        
+
         // Update telemetry values
         frontLeftRpm = frontLeftWheelCollider.rpm;
         rpm.SetGlobalValue(frontLeftWheelCollider.rpm);
         velocity = rb.linearVelocity.magnitude;
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-        
+
         // All clients process physics for all vehicles
         ProcessPhysics();
-        
+
         // Only server sends authority updates
         if (IsServer)
         {
-            if (Time.time - lastAuthoritySyncTime > authoritySyncInterval)
+            // Dynamic sync interval based on speed and angular velocity
+            float speedFactor = Mathf.Clamp01(rb.linearVelocity.magnitude / 30f);
+            float rotationFactor = Mathf.Clamp01(rb.angularVelocity.magnitude / 5f);
+            float dynamicFactor = Mathf.Max(speedFactor, rotationFactor);
+
+            // More frequent updates at high speeds or when rotating quickly
+            float currentInterval = Mathf.Lerp(
+                authoritySyncInterval,
+                authoritySyncInterval * 0.25f, // 4x more frequent at max speed/rotation
+                dynamicFactor
+            );
+
+            if (Time.time - lastAuthoritySyncTime > currentInterval)
             {
                 SendAuthorityUpdate();
                 lastAuthoritySyncTime = Time.time;
             }
         }
-        
+
         // Visual updates
         AnimateWheels();
         DriftCarFX();
     }
-    
+
     private void ProcessPhysics()
     {
         // Make sure we have a valid Rigidbody
         if (rb == null) return;
-        
+
         // Use the latest network input value to simulate physics
         ClientInput currentInput = latestInput.Value;
-        
+
         // Check if vehicle is under terrain - apply correction if needed
         if (transform.position.y < heightEmergencyThreshold && !IsServer)
         {
             // Emergency correction to authority position
-            ApplyEmergencyCorrection();
+            ApplyHardCorrection();
             return;
         }
-        
+
         // Only process if we have a valid input
         if (currentInput.clientId == OwnerClientId || inputSequence.Value > 0)
         {
             // Calculate steering angle 
             float steeringAngle = CalculateSteeringFromCameraAngle(currentInput.rawCameraAngle, currentInput.moveInput);
-            
+
             // Calculate torque based on input
             float targetTorque = Mathf.Clamp(currentInput.moveInput, -1f, 1f) * maxTorque;
-            
+
             // Apply acceleration/deceleration
             if (Mathf.Abs(currentInput.moveInput) > 0.01f)
             {
@@ -273,11 +286,11 @@ public class HogController : NetworkBehaviour
                 // No input - gradually decelerate
                 currentTorque = Mathf.MoveTowards(currentTorque, 0f, Time.deltaTime * maxTorque * decelerationFactor);
             }
-            
+
             // Apply physics
             ApplyMotorTorque(currentTorque);
             ApplySteering(steeringAngle);
-            
+
             // Handle handbrake
             if (currentInput.handbrake)
             {
@@ -288,7 +301,7 @@ public class HogController : NetworkBehaviour
             {
                 RecoverTraction();
             }
-            
+
             // Update drift state (server is authoritative for this)
             if (IsServer)
             {
@@ -296,7 +309,7 @@ public class HogController : NetworkBehaviour
             }
         }
     }
-    
+
     private void GenerateInput()
     {
         // Calculate raw camera angle
@@ -304,18 +317,18 @@ public class HogController : NetworkBehaviour
         cameraVector.y = 0;
         Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
         float rawCameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
-        
+
         // Store for debugging
         cameraAngle = rawCameraAngle;
-        
+
         // Get input values
         float moveInput = GetMoveInput();
         float brakeInput = 0f; // Not using this currently
         bool handbrakeInput = GetHandbrakeInput();
-        
+
         // Increment sequence
         localInputSequence++;
-        
+
         // Create input struct
         ClientInput input = new ClientInput
         {
@@ -327,14 +340,14 @@ public class HogController : NetworkBehaviour
             sequence = localInputSequence,
             timestamp = Time.time
         };
-        
+
         // Process controller camera controls
         ProcessCameraControls();
-        
+
         // Send to server
         SendInputServerRpc(input);
     }
-    
+
     private void ProcessCameraControls()
     {
         // Controller camera control with right stick
@@ -353,7 +366,7 @@ public class HogController : NetworkBehaviour
             }
         }
     }
-    
+
     private float GetMoveInput()
     {
         float move = 0;
@@ -367,7 +380,7 @@ public class HogController : NetworkBehaviour
         {
             move = -1f;
         }
-        
+
         // Controller input
         if (Input.GetJoystickNames().Length > 0)
         {
@@ -383,15 +396,15 @@ public class HogController : NetworkBehaviour
                 move = leftTrigger;
             }
         }
-        
+
         return move;
     }
-    
+
     private bool GetHandbrakeInput()
     {
         return Input.GetKey(KeyCode.Space);
     }
-    
+
     private void SendAuthorityUpdate()
     {
         authorityPosition.Value = rb.position;
@@ -399,44 +412,44 @@ public class HogController : NetworkBehaviour
         authorityVelocity.Value = rb.linearVelocity;
         authorityAngularVelocity.Value = rb.angularVelocity;
         authoritySpeed.Value = rb.linearVelocity.magnitude;
-        
+
         // Broadcast to all clients
         SendAuthorityCorrectionClientRpc();
     }
-    
+
     [ClientRpc]
     private void SendAuthorityCorrectionClientRpc()
     {
         // Skip on server
         if (IsServer) return;
-        
-        // If client is severely misplaced (below terrain), apply immediate correction
-        if (transform.position.y < heightEmergencyThreshold)
-        {
-            ApplyEmergencyCorrection();
-            return;
-        }
-        
-        // Calculate discrepancy between client and server state
+
         float positionDelta = Vector3.Distance(rb.position, authorityPosition.Value);
         float rotationDelta = Quaternion.Angle(rb.rotation, authorityRotation.Value);
-        
+
+        // Emergency correction for extreme desync
+        if (transform.position.y < heightEmergencyThreshold || positionDelta > emergencyThreshold)
+        {
+            Debug.Log($"Emergency correction applied. Delta: {positionDelta:F2}m");
+            ApplyHardCorrection();
+            return;
+        }
+
         // Owner gets more leeway than observers
         float posThreshold = IsOwner ? positionCorrectionThreshold : positionCorrectionThreshold * 0.7f;
         float rotThreshold = IsOwner ? rotationCorrectionThreshold : rotationCorrectionThreshold * 0.7f;
-        
+
         // Gradually increase correction intensity based on how far off we are
         if (positionDelta > posThreshold || rotationDelta > rotThreshold)
         {
             // Calculate correction intensity (0-1) based on how far beyond threshold
             float posIntensity = Mathf.Clamp01((positionDelta - posThreshold) / (posThreshold * 2));
             float rotIntensity = Mathf.Clamp01((rotationDelta - rotThreshold) / (rotThreshold * 2));
-            
+
             // Use the higher intensity
             correctionIntensity = Mathf.Max(posIntensity, rotIntensity, correctionIntensity);
-            
+
             // Only start a new correction if we don't have one already or if we're way off
-            if (!receivedCorrection || positionDelta > posThreshold * 3 || rotationDelta > rotThreshold * 3)
+            if (!receivedCorrection || positionDelta > posThreshold * 2)
             {
                 StartSmoothedCorrection();
             }
@@ -447,7 +460,7 @@ public class HogController : NetworkBehaviour
             correctionIntensity = Mathf.Max(0, correctionIntensity - (Time.deltaTime * 0.5f));
         }
     }
-    
+
     private void StartSmoothedCorrection()
     {
         // Store current state as starting point
@@ -455,53 +468,58 @@ public class HogController : NetworkBehaviour
         correctionStartRotation = rb.rotation;
         correctionStartVelocity = rb.linearVelocity;
         correctionStartAngularVelocity = rb.angularVelocity;
-        
+
         // Store target state
         correctionPositionTarget = authorityPosition.Value;
         correctionRotationTarget = authorityRotation.Value;
         correctionVelocityTarget = authorityVelocity.Value;
         correctionAngularVelocityTarget = authorityAngularVelocity.Value;
-        
+
         // Start correction
         correctionStartTime = Time.time;
         receivedCorrection = true;
     }
-    
-    private void ApplyEmergencyCorrection()
+
+    // Replace emergency correction with this more aggressive version
+    private void ApplyHardCorrection()
     {
         // Teleport to authority position for severe cases
         rb.position = authorityPosition.Value;
         rb.rotation = authorityRotation.Value;
-        
-        // Don't override velocity for owner unless explicitly enabled
-        if (!IsOwner || applyVelocityCorrection)
-        {
-            rb.linearVelocity = authorityVelocity.Value;
-            rb.angularVelocity = authorityAngularVelocity.Value;
-        }
-        
+        rb.linearVelocity = authorityVelocity.Value;
+        rb.angularVelocity = authorityAngularVelocity.Value;
+
+        // Reset any physics state that might be causing issues
+        rb.Sleep();
+        rb.WakeUp();
+
         receivedCorrection = false;
+
+        // Visual feedback for debugging
+        if (debugMode)
+        {
+            Debug.DrawLine(transform.position, transform.position + Vector3.up * 5f, Color.red, 1.0f);
+        }
     }
-    
     private void ApplyAuthorityCorrection()
     {
         if (!receivedCorrection) return;
-        
+
         // Calculate interpolation factor (0-1)
         float timeSinceCorrection = Time.time - correctionStartTime;
         float t = Mathf.Clamp01(timeSinceCorrection / correctionDuration);
-        
+
         // Use smoothstep for more natural easing
         float smoothT = t * t * (3f - 2f * t);
-        
+
         // Apply position correction with intensity-based lerping
         Vector3 targetPos = Vector3.Lerp(correctionStartPosition, correctionPositionTarget, smoothT);
         rb.position = Vector3.Lerp(rb.position, targetPos, correctionIntensity * correctionLerpSpeed * Time.deltaTime);
-        
+
         // Apply rotation correction with intensity-based slerping
         Quaternion targetRot = Quaternion.Slerp(correctionStartRotation, correctionRotationTarget, smoothT);
         rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, correctionIntensity * correctionLerpSpeed * Time.deltaTime);
-        
+
         // Only apply velocity correction if explicitly enabled and for non-owners
         if (applyVelocityCorrection && !IsOwner)
         {
@@ -513,7 +531,7 @@ public class HogController : NetworkBehaviour
                 rb.angularVelocity = authorityAngularVelocity.Value;
             }
         }
-        
+
         // If interpolation is complete, end correction
         if (t >= 1.0f)
         {
@@ -526,7 +544,7 @@ public class HogController : NetworkBehaviour
     {
         // Get the client ID that sent the request
         ulong clientId = serverRpcParams.Receive.SenderClientId;
-        
+
         // Send immediate state to the requesting client
         SendInitialStateClientRpc(
             transform.position,
@@ -545,40 +563,40 @@ public class HogController : NetworkBehaviour
             }
         );
     }
-    
+
     [ClientRpc]
-    private void SendInitialStateClientRpc(Vector3 position, Quaternion rotation, Vector3 velocity, 
+    private void SendInitialStateClientRpc(Vector3 position, Quaternion rotation, Vector3 velocity,
                                          Vector3 angularVelocity, float speed, ClientInput input, int sequence,
                                          ClientRpcParams clientRpcParams = default)
     {
         // Skip if we're the server or already synced
         if (IsServer || hasReceivedInitialSync)
             return;
-            
+
         // Set initial state
         rb.position = position;
         rb.rotation = rotation;
-        
+
         // Only apply velocity to non-owned vehicles
         if (!IsOwner)
         {
             rb.linearVelocity = velocity;
             rb.angularVelocity = angularVelocity;
         }
-        
+
         // Mark as having received initial sync
         hasReceivedInitialSync = true;
-        
+
         Debug.Log($"Received initial sync for vehicle ID {OwnerClientId}");
     }
-    
+
     // When a client connects after players are already in game
     public void OnPlayerJoinedLate(ulong newClientId)
     {
         // Only the server should handle this
         if (!IsServer)
             return;
-            
+
         // Send current state to the new client
         SendInitialStateClientRpc(
             transform.position,
@@ -603,19 +621,19 @@ public class HogController : NetworkBehaviour
     {
         // Only accept inputs from the vehicle owner
         if (input.clientId != OwnerClientId) return;
-        
+
         // Server validates and authorizes input
         if (input.sequence > inputSequence.Value)
         {
             // Accept new input - update the network variable for all clients
             latestInput.Value = input;
             inputSequence.Value = input.sequence;
-            
+
             // Server processes physics immediately
             ProcessPhysics();
         }
     }
-    
+
     // Calculate steering angle from camera angle
     private float CalculateSteeringFromCameraAngle(float cameraAngle, float moveInput)
     {
@@ -905,7 +923,7 @@ public class HogController : NetworkBehaviour
             isTractionLocked = true; // Only set to true when fully recovered
         }
     }
-    
+
     private void InitializeWheelFriction()
     {
         FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
@@ -928,7 +946,7 @@ public class HogController : NetworkBehaviour
         rearLeftWheelCollider.enabled = true;
         rearRightWheelCollider.enabled = true;
     }
-    
+
     private void DisableWheelColliderPhysics()
     {
         frontLeftWheelCollider.enabled = false;
@@ -937,14 +955,35 @@ public class HogController : NetworkBehaviour
         rearRightWheelCollider.enabled = false;
     }
 
+    // Add a method for handling collisions with special sync
     private void OnCollisionEnter(Collision collision)
     {
         if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
         {
             StartCoroutine(CollisionForceDebounce());
+
+            // Force an immediate sync after collision
+            SendAuthorityUpdate();
+            BroadcastHardSyncClientRpc();
         }
 
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
+    }
+
+    [ClientRpc]
+    private void BroadcastHardSyncClientRpc()
+    {
+        if (!IsServer && !IsOwner) // Only for non-owner, non-server clients
+        {
+            StartCoroutine(DelayedHardSync());
+        }
+    }
+
+    // Add a slight delay to ensure we have the latest state
+    private IEnumerator DelayedHardSync()
+    {
+        yield return new WaitForSeconds(0.05f);
+        ApplyHardCorrection();
     }
 
     private IEnumerator CollisionForceDebounce()
@@ -1034,4 +1073,28 @@ public class HogController : NetworkBehaviour
             Destroy(explosionInstance);
         }
     }
+
+    private void OnDrawGizmos()
+    {
+        if (!Application.isPlaying || !debugMode) return;
+
+        if (!IsServer && authorityPosition != null)
+        {
+            // Draw line between local position and authority position
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(rb.position, authorityPosition.Value);
+
+            // Draw sphere at authority position
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(authorityPosition.Value, 0.5f);
+
+            // Display distance text
+#if UNITY_EDITOR
+            float distance = Vector3.Distance(rb.position, authorityPosition.Value);
+            UnityEditor.Handles.Label(Vector3.Lerp(rb.position, authorityPosition.Value, 0.5f),
+                                      $"Δ{distance:F2}m");
+#endif
+        }
+    }
+
 }
