@@ -9,12 +9,19 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public float betweenRoundLength = 5f;
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
 
+    float totalplaytime;
+
     [SerializeField] private bool showScoreboardBetweenRounds = true;
 
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
+
+    [Header("Wwise")]
+    [SerializeField] public AK.Wwise.Event LevelMusicOn;
+
     public static GameManager instance;
     private ulong roundWinnerClientId;
+    private bool gameMusicPlaying;
 
     public void Start()
     {
@@ -27,6 +34,7 @@ public class GameManager : NetworkBehaviour
         {
             Destroy(gameObject);
         }
+        
         TransitionToState(GameState.Pending);
     }
 
@@ -77,6 +85,11 @@ public class GameManager : NetworkBehaviour
 
     private void OnPlayingEnter()
     {
+        if (!gameMusicPlaying) 
+        {
+            gameMusicPlaying = true;
+            LevelMusicOn.Post(gameObject);
+        }
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
             LockPlayerMovement();

@@ -22,8 +22,6 @@ public class ConnectToGame : MonoBehaviour
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event MenuMusicOff;
-    [SerializeField] private AK.Wwise.Event LevelMusicOn;
-    [SerializeField] private AK.Wwise.Event LevelMusicOff;
 
     private async void Start()
     {

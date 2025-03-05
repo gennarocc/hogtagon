@@ -3175,6 +3175,10 @@ MonoBehaviour:
   betweenRoundLength: 7
   showScoreboardBetweenRounds: 1
   menuManager: {fileID: 1935665467}
+  LevelMusicOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: ea399993d59357e489498370a898da31, type: 2}
 --- !u!4 &423498034
 Transform:
   m_ObjectHideFlags: 0
@@ -5511,15 +5515,15 @@ MonoBehaviour:
   MasterVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 8e1ef461f2cda0e478847bfba655176e, type: 2}
+    WwiseObjectReference: {fileID: 11400000, guid: 6c68db4f9a756e847954490e04e5d673, type: 2}
   MusicVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 275a2ac0b2ccdc544bcdf73f4bb63ae8, type: 2}
+    WwiseObjectReference: {fileID: 11400000, guid: 61ed68fcb39605a42b6f453c02938b91, type: 2}
   SfxVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 887ce1eb840c60c40b7585e97601c7b4, type: 2}
+    WwiseObjectReference: {fileID: 11400000, guid: 61ed68fcb39605a42b6f453c02938b91, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 
@@ -11260,15 +11264,7 @@ MonoBehaviour:
   MenuMusicOff:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: ec30697fac339df489902cd644ef072e, type: 2}
-  LevelMusicOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: c8be56506c2a03e4ab23376ec02239f8, type: 2}
-  LevelMusicOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 5a0cc444fa38a2143b3d157bc6368e7e, type: 2}
+    WwiseObjectReference: {fileID: 11400000, guid: f87528b60581a3044ae9486b356f4970, type: 2}
 --- !u!114 &1508066504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14275,7 +14271,7 @@ MonoBehaviour:
   MenuMusicOn:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 42f6c17292a660c49986c5ea2ed7f0e1, type: 2}
+    WwiseObjectReference: {fileID: 11400000, guid: 9a29dcbf8532d554ab7aa54612fc5ad5, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 
