@@ -166,10 +166,13 @@ public class MenuManager : NetworkBehaviour
 
     void Pause()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        pauseMenuUI.SetActive(true);
-        gameIsPaused = true;
+        if (GameManager.instance.state != GameState.Ending)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            pauseMenuUI.SetActive(true);
+            gameIsPaused = true;
+        }
     }
 
     public void StartGame()
