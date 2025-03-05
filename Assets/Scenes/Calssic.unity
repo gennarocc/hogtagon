@@ -15608,6 +15608,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1363538417}
     m_Modifications:
+    - target: {fileID: 4309159959625504855, guid: e8dda8268254aa8458023971881e5c52, type: 3}
+      propertyPath: duration
+      value: 120
+      objectReference: {fileID: 0}
+    - target: {fileID: 4309159959625504855, guid: e8dda8268254aa8458023971881e5c52, type: 3}
+      propertyPath: targetSize.x
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 4309159959625504855, guid: e8dda8268254aa8458023971881e5c52, type: 3}
+      propertyPath: targetSize.y
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 4309159959625504855, guid: e8dda8268254aa8458023971881e5c52, type: 3}
+      propertyPath: targetSize.z
+      value: 80
+      objectReference: {fileID: 0}
     - target: {fileID: 4985899555204561827, guid: e8dda8268254aa8458023971881e5c52, type: 3}
       propertyPath: m_Name
       value: Plasma Ball
