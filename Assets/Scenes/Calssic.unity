@@ -603,7 +603,7 @@ GameObject:
   - component: {fileID: 107248770}
   - component: {fileID: 107248772}
   - component: {fileID: 107248771}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Players
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2742,7 +2742,7 @@ GameObject:
   - component: {fileID: 383991255}
   - component: {fileID: 383991257}
   - component: {fileID: 383991256}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: ScoreColumnHeader
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3671,7 +3671,7 @@ GameObject:
   - component: {fileID: 476625763}
   - component: {fileID: 476625765}
   - component: {fileID: 476625764}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Header
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6967,7 +6967,7 @@ GameObject:
   - component: {fileID: 919591785}
   - component: {fileID: 919591787}
   - component: {fileID: 919591786}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Backdrop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7228,7 +7228,7 @@ GameObject:
   - component: {fileID: 961367067}
   - component: {fileID: 961367069}
   - component: {fileID: 961367068}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Dropshadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8389,7 +8389,7 @@ GameObject:
   - component: {fileID: 1173365416}
   - component: {fileID: 1173365415}
   - component: {fileID: 1173365418}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Scoreboard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9645,7 +9645,7 @@ GameObject:
   - component: {fileID: 1291737637}
   - component: {fileID: 1291737639}
   - component: {fileID: 1291737638}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Modal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11555,7 +11555,7 @@ GameObject:
   - component: {fileID: 1513337143}
   - component: {fileID: 1513337145}
   - component: {fileID: 1513337144}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Scores
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11691,7 +11691,7 @@ GameObject:
   - component: {fileID: 1536494376}
   - component: {fileID: 1536494378}
   - component: {fileID: 1536494377}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: PlayerColumnHeader
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14201,9 +14201,9 @@ RectTransform:
   m_Children:
   - {fileID: 2026663748}
   - {fileID: 1508066502}
+  - {fileID: 1173365414}
   - {fileID: 1246823220}
   - {fileID: 748281886}
-  - {fileID: 1173365414}
   - {fileID: 713204404}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
