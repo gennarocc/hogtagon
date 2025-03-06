@@ -4,353 +4,528 @@ using Cinemachine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
+[RequireComponent(typeof(Rigidbody))]
 public class HogController : NetworkBehaviour
 {
+    #region Variables
+
     [Header("Hog Params")]
     [SerializeField] public bool canMove = true;
-    [SerializeField] private float maxTorque = 500f; // Maximum torque applied to wheels
-    [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
+    [SerializeField] private float maxTorque = 500f;
+    [SerializeField] private float brakeTorque = 300f;
     [SerializeField] private Vector3 centerOfMass;
-    [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
+    [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
-    [SerializeField] public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
-    [SerializeField] public float cameraAngle;
+    [SerializeField] public int handbrakeDriftMultiplier = 5;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
 
     [Header("Acceleration and Deceleration")]
-    [SerializeField, Range(0.1f, 10f)] private float accelerationFactor = 2f; // How quickly the car reaches max torque
-    [SerializeField, Range(0.1f, 5f)] private float decelerationFactor = 1f; // How quickly the car slows down with no input
+    [SerializeField, Range(0.1f, 10f)] private float accelerationFactor = 2f;
+    [SerializeField, Range(0.1f, 5f)] private float decelerationFactor = 1f;
 
-    [Header("Networking and Synchronization")]
-    [SerializeField] private float positionCorrectionThreshold = 1.0f; // More strict threshold
-    [SerializeField] private float rotationCorrectionThreshold = 20.0f; // More strict threshold
-    [SerializeField] private float correctionLerpSpeed = 2.5f; // Correction speed
-    [SerializeField] private float authoritySyncInterval = 0.05f; // More frequent sync (20Hz)
-    [SerializeField] private bool applyVelocityCorrection = true; // Enable velocity correction by default
-    [SerializeField] private float emergencyThreshold = 3.0f; // Distance before hard correction
-    [SerializeField] private float heightEmergencyThreshold = -10f; // Height trigger for emergency reset
-    [SerializeField] private bool debugMode = false; // Enable debug visualization
+    [Header("Network Reconciliation")]
+    [SerializeField] private float positionErrorThreshold = 1.0f;
+    [SerializeField] private float rotationErrorThreshold = 15.0f;
+    [SerializeField] private float reconciliationLerpSpeed = 10f;
+    [SerializeField] private bool debugMode = false;
+    [SerializeField] private int inputBufferSize = 60; // 1 second at 60Hz
+
     [Header("References")]
-    [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
-    [SerializeField] private CinemachineFreeLook freeLookCamera; // Reference to the CinemachineFreeLook camera
-    [SerializeField] private WheelCollider frontLeftWheelCollider;
-    [SerializeField] private WheelCollider frontRightWheelCollider;
-    [SerializeField] private WheelCollider rearLeftWheelCollider;
-    [SerializeField] private WheelCollider rearRightWheelCollider;
-    [SerializeField] private Transform frontLeftWheelTransform;
-    [SerializeField] private Transform frontRightWheelTransform;
-    [SerializeField] private Transform rearLeftWheelTransform;
-    [SerializeField] private Transform rearRightWheelTransform;
-
-    [Header("Effects")]
-    [SerializeField] public ParticleSystem RLWParticleSystem;
-    [SerializeField] public ParticleSystem RRWParticleSystem;
-    [SerializeField] public TrailRenderer RLWTireSkid;
-    [SerializeField] public TrailRenderer RRWTireSkid;
-    [SerializeField] public GameObject Explosion;
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private CinemachineFreeLook freeLookCamera;
+    [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
+    [SerializeField] private Transform[] wheelMeshes = new Transform[4];
+    [SerializeField] private HogVisualEffects vfxController;
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event EngineOn;
     [SerializeField] private AK.Wwise.Event EngineOff;
     [SerializeField] private AK.Wwise.RTPC rpm;
 
-    // State management for initial sync
+    // State tracking
     private bool hasReceivedInitialSync = false;
-    private NetworkVariable<bool> isReadyForSync = new NetworkVariable<bool>(false);
-    private float lastAuthoritySyncTime;
-
-    // Network variables for position synchronization
-    private NetworkVariable<Vector3> authorityPosition = new NetworkVariable<Vector3>();
-    private NetworkVariable<Quaternion> authorityRotation = new NetworkVariable<Quaternion>();
-    private NetworkVariable<Vector3> authorityVelocity = new NetworkVariable<Vector3>(Vector3.zero);
-    private NetworkVariable<Vector3> authorityAngularVelocity = new NetworkVariable<Vector3>(Vector3.zero);
-    private NetworkVariable<float> authoritySpeed = new NetworkVariable<float>(0f);
-
-    // Network variables for input synchronization
-    private NetworkVariable<ClientInput> latestInput = new NetworkVariable<ClientInput>();
-    private NetworkVariable<int> inputSequence = new NetworkVariable<int>(0);
-    private int localInputSequence = 0;
-
-    // Correction control variables
-    private bool receivedCorrection = false;
-    private Vector3 correctionPositionTarget;
-    private Quaternion correctionRotationTarget;
-    private Vector3 correctionVelocityTarget;
-    private Vector3 correctionAngularVelocityTarget;
-    private float correctionStartTime;
-    private float correctionDuration = 0.5f; // Duration for smooth interpolation
-    private Vector3 correctionStartPosition;
-    private Quaternion correctionStartRotation;
-    private Vector3 correctionStartVelocity;
-    private Vector3 correctionStartAngularVelocity;
-    private float correctionIntensity = 0f; // 0-1 value for gradually increasing correction
-
-    // State variables
-    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
     private float driftingAxis;
     private bool isTractionLocked = true;
-    private bool driftingSoundOn = false;
+    private float cameraAngle;
 
     // Wheel friction variables
-    private WheelFrictionCurve FLwheelFriction;
-    private float FLWextremumSlip;
-    private WheelFrictionCurve FRwheelFriction;
-    private float FRWextremumSlip;
-    private WheelFrictionCurve RLwheelFriction;
-    private float RLWextremumSlip;
-    private WheelFrictionCurve RRwheelFriction;
-    private float RRWextremumSlip;
+    private WheelFrictionCurve[] originalWheelFrictions = new WheelFrictionCurve[4];
+    private float[] originalExtremumSlips = new float[4];
 
-    // Input struct with sequence number and timestamp
-    public struct ClientInput : INetworkSerializable
+    // Deterministic physics variables
+    private const float FIXED_PHYSICS_TIMESTEP = 0.01666667f; // Exactly 1/60 second
+    private float accumulatedTime = 0f;
+    private uint currentPhysicsFrame = 0;
+    private NetworkVariable<uint> serverPhysicsFrame = new NetworkVariable<uint>(0);
+
+    // Input-sync variables
+    private int nextInputSequence = 0;
+    private NetworkVariable<int> lastProcessedInputSequence = new NetworkVariable<int>(0);
+    private Queue<InputState> pendingInputs = new Queue<InputState>();
+    private NetworkVariable<StateSnapshot> authorityState = new NetworkVariable<StateSnapshot>();
+    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+
+    // Visual smoothing for remote vehicles
+    private Vector3 visualPositionTarget;
+    private Quaternion visualRotationTarget;
+    private bool needsSmoothing = false;
+
+    #endregion
+
+    #region Network Structs
+
+    public struct InputState : INetworkSerializable
     {
-        public ulong clientId;
+        public int sequenceNumber;
+        public double timestamp;
+        public uint physicsFrame;
         public float moveInput;
-        public float brakeInput;
-        public bool handbrake;
-        public float rawCameraAngle;
-        public int sequence; // Added sequence number
-        public float timestamp; // Added timestamp for better prediction
+        public float steeringInput;
+        public bool handbrakeInput;
+        public float deltaTime;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
-            serializer.SerializeValue(ref clientId);
-            serializer.SerializeValue(ref moveInput);
-            serializer.SerializeValue(ref brakeInput);
-            serializer.SerializeValue(ref handbrake);
-            serializer.SerializeValue(ref rawCameraAngle);
-            serializer.SerializeValue(ref sequence);
+            serializer.SerializeValue(ref sequenceNumber);
             serializer.SerializeValue(ref timestamp);
+            serializer.SerializeValue(ref physicsFrame);
+            serializer.SerializeValue(ref moveInput);
+            serializer.SerializeValue(ref steeringInput);
+            serializer.SerializeValue(ref handbrakeInput);
+            serializer.SerializeValue(ref deltaTime);
         }
     }
 
-    // Override OnNetworkSpawn to ensure proper initialization
+    public struct StateSnapshot : INetworkSerializable
+    {
+        public int lastProcessedInput;
+        public uint physicsFrame;
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 velocity;
+        public Vector3 angularVelocity;
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref lastProcessedInput);
+            serializer.SerializeValue(ref physicsFrame);
+            serializer.SerializeValue(ref position);
+            serializer.SerializeValue(ref rotation);
+            serializer.SerializeValue(ref velocity);
+            serializer.SerializeValue(ref angularVelocity);
+        }
+    }
+
+    #endregion
+
+    #region Lifecycle Methods
+
+    // One-time setup of physics settings on app startup
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void ConfigurePhysicsSettings()
+    {
+        // Force exact fixed timestep for determinism
+        Time.fixedDeltaTime = FIXED_PHYSICS_TIMESTEP;
+        
+        // Configure physics parameters for determinism
+        Physics.defaultSolverIterations = 6;
+        Physics.defaultSolverVelocityIterations = 1;
+        Physics.defaultMaxAngularSpeed = 50f;
+        Physics.sleepThreshold = 0.005f;
+        Physics.defaultContactOffset = 0.01f;
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
-        // Make sure physics are properly initialized
         rb.isKinematic = false;
 
+        // Initialize immediately for server
         if (IsServer)
         {
-            // Server sets initial authority position immediately
-            authorityPosition.Value = transform.position;
-            authorityRotation.Value = transform.rotation;
-            authorityVelocity.Value = Vector3.zero;
-            authorityAngularVelocity.Value = Vector3.zero;
-            authoritySpeed.Value = 0f;
-
-            // Create an initial blank input
-            ClientInput initialInput = new ClientInput
-            {
-                clientId = OwnerClientId,
-                moveInput = 0f,
-                brakeInput = 0f,
-                handbrake = false,
-                rawCameraAngle = 0f,
-                sequence = 0,
-                timestamp = Time.time
-            };
-
-            latestInput.Value = initialInput;
-
-            // Server is always ready
-            hasReceivedInitialSync = true;
+            InitializeServerState();
         }
         else
         {
-            // Client notifies server it's ready for sync
             RequestInitialSyncServerRpc();
         }
 
-        // Ensure wheel colliders are properly enabled
-        EnableWheelColliderPhysics();
+        EnableWheelColliders();
     }
 
     private void Start()
     {
-        // All clients need physics for prediction
         rb.centerOfMass = centerOfMass;
         InitializeWheelFriction();
-
+        vfxController.Initialize(transform, centerOfMass, OwnerClientId);
         EngineOn.Post(gameObject);
+        
+        // Initialize visual smoothing
+        visualPositionTarget = transform.position;
+        visualRotationTarget = transform.rotation;
     }
 
     private void Update()
     {
-        // Wait for initial sync before processing input
-        if (!hasReceivedInitialSync)
-            return;
+        // Wait for initial sync
+        if (!hasReceivedInitialSync) return;
 
-        // Only the owner generates inputs
+        // Handle owner input generation
         if (IsOwner)
         {
-            if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0)) && !transform.root.gameObject.GetComponent<Player>().isSpectating)
-            {
-                // Play Horn Sound
-                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
-            }
-
-            // Generate player input only as owner
-            GenerateInput();
+            CollectAndSendInput();
         }
 
-        // Check for authority correction
-        if (receivedCorrection)
+        // Accumulate time for deterministic physics steps
+        accumulatedTime += Time.deltaTime;
+
+        // Process deterministic physics steps
+        while (accumulatedTime >= FIXED_PHYSICS_TIMESTEP)
         {
-            ApplyAuthorityCorrection();
+            ProcessPhysicsStep();
+            accumulatedTime -= FIXED_PHYSICS_TIMESTEP;
+        }
+
+        // Visual updates that don't need fixed timestep
+        AnimateWheels();
+        UpdateDriftEffects();
+        SmoothVisualForRemoteVehicles();
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (IsServer && !collisionForceOnCooldown && collision.gameObject.CompareTag("Player"))
+        {
+            StartCoroutine(CollisionDebounce());
+            SendAuthoritySnapshot();
+        }
+
+        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
+    }
+
+    #endregion
+
+    #region Initialization
+
+    private void InitializeServerState()
+    {
+        // Set initial server state
+        authorityState.Value = new StateSnapshot
+        {
+            position = transform.position,
+            rotation = transform.rotation,
+            velocity = Vector3.zero,
+            angularVelocity = Vector3.zero,
+            physicsFrame = 0,
+            lastProcessedInput = 0
+        };
+
+        hasReceivedInitialSync = true;
+        serverPhysicsFrame.Value = 0;
+    }
+
+    private void InitializeWheelFriction()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            originalWheelFrictions[i] = wheelColliders[i].sidewaysFriction;
+            originalExtremumSlips[i] = originalWheelFrictions[i].extremumSlip;
         }
     }
 
-    private void FixedUpdate()
+    #endregion
+
+    #region Deterministic Physics Processing
+
+    private void ProcessPhysicsStep()
     {
-        // Wait for initial sync before processing physics
-        if (!hasReceivedInitialSync)
-            return;
-
-        // Update telemetry values
-        frontLeftRpm = frontLeftWheelCollider.rpm;
-        rpm.SetGlobalValue(frontLeftWheelCollider.rpm);
-        velocity = rb.linearVelocity.magnitude;
-        localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-
-        // All clients process physics for all vehicles
-        ProcessPhysics();
-
-        // Only server sends authority updates
+        // Increment physics frame counter
+        currentPhysicsFrame++;
+        
         if (IsServer)
         {
-            // Dynamic sync interval based on speed and angular velocity
-            float speedFactor = Mathf.Clamp01(rb.linearVelocity.magnitude / 30f);
-            float rotationFactor = Mathf.Clamp01(rb.angularVelocity.magnitude / 5f);
-            float dynamicFactor = Mathf.Max(speedFactor, rotationFactor);
-
-            // More frequent updates at high speeds or when rotating quickly
-            float currentInterval = Mathf.Lerp(
-                authoritySyncInterval,
-                authoritySyncInterval * 0.25f, // 4x more frequent at max speed/rotation
-                dynamicFactor
-            );
-
-            if (Time.time - lastAuthoritySyncTime > currentInterval)
-            {
-                SendAuthorityUpdate();
-                lastAuthoritySyncTime = Time.time;
-            }
+            // Update server frame counter
+            serverPhysicsFrame.Value = currentPhysicsFrame;
+            
+            // Process any pending physics on server
+            // (Vehicle owner's inputs are already processed when received)
         }
-
-        // Visual updates
-        AnimateWheels();
-        DriftCarFX();
+        else if (IsOwner)
+        {
+            // Process inputs for current physics step
+            ProcessOwnerInputs();
+            
+            // Check for reconciliation against server state if needed
+            CheckReconciliation();
+        }
+        // Non-owner clients don't simulate physics - they just receive state
     }
 
-    private void ProcessPhysics()
+    private void ProcessOwnerInputs()
     {
-        // Make sure we have a valid Rigidbody
-        if (rb == null) return;
-
-        // Use the latest network input value to simulate physics
-        ClientInput currentInput = latestInput.Value;
-
-        // Check if vehicle is under terrain - apply correction if needed
-        if (transform.position.y < heightEmergencyThreshold && !IsServer)
+        // Find pending inputs for this frame
+        InputState? inputForFrame = null;
+        
+        foreach (var input in pendingInputs)
         {
-            // Emergency correction to authority position
-            ApplyHardCorrection();
+            // Use the most recent input for this frame
+            if (input.physicsFrame <= currentPhysicsFrame)
+            {
+                inputForFrame = input;
+            }
+        }
+        
+        // If we have an input for this frame, apply it
+        if (inputForFrame.HasValue)
+        {
+            ApplyDeterministicPhysics(inputForFrame.Value);
+        }
+    }
+
+    private void ApplyDeterministicPhysics(InputState input)
+    {
+        // Save current physics settings
+        float prevDeltaTime = Time.fixedDeltaTime;
+        Time.fixedDeltaTime = input.deltaTime;
+        
+        // Apply exact physics
+        float steeringAngle = CalculateSteering(input.steeringInput, input.moveInput);
+        
+        // Calculate exact torque with deterministic math
+        float targetTorque = Mathf.Clamp(input.moveInput, -1f, 1f) * maxTorque;
+        float torqueDelta = input.moveInput != 0 ? 
+            (input.deltaTime * maxTorque * accelerationFactor) : 
+            (input.deltaTime * maxTorque * decelerationFactor);
+            
+        // Use deterministic MoveTowards
+        if (Mathf.Abs(targetTorque - currentTorque) <= torqueDelta)
+        {
+            currentTorque = targetTorque; 
+        }
+        else
+        {
+            currentTorque += Mathf.Sign(targetTorque - currentTorque) * torqueDelta;
+        }
+        
+        // Apply to wheels
+        ApplySteeringToWheels(steeringAngle);
+        ApplyMotorTorqueToWheels(currentTorque);
+        
+        // Handle handbrake with exact physics
+        if (input.handbrakeInput)
+        {
+            ApplyDeterministicHandbrake(input.deltaTime);
+        }
+        else if (!input.handbrakeInput && !isTractionLocked)
+        {
+            ApplyDeterministicTractionRecovery(input.deltaTime);
+        }
+        
+        // Restore physics settings
+        Time.fixedDeltaTime = prevDeltaTime;
+        
+        // Update local velocity for drift detection
+        localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
+        
+        // Server updates drift state
+        if (IsServer)
+        {
+            isDrifting.Value = localVelocityX > 0.25f;
+        }
+    }
+
+    private float CalculateSteering(float steeringInput, float moveInput)
+    {
+        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
+        bool isMovingInReverse = forwardVelocity < -0.5f;
+        
+        // Invert steering for reverse driving
+        if (isMovingInReverse && moveInput < 0)
+        {
+            steeringInput = -steeringInput;
+        }
+
+        return Mathf.Clamp(steeringInput, -maxSteeringAngle, maxSteeringAngle);
+    }
+
+    private void ApplySteeringToWheels(float steeringAngle)
+    {
+        // Front wheels steering
+        wheelColliders[0].steerAngle = Mathf.Lerp(wheelColliders[0].steerAngle, steeringAngle, steeringSpeed);
+        wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringAngle, steeringSpeed);
+        
+        // Rear wheels counter-steering
+        float rearSteeringAngle = steeringAngle * -0.35f;
+        wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, rearSteeringAngle, steeringSpeed);
+        wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, rearSteeringAngle, steeringSpeed);
+    }
+
+    private void ApplyMotorTorqueToWheels(float torqueValue)
+    {
+        if (!canMove)
+        {
+            foreach (var wheel in wheelColliders)
+            {
+                wheel.motorTorque = 0;
+            }
             return;
         }
 
-        // Only process if we have a valid input
-        if (currentInput.clientId == OwnerClientId || inputSequence.Value > 0)
+        foreach (var wheel in wheelColliders)
         {
-            // Calculate steering angle 
-            float steeringAngle = CalculateSteeringFromCameraAngle(currentInput.rawCameraAngle, currentInput.moveInput);
-
-            // Calculate torque based on input
-            float targetTorque = Mathf.Clamp(currentInput.moveInput, -1f, 1f) * maxTorque;
-
-            // Apply acceleration/deceleration
-            if (Mathf.Abs(currentInput.moveInput) > 0.01f)
-            {
-                // Apply acceleration factor
-                currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * maxTorque * accelerationFactor);
-            }
-            else
-            {
-                // No input - gradually decelerate
-                currentTorque = Mathf.MoveTowards(currentTorque, 0f, Time.deltaTime * maxTorque * decelerationFactor);
-            }
-
-            // Apply physics
-            ApplyMotorTorque(currentTorque);
-            ApplySteering(steeringAngle);
-
-            // Handle handbrake
-            if (currentInput.handbrake)
-            {
-                Handbrake();
-                if (IsServer) isDrifting.Value = true;
-            }
-            else if (!currentInput.handbrake && !isTractionLocked)
-            {
-                RecoverTraction();
-            }
-
-            // Update drift state (server is authoritative for this)
-            if (IsServer)
-            {
-                isDrifting.Value = localVelocityX > .25f ? true : false;
-            }
+            wheel.motorTorque = torqueValue;
         }
     }
 
-    private void GenerateInput()
+    private void ApplyDeterministicHandbrake(float deltaTime)
     {
-        // Calculate raw camera angle
+        CancelInvoke("RecoverTraction");
+        isTractionLocked = false;
+        
+        // Deterministic drift calculation
+        float newDriftingAxis = driftingAxis + deltaTime;
+        float secureStartingPoint = newDriftingAxis * originalExtremumSlips[0] * handbrakeDriftMultiplier;
+        
+        if (secureStartingPoint < originalExtremumSlips[0])
+        {
+            newDriftingAxis = originalExtremumSlips[0] / (originalExtremumSlips[0] * handbrakeDriftMultiplier);
+        }
+        
+        driftingAxis = Mathf.Min(newDriftingAxis, 1f);
+        
+        // Apply to all wheels deterministically
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
+            friction.extremumSlip = originalExtremumSlips[i] * handbrakeDriftMultiplier * driftingAxis;
+            wheelColliders[i].sidewaysFriction = friction;
+        }
+    }
+
+    private void ApplyDeterministicTractionRecovery(float deltaTime)
+    {
+        // Determine exact recovery amount
+        float newDriftingAxis = driftingAxis - (deltaTime / 1.5f);
+        driftingAxis = Mathf.Max(newDriftingAxis, 0f);
+        
+        if (driftingAxis > 0f)
+        {
+            // Apply recovery to all wheels
+            for (int i = 0; i < wheelColliders.Length; i++)
+            {
+                WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
+                friction.extremumSlip = Mathf.Max(
+                    originalExtremumSlips[i],
+                    originalExtremumSlips[i] * handbrakeDriftMultiplier * driftingAxis
+                );
+                wheelColliders[i].sidewaysFriction = friction;
+            }
+            
+            // Continue recovery next frame
+            Invoke("RecoverTraction", deltaTime);
+        }
+        else
+        {
+            // Reset friction when fully recovered
+            for (int i = 0; i < wheelColliders.Length; i++)
+            {
+                WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
+                friction.extremumSlip = originalExtremumSlips[i];
+                wheelColliders[i].sidewaysFriction = friction;
+            }
+            
+            driftingAxis = 0f;
+            isTractionLocked = true;
+        }
+    }
+
+    #endregion
+
+    #region Input Handling
+
+    private void CollectAndSendInput()
+    {
+        // Handle horn input
+        CheckHornInput();
+        
+        // Calculate camera angle
+        cameraAngle = CalculateCameraAngle();
+        
+        // Collect input
+        var input = new InputState
+        {
+            sequenceNumber = nextInputSequence++,
+            timestamp = Time.timeAsDouble,
+            physicsFrame = currentPhysicsFrame,
+            moveInput = GetMovementInput(),
+            steeringInput = cameraAngle,
+            handbrakeInput = Input.GetKey(KeyCode.Space),
+            deltaTime = FIXED_PHYSICS_TIMESTEP
+        };
+        
+        // Store locally for prediction
+        pendingInputs.Enqueue(input);
+        
+        // Keep buffer size reasonable
+        while (pendingInputs.Count > inputBufferSize)
+        {
+            pendingInputs.Dequeue();
+        }
+        
+        // Send to server for processing
+        SendInputToServerRpc(input);
+        
+        // Process controller camera controls
+        UpdateCameraControls();
+    }
+
+    private void CheckHornInput()
+    {
+        if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0)) && 
+            !transform.root.gameObject.GetComponent<Player>().isSpectating)
+        {
+            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
+        }
+    }
+
+    private float CalculateCameraAngle()
+    {
         Vector3 cameraVector = transform.position - freeLookCamera.transform.position;
         cameraVector.y = 0;
         Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
-        float rawCameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
-
-        // Store for debugging
-        cameraAngle = rawCameraAngle;
-
-        // Get input values
-        float moveInput = GetMoveInput();
-        float brakeInput = 0f; // Not using this currently
-        bool handbrakeInput = GetHandbrakeInput();
-
-        // Increment sequence
-        localInputSequence++;
-
-        // Create input struct
-        ClientInput input = new ClientInput
-        {
-            clientId = OwnerClientId,
-            moveInput = moveInput,
-            brakeInput = brakeInput,
-            handbrake = handbrakeInput,
-            rawCameraAngle = rawCameraAngle,
-            sequence = localInputSequence,
-            timestamp = Time.time
-        };
-
-        // Process controller camera controls
-        ProcessCameraControls();
-
-        // Send to server
-        SendInputServerRpc(input);
+        return Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
     }
 
-    private void ProcessCameraControls()
+    private float GetMovementInput()
     {
-        // Controller camera control with right stick
+        float move = 0;
+
+        // Keyboard input
+        if (Input.GetKey(KeyCode.W)) move = 1f;
+        if (Input.GetKey(KeyCode.S)) move = -1f;
+
+        // Controller input
+        if (Input.GetJoystickNames().Length > 0)
+        {
+            float rightTrigger = Input.GetAxis("XRI_Right_Trigger");
+            float leftTrigger = Input.GetAxis("XRI_Left_Trigger");
+
+            if (rightTrigger != 0) move = -rightTrigger;
+            if (leftTrigger != 0) move = leftTrigger;
+        }
+
+        return move;
+    }
+
+    private void UpdateCameraControls()
+    {
+        // Process controller camera control with right stick
         if (Input.GetJoystickNames().Length > 0)
         {
             float rightStickX = Input.GetAxis("XRI_Right_Primary2DAxis_Horizontal");
@@ -367,193 +542,178 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    private float GetMoveInput()
+    #endregion
+
+    #region Reconciliation
+
+    private void CheckReconciliation()
     {
-        float move = 0;
-
-        // Keyboard input
-        if (Input.GetKey(KeyCode.W))
+        // Only perform reconciliation if we have server state
+        if (lastProcessedInputSequence.Value <= 0) return;
+        
+        // Skip if no pending inputs
+        if (pendingInputs.Count == 0) return;
+        
+        // Calculate error between local and server state
+        float positionError = Vector3.Distance(rb.position, authorityState.Value.position);
+        float rotationError = Quaternion.Angle(rb.rotation, authorityState.Value.rotation);
+        
+        // Determine if reconciliation is needed
+        if (positionError > positionErrorThreshold || rotationError > rotationErrorThreshold)
         {
-            move = 1f;
+            PerformReconciliation();
         }
-        if (Input.GetKey(KeyCode.S))
-        {
-            move = -1f;
-        }
-
-        // Controller input
-        if (Input.GetJoystickNames().Length > 0)
-        {
-            float rightTrigger = Input.GetAxis("XRI_Right_Trigger");
-            float leftTrigger = Input.GetAxis("XRI_Left_Trigger");
-
-            if (rightTrigger != 0)
-            {
-                move = -rightTrigger;
-            }
-            if (leftTrigger != 0)
-            {
-                move = leftTrigger;
-            }
-        }
-
-        return move;
     }
 
-    private bool GetHandbrakeInput()
+    private void PerformReconciliation()
     {
-        return Input.GetKey(KeyCode.Space);
+        // Log for debugging
+        if (debugMode)
+        {
+            Debug.Log($"Reconciling vehicle. Position error: {Vector3.Distance(rb.position, authorityState.Value.position):F2}, " +
+                     $"Rotation error: {Quaternion.Angle(rb.rotation, authorityState.Value.rotation):F2}");
+        }
+        
+        // Remove already processed inputs
+        while (pendingInputs.Count > 0 && 
+              pendingInputs.Peek().sequenceNumber <= lastProcessedInputSequence.Value)
+        {
+            pendingInputs.Dequeue();
+        }
+        
+        // Reset to server state
+        rb.position = authorityState.Value.position;
+        rb.rotation = authorityState.Value.rotation;
+        rb.linearVelocity = authorityState.Value.velocity;
+        rb.angularVelocity = authorityState.Value.angularVelocity;
+        
+        // Reapply all pending inputs
+        foreach (var input in pendingInputs)
+        {
+            ApplyDeterministicPhysics(input);
+        }
     }
 
-    private void SendAuthorityUpdate()
+    private void SmoothVisualForRemoteVehicles()
     {
-        authorityPosition.Value = rb.position;
-        authorityRotation.Value = rb.rotation;
-        authorityVelocity.Value = rb.linearVelocity;
-        authorityAngularVelocity.Value = rb.angularVelocity;
-        authoritySpeed.Value = rb.linearVelocity.magnitude;
+        // Only for non-owner, non-server vehicles
+        if (IsOwner || IsServer || !needsSmoothing) return;
+        
+        // Apply smoothing to visual representation
+        transform.position = Vector3.Lerp(transform.position, visualPositionTarget, 
+                                         Time.deltaTime * reconciliationLerpSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, visualRotationTarget, 
+                                             Time.deltaTime * reconciliationLerpSpeed);
+        
+        // Check if we're close enough to stop smoothing
+        if (Vector3.Distance(transform.position, visualPositionTarget) < 0.01f &&
+            Quaternion.Angle(transform.rotation, visualRotationTarget) < 0.1f)
+        {
+            needsSmoothing = false;
+        }
+    }
 
-        // Broadcast to all clients
-        SendAuthorityCorrectionClientRpc();
+    private void ApplyRemoteState(StateSnapshot state)
+    {
+        // For non-owner vehicles, set targets for smooth interpolation
+        visualPositionTarget = state.position;
+        visualRotationTarget = state.rotation;
+        needsSmoothing = true;
+        
+        // Update rigidbody state directly
+        rb.position = state.position;
+        rb.rotation = state.rotation;
+        rb.linearVelocity = state.velocity;
+        rb.angularVelocity = state.angularVelocity;
+    }
+
+    #endregion
+
+    #region Visual Effects
+
+    private void AnimateWheels()
+    {
+        // Update wheel meshes to match collider positions
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 position;
+            Quaternion rotation;
+            wheelColliders[i].GetWorldPose(out position, out rotation);
+            
+            wheelMeshes[i].position = position;
+            wheelMeshes[i].rotation = rotation;
+        }
+    }
+
+    private void UpdateDriftEffects()
+    {
+        bool rearLeftGrounded = wheelColliders[2].isGrounded;
+        bool rearRightGrounded = wheelColliders[3].isGrounded;
+        
+        vfxController.UpdateDriftEffects(isDrifting.Value, rearLeftGrounded, rearRightGrounded, canMove);
     }
 
     [ClientRpc]
-    private void SendAuthorityCorrectionClientRpc()
+    public void ExplodeCarClientRpc()
     {
-        // Skip on server
-        if (IsServer) return;
-
-        float positionDelta = Vector3.Distance(rb.position, authorityPosition.Value);
-        float rotationDelta = Quaternion.Angle(rb.rotation, authorityRotation.Value);
-
-        // Emergency correction for extreme desync
-        if (transform.position.y < heightEmergencyThreshold || positionDelta > emergencyThreshold)
-        {
-            Debug.Log($"Emergency correction applied. Delta: {positionDelta:F2}m");
-            ApplyHardCorrection();
-            return;
-        }
-
-        // Owner gets more leeway than observers
-        float posThreshold = IsOwner ? positionCorrectionThreshold : positionCorrectionThreshold * 0.7f;
-        float rotThreshold = IsOwner ? rotationCorrectionThreshold : rotationCorrectionThreshold * 0.7f;
-
-        // Gradually increase correction intensity based on how far off we are
-        if (positionDelta > posThreshold || rotationDelta > rotThreshold)
-        {
-            // Calculate correction intensity (0-1) based on how far beyond threshold
-            float posIntensity = Mathf.Clamp01((positionDelta - posThreshold) / (posThreshold * 2));
-            float rotIntensity = Mathf.Clamp01((rotationDelta - rotThreshold) / (rotThreshold * 2));
-
-            // Use the higher intensity
-            correctionIntensity = Mathf.Max(posIntensity, rotIntensity, correctionIntensity);
-
-            // Only start a new correction if we don't have one already or if we're way off
-            if (!receivedCorrection || positionDelta > posThreshold * 2)
-            {
-                StartSmoothedCorrection();
-            }
-        }
-        else
-        {
-            // We're close enough, gradually reduce correction intensity
-            correctionIntensity = Mathf.Max(0, correctionIntensity - (Time.deltaTime * 0.5f));
-        }
+        canMove = false;
+        vfxController.CreateExplosion(canMove);
+        
+        StartCoroutine(ResetAfterExplosion());
     }
 
-    private void StartSmoothedCorrection()
+    private IEnumerator ResetAfterExplosion()
     {
-        // Store current state as starting point
-        correctionStartPosition = rb.position;
-        correctionStartRotation = rb.rotation;
-        correctionStartVelocity = rb.linearVelocity;
-        correctionStartAngularVelocity = rb.angularVelocity;
-
-        // Store target state
-        correctionPositionTarget = authorityPosition.Value;
-        correctionRotationTarget = authorityRotation.Value;
-        correctionVelocityTarget = authorityVelocity.Value;
-        correctionAngularVelocityTarget = authorityAngularVelocity.Value;
-
-        // Start correction
-        correctionStartTime = Time.time;
-        receivedCorrection = true;
+        yield return new WaitForSeconds(3f);
+        canMove = true;
     }
 
-    // Replace emergency correction with this more aggressive version
-    private void ApplyHardCorrection()
+    #endregion
+
+    #region Network RPCs
+
+    [ServerRpc]
+    private void SendInputToServerRpc(InputState input, ServerRpcParams rpcParams = default)
     {
-        // Teleport to authority position for severe cases
-        rb.position = authorityPosition.Value;
-        rb.rotation = authorityRotation.Value;
-        rb.linearVelocity = authorityVelocity.Value;
-        rb.angularVelocity = authorityAngularVelocity.Value;
-
-        // Reset any physics state that might be causing issues
-        rb.Sleep();
-        rb.WakeUp();
-
-        receivedCorrection = false;
-
-        // Visual feedback for debugging
-        if (debugMode)
-        {
-            Debug.DrawLine(transform.position, transform.position + Vector3.up * 5f, Color.red, 1.0f);
-        }
+        // Validate sender
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        if (clientId != OwnerClientId) return;
+        
+        // Process sequence number
+        if (input.sequenceNumber <= lastProcessedInputSequence.Value) return;
+        
+        // Process this input immediately on server
+        ApplyDeterministicPhysics(input);
+        
+        // Update last processed input
+        lastProcessedInputSequence.Value = input.sequenceNumber;
+        
+        // Update authority state for reconciliation
+        SendAuthoritySnapshot();
     }
-    private void ApplyAuthorityCorrection()
+
+    private void SendAuthoritySnapshot()
     {
-        if (!receivedCorrection) return;
-
-        // Calculate interpolation factor (0-1)
-        float timeSinceCorrection = Time.time - correctionStartTime;
-        float t = Mathf.Clamp01(timeSinceCorrection / correctionDuration);
-
-        // Use smoothstep for more natural easing
-        float smoothT = t * t * (3f - 2f * t);
-
-        // Apply position correction with intensity-based lerping
-        Vector3 targetPos = Vector3.Lerp(correctionStartPosition, correctionPositionTarget, smoothT);
-        rb.position = Vector3.Lerp(rb.position, targetPos, correctionIntensity * correctionLerpSpeed * Time.deltaTime);
-
-        // Apply rotation correction with intensity-based slerping
-        Quaternion targetRot = Quaternion.Slerp(correctionStartRotation, correctionRotationTarget, smoothT);
-        rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, correctionIntensity * correctionLerpSpeed * Time.deltaTime);
-
-        // Only apply velocity correction if explicitly enabled and for non-owners
-        if (applyVelocityCorrection && !IsOwner)
+        // Update authority state for clients
+        authorityState.Value = new StateSnapshot
         {
-            // Only override velocity for non-owner vehicles or emergency cases
-            if (correctionIntensity > 0.8f)
-            {
-                // Only for severe corrections, directly set velocity
-                rb.linearVelocity = authorityVelocity.Value;
-                rb.angularVelocity = authorityAngularVelocity.Value;
-            }
-        }
-
-        // If interpolation is complete, end correction
-        if (t >= 1.0f)
-        {
-            receivedCorrection = false;
-        }
+            lastProcessedInput = lastProcessedInputSequence.Value,
+            physicsFrame = currentPhysicsFrame,
+            position = rb.position,
+            rotation = rb.rotation,
+            velocity = rb.linearVelocity,
+            angularVelocity = rb.angularVelocity
+        };
     }
 
     [ServerRpc]
-    private void RequestInitialSyncServerRpc(ServerRpcParams serverRpcParams = default)
+    private void RequestInitialSyncServerRpc(ServerRpcParams rpcParams = default)
     {
-        // Get the client ID that sent the request
-        ulong clientId = serverRpcParams.Receive.SenderClientId;
-
-        // Send immediate state to the requesting client
+        ulong clientId = rpcParams.Receive.SenderClientId;
+        
+        // Send initial state to requesting client
         SendInitialStateClientRpc(
-            transform.position,
-            transform.rotation,
-            rb.linearVelocity,
-            rb.angularVelocity,
-            rb.linearVelocity.magnitude,
-            latestInput.Value,
-            inputSequence.Value,
+            authorityState.Value,
             new ClientRpcParams
             {
                 Send = new ClientRpcSendParams
@@ -565,536 +725,70 @@ public class HogController : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void SendInitialStateClientRpc(Vector3 position, Quaternion rotation, Vector3 velocity,
-                                         Vector3 angularVelocity, float speed, ClientInput input, int sequence,
-                                         ClientRpcParams clientRpcParams = default)
+    private void SendInitialStateClientRpc(StateSnapshot state, ClientRpcParams clientRpcParams = default)
     {
-        // Skip if we're the server or already synced
-        if (IsServer || hasReceivedInitialSync)
-            return;
+        if (IsServer || hasReceivedInitialSync) return;
 
-        // Set initial state
-        rb.position = position;
-        rb.rotation = rotation;
-
-        // Only apply velocity to non-owned vehicles
+        // Set position and rotation
+        transform.position = state.position;
+        transform.rotation = state.rotation;
+        
+        // Set physics state
+        rb.position = state.position;
+        rb.rotation = state.rotation;
+        
+        // Apply velocity only for non-owners
         if (!IsOwner)
         {
-            rb.linearVelocity = velocity;
-            rb.angularVelocity = angularVelocity;
+            rb.linearVelocity = state.velocity;
+            rb.angularVelocity = state.angularVelocity;
+            
+            // Set visual targets
+            visualPositionTarget = state.position;
+            visualRotationTarget = state.rotation;
         }
-
-        // Mark as having received initial sync
+        
+        // Mark as initialized
         hasReceivedInitialSync = true;
-
-        Debug.Log($"Received initial sync for vehicle ID {OwnerClientId}");
-    }
-
-    // When a client connects after players are already in game
-    public void OnPlayerJoinedLate(ulong newClientId)
-    {
-        // Only the server should handle this
-        if (!IsServer)
-            return;
-
-        // Send current state to the new client
-        SendInitialStateClientRpc(
-            transform.position,
-            transform.rotation,
-            rb.linearVelocity,
-            rb.angularVelocity,
-            rb.linearVelocity.magnitude,
-            latestInput.Value,
-            inputSequence.Value,
-            new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new ulong[] { newClientId }
-                }
-            }
-        );
-    }
-
-    [ServerRpc]
-    private void SendInputServerRpc(ClientInput input)
-    {
-        // Only accept inputs from the vehicle owner
-        if (input.clientId != OwnerClientId) return;
-
-        // Server validates and authorizes input
-        if (input.sequence > inputSequence.Value)
-        {
-            // Accept new input - update the network variable for all clients
-            latestInput.Value = input;
-            inputSequence.Value = input.sequence;
-
-            // Server processes physics immediately
-            ProcessPhysics();
-        }
-    }
-
-    // Calculate steering angle from camera angle
-    private float CalculateSteeringFromCameraAngle(float cameraAngle, float moveInput)
-    {
-        // Check if car is actually moving in reverse (based on velocity, not just input)
-        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
-        bool isMovingInReverse = forwardVelocity < -0.5f;
-
-        // Determine if we should apply reverse steering logic
-        bool shouldUseReverseControls = isMovingInReverse && moveInput < 0;
-
-        // For reverse, we invert the steering direction
-        if (shouldUseReverseControls)
-        {
-            cameraAngle = -cameraAngle;
-
-            // Add hysteresis - if angle is around 90 degrees, maintain the current steering angle
-            // This prevents rapid changes when looking from the side
-            if (Mathf.Abs(cameraAngle) > 70f && Mathf.Abs(cameraAngle) < 110f)
-            {
-                // Get the current steering angle and maintain it with some smoothing
-                float currentSteeringAverage = (frontLeftWheelCollider.steerAngle + frontRightWheelCollider.steerAngle) / 2f;
-
-                // Only make small adjustments when in this "stability zone"
-                cameraAngle = Mathf.Lerp(cameraAngle, currentSteeringAverage, 0.8f);
-            }
-        }
-
-        // Check if camera is behind the car based on maxSteeringAngle
-        // Camera is behind if it's in the region: (180-maxSteeringAngle) to (-180+maxSteeringAngle)
-        bool isCameraBehind = Mathf.Abs(cameraAngle) > (180f - maxSteeringAngle);
-
-        float finalSteeringAngle;
-        if (isCameraBehind)
-        {
-            // When camera is in the "behind" region, calculate how far into that region
-            float behindFactor;
-
-            if (cameraAngle > 0)
-            {
-                // Positive angle (right side behind region)
-                behindFactor = (180f - cameraAngle) / maxSteeringAngle;
-            }
-            else
-            {
-                // Negative angle (left side behind region)
-                behindFactor = (180f + cameraAngle) / maxSteeringAngle;
-            }
-
-            behindFactor = Mathf.Clamp01(behindFactor);
-
-            // Calculate steering angle that decreases as we go deeper into behind region
-            if (cameraAngle > 0)
-            {
-                finalSteeringAngle = maxSteeringAngle * behindFactor;
-            }
-            else
-            {
-                finalSteeringAngle = -maxSteeringAngle * behindFactor;
-            }
-        }
-        else
-        {
-            // Normal steering - within normal range
-            finalSteeringAngle = Mathf.Clamp(cameraAngle, -maxSteeringAngle, maxSteeringAngle);
-        }
-
-        return finalSteeringAngle;
-    }
-
-    private void ApplyMotorTorque(float torqueValue)
-    {
-        if (!canMove)
-        {
-            frontLeftWheelCollider.motorTorque = 0;
-            frontRightWheelCollider.motorTorque = 0;
-            rearLeftWheelCollider.motorTorque = 0;
-            rearRightWheelCollider.motorTorque = 0;
-            return;
-        }
-
-        // Apply the calculated torque to the wheels
-        frontLeftWheelCollider.motorTorque = torqueValue;
-        frontRightWheelCollider.motorTorque = torqueValue;
-        rearLeftWheelCollider.motorTorque = torqueValue;
-        rearRightWheelCollider.motorTorque = torqueValue;
-    }
-
-    private void ApplySteering(float steeringAngle)
-    {
-        // Use only 35% of steering angle for rear wheels (in opposite direction)
-        float rearSteeringAngle = steeringAngle * -0.35f;
-
-        // Apply smoothed steering to wheel colliders
-        frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, steeringAngle, steeringSpeed);
-        frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, steeringAngle, steeringSpeed);
-        rearLeftWheelCollider.steerAngle = Mathf.Lerp(rearLeftWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
-        rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
-    }
-
-    private void AnimateWheels()
-    {
-        // Check actual car movement direction
-        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
-        bool isMovingInReverse = forwardVelocity < -0.5f;
-
-        // Get current input direction
-        bool isPressingReverse = false;
-        if (IsOwner)
-        {
-            isPressingReverse = Input.GetKey(KeyCode.S) || (Input.GetJoystickNames().Length > 0 && Input.GetAxis("XRI_Right_Trigger") != 0);
-        }
-
-        // Only use reverse controls when both moving in reverse and pressing reverse
-        bool shouldUseReverseControls = isMovingInReverse && isPressingReverse;
-
-        // For reverse, invert the steering direction
-        float adjustedCameraAngle = shouldUseReverseControls ? -cameraAngle : cameraAngle;
-
-        // Check if camera is behind - same logic as in ApplySteering
-        bool isCameraBehind = Mathf.Abs(adjustedCameraAngle) > (180f - maxSteeringAngle);
-
-        float frontSteeringAngle;
-        if (isCameraBehind)
-        {
-            // Calculate how far into the behind region
-            float behindFactor;
-
-            if (adjustedCameraAngle > 0)
-            {
-                behindFactor = (180f - adjustedCameraAngle) / maxSteeringAngle;
-            }
-            else
-            {
-                behindFactor = (180f + adjustedCameraAngle) / maxSteeringAngle;
-            }
-
-            behindFactor = Mathf.Clamp01(behindFactor);
-
-            if (adjustedCameraAngle > 0)
-            {
-                frontSteeringAngle = maxSteeringAngle * behindFactor;
-            }
-            else
-            {
-                frontSteeringAngle = -maxSteeringAngle * behindFactor;
-            }
-        }
-        else
-        {
-            frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, -maxSteeringAngle, maxSteeringAngle);
-        }
-
-        // Use 50% of steering angle for rear wheels (in opposite direction)
-        float rearSteeringAngle = frontSteeringAngle * -0.5f;
-
-        // Store current rotation to preserve roll angles
-        Quaternion flCurrentRotation = frontLeftWheelTransform.localRotation;
-        Quaternion frCurrentRotation = frontRightWheelTransform.localRotation;
-        Quaternion rlCurrentRotation = rearLeftWheelTransform.localRotation;
-        Quaternion rrCurrentRotation = rearRightWheelTransform.localRotation;
-
-        // Apply steering rotation to wheel transforms (preserving any current X rotation)
-        frontLeftWheelTransform.localRotation = Quaternion.Euler(flCurrentRotation.eulerAngles.x, frontSteeringAngle, 0);
-        frontRightWheelTransform.localRotation = Quaternion.Euler(frCurrentRotation.eulerAngles.x, frontSteeringAngle, 0);
-        rearLeftWheelTransform.localRotation = Quaternion.Euler(rlCurrentRotation.eulerAngles.x, rearSteeringAngle, 0);
-        rearRightWheelTransform.localRotation = Quaternion.Euler(rrCurrentRotation.eulerAngles.x, rearSteeringAngle, 0);
-
-        // Calculate wheel rotation using the precise physics-based approach
-
-        // Front Left Wheel
-        float flCircumference = 2f * Mathf.PI * frontLeftWheelCollider.radius;
-        float flDistanceTraveled = frontLeftWheelCollider.rpm * Time.deltaTime * flCircumference / 60f;
-        float flRotationDegrees = (flDistanceTraveled / flCircumference) * 360f;
-
-        // Front Right Wheel
-        float frCircumference = 2f * Mathf.PI * frontRightWheelCollider.radius;
-        float frDistanceTraveled = frontRightWheelCollider.rpm * Time.deltaTime * frCircumference / 60f;
-        float frRotationDegrees = (frDistanceTraveled / frCircumference) * 360f;
-
-        // Rear Left Wheel
-        float rlCircumference = 2f * Mathf.PI * rearLeftWheelCollider.radius;
-        float rlDistanceTraveled = rearLeftWheelCollider.rpm * Time.deltaTime * rlCircumference / 60f;
-        float rlRotationDegrees = (rlDistanceTraveled / rlCircumference) * 360f;
-
-        // Rear Right Wheel
-        float rrCircumference = 2f * Mathf.PI * rearRightWheelCollider.radius;
-        float rrDistanceTraveled = rearRightWheelCollider.rpm * Time.deltaTime * rrCircumference / 60f;
-        float rrRotationDegrees = (rrDistanceTraveled / rrCircumference) * 360f;
-
-        // Apply rotation to wheel models around their X axis (roll)
-        frontLeftWheelTransform.Rotate(flRotationDegrees, 0f, 0f, Space.Self);
-        frontRightWheelTransform.Rotate(frRotationDegrees, 0f, 0f, Space.Self);
-        rearLeftWheelTransform.Rotate(rlRotationDegrees, 0f, 0f, Space.Self);
-        rearRightWheelTransform.Rotate(rrRotationDegrees, 0f, 0f, Space.Self);
-    }
-
-    public void Handbrake()
-    {
-        CancelInvoke("RecoverTraction");
-        isTractionLocked = false;
-        // We are going to start losing traction smoothly, there is were our 'driftingAxis' variable takes
-        // place. This variable will start from 0 and will reach a top value of 1, which means that the maximum
-        // drifting value has been reached. It will increase smoothly by using the variable Time.deltaTime.
-        driftingAxis = driftingAxis + Time.deltaTime;
-        float secureStartingPoint = driftingAxis * FLWextremumSlip * handbrakeDriftMultiplier;
-
-        if (secureStartingPoint < FLWextremumSlip)
-        {
-            driftingAxis = FLWextremumSlip / (FLWextremumSlip * handbrakeDriftMultiplier);
-        }
-        if (driftingAxis > 1f)
-        {
-            driftingAxis = 1f;
-        }
-        if (driftingAxis < 1f)
-        {
-            FLwheelFriction.extremumSlip = FLWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
-
-            FRwheelFriction.extremumSlip = FRWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
-
-            RLwheelFriction.extremumSlip = RLWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
-
-            RRwheelFriction.extremumSlip = RRWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
-        }
-    }
-
-    public void RecoverTraction()
-    {
-        driftingAxis = driftingAxis - (Time.deltaTime / 1.5f);
-        if (driftingAxis < 0f)
-        {
-            driftingAxis = 0f;
-        }
-
-        if (driftingAxis > 0f)
-        {
-            // Calculate new slip values
-            float newFLSlip = Mathf.Max(FLWextremumSlip, FLWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-            float newFRSlip = Mathf.Max(FRWextremumSlip, FRWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-            float newRLSlip = Mathf.Max(RLWextremumSlip, RLWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-            float newRRSlip = Mathf.Max(RRWextremumSlip, RRWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-
-            // Apply new slip values
-            FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
-            FLwheelFriction.extremumSlip = newFLSlip;
-            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
-
-            FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
-            FRwheelFriction.extremumSlip = newFRSlip;
-            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
-
-            RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
-            RLwheelFriction.extremumSlip = newRLSlip;
-            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
-
-            RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
-            RRwheelFriction.extremumSlip = newRRSlip;
-            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
-
-            // Continue recovery in the next frame
-            Invoke("RecoverTraction", Time.deltaTime);
-        }
-        else
-        {
-            // Reset to original values when recovery is complete
-            FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
-            FLwheelFriction.extremumSlip = FLWextremumSlip;
-            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
-
-            FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
-            FRwheelFriction.extremumSlip = FRWextremumSlip;
-            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
-
-            RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
-            RLwheelFriction.extremumSlip = RLWextremumSlip;
-            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
-
-            RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
-            RRwheelFriction.extremumSlip = RRWextremumSlip;
-            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
-
-            driftingAxis = 0f;
-            isTractionLocked = true; // Only set to true when fully recovered
-        }
-    }
-
-    private void InitializeWheelFriction()
-    {
-        FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
-        FLWextremumSlip = FLwheelFriction.extremumSlip;
-
-        FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
-        FRWextremumSlip = FRwheelFriction.extremumSlip;
-
-        RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
-        RLWextremumSlip = RLwheelFriction.extremumSlip;
-
-        RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
-        RRWextremumSlip = RRwheelFriction.extremumSlip;
-    }
-
-    private void EnableWheelColliderPhysics()
-    {
-        frontLeftWheelCollider.enabled = true;
-        frontRightWheelCollider.enabled = true;
-        rearLeftWheelCollider.enabled = true;
-        rearRightWheelCollider.enabled = true;
-    }
-
-    private void DisableWheelColliderPhysics()
-    {
-        frontLeftWheelCollider.enabled = false;
-        frontRightWheelCollider.enabled = false;
-        rearLeftWheelCollider.enabled = false;
-        rearRightWheelCollider.enabled = false;
-    }
-
-    // Add a method for handling collisions with special sync
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
-        {
-            StartCoroutine(CollisionForceDebounce());
-
-            // Force an immediate sync after collision
-            SendAuthorityUpdate();
-            BroadcastHardSyncClientRpc();
-        }
-
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
+        currentPhysicsFrame = state.physicsFrame;
     }
 
     [ClientRpc]
-    private void BroadcastHardSyncClientRpc()
+    public void BroadcastHardSyncClientRpc()
     {
-        if (!IsServer && !IsOwner) // Only for non-owner, non-server clients
+        if (!IsServer && !IsOwner)
         {
-            StartCoroutine(DelayedHardSync());
+            // For non-owner clients, apply state directly
+            ApplyRemoteState(authorityState.Value);
         }
     }
 
-    // Add a slight delay to ensure we have the latest state
-    private IEnumerator DelayedHardSync()
-    {
-        yield return new WaitForSeconds(0.05f);
-        ApplyHardCorrection();
-    }
+    #endregion
 
-    private IEnumerator CollisionForceDebounce()
+    #region Utility Methods
+
+    private IEnumerator CollisionDebounce()
     {
         collisionForceOnCooldown = true;
         yield return new WaitForSeconds(.5f);
         collisionForceOnCooldown = false;
     }
 
-    public void DriftCarFX()
+    private void EnableWheelColliders()
     {
-        // Check if wheels are grounded and drifting
-        bool rearLeftGrounded = rearLeftWheelCollider.isGrounded;
-        bool rearRightGrounded = rearRightWheelCollider.isGrounded;
-
-        if (isDrifting.Value)
+        foreach (var wheel in wheelColliders)
         {
-            // Only play particle effects and skid marks if the wheels are grounded
-            if (rearLeftGrounded)
-            {
-                if (!driftingSoundOn && canMove)
-                {
-                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
-                    driftingSoundOn = true;
-                }
-                RLWParticleSystem.Play();
-                RLWTireSkid.emitting = true;
-            }
-            else
-            {
-                if (driftingSoundOn)
-                {
-                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-                    driftingSoundOn = false;
-                }
-                RLWParticleSystem.Stop();
-                RLWTireSkid.emitting = false;
-            }
-
-            if (rearRightGrounded)
-            {
-                RRWParticleSystem.Play();
-                RRWTireSkid.emitting = true;
-            }
-            else
-            {
-                RRWParticleSystem.Stop();
-                RRWTireSkid.emitting = false;
-            }
-        }
-        else if (!isDrifting.Value)
-        {
-            // Not drifting, turn off all effects
-            RLWParticleSystem.Stop();
-            RRWParticleSystem.Stop();
-            RLWTireSkid.emitting = false;
-            RRWTireSkid.emitting = false;
-            if (driftingSoundOn)
-            {
-                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-                driftingSoundOn = false;
-            }
+            wheel.enabled = true;
         }
     }
 
-    [ClientRpc]
-    public void ExplodeCarClientRpc()
+    private void DisableWheelColliders()
     {
-        // Store reference to instantiated explosion
-        GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.CarExplosion); // Play Explosion Sound.
-        canMove = false;
-        if (driftingSoundOn) HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-
-        Debug.Log("Exploding car for player - " + ConnectionManager.instance.GetClientUsername(OwnerClientId));
-        StartCoroutine(ResetAfterExplosion(explosionInstance));
-    }
-
-    private IEnumerator ResetAfterExplosion(GameObject explosionInstance)
-    {
-        yield return new WaitForSeconds(3f);
-
-        // Reset movement and destroy explosion
-        canMove = true;
-        if (explosionInstance != null)
+        foreach (var wheel in wheelColliders)
         {
-            Destroy(explosionInstance);
+            wheel.enabled = false;
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        if (!Application.isPlaying || !debugMode) return;
-
-        if (!IsServer && authorityPosition != null)
-        {
-            // Draw line between local position and authority position
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(rb.position, authorityPosition.Value);
-
-            // Draw sphere at authority position
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(authorityPosition.Value, 0.5f);
-
-            // Display distance text
-#if UNITY_EDITOR
-            float distance = Vector3.Distance(rb.position, authorityPosition.Value);
-            UnityEditor.Handles.Label(Vector3.Lerp(rb.position, authorityPosition.Value, 0.5f),
-                                      $"Δ{distance:F2}m");
-#endif
-        }
-    }
-
+    #endregion
 }

@@ -1051,8 +1051,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2121655961194616059}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.27059808, y: -0.65328145, z: 0.27059805, w: 0.6532815}
-  m_LocalPosition: {x: 40, y: 268, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.078459114, w: 0.99691737}
+  m_LocalPosition: {x: -3.7336378, y: 7.9801493, z: -14.5522}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1089,11 +1089,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 90
+  near clip plane: 0.1
+  far clip plane: 5000
+  field of view: 40
   orthographic: 0
-  orthographic size: 5
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -7075,6 +7075,7 @@ GameObject:
   - component: {fileID: 4720890600952979840}
   - component: {fileID: 2725043071608973344}
   - component: {fileID: 7500573832422394504}
+  - component: {fileID: 5108959781139005313}
   m_Layer: 0
   m_Name: Hog
   m_TagString: Player
@@ -7146,37 +7147,33 @@ MonoBehaviour:
   maxTorque: 650
   brakeTorque: 300
   centerOfMass: {x: 0, y: 0.3, z: 0}
-  maxSteeringAngle: 55
-  steeringSpeed: 0.8
-  handbrakeDriftMultiplier: 8
-  cameraAngle: 0
-  frontLeftRpm: 0
-  velocity: 0
+  maxSteeringAngle: 45
+  steeringSpeed: 0.7
+  handbrakeDriftMultiplier: 6
   accelerationFactor: 2
   decelerationFactor: 2
-  positionCorrectionThreshold: 1
-  rotationCorrectionThreshold: 15
-  correctionLerpSpeed: 6
-  authoritySyncInterval: 0.02
+  positionCorrectionThreshold: 3.5
+  rotationCorrectionThreshold: 25
+  correctionLerpSpeed: 5
+  authoritySyncInterval: 0.03
   applyVelocityCorrection: 1
-  emergencyThreshold: 3
-  heightEmergencyThreshold: -10
-  debugMode: 0
+  emergencyThreshold: 8
+  debugMode: 1
+  extrapolationFactor: 0
+  maxExtrapolationTime: 0.15
   rb: {fileID: 2725043071608973344}
   freeLookCamera: {fileID: 1233816499970886941}
-  frontLeftWheelCollider: {fileID: 7947942277690021792}
-  frontRightWheelCollider: {fileID: 4296994293568657065}
-  rearLeftWheelCollider: {fileID: 7945259627787905534}
-  rearRightWheelCollider: {fileID: 6832065672850586991}
-  frontLeftWheelTransform: {fileID: 7734228441085981954}
-  frontRightWheelTransform: {fileID: 6018523294074852569}
-  rearLeftWheelTransform: {fileID: 6060384585544935324}
-  rearRightWheelTransform: {fileID: 3707604260707810283}
-  RLWParticleSystem: {fileID: 1626974902313389262}
-  RRWParticleSystem: {fileID: 726239328357988392}
-  RLWTireSkid: {fileID: 362347677443509517}
-  RRWTireSkid: {fileID: 2553562073284689455}
-  Explosion: {fileID: 801768762681791778, guid: 8ac8c65bc56d73f44886274bcf0ddfd6, type: 3}
+  wheelColliders:
+  - {fileID: 7947942277690021792}
+  - {fileID: 4296994293568657065}
+  - {fileID: 7945259627787905534}
+  - {fileID: 6832065672850586991}
+  wheelMeshes:
+  - {fileID: 7734228441085981954}
+  - {fileID: 6018523294074852569}
+  - {fileID: 6060384585544935324}
+  - {fileID: 3707604260707810283}
+  vfx: {fileID: 5108959781139005313}
   EngineOn:
     idInternal: 0
     valueGuidInternal: 
@@ -7189,6 +7186,23 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: 6f55246155700064bafd21a7a4a31cfc, type: 2}
+--- !u!114 &5108959781139005313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5388601285324323642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f695b5531a60c4448d27218d7352c1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rearLeftWheelParticleSystem: {fileID: 1626974902313389262}
+  rearRightWheelParticleSystem: {fileID: 726239328357988392}
+  rearLeftWheelTireSkid: {fileID: 362347677443509517}
+  rearRightWheelTireSkid: {fileID: 2553562073284689455}
+  explosionPrefab: {fileID: 801768762681791778, guid: 8ac8c65bc56d73f44886274bcf0ddfd6, type: 3}
 --- !u!1 &5629968131305222426
 GameObject:
   m_ObjectHideFlags: 3
