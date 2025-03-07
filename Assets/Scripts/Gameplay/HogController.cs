@@ -11,6 +11,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] public bool canMove = true;
     [SerializeField] private float maxTorque = 500f; // Maximum torque plied to wheels
     [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
+    [SerializeField, Range(0f, 1f)] private float rearSteeringAmount = .35f;
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
     [SerializeField, Range(0.1f, 1f)]
@@ -408,7 +409,7 @@ public class HogController : NetworkBehaviour
     private void ApplySteering(float steeringAngle, float moveInput)
     {
         // Use only 35% of steering angle for rear wheels (in opposite direction)
-        float rearSteeringAngle = steeringAngle * -0.35f;
+        float rearSteeringAngle = steeringAngle * rearSteeringAmount * -1;
 
         // Apply smoothed steering to wheel colliders
         frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, steeringAngle, steeringSpeed);
@@ -471,7 +472,7 @@ public class HogController : NetworkBehaviour
         }
 
         // Use 50% of steering angle for rear wheels (in opposite direction)
-        float rearSteeringAngle = frontSteeringAngle * -0.5f;
+        float rearSteeringAngle = frontSteeringAngle * -rearSteeringAmount;
 
         // Store current rotation to preserve roll angles
         Quaternion flCurrentRotation = frontLeftWheelTransform.localRotation;

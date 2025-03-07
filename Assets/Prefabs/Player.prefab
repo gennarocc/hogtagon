@@ -1246,6 +1246,7 @@ GameObject:
   - component: {fileID: 7242303978897612363}
   - component: {fileID: 3120187301465190269}
   - component: {fileID: 7405183568773331293}
+  - component: {fileID: 6251583506931057773}
   m_Layer: 0
   m_Name: Bumpers
   m_TagString: Player
@@ -1321,6 +1322,28 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &6251583506931057773
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2829832482333494994}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -1387407503233429609, guid: 7734de1fe5e0d5a4b89c4d8c26031607, type: 3}
 --- !u!1 &2869276873341789915
 GameObject:
   m_ObjectHideFlags: 0
@@ -7200,6 +7223,7 @@ MonoBehaviour:
   canMove: 1
   maxTorque: 650
   brakeTorque: 300
+  rearSteeringAmount: 0.35
   centerOfMass: {x: 0, y: 0.3, z: 0}
   maxSteeringAngle: 55
   steeringSpeed: 0.8
@@ -7230,14 +7254,6 @@ MonoBehaviour:
   RLWTireSkid: {fileID: 362347677443509517}
   RRWTireSkid: {fileID: 2553562073284689455}
   Explosion: {fileID: 801768762681791778, guid: 8ac8c65bc56d73f44886274bcf0ddfd6, type: 3}
-  EngineOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: ad9bafa82afe869438b5285241574cfc, type: 2}
-  EngineOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 26fba088fe0a84240abad565212f06cb, type: 2}
   rpm:
     idInternal: 0
     valueGuidInternal: 
