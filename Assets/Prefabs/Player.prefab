@@ -7135,7 +7135,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5388601285324323642}
   serializedVersion: 4
-  m_Mass: 600
+  m_Mass: 400
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -7224,21 +7224,21 @@ MonoBehaviour:
   maxTorque: 650
   brakeTorque: 300
   rearSteeringAmount: 0.35
-  centerOfMass: {x: 0, y: 0.3, z: 0}
+  centerOfMass: {x: 0, y: 0.35, z: 0}
   maxSteeringAngle: 55
   steeringSpeed: 0.8
   handbrakeDriftMultiplier: 8
   cameraAngle: 0
   frontLeftRpm: 0
   velocity: 0
-  steeringBufferSize: 5
+  steeringBufferSize: 6
   minDeadzone: 1
   maxDeadzone: 2
   maxSpeedForSteering: 14
   minSteeringResponse: 0.8
   maxSteeringResponse: 1
   inputWeightingMethod: 2
-  weightingFactor: 1
+  weightingFactor: 2
   rb: {fileID: 2725043071608973344}
   freeLookCamera: {fileID: 1233816499970886941}
   frontLeftWheelCollider: {fileID: 7947942277690021792}
