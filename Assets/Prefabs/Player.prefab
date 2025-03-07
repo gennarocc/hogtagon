@@ -1051,8 +1051,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2121655961194616059}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.078459114, w: 0.99691737}
-  m_LocalPosition: {x: -3.7336378, y: 7.9801493, z: -14.5522}
+  m_LocalRotation: {x: 0.27059808, y: -0.65328145, z: 0.27059805, w: 0.6532815}
+  m_LocalPosition: {x: 40, y: 263.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1089,11 +1089,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.1
-  far clip plane: 5000
-  field of view: 40
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 90
   orthographic: 0
-  orthographic size: 10
+  orthographic size: 5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1246,6 +1246,7 @@ GameObject:
   - component: {fileID: 7242303978897612363}
   - component: {fileID: 3120187301465190269}
   - component: {fileID: 7405183568773331293}
+  - component: {fileID: 6251583506931057773}
   m_Layer: 0
   m_Name: Bumpers
   m_TagString: Player
@@ -1321,6 +1322,28 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &6251583506931057773
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2829832482333494994}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -1387407503233429609, guid: 7734de1fe5e0d5a4b89c4d8c26031607, type: 3}
 --- !u!1 &2869276873341789915
 GameObject:
   m_ObjectHideFlags: 0
@@ -7112,7 +7135,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5388601285324323642}
   serializedVersion: 4
-  m_Mass: 600
+  m_Mass: 400
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -7198,46 +7221,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   canMove: 1
-  maxTorque: 650
-  brakeTorque: 300
-  centerOfMass: {x: 0, y: 0.3, z: 0}
+  maxTorque: 400
+  brakeTorque: 350
+  rearSteeringAmount: 0.35
+  centerOfMass: {x: 0, y: 0.2, z: 0}
   maxSteeringAngle: 55
   steeringSpeed: 0.8
   handbrakeDriftMultiplier: 8
   cameraAngle: 0
   frontLeftRpm: 0
   velocity: 0
-  steeringBufferSize: 5
+  steeringBufferSize: 6
   minDeadzone: 1
   maxDeadzone: 2
   maxSpeedForSteering: 14
   minSteeringResponse: 0.8
   maxSteeringResponse: 1
   inputWeightingMethod: 2
-  weightingFactor: 1
+  weightingFactor: 2.25
   rb: {fileID: 2725043071608973344}
   freeLookCamera: {fileID: 1233816499970886941}
-  frontLeftWheelCollider: {fileID: 7947942277690021792}
-  frontRightWheelCollider: {fileID: 4296994293568657065}
-  rearLeftWheelCollider: {fileID: 7945259627787905534}
-  rearRightWheelCollider: {fileID: 6832065672850586991}
-  frontLeftWheelTransform: {fileID: 7734228441085981954}
-  frontRightWheelTransform: {fileID: 6018523294074852569}
-  rearLeftWheelTransform: {fileID: 6060384585544935324}
-  rearRightWheelTransform: {fileID: 3707604260707810283}
-  RLWParticleSystem: {fileID: 1626974902313389262}
-  RRWParticleSystem: {fileID: 726239328357988392}
-  RLWTireSkid: {fileID: 362347677443509517}
-  RRWTireSkid: {fileID: 2553562073284689455}
+  wheelColliders:
+  - {fileID: 7947942277690021792}
+  - {fileID: 4296994293568657065}
+  - {fileID: 7945259627787905534}
+  - {fileID: 6832065672850586991}
+  wheelTransforms:
+  - {fileID: 7734228441085981954}
+  - {fileID: 6018523294074852569}
+  - {fileID: 6060384585544935324}
+  - {fileID: 3707604260707810283}
+  wheelParticleSystems:
+  - {fileID: 1626974902313389262}
+  - {fileID: 726239328357988392}
+  tireSkids:
+  - {fileID: 362347677443509517}
+  - {fileID: 2553562073284689455}
   Explosion: {fileID: 801768762681791778, guid: 8ac8c65bc56d73f44886274bcf0ddfd6, type: 3}
-  EngineOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: ad9bafa82afe869438b5285241574cfc, type: 2}
-  EngineOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 26fba088fe0a84240abad565212f06cb, type: 2}
   rpm:
     idInternal: 0
     valueGuidInternal: 

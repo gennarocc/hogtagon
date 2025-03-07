@@ -33,8 +33,8 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public Camera startCamera;
 
     [Header("Scoreboard")]
-    [SerializeField] private GameObject scoreboardUI; 
-    [SerializeField] private Scoreboard scoreboard; 
+    [SerializeField] private GameObject scoreboardUI;
+    [SerializeField] private Scoreboard scoreboard;
 
     [Header("Wwise")]
 
@@ -166,10 +166,13 @@ public class MenuManager : NetworkBehaviour
 
     void Pause()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        pauseMenuUI.SetActive(true);
-        gameIsPaused = true;
+        if (GameManager.instance.state != GameState.Ending)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            pauseMenuUI.SetActive(true);
+            gameIsPaused = true;
+        }
     }
 
     public void StartGame()
@@ -239,20 +242,13 @@ public class MenuManager : NetworkBehaviour
         tempUI.SetActive(false);
     }
 
-    // Force an update of the scoreboard data on the server
-    [ServerRpc(RequireOwnership = false)]
-    public void ForceScoreboardUpdateServerRpc()
-    {
-        // This method runs on the server to ensure all player data is up to date
-        ConnectionManager.instance.UpdateAllClientsClientRpc();
-    }
-
     [ClientRpc]
     public void ShowScoreboardClientRpc()
     {
+        scoreboard.UpdatePlayerList();
         // Enable the scoreboard panel
         scoreboardUI.SetActive(true);
-        
+
         // Update the scoreboard data
         scoreboard.UpdatePlayerList();
     }
@@ -284,7 +280,7 @@ public class MenuManager : NetworkBehaviour
             DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
         }
         MainMenu();
-        Cursor.visible = Cursor.visible;
+        Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         ConnectionManager.instance.isConnected = false;
     }
@@ -300,6 +296,37 @@ public class MenuManager : NetworkBehaviour
     {
         Debug.Log("Quitting Game");
         Application.Quit();
+    }
+
+    public void DisplayHostAloneMessage(string disconnectedPlayerName)
+    {
+        // Display a message in the existing UI
+        tempUI.SetActive(true);
+
+        // Use the winner text component to display the message
+        if (winnerText != null)
+        {
+            winnerText.text = $"{disconnectedPlayerName} disconnected.\nYou are the only player remaining.\nWaiting for more players to join...";
+        }
+
+        // Hide message after a few seconds (optional)
+        StartCoroutine(HideHostAloneMessage(8f)); // 8 seconds seems reasonable
+    }
+
+    private IEnumerator HideHostAloneMessage(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // Hide the message
+        if (tempUI != null && tempUI.activeSelf)
+        {
+            tempUI.SetActive(false);
+        }
+
+        if (winnerText != null)
+        {
+            winnerText.text = "";
+        }
     }
 
     public void DisplayConnectionError(string error)

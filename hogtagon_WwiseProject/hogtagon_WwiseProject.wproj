@@ -69,7 +69,7 @@
 			</PropertyList>
 			<MiscSettings>
 				<MiscSettingEntry Name="Cache"><![CDATA[.cache]]></MiscSettingEntry>
-				<MiscSettingEntry Name="Originals"><![CDATA[Y:\Downloads\hogtagon\Originals\]]></MiscSettingEntry>
+				<MiscSettingEntry Name="Originals"><![CDATA[C:\Users\Owner\repos\_hogtagon-utilities\Originals\]]></MiscSettingEntry>
 			</MiscSettings>
 			<SharedValues>
 				<SharedPropertyList ClassName="AudioFileSource" PluginType="0" CompanyID="1" PluginID="0">

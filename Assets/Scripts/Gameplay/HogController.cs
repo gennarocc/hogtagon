@@ -7,53 +7,54 @@ using System.Collections.Generic;
 
 public class HogController : NetworkBehaviour
 {
+    #region Configuration Parameters
+
     [Header("Hog Params")]
     [SerializeField] public bool canMove = true;
-    [SerializeField] private float maxTorque = 500f; // Maximum torque plied to wheels
-    [SerializeField] private float brakeTorque = 300f; // Brake torque applied to wheels
+    [SerializeField] private float maxTorque = 500f;
+    [SerializeField] private float brakeTorque = 300f;
+    [SerializeField, Range(0f, 1f)] private float rearSteeringAmount = .35f;
     [SerializeField] private Vector3 centerOfMass;
-    [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f; // Default maximum steering angle
-    [SerializeField, Range(0.1f, 1f)]
-    private float steeringSpeed = .7f;
-    [SerializeField] public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
+    [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
+    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
+    [SerializeField] public int handbrakeDriftMultiplier = 5;
     [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
 
     [Header("Input Smoothing Settings")]
-    [SerializeField, Range(1, 10)] public int steeringBufferSize = 5; // Number of frames to average for inputs
-    [SerializeField, Range(0f, 20f)] public float minDeadzone = 3f; // Minimum deadzone at low speeds
-    [SerializeField, Range(0f, 30f)] public float maxDeadzone = 10f; // Maximum deadzone at high speeds
-    [SerializeField, Range(10f, 50f)] public float maxSpeedForSteering = 20f; // Speed at which steering responsiveness is at minimum
-    [SerializeField, Range(0.1f, 1f)] public float minSteeringResponse = 0.6f; // Minimum steering response at high speeds (lower = less responsive)
-    [SerializeField, Range(0.5f, 1f)] public float maxSteeringResponse = 1.0f; // Maximum steering response at low speeds
+    [SerializeField, Range(1, 10)] public int steeringBufferSize = 5;
+    [SerializeField, Range(0f, 20f)] public float minDeadzone = 3f;
+    [SerializeField, Range(0f, 30f)] public float maxDeadzone = 10f;
+    [SerializeField, Range(10f, 50f)] public float maxSpeedForSteering = 20f;
+    [SerializeField, Range(0.1f, 1f)] public float minSteeringResponse = 0.6f;
+    [SerializeField, Range(0.5f, 1f)] public float maxSteeringResponse = 1.0f;
     [SerializeField] public enum WeightingMethod { Exponential, Logarithmic, Linear }
     [SerializeField] public WeightingMethod inputWeightingMethod = WeightingMethod.Linear;
-    [SerializeField, Range(0.1f, 3f)] public float weightingFactor = 1.0f; // Controls drop-off rate (higher = steeper drop-off)
+    [SerializeField, Range(0.1f, 3f)] public float weightingFactor = 1.0f;
 
     [Header("References")]
-    [SerializeField] private Rigidbody rb; // Reference to the car's Rigidbody
-    [SerializeField] private CinemachineFreeLook freeLookCamera; // Reference to the CinemachineFreeLook camera
-    [SerializeField] private WheelCollider frontLeftWheelCollider;
-    [SerializeField] private WheelCollider frontRightWheelCollider;
-    [SerializeField] private WheelCollider rearLeftWheelCollider;
-    [SerializeField] private WheelCollider rearRightWheelCollider;
-    [SerializeField] private Transform frontLeftWheelTransform;
-    [SerializeField] private Transform frontRightWheelTransform;
-    [SerializeField] private Transform rearLeftWheelTransform;
-    [SerializeField] private Transform rearRightWheelTransform;
+    [SerializeField] private Rigidbody rb;
+    [SerializeField] private CinemachineFreeLook freeLookCamera;
+    [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
+    [SerializeField] private Transform[] wheelTransforms = new Transform[4]; // FL, FR, RL, RR
 
     [Header("Effects")]
-    [SerializeField] public ParticleSystem RLWParticleSystem;
-    [SerializeField] public ParticleSystem RRWParticleSystem;
-    [SerializeField] public TrailRenderer RLWTireSkid;
-    [SerializeField] public TrailRenderer RRWTireSkid;
+    [SerializeField] public ParticleSystem[] wheelParticleSystems = new ParticleSystem[2]; // RL, RR
+    [SerializeField] public TrailRenderer[] tireSkids = new TrailRenderer[2]; // RL, RR
     [SerializeField] public GameObject Explosion;
 
     [Header("Wwise")]
-    [SerializeField] private AK.Wwise.Event EngineOn;
-    [SerializeField] private AK.Wwise.Event EngineOff;
     [SerializeField] private AK.Wwise.RTPC rpm;
+
+    #endregion
+
+    #region Private Fields
+
+    // Constants
+    private const float CAMERA_BEHIND_THRESHOLD = 180f;
+    private const float MIN_VELOCITY_FOR_REVERSE = -0.5f;
+    private const float DRIFT_RECOVERY_RATE = 1.5f;
 
     // Input Smoothing
     private Queue<float> _recentSteeringInputs;
@@ -70,15 +71,19 @@ public class HogController : NetworkBehaviour
     private bool isTractionLocked = true;
     private bool driftingSoundOn = false;
 
-    // Wheel references
-    private WheelFrictionCurve FLwheelFriction;
-    private float FLWextremumSlip;
-    private WheelFrictionCurve FRwheelFriction;
-    private float FRWextremumSlip;
-    private WheelFrictionCurve RLwheelFriction;
-    private float RLWextremumSlip;
-    private WheelFrictionCurve RRwheelFriction;
-    private float RRWextremumSlip;
+    // Cached physics values
+    private Vector3 cachedVelocity;
+    private float cachedSpeed;
+    private float[] cachedWheelRpms = new float[4];
+    private float cachedForwardVelocity;
+
+    // Wheel friction data
+    private WheelFrictionCurve[] wheelFrictions = new WheelFrictionCurve[4];
+    private float[] originalExtremumSlip = new float[4];
+
+    #endregion
+
+    #region Data Structures
 
     // Struct to send input data to server
     public struct ClientInput : INetworkSerializable
@@ -87,7 +92,7 @@ public class HogController : NetworkBehaviour
         public float moveInput;
         public float brakeInput;
         public bool handbrake;
-        public float rawCameraAngle; // Changed to raw camera angle instead of processed steering
+        public float rawCameraAngle;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
@@ -98,6 +103,18 @@ public class HogController : NetworkBehaviour
             serializer.SerializeValue(ref rawCameraAngle);
         }
     }
+
+    // Steering angles data structure
+    private struct SteeringData
+    {
+        public float frontSteeringAngle;
+        public float rearSteeringAngle;
+        public bool isReversing;
+    }
+
+    #endregion
+
+    #region Unity Lifecycle Methods
 
     private void Start()
     {
@@ -116,8 +133,7 @@ public class HogController : NetworkBehaviour
             DisableWheelColliderPhysics();
         }
 
-        EngineOn.Post(gameObject);
-        // Set player color
+        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
     }
 
     private void Update()
@@ -133,11 +149,8 @@ public class HogController : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        frontLeftRpm = frontLeftWheelCollider.rpm;
-        rpm.SetGlobalValue(frontLeftWheelCollider.rpm);
-        velocity = rb.linearVelocity.magnitude;
-        // Save the local velocity of the car in the x axis. Used to know if the car is drifting.
-        localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
+        // Cache frequently used physics values
+        CachePhysicsValues();
 
         if (IsClient && IsOwner)
         {
@@ -145,18 +158,47 @@ public class HogController : NetworkBehaviour
         }
 
         AnimateWheels();
-        DriftCarFX();
+        UpdateDriftEffects();
     }
+
+    #endregion
+
+    #region Input Handling
 
     private void ClientMove()
     {
+        ClientInput input = CollectPlayerInput();
+        SendInputServerRpc(input);
+    }
+
+    private ClientInput CollectPlayerInput()
+    {
         // Calculate raw camera angle relative to car
+        float rawCameraAngle = CalculateRawCameraAngle();
+        float smoothedAngle = ApplyInputSmoothing(rawCameraAngle);
+        cameraAngle = smoothedAngle; // Store for visualization
+
+        return new ClientInput
+        {
+            clientId = OwnerClientId,
+            moveInput = CollectMovementInput(),
+            brakeInput = CollectBrakeInput(),
+            handbrake = Input.GetKey(KeyCode.Space),
+            rawCameraAngle = smoothedAngle
+        };
+    }
+
+    private float CalculateRawCameraAngle()
+    {
         Vector3 cameraVector = transform.position - freeLookCamera.transform.position;
         cameraVector.y = 0;
         Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
-        float rawCameraAngle = Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
+        return Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
+    }
 
-        // Add to input buffer for smoothing using weighted average
+    private float ApplyInputSmoothing(float rawCameraAngle)
+    {
+        // Add to input buffer for smoothing
         _recentSteeringInputs.Enqueue(rawCameraAngle);
         if (_recentSteeringInputs.Count > steeringBufferSize)
             _recentSteeringInputs.Dequeue();
@@ -165,21 +207,19 @@ public class HogController : NetworkBehaviour
         _steeringInputsList.Clear();
         _steeringInputsList.AddRange(_recentSteeringInputs);
 
-        // Store current angle for visualization/debugging
-        // We'll use the weighted average for our displayed value
+        // Return weighted average if we have inputs
         if (_steeringInputsList.Count > 0)
         {
-            cameraAngle = CalculateWeightedAverage(_steeringInputsList, weightingFactor);
+            return CalculateWeightedAverage(_steeringInputsList, weightingFactor);
         }
-        else
-        {
-            cameraAngle = rawCameraAngle;
-        }
+        
+        return rawCameraAngle;
+    }
 
+    private float CollectMovementInput()
+    {
         float move = 0;
-        float brake = 0f;
-        bool handbrakeOn = false;
-
+        
         // Keyboard input
         if (Input.GetKey(KeyCode.W))
         {
@@ -188,10 +228,6 @@ public class HogController : NetworkBehaviour
         if (Input.GetKey(KeyCode.S))
         {
             move = -1f;
-        }
-        if (Input.GetKey(KeyCode.Space))
-        {
-            handbrakeOn = true;
         }
 
         // Controller input (if controller is connected)
@@ -224,20 +260,15 @@ public class HogController : NetworkBehaviour
             }
         }
 
-        // Send raw inputs to server instead of processed steering
-        ClientInput input = new ClientInput
-        {
-            clientId = OwnerClientId,
-            moveInput = move,
-            brakeInput = brake,
-            handbrake = handbrakeOn,
-            rawCameraAngle = _steeringInputsList.Count > 0 ? CalculateWeightedAverage(_steeringInputsList, weightingFactor) : rawCameraAngle,
-        };
-
-        SendInputServerRpc(input);
+        return move;
     }
 
-    // Calculate weighted average of inputs with more recent inputs having more weight
+    private float CollectBrakeInput()
+    {
+        // Add brake input collection if needed
+        return 0f;
+    }
+
     private float CalculateWeightedAverage(List<float> values, float weightingFactor)
     {
         if (values.Count == 0) return 0f;
@@ -280,429 +311,29 @@ public class HogController : NetworkBehaviour
         return total / weightSum;
     }
 
+    #endregion
+
+    #region Networking
+
     [ServerRpc]
     private void SendInputServerRpc(ClientInput input)
     {
         // Calculate steering angle server-side to ensure consistency
-        float steeringAngle = CalculateSteeringFromCameraAngle(input.rawCameraAngle, input.moveInput);
+        SteeringData steeringData = CalculateSteeringFromCameraAngle(input.rawCameraAngle, input.moveInput);
 
         ApplyMotorTorque(input.moveInput, input.brakeInput);
-        ApplySteering(steeringAngle, input.moveInput);
+        ApplySteering(steeringData);
 
-        isDrifting.Value = localVelocityX > .25f ? true : false;
+        isDrifting.Value = Mathf.Abs(localVelocityX) > .25f;
 
         if (input.handbrake)
         {
-            Handbrake();
+            ApplyHandbrakeDrift();
             isDrifting.Value = true;
         }
-        else if (!input.handbrake && !isTractionLocked)
+        else if (!isTractionLocked)
         {
-            // Only call RecoverTraction once when handbrake is released
-            RecoverTraction();
-        }
-    }
-
-    // New method to centralize steering angle calculation on the server
-    private float CalculateSteeringFromCameraAngle(float cameraAngle, float moveInput)
-    {
-        // Apply adaptive deadzone - higher deadzone at higher speeds
-        float speedFactor = Mathf.Clamp01(rb.linearVelocity.magnitude / maxSpeedForSteering);
-        float deadzone = Mathf.Lerp(minDeadzone, maxDeadzone, speedFactor);
-
-        if (cameraAngle < deadzone && cameraAngle > -deadzone)
-            cameraAngle = 0f;
-
-        // If camera angle is small, treat it as zero
-        if (Math.Abs(cameraAngle) < 1f)
-            cameraAngle = 0f;
-
-        // Check if car is actually moving in reverse (based on velocity, not just input)
-        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
-        bool isMovingInReverse = forwardVelocity < -0.5f;
-
-        // Determine if we should apply reverse steering logic
-        bool shouldUseReverseControls = isMovingInReverse && moveInput < 0;
-
-        // For reverse, we invert the steering direction
-        if (shouldUseReverseControls)
-        {
-            cameraAngle = -cameraAngle;
-
-            // Add hysteresis - if angle is around 90 degrees, maintain the current steering angle
-            // This prevents rapid changes when looking from the side
-            if (Mathf.Abs(cameraAngle) > 70f && Mathf.Abs(cameraAngle) < 110f)
-            {
-                // Get the current steering angle and maintain it with some smoothing
-                float currentSteeringAverage = (frontLeftWheelCollider.steerAngle + frontRightWheelCollider.steerAngle) / 2f;
-
-                // Only make small adjustments when in this "stability zone"
-                cameraAngle = Mathf.Lerp(cameraAngle, currentSteeringAverage, 0.8f);
-            }
-        }
-
-        // Check if camera is behind the car based on maxSteeringAngle
-        // Camera is behind if it's in the region: (180-maxSteeringAngle) to (-180+maxSteeringAngle)
-        bool isCameraBehind = Mathf.Abs(cameraAngle) > (180f - maxSteeringAngle);
-
-        float finalSteeringAngle;
-        if (isCameraBehind)
-        {
-            // When camera is in the "behind" region, calculate how far into that region
-            float behindFactor;
-
-            if (cameraAngle > 0)
-            {
-                // Positive angle (right side behind region)
-                behindFactor = (180f - cameraAngle) / maxSteeringAngle;
-            }
-            else
-            {
-                // Negative angle (left side behind region)
-                behindFactor = (180f + cameraAngle) / maxSteeringAngle;
-            }
-
-            behindFactor = Mathf.Clamp01(behindFactor);
-
-            // Calculate steering angle that decreases as we go deeper into behind region
-            if (cameraAngle > 0)
-            {
-                finalSteeringAngle = maxSteeringAngle * behindFactor;
-            }
-            else
-            {
-                finalSteeringAngle = -maxSteeringAngle * behindFactor;
-            }
-        }
-        else
-        {
-            // Normal steering - within normal range
-            finalSteeringAngle = Mathf.Clamp(cameraAngle, -maxSteeringAngle, maxSteeringAngle);
-        }
-
-        // Progressive steering response - less responsive at higher speeds
-        float steeringResponse = Mathf.Lerp(maxSteeringResponse, minSteeringResponse, speedFactor);
-        finalSteeringAngle *= steeringResponse;
-
-        return finalSteeringAngle;
-    }
-
-    private void ApplyMotorTorque(float moveInput, float brakeInput)
-    {
-        if (!canMove)
-        {
-            frontLeftWheelCollider.motorTorque = 0;
-            frontRightWheelCollider.motorTorque = 0;
-            rearLeftWheelCollider.motorTorque = 0;
-            rearRightWheelCollider.motorTorque = 0;
-            return;
-        }
-
-        float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
-        currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * 3f); // Adjust 100f to control how fast it reaches maxTorque
-        float motorTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
-
-        frontLeftWheelCollider.motorTorque = motorTorque;
-        frontRightWheelCollider.motorTorque = motorTorque;
-        rearLeftWheelCollider.motorTorque = motorTorque;
-        rearRightWheelCollider.motorTorque = motorTorque;
-    }
-
-    private void ApplySteering(float steeringAngle, float moveInput)
-    {
-        // Use only 35% of steering angle for rear wheels (in opposite direction)
-        float rearSteeringAngle = steeringAngle * -0.35f;
-
-        // Apply smoothed steering to wheel colliders
-        frontLeftWheelCollider.steerAngle = Mathf.Lerp(frontLeftWheelCollider.steerAngle, steeringAngle, steeringSpeed);
-        frontRightWheelCollider.steerAngle = Mathf.Lerp(frontRightWheelCollider.steerAngle, steeringAngle, steeringSpeed);
-        rearLeftWheelCollider.steerAngle = Mathf.Lerp(rearLeftWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
-        rearRightWheelCollider.steerAngle = Mathf.Lerp(rearRightWheelCollider.steerAngle, rearSteeringAngle, steeringSpeed);
-    }
-
-    private void AnimateWheels()
-    {
-        // Check actual car movement direction
-        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
-        bool isMovingInReverse = forwardVelocity < -0.5f;
-
-        // Get current input direction
-        bool isPressingReverse = false;
-        if (IsOwner)
-        {
-            isPressingReverse = Input.GetKey(KeyCode.S) || (Input.GetJoystickNames().Length > 0 && Input.GetAxis("XRI_Right_Trigger") != 0);
-        }
-
-        // Only use reverse controls when both moving in reverse and pressing reverse
-        bool shouldUseReverseControls = isMovingInReverse && isPressingReverse;
-
-        // For reverse, invert the steering direction
-        float adjustedCameraAngle = shouldUseReverseControls ? -cameraAngle : cameraAngle;
-
-        // Check if camera is behind - same logic as in ApplySteering
-        bool isCameraBehind = Mathf.Abs(adjustedCameraAngle) > (180f - maxSteeringAngle);
-
-        float frontSteeringAngle;
-        if (isCameraBehind)
-        {
-            // Calculate how far into the behind region
-            float behindFactor;
-
-            if (adjustedCameraAngle > 0)
-            {
-                behindFactor = (180f - adjustedCameraAngle) / maxSteeringAngle;
-            }
-            else
-            {
-                behindFactor = (180f + adjustedCameraAngle) / maxSteeringAngle;
-            }
-
-            behindFactor = Mathf.Clamp01(behindFactor);
-
-            if (adjustedCameraAngle > 0)
-            {
-                frontSteeringAngle = maxSteeringAngle * behindFactor;
-            }
-            else
-            {
-                frontSteeringAngle = -maxSteeringAngle * behindFactor;
-            }
-        }
-        else
-        {
-            frontSteeringAngle = Mathf.Clamp(adjustedCameraAngle, -maxSteeringAngle, maxSteeringAngle);
-        }
-
-        // Use 50% of steering angle for rear wheels (in opposite direction)
-        float rearSteeringAngle = frontSteeringAngle * -0.5f;
-
-        // Store current rotation to preserve roll angles
-        Quaternion flCurrentRotation = frontLeftWheelTransform.localRotation;
-        Quaternion frCurrentRotation = frontRightWheelTransform.localRotation;
-        Quaternion rlCurrentRotation = rearLeftWheelTransform.localRotation;
-        Quaternion rrCurrentRotation = rearRightWheelTransform.localRotation;
-
-        // Apply steering rotation to wheel transforms (preserving any current X rotation)
-        frontLeftWheelTransform.localRotation = Quaternion.Euler(flCurrentRotation.eulerAngles.x, frontSteeringAngle, 0);
-        frontRightWheelTransform.localRotation = Quaternion.Euler(frCurrentRotation.eulerAngles.x, frontSteeringAngle, 0);
-        rearLeftWheelTransform.localRotation = Quaternion.Euler(rlCurrentRotation.eulerAngles.x, rearSteeringAngle, 0);
-        rearRightWheelTransform.localRotation = Quaternion.Euler(rrCurrentRotation.eulerAngles.x, rearSteeringAngle, 0);
-
-        // Calculate wheel rotation using the precise physics-based approach
-
-        // Front Left Wheel
-        float flCircumference = 2f * Mathf.PI * frontLeftWheelCollider.radius;
-        float flDistanceTraveled = frontLeftWheelCollider.rpm * Time.deltaTime * flCircumference / 60f;
-        float flRotationDegrees = (flDistanceTraveled / flCircumference) * 360f;
-
-        // Front Right Wheel
-        float frCircumference = 2f * Mathf.PI * frontRightWheelCollider.radius;
-        float frDistanceTraveled = frontRightWheelCollider.rpm * Time.deltaTime * frCircumference / 60f;
-        float frRotationDegrees = (frDistanceTraveled / frCircumference) * 360f;
-
-        // Rear Left Wheel
-        float rlCircumference = 2f * Mathf.PI * rearLeftWheelCollider.radius;
-        float rlDistanceTraveled = rearLeftWheelCollider.rpm * Time.deltaTime * rlCircumference / 60f;
-        float rlRotationDegrees = (rlDistanceTraveled / rlCircumference) * 360f;
-
-        // Rear Right Wheel
-        float rrCircumference = 2f * Mathf.PI * rearRightWheelCollider.radius;
-        float rrDistanceTraveled = rearRightWheelCollider.rpm * Time.deltaTime * rrCircumference / 60f;
-        float rrRotationDegrees = (rrDistanceTraveled / rrCircumference) * 360f;
-
-        // Apply rotation to wheel models around their X axis (roll)
-        frontLeftWheelTransform.Rotate(flRotationDegrees, 0f, 0f, Space.Self);
-        frontRightWheelTransform.Rotate(frRotationDegrees, 0f, 0f, Space.Self);
-        rearLeftWheelTransform.Rotate(rlRotationDegrees, 0f, 0f, Space.Self);
-        rearRightWheelTransform.Rotate(rrRotationDegrees, 0f, 0f, Space.Self);
-    }
-
-    public void Handbrake()
-    {
-        CancelInvoke("RecoverTraction");
-        isTractionLocked = false;
-        // We are going to start losing traction smoothly, there is were our 'driftingAxis' variable takes
-        // place. This variable will start from 0 and will reach a top value of 1, which means that the maximum
-        // drifting value has been reached. It will increase smoothly by using the variable Time.deltaTime.
-        driftingAxis = driftingAxis + Time.deltaTime;
-        float secureStartingPoint = driftingAxis * FLWextremumSlip * handbrakeDriftMultiplier;
-
-        if (secureStartingPoint < FLWextremumSlip)
-        {
-            driftingAxis = FLWextremumSlip / (FLWextremumSlip * handbrakeDriftMultiplier);
-        }
-        if (driftingAxis > 1f)
-        {
-            driftingAxis = 1f;
-        }
-        if (driftingAxis < 1f)
-        {
-            FLwheelFriction.extremumSlip = FLWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
-
-            FRwheelFriction.extremumSlip = FRWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
-
-            RLwheelFriction.extremumSlip = RLWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
-
-            RRwheelFriction.extremumSlip = RRWextremumSlip * handbrakeDriftMultiplier * driftingAxis;
-            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
-        }
-    }
-
-    public void RecoverTraction()
-    {
-        driftingAxis = driftingAxis - (Time.deltaTime / 1.5f);
-        if (driftingAxis < 0f)
-        {
-            driftingAxis = 0f;
-        }
-
-        if (driftingAxis > 0f)
-        {
-            // Calculate new slip values
-            float newFLSlip = Mathf.Max(FLWextremumSlip, FLWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-            float newFRSlip = Mathf.Max(FRWextremumSlip, FRWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-            float newRLSlip = Mathf.Max(RLWextremumSlip, RLWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-            float newRRSlip = Mathf.Max(RRWextremumSlip, RRWextremumSlip * handbrakeDriftMultiplier * driftingAxis);
-
-            // Apply new slip values
-            FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
-            FLwheelFriction.extremumSlip = newFLSlip;
-            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
-
-            FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
-            FRwheelFriction.extremumSlip = newFRSlip;
-            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
-
-            RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
-            RLwheelFriction.extremumSlip = newRLSlip;
-            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
-
-            RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
-            RRwheelFriction.extremumSlip = newRRSlip;
-            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
-
-            // Continue recovery in the next frame
-            Invoke("RecoverTraction", Time.deltaTime);
-        }
-        else
-        {
-            // Reset to original values when recovery is complete
-            FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
-            FLwheelFriction.extremumSlip = FLWextremumSlip;
-            frontLeftWheelCollider.sidewaysFriction = FLwheelFriction;
-
-            FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
-            FRwheelFriction.extremumSlip = FRWextremumSlip;
-            frontRightWheelCollider.sidewaysFriction = FRwheelFriction;
-
-            RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
-            RLwheelFriction.extremumSlip = RLWextremumSlip;
-            rearLeftWheelCollider.sidewaysFriction = RLwheelFriction;
-
-            RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
-            RRwheelFriction.extremumSlip = RRWextremumSlip;
-            rearRightWheelCollider.sidewaysFriction = RRwheelFriction;
-
-            driftingAxis = 0f;
-            isTractionLocked = true; // Only set to true when fully recovered
-        }
-    }
-
-    private void InitializeWheelFriction()
-    {
-        FLwheelFriction = frontLeftWheelCollider.sidewaysFriction;
-        FLWextremumSlip = FLwheelFriction.extremumSlip;
-
-        FRwheelFriction = frontRightWheelCollider.sidewaysFriction;
-        FRWextremumSlip = FRwheelFriction.extremumSlip;
-
-        RLwheelFriction = rearLeftWheelCollider.sidewaysFriction;
-        RLWextremumSlip = RLwheelFriction.extremumSlip;
-
-        RRwheelFriction = rearRightWheelCollider.sidewaysFriction;
-        RRWextremumSlip = RRwheelFriction.extremumSlip;
-    }
-
-    private void DisableWheelColliderPhysics()
-    {
-        frontLeftWheelCollider.enabled = false;
-        frontRightWheelCollider.enabled = false;
-        rearLeftWheelCollider.enabled = false;
-        rearRightWheelCollider.enabled = false;
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
-        {
-            StartCoroutine(CollisionForceDebounce());
-        }
-
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
-    }
-
-    private IEnumerator CollisionForceDebounce()
-    {
-        yield return new WaitForSeconds(.5f);
-        collisionForceOnCooldown = false;
-    }
-
-    public void DriftCarFX()
-    {
-        // Check if wheels are grounded and drifting
-        bool rearLeftGrounded = rearLeftWheelCollider.isGrounded;
-        bool rearRightGrounded = rearRightWheelCollider.isGrounded;
-
-        if (isDrifting.Value)
-        {
-            // Only play particle effects and skid marks if the wheels are grounded
-            if (rearLeftGrounded)
-            {
-                if (!driftingSoundOn && canMove)
-                {
-                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
-                    driftingSoundOn = true;
-                }
-                RLWParticleSystem.Play();
-                RLWTireSkid.emitting = true;
-            }
-            else
-            {
-                if (driftingSoundOn)
-                {
-                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-                    driftingSoundOn = false;
-                }
-                RLWParticleSystem.Stop();
-                RLWTireSkid.emitting = false;
-            }
-
-            if (rearRightGrounded)
-            {
-                RRWParticleSystem.Play();
-                RRWTireSkid.emitting = true;
-            }
-            else
-            {
-                RRWParticleSystem.Stop();
-                RRWTireSkid.emitting = false;
-            }
-        }
-        else if (!isDrifting.Value)
-        {
-            // Not drifting, turn off all effects
-            RLWParticleSystem.Stop();
-            RRWParticleSystem.Stop();
-            RLWTireSkid.emitting = false;
-            RRWTireSkid.emitting = false;
-            if (driftingSoundOn)
-            {
-                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-                driftingSoundOn = false;
-            }
+            RecoverTractionGradually();
         }
     }
 
@@ -719,6 +350,376 @@ public class HogController : NetworkBehaviour
         StartCoroutine(ResetAfterExplosion(explosionInstance));
     }
 
+    #endregion
+
+    #region Physics & Movement
+
+    private void CachePhysicsValues()
+    {
+        cachedVelocity = rb.linearVelocity;
+        cachedSpeed = cachedVelocity.magnitude;
+        localVelocityX = transform.InverseTransformDirection(cachedVelocity).x;
+        cachedForwardVelocity = Vector3.Dot(cachedVelocity, transform.forward);
+        
+        if (IsServer || IsOwner)
+        {
+            for (int i = 0; i < wheelColliders.Length; i++)
+            {
+                cachedWheelRpms[i] = wheelColliders[i].rpm;
+            }
+            
+            frontLeftRpm = cachedWheelRpms[0];
+            rpm.SetGlobalValue(frontLeftRpm);
+            velocity = cachedSpeed;
+        }
+    }
+
+    private SteeringData CalculateSteeringFromCameraAngle(float cameraAngle, float moveInput)
+    {
+        // Apply adaptive deadzone - higher deadzone at higher speeds
+        float speedFactor = Mathf.Clamp01(cachedSpeed / maxSpeedForSteering);
+        float deadzone = Mathf.Lerp(minDeadzone, maxDeadzone, speedFactor);
+
+        if (cameraAngle < deadzone && cameraAngle > -deadzone)
+            cameraAngle = 0f;
+
+        // If camera angle is small, treat it as zero
+        if (Math.Abs(cameraAngle) < 1f)
+            cameraAngle = 0f;
+
+        // Check if car is actually moving in reverse
+        bool isMovingInReverse = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE;
+
+        // Determine if we should apply reverse steering logic
+        bool shouldUseReverseControls = isMovingInReverse && moveInput < 0;
+
+        // For reverse, we invert the steering direction
+        float adjustedCameraAngle = cameraAngle;
+        if (shouldUseReverseControls)
+        {
+            adjustedCameraAngle = -cameraAngle;
+
+            // Add hysteresis - if angle is around 90 degrees, maintain the current steering angle
+            if (Mathf.Abs(adjustedCameraAngle) > 70f && Mathf.Abs(adjustedCameraAngle) < 110f)
+            {
+                // Get the current steering angle and maintain it with some smoothing
+                float currentSteeringAverage = (wheelColliders[0].steerAngle + wheelColliders[1].steerAngle) / 2f;
+
+                // Only make small adjustments when in this "stability zone"
+                adjustedCameraAngle = Mathf.Lerp(adjustedCameraAngle, currentSteeringAverage, 0.8f);
+            }
+        }
+
+        // Check if camera is behind the car based on maxSteeringAngle
+        bool isCameraBehind = Mathf.Abs(adjustedCameraAngle) > (CAMERA_BEHIND_THRESHOLD - maxSteeringAngle);
+
+        float finalSteeringAngle;
+        if (isCameraBehind)
+        {
+            // When camera is in the "behind" region, calculate how far into that region
+            float behindFactor = CalculateBehindFactor(adjustedCameraAngle);
+
+            // Calculate steering angle that decreases as we go deeper into behind region
+            finalSteeringAngle = adjustedCameraAngle > 0
+                ? maxSteeringAngle * behindFactor
+                : -maxSteeringAngle * behindFactor;
+        }
+        else
+        {
+            // Normal steering - within normal range
+            finalSteeringAngle = Mathf.Clamp(adjustedCameraAngle, -maxSteeringAngle, maxSteeringAngle);
+        }
+
+        // Progressive steering response - less responsive at higher speeds
+        float steeringResponse = Mathf.Lerp(maxSteeringResponse, minSteeringResponse, speedFactor);
+        finalSteeringAngle *= steeringResponse;
+
+        // Calculate rear steering angle
+        float rearSteeringAngle = finalSteeringAngle * rearSteeringAmount * -1;
+
+        return new SteeringData
+        {
+            frontSteeringAngle = finalSteeringAngle,
+            rearSteeringAngle = rearSteeringAngle,
+            isReversing = shouldUseReverseControls
+        };
+    }
+
+    private float CalculateBehindFactor(float angle)
+    {
+        float factor = angle > 0 
+            ? (CAMERA_BEHIND_THRESHOLD - angle) / maxSteeringAngle
+            : (CAMERA_BEHIND_THRESHOLD + angle) / maxSteeringAngle;
+        return Mathf.Clamp01(factor);
+    }
+
+    private void ApplyMotorTorque(float moveInput, float brakeInput)
+    {
+        if (!canMove)
+        {
+            for (int i = 0; i < wheelColliders.Length; i++)
+            {
+                wheelColliders[i].motorTorque = 0;
+            }
+            return;
+        }
+
+        float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
+        currentTorque = Mathf.MoveTowards(currentTorque, targetTorque, Time.deltaTime * 3f);
+        float motorTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
+
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            wheelColliders[i].motorTorque = motorTorque;
+        }
+    }
+
+    private void ApplySteering(SteeringData steeringData)
+    {
+        // Apply smoothed steering to wheel colliders
+        wheelColliders[0].steerAngle = Mathf.Lerp(wheelColliders[0].steerAngle, steeringData.frontSteeringAngle, steeringSpeed);
+        wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringData.frontSteeringAngle, steeringSpeed);
+        wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, steeringData.rearSteeringAngle, steeringSpeed);
+        wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, steeringData.rearSteeringAngle, steeringSpeed);
+    }
+
+    private void ApplyHandbrakeDrift()
+    {
+        CancelInvoke("RecoverTractionGradually");
+        isTractionLocked = false;
+        
+        // Gradually increase drifting effect
+        driftingAxis = Mathf.Min(1f, driftingAxis + Time.deltaTime);
+        
+        // Apply to all wheels
+        if (driftingAxis < 1f)
+        {
+            ApplyWheelFrictionMultiplier(driftingAxis * handbrakeDriftMultiplier);
+        }
+    }
+
+    private void RecoverTractionGradually()
+    {
+        driftingAxis = Mathf.Max(0f, driftingAxis - (Time.deltaTime / DRIFT_RECOVERY_RATE));
+        
+        if (driftingAxis > 0f)
+        {
+            ApplyWheelFrictionMultiplier(driftingAxis * handbrakeDriftMultiplier);
+            Invoke("RecoverTractionGradually", Time.deltaTime);
+        }
+        else
+        {
+            ResetWheelFriction();
+            driftingAxis = 0f;
+            isTractionLocked = true;
+        }
+    }
+
+    private void ApplyWheelFrictionMultiplier(float multiplier)
+    {
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
+            friction.extremumSlip = Mathf.Max(originalExtremumSlip[i], originalExtremumSlip[i] * multiplier);
+            wheelColliders[i].sidewaysFriction = friction;
+        }
+    }
+
+    private void ResetWheelFriction()
+    {
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
+            friction.extremumSlip = originalExtremumSlip[i];
+            wheelColliders[i].sidewaysFriction = friction;
+        }
+    }
+
+    private void InitializeWheelFriction()
+    {
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            wheelFrictions[i] = wheelColliders[i].sidewaysFriction;
+            originalExtremumSlip[i] = wheelFrictions[i].extremumSlip;
+        }
+    }
+
+    private void DisableWheelColliderPhysics()
+    {
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            wheelColliders[i].enabled = false;
+        }
+    }
+
+    #endregion
+
+    #region Visual Effects
+
+    private void AnimateWheels()
+    {
+        // Get current steering angles
+        SteeringData steeringData = GetCurrentSteeringAngles();
+
+        // Apply steering angles to wheel transforms
+        ApplySteeringToWheelMeshes(steeringData);
+
+        // Rotate wheels based on physics or rigidbody velocity
+        if (IsServer || IsOwner)
+        {
+            RotateWheelsUsingColliders();
+        }
+        else
+        {
+            RotateWheelsUsingVelocity();
+        }
+    }
+
+    private SteeringData GetCurrentSteeringAngles()
+    {
+        // Use existing steering angles from wheel colliders
+        float frontSteeringAngle = (wheelColliders[0].steerAngle + wheelColliders[1].steerAngle) / 2f;
+        float rearSteeringAngle = (wheelColliders[2].steerAngle + wheelColliders[3].steerAngle) / 2f;
+        
+        bool isReversing = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE && 
+                           (IsOwner && (Input.GetKey(KeyCode.S) || (Input.GetJoystickNames().Length > 0 && Input.GetAxis("XRI_Right_Trigger") != 0)));
+        
+        return new SteeringData
+        {
+            frontSteeringAngle = frontSteeringAngle,
+            rearSteeringAngle = rearSteeringAngle,
+            isReversing = isReversing
+        };
+    }
+
+    private void ApplySteeringToWheelMeshes(SteeringData steeringData)
+    {
+        // Store current rotation to preserve roll angles
+        Quaternion[] currentRotations = new Quaternion[4];
+        for (int i = 0; i < wheelTransforms.Length; i++)
+        {
+            currentRotations[i] = wheelTransforms[i].localRotation;
+        }
+
+        // Apply steering rotation to wheel transforms (preserving X rotation)
+        wheelTransforms[0].localRotation = Quaternion.Euler(currentRotations[0].eulerAngles.x, steeringData.frontSteeringAngle, 0);
+        wheelTransforms[1].localRotation = Quaternion.Euler(currentRotations[1].eulerAngles.x, steeringData.frontSteeringAngle, 0);
+        wheelTransforms[2].localRotation = Quaternion.Euler(currentRotations[2].eulerAngles.x, steeringData.rearSteeringAngle, 0);
+        wheelTransforms[3].localRotation = Quaternion.Euler(currentRotations[3].eulerAngles.x, steeringData.rearSteeringAngle, 0);
+    }
+
+    private void RotateWheelsUsingColliders()
+    {
+        // Rotate each wheel based on its collider's RPM
+        for (int i = 0; i < wheelTransforms.Length; i++)
+        {
+            float circumference = 2f * Mathf.PI * wheelColliders[i].radius;
+            float distanceTraveled = wheelColliders[i].rpm * Time.deltaTime * circumference / 60f;
+            float rotationDegrees = (distanceTraveled / circumference) * 360f;
+            
+            wheelTransforms[i].Rotate(rotationDegrees, 0f, 0f, Space.Self);
+        }
+    }
+
+    private void RotateWheelsUsingVelocity()
+    {
+        // For non-owner clients, estimate wheel rotation based on rigidbody velocity
+        float wheelRadius = 0.33f; // Assuming all wheels have the same radius, adjust as needed
+        float velocity = Mathf.Abs(cachedForwardVelocity);
+        
+        // Calculate RPM: (velocity in m/s) / (circumference in meters) * 60 seconds
+        float estimatedRPM = (velocity / (2f * Mathf.PI * wheelRadius)) * 60f;
+        
+        // Calculate rotation degrees
+        float circumference = 2f * Mathf.PI * wheelRadius;
+        float distanceTraveled = estimatedRPM * Time.deltaTime * circumference / 60f;
+        float rotationDegrees = (distanceTraveled / circumference) * 360f;
+        
+        // If moving in reverse, invert rotation direction
+        if (cachedForwardVelocity < 0)
+        {
+            rotationDegrees = -rotationDegrees;
+        }
+        
+        // Apply rotation to all wheels
+        for (int i = 0; i < wheelTransforms.Length; i++)
+        {
+            wheelTransforms[i].Rotate(rotationDegrees, 0f, 0f, Space.Self);
+        }
+    }
+
+    private void UpdateDriftEffects()
+    {
+        // Check if wheels are grounded and drifting
+        bool rearLeftGrounded = wheelColliders[2].isGrounded;
+        bool rearRightGrounded = wheelColliders[3].isGrounded;
+
+        if (isDrifting.Value)
+        {
+            // Only play particle effects and skid marks if the wheels are grounded
+            if (rearLeftGrounded)
+            {
+                if (!driftingSoundOn && canMove)
+                {
+                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
+                    driftingSoundOn = true;
+                }
+                wheelParticleSystems[0].Play();
+                tireSkids[0].emitting = true;
+            }
+            else
+            {
+                wheelParticleSystems[0].Stop();
+                tireSkids[0].emitting = false;
+            }
+
+            if (rearRightGrounded)
+            {
+                wheelParticleSystems[1].Play();
+                tireSkids[1].emitting = true;
+            }
+            else
+            {
+                wheelParticleSystems[1].Stop();
+                tireSkids[1].emitting = false;
+            }
+        }
+        else if (!isDrifting.Value)
+        {
+            // Not drifting, turn off all effects
+            wheelParticleSystems[0].Stop();
+            wheelParticleSystems[1].Stop();
+            tireSkids[0].emitting = false;
+            tireSkids[1].emitting = false;
+            if (driftingSoundOn) 
+            {
+                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
+                driftingSoundOn = false;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Collision Handling
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
+        {
+            StartCoroutine(CollisionForceDebounce());
+        }
+
+        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
+    }
+
+    private IEnumerator CollisionForceDebounce()
+    {
+        collisionForceOnCooldown = true;
+        yield return new WaitForSeconds(.5f);
+        collisionForceOnCooldown = false;
+    }
+
     private IEnumerator ResetAfterExplosion(GameObject explosionInstance)
     {
         yield return new WaitForSeconds(3f);
@@ -730,4 +731,6 @@ public class HogController : NetworkBehaviour
             Destroy(explosionInstance);
         }
     }
+
+    #endregion
 }

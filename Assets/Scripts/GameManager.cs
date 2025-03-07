@@ -8,13 +8,17 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public float gameTime;
     [SerializeField] public float betweenRoundLength = 5f;
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
-
     [SerializeField] private bool showScoreboardBetweenRounds = true;
 
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
+
+    [Header("Wwise")]
+    [SerializeField] public AK.Wwise.Event LevelMusicOn;
+
     public static GameManager instance;
     private ulong roundWinnerClientId;
+    private bool gameMusicPlaying;
 
     public void Start()
     {
@@ -27,6 +31,7 @@ public class GameManager : NetworkBehaviour
         {
             Destroy(gameObject);
         }
+        
         TransitionToState(GameState.Pending);
     }
 
@@ -62,28 +67,26 @@ public class GameManager : NetworkBehaviour
 
     private void OnEndingEnter()
     {
-       // Change camera to player who won.
-       state = GameState.Ending;
-       ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
+        // Change camera to player who won.
+        SetGameState(GameState.Ending);
+        ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
 
-       menuManager.DisplayWinnerClientRpc(roundWinner.username);
-       roundWinner.score++;
+        menuManager.DisplayWinnerClientRpc(roundWinner.username);
+        roundWinner.score++;
 
-       ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
-       ConnectionManager.instance.UpdateLobbyLeaderBasedOnScore();
+        ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
+        ConnectionManager.instance.UpdateLobbyLeaderBasedOnScore();
 
-            // Show scoreboard if enabled
-        if (showScoreboardBetweenRounds)
-        {
-            // First, update the scoreboard on server to ensure it's ready
-            menuManager.ForceScoreboardUpdateServerRpc();
-        }
-
-       StartCoroutine(BetweenRoundTimer()); 
+        StartCoroutine(BetweenRoundTimer());
     }
 
     private void OnPlayingEnter()
     {
+        if (!gameMusicPlaying) 
+        {
+            gameMusicPlaying = true;
+            LevelMusicOn.Post(gameObject);
+        }
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
             LockPlayerMovement();
@@ -98,27 +101,28 @@ public class GameManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(3f);
         UnlockPlayerMovement();
-        state = GameState.Playing;
+        SetGameState(GameState.Playing);
     }
 
-   public IEnumerator BetweenRoundTimer()
+    public IEnumerator BetweenRoundTimer()
     {
         // Configuration values
         float showWinnerDuration = 2.0f;     // How long to show just the winner text
         float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
-        
+
+        menuManager.HideScoreboardClientRpc();  //Don't love that I have to do this here but the scoreboard is popping up too early if I don't
         // Show the winner text first for a few seconds
         yield return new WaitForSeconds(showWinnerDuration);
-        
+
         // Now show the scoreboard
         menuManager.ShowScoreboardClientRpc();
-        
+
         // Show the scoreboard for specified duration
         yield return new WaitForSeconds(showScoreboardDuration);
 
         // Hide scoreboard when starting new round
         menuManager.HideScoreboardClientRpc();
-        
+
         // Transition to next round
         OnPlayingEnter();
     }
@@ -126,7 +130,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnPendingEnter()
     {
-
+        SetGameState(GameState.Pending);
     }
 
     public void CheckGameStatus()
@@ -180,5 +184,17 @@ public class GameManager : NetworkBehaviour
         {
             player.canMove = true;
         }
+    }
+
+    private void SetGameState(GameState state)
+    {
+        this.state = state;
+        BroadcastGameStateClientRpc(state);
+    }
+
+    [ClientRpc]
+    private void BroadcastGameStateClientRpc(GameState state)
+    {
+        this.state = state;
     }
 }
