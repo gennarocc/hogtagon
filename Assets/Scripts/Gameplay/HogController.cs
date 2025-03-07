@@ -420,6 +420,29 @@ public class HogController : NetworkBehaviour
 
     private void AnimateWheels()
     {
+        // Non-owners need to sync wheel rotations from the server
+        if (!IsOwner && !IsServer)
+        {
+        // For non-owner clients, we need to simulate wheel rotation since the physics are disabled
+        // Use the linearVelocity of the vehicle to estimate wheel rotation
+        float speed = rb.linearVelocity.magnitude;
+        float rotationSpeed = speed / (2 * Mathf.PI * frontLeftWheelCollider.radius) * 360f * Time.deltaTime;
+        
+        // Rotate all wheels based on estimated speed
+        frontLeftWheelTransform.Rotate(rotationSpeed, 0f, 0f, Space.Self);
+        frontRightWheelTransform.Rotate(rotationSpeed, 0f, 0f, Space.Self);
+        rearLeftWheelTransform.Rotate(rotationSpeed, 0f, 0f, Space.Self);
+        rearRightWheelTransform.Rotate(rotationSpeed, 0f, 0f, Space.Self);
+        
+        // For steering angle, use the visual steering from the server
+        frontLeftWheelTransform.localRotation = Quaternion.Euler(frontLeftWheelTransform.localRotation.eulerAngles.x, frontLeftWheelCollider.steerAngle, 0);
+        frontRightWheelTransform.localRotation = Quaternion.Euler(frontRightWheelTransform.localRotation.eulerAngles.x, frontRightWheelCollider.steerAngle, 0);
+        rearLeftWheelTransform.localRotation = Quaternion.Euler(rearLeftWheelTransform.localRotation.eulerAngles.x, rearLeftWheelCollider.steerAngle * -rearSteeringAmount, 0);
+        rearRightWheelTransform.localRotation = Quaternion.Euler(rearRightWheelTransform.localRotation.eulerAngles.x, rearRightWheelCollider.steerAngle * -rearSteeringAmount, 0);
+        
+        return;
+        }
+
         // Check actual car movement direction
         float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
         bool isMovingInReverse = forwardVelocity < -0.5f;

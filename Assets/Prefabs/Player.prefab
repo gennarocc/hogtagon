@@ -7224,7 +7224,7 @@ MonoBehaviour:
   maxTorque: 650
   brakeTorque: 300
   rearSteeringAmount: 0.35
-  centerOfMass: {x: 0, y: 0.35, z: 0}
+  centerOfMass: {x: 0, y: 0.2, z: 0}
   maxSteeringAngle: 55
   steeringSpeed: 0.8
   handbrakeDriftMultiplier: 8
