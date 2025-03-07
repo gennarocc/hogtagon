@@ -130,7 +130,7 @@ public class Player : NetworkBehaviour
         if (!IsServer) return;
         Debug.Log("Respawning Player");
         rb.position = playerData.spawnPoint;
-        rb.transform.LookAt(SpawnPointManager.instance.transform);
+        rb.rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - playerData.spawnPoint);
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 

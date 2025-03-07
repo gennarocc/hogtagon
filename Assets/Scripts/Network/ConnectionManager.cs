@@ -1,7 +1,9 @@
+using TMPro;
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 public class ConnectionManager : NetworkBehaviour
 {
@@ -99,6 +101,11 @@ public class ConnectionManager : NetworkBehaviour
         {
             clientDataDictionary.Remove(clientId);
             RemovePlayerClientRpc(clientId);
+            // Update the scoreboard
+            if (scoreboard != null)
+            {
+                scoreboard.UpdatePlayerList();
+            }
         }
 
         if (!IsServer && NetworkManager.Singleton.DisconnectReason != string.Empty)
@@ -209,10 +216,22 @@ public class ConnectionManager : NetworkBehaviour
 
     public string PrintPlayers()
     {
+        // Sort players by score in descending order
+        var sortedPlayers = clientDataDictionary
+            .OrderByDescending(player => player.Value.score)
+            .ToList();
+
         var str = "";
-        foreach (var player in clientDataDictionary)
+        foreach (var player in sortedPlayers)
         {
-            str += player.Value.username + "\n";
+            if (player.Value.state != PlayerState.Alive)
+            {
+                str += $"<color=#FF0000>{player.Value.username}</color>\n";
+            }
+            else
+            {
+                str += player.Value.username + "\n";
+            }
         }
 
         return str;
@@ -220,8 +239,13 @@ public class ConnectionManager : NetworkBehaviour
 
     public string PrintScore()
     {
+        // Sort players by score in descending order
+        var sortedPlayers = clientDataDictionary
+            .OrderByDescending(player => player.Value.score)
+            .ToList();
+
         var str = "";
-        foreach (var player in clientDataDictionary)
+        foreach (var player in sortedPlayers)
         {
             str += player.Value.score + "\n";
         }
@@ -295,6 +319,7 @@ public class ConnectionManager : NetworkBehaviour
         }
         return -1; // No available textures
     }
+
 
     public void UpdateLobbyLeaderBasedOnScore()
     {

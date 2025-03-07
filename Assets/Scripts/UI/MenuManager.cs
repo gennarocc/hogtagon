@@ -14,7 +14,6 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private GameObject playMenuPanel;
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
-    [SerializeField] private GameObject scoreboardUI;
     [SerializeField] private GameObject tempUI;
 
     [Header("Main Menu Components")]
@@ -33,6 +32,10 @@ public class MenuManager : NetworkBehaviour
     [Header("References")]
     [SerializeField] public Camera startCamera;
 
+    [Header("Scoreboard")]
+    [SerializeField] private GameObject scoreboardUI;
+    [SerializeField] private Scoreboard scoreboard;
+
     [Header("Wwise")]
 
     [SerializeField] private AK.Wwise.Event MenuMusicOn;
@@ -45,6 +48,7 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private CinemachineVirtualCamera virtualCamera;
     [SerializeField] private float rotationSpeed = 0.01f;
     private CinemachineOrbitalTransposer orbitalTransposer;
+
 
     private void Start()
     {
@@ -162,10 +166,13 @@ public class MenuManager : NetworkBehaviour
 
     void Pause()
     {
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        pauseMenuUI.SetActive(true);
-        gameIsPaused = true;
+        if (GameManager.instance.state != GameState.Ending)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            pauseMenuUI.SetActive(true);
+            gameIsPaused = true;
+        }
     }
 
     public void StartGame()
@@ -227,11 +234,30 @@ public class MenuManager : NetworkBehaviour
         StartCoroutine(BetweenRoundTime());
     }
 
+
     public IEnumerator BetweenRoundTime()
     {
-        yield return new WaitForSeconds(7f);
+        yield return new WaitForSeconds(5f);
         winnerText.text = "";
         tempUI.SetActive(false);
+    }
+
+    [ClientRpc]
+    public void ShowScoreboardClientRpc()
+    {
+        scoreboard.UpdatePlayerList();
+        // Enable the scoreboard panel
+        scoreboardUI.SetActive(true);
+
+        // Update the scoreboard data
+        scoreboard.UpdatePlayerList();
+    }
+
+    [ClientRpc]
+    public void HideScoreboardClientRpc()
+    {
+        // Disable the scoreboard panel
+        scoreboardUI.SetActive(false);
     }
 
     public void MainMenu()

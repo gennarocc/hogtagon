@@ -16,8 +16,10 @@ public class HogSoundManager : NetworkBehaviour
         TireScreechOn = 1,
         TireScreechOff = 2,
         HogImpact = 3,
-        CarExplosion = 4
-        // Add other sound effects as needed
+        CarExplosion = 4,
+        EngineOn = 5,
+        EngineOff = 6,
+
     }
 
     [Serializable]
