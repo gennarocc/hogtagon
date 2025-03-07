@@ -1051,8 +1051,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2121655961194616059}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.078459114, w: 0.99691737}
-  m_LocalPosition: {x: -3.7336378, y: 7.9801493, z: -14.5522}
+  m_LocalRotation: {x: 0.27059808, y: -0.65328145, z: 0.27059805, w: 0.6532815}
+  m_LocalPosition: {x: 40, y: 263.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1089,11 +1089,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.1
-  far clip plane: 5000
-  field of view: 40
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 90
   orthographic: 0
-  orthographic size: 10
+  orthographic size: 5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -7221,10 +7221,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   canMove: 1
-  maxTorque: 650
-  brakeTorque: 300
+  maxTorque: 400
+  brakeTorque: 350
   rearSteeringAmount: 0.35
-  centerOfMass: {x: 0, y: 0.35, z: 0}
+  centerOfMass: {x: 0, y: 0.2, z: 0}
   maxSteeringAngle: 55
   steeringSpeed: 0.8
   handbrakeDriftMultiplier: 8
@@ -7238,21 +7238,25 @@ MonoBehaviour:
   minSteeringResponse: 0.8
   maxSteeringResponse: 1
   inputWeightingMethod: 2
-  weightingFactor: 2
+  weightingFactor: 2.25
   rb: {fileID: 2725043071608973344}
   freeLookCamera: {fileID: 1233816499970886941}
-  frontLeftWheelCollider: {fileID: 7947942277690021792}
-  frontRightWheelCollider: {fileID: 4296994293568657065}
-  rearLeftWheelCollider: {fileID: 7945259627787905534}
-  rearRightWheelCollider: {fileID: 6832065672850586991}
-  frontLeftWheelTransform: {fileID: 7734228441085981954}
-  frontRightWheelTransform: {fileID: 6018523294074852569}
-  rearLeftWheelTransform: {fileID: 6060384585544935324}
-  rearRightWheelTransform: {fileID: 3707604260707810283}
-  RLWParticleSystem: {fileID: 1626974902313389262}
-  RRWParticleSystem: {fileID: 726239328357988392}
-  RLWTireSkid: {fileID: 362347677443509517}
-  RRWTireSkid: {fileID: 2553562073284689455}
+  wheelColliders:
+  - {fileID: 7947942277690021792}
+  - {fileID: 4296994293568657065}
+  - {fileID: 7945259627787905534}
+  - {fileID: 6832065672850586991}
+  wheelTransforms:
+  - {fileID: 7734228441085981954}
+  - {fileID: 6018523294074852569}
+  - {fileID: 6060384585544935324}
+  - {fileID: 3707604260707810283}
+  wheelParticleSystems:
+  - {fileID: 1626974902313389262}
+  - {fileID: 726239328357988392}
+  tireSkids:
+  - {fileID: 362347677443509517}
+  - {fileID: 2553562073284689455}
   Explosion: {fileID: 801768762681791778, guid: 8ac8c65bc56d73f44886274bcf0ddfd6, type: 3}
   rpm:
     idInternal: 0
