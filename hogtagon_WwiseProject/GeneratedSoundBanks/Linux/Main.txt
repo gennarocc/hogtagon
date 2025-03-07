@@ -1,4 +1,5 @@
 Event	ID	Name			Wwise Object Path	Notes
+	80751710	PauseOn			\Default Work Unit\PauseOn	
 	144991338	CarExplosion			\Default Work Unit\CarExplosion	
 	685626117	uiConfirm			\Default Work Unit\uiConfirm	
 	1933252553	uiCancel			\Default Work Unit\uiCancel	
@@ -9,6 +10,7 @@ Event	ID	Name			Wwise Object Path	Notes
 	3164408517	uiClick			\Default Work Unit\uiClick	
 	3567623486	HogHorn			\Default Work Unit\HogHorn	
 	3670274905	TireScreechOn			\Default Work Unit\TireScreechOn	
+	3921005316	PauseOff			\Default Work Unit\PauseOff	
 
 Switch Group	ID	Name			Wwise Object Path	Notes
 	1449613434	hog_impact			\Default Work Unit\hog_impact	

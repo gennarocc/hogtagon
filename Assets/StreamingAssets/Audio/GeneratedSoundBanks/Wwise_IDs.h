@@ -22,6 +22,10 @@ namespace AK
         static const AkUniqueID LEVELMUSICON = 1021065561U;
         static const AkUniqueID MENUMUSICOFF = 2510477776U;
         static const AkUniqueID MENUMUSICON = 878061882U;
+        static const AkUniqueID MIDROUNDOFF = 1869858978U;
+        static const AkUniqueID MIDROUNDON = 668901028U;
+        static const AkUniqueID PAUSEOFF = 3921005316U;
+        static const AkUniqueID PAUSEON = 80751710U;
         static const AkUniqueID TIRESCREECHOFF = 3010988261U;
         static const AkUniqueID TIRESCREECHON = 3670274905U;
         static const AkUniqueID UICANCEL = 1933252553U;

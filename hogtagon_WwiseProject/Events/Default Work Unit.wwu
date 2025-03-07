@@ -187,6 +187,95 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="PauseOn" ID="{E8BED00B-F6C7-4750-AEA7-A9D46DF0E0A6}">
+					<ChildrenList>
+						<Action Name="" ID="{A7D61E6E-D21D-4FF9-B0B3-BC2ADB73B87B}" ShortID="780258588">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="26"/>
+								<Property Name="FadeTime" Type="Real64" Value="1.5"/>
+								<Property Name="Lowpass" Type="int16" Value="65"/>
+								<Property Name="Scope" Type="int16" Value="1"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="Music" ID="{5EF84C62-E229-4AE1-9A1D-4CFEC7C94548}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+						<Action Name="" ID="{DD8F8673-9E0F-4B36-82F6-EF450A39A06A}" ShortID="864837618">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="26"/>
+								<Property Name="FadeTime" Type="Real64" Value="1.5"/>
+								<Property Name="Lowpass" Type="int16" Value="65"/>
+								<Property Name="Scope" Type="int16" Value="1"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="PauseOff" ID="{141FE736-21DB-4AEA-AE49-07A0FC668D73}">
+					<ChildrenList>
+						<Action Name="" ID="{CCF4D7BB-D785-4D23-80EC-3E2AC3EA4856}" ShortID="273158512">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="26"/>
+								<Property Name="FadeTime" Type="Real64" Value="1.5"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="Music" ID="{5EF84C62-E229-4AE1-9A1D-4CFEC7C94548}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+						<Action Name="" ID="{5190FE11-B2B6-456A-AB84-893586C895FE}" ShortID="194175223">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="26"/>
+								<Property Name="FadeTime" Type="Real64" Value="1.5"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="MidroundOn" ID="{D9054DF8-BF62-433E-A094-BBE2D075E616}">
+					<ChildrenList>
+						<Action Name="" ID="{472DEF8E-2EBC-4D8B-A1E5-86ADE7FBCB68}" ShortID="611520651">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="29"/>
+								<Property Name="FadeTime" Type="Real64" Value="2"/>
+								<Property Name="Highpass" Type="int16" Value="65"/>
+								<Property Name="Scope" Type="int16" Value="1"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="Music" ID="{5EF84C62-E229-4AE1-9A1D-4CFEC7C94548}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="MidroundOff" ID="{3114A31F-9387-4E49-9F91-AFAE8125B52C}">
+					<ChildrenList>
+						<Action Name="" ID="{8BC9993E-BE37-4991-AC60-B9E1DCCA1056}" ShortID="54051681">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="29"/>
+								<Property Name="FadeTime" Type="Real64" Value="3"/>
+								<Property Name="Scope" Type="int16" Value="1"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="Music" ID="{5EF84C62-E229-4AE1-9A1D-4CFEC7C94548}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>
