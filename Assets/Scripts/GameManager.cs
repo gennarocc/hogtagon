@@ -133,7 +133,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnPendingEnter()
     {
-
+        state = GameState.Pending;
     }
 
     public void CheckGameStatus()
@@ -187,5 +187,17 @@ public class GameManager : NetworkBehaviour
         {
             player.canMove = true;
         }
+    }
+
+    private void SetGameStateClientRpc(GameState state)
+    {
+        this.state = state;
+        BroadcastClientGameStateClientRpc(state);
+    }
+
+    [ClientRpc]
+    private void BroadcastClientGameStateClientRpc(GameState state)
+    {
+        this.state = state;
     }
 }

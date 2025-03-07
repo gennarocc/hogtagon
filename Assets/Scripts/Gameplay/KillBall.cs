@@ -4,6 +4,7 @@ using Unity.Netcode;
 public class KillBall : NetworkBehaviour
 {
     [SerializeField] private float blowupForce = 2;
+    [SerializeField] public Vector3 pendingSize = new Vector3(20, 20, 20);
     [SerializeField] public Vector3 initialSize;
     [SerializeField] public Vector3 targetSize;
     [SerializeField] private float duration = 60;
@@ -14,7 +15,8 @@ public class KillBall : NetworkBehaviour
     {
         if (GameManager.instance.state == GameState.Pending)
         {
-            transform.localScale = new Vector3(20, 20, 20);
+            // Ensure we always reset to the initial size in Pending state
+            transform.localScale = pendingSize;
             return;
         }
         float scaleLerp = Mathf.Clamp01(GameManager.instance.gameTime / duration);

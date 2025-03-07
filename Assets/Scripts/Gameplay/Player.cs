@@ -102,20 +102,43 @@ public class Player : NetworkBehaviour
         cameraTarget.position = cameraOffset.position;
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
         // Set camera to spectator if dead
-        if (playerData.state != PlayerState.Alive)
+        if (playerData.state != PlayerState.Alive && GameManager.instance.state != GameState.Pending)
         {
             List<ulong> aliveClients = ConnectionManager.instance.GetAliveClients();
-            if (spectatingPlayerIndex >= aliveClients.Count) spectatingPlayerIndex = 0;
-            Player spectatePlayer = ConnectionManager.instance.GetPlayer(ConnectionManager.instance.GetAliveClients()[spectatingPlayerIndex]);
+
+            // Check if there are ANY alive clients before proceeding
+            if (aliveClients.Count > 0)
+            {
+                // Make sure spectatingPlayerIndex is within bounds
+                if (spectatingPlayerIndex >= aliveClients.Count)
+                    spectatingPlayerIndex = 0;
+
+                // Get the player to spectate
+                Player spectatePlayer = ConnectionManager.instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
+
+                // Only follow/look if we got a valid player
+                if (spectatePlayer != null)
+                {
             mainCamera.Follow = spectatePlayer.cameraTarget;
             mainCamera.LookAt = spectatePlayer.cameraTarget;
+                }
+
+                // Handle changing spectate target
             if (Input.GetKeyDown(KeyCode.Mouse0))
             {
-                spectatingPlayerIndex++;
+                    spectatingPlayerIndex = (spectatingPlayerIndex + 1) % aliveClients.Count;
+                }
+            }
+            else
+            {
+                // No alive players to spectate, fall back to own camera
+                mainCamera.Follow = cameraTarget;
+                mainCamera.LookAt = cameraTarget;
             }
         }
         else
         {
+            // Not dead or in pending state - use own camera
             mainCamera.Follow = cameraTarget;
             mainCamera.LookAt = cameraTarget;
         }
@@ -182,6 +205,18 @@ public class Player : NetworkBehaviour
         if (IsServer)
         {
             networkPlayerData.Value = playerData;
+        }
+    }
+
+    public override void OnDestroy()
+    {
+        // Call the base implementation first (important!)
+        base.OnDestroy();
+
+        // Then do your custom cleanup
+        if (floatingUsername != null && floatingUsername.gameObject != null)
+        {
+            Destroy(floatingUsername.gameObject);
         }
     }
 }
