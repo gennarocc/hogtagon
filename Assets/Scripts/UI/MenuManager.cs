@@ -280,7 +280,7 @@ public class MenuManager : NetworkBehaviour
             DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
         }
         MainMenu();
-        Cursor.visible = Cursor.visible;
+        Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         ConnectionManager.instance.isConnected = false;
     }
@@ -296,6 +296,37 @@ public class MenuManager : NetworkBehaviour
     {
         Debug.Log("Quitting Game");
         Application.Quit();
+    }
+
+    public void DisplayHostAloneMessage(string disconnectedPlayerName)
+    {
+        // Display a message in the existing UI
+        tempUI.SetActive(true);
+
+        // Use the winner text component to display the message
+        if (winnerText != null)
+        {
+            winnerText.text = $"{disconnectedPlayerName} disconnected.\nYou are the only player remaining.\nWaiting for more players to join...";
+        }
+
+        // Hide message after a few seconds (optional)
+        StartCoroutine(HideHostAloneMessage(8f)); // 8 seconds seems reasonable
+    }
+
+    private IEnumerator HideHostAloneMessage(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // Hide the message
+        if (tempUI != null && tempUI.activeSelf)
+        {
+            tempUI.SetActive(false);
+        }
+
+        if (winnerText != null)
+        {
+            winnerText.text = "";
+        }
     }
 
     public void DisplayConnectionError(string error)

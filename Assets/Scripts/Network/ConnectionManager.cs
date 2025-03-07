@@ -99,12 +99,27 @@ public class ConnectionManager : NetworkBehaviour
         // Remove Data from Client Dictonary/List
         if (clientDataDictionary.ContainsKey(clientId))
         {
+            // Store the username for the notification
+            string username = "A player";
+            if (TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+                username = playerData.username;
+            }
+
             clientDataDictionary.Remove(clientId);
             RemovePlayerClientRpc(clientId);
+
             // Update the scoreboard
             if (scoreboard != null)
             {
                 scoreboard.UpdatePlayerList();
+            }
+
+            // If server and only one player left, reset to lobby state and show message
+            if (IsServer && NetworkManager.Singleton.ConnectedClients.Count <= 1)
+            {
+                GameManager.instance.TransitionToState(GameState.Pending);
+                ShowHostAloneMessageClientRpc(username);
             }
         }
 
@@ -112,6 +127,16 @@ public class ConnectionManager : NetworkBehaviour
         {
             menuManager.MainMenu();
             menuManager.DisplayConnectionError(NetworkManager.Singleton.DisconnectReason);
+        }
+    }
+
+    [ClientRpc]
+    private void ShowHostAloneMessageClientRpc(string disconnectedPlayerName)
+    {
+        // Show message to host (and any remaining clients if there are any)
+        if (menuManager != null)
+        {
+            menuManager.DisplayHostAloneMessage(disconnectedPlayerName);
         }
     }
 
