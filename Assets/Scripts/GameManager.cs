@@ -8,9 +8,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public float gameTime;
     [SerializeField] public float betweenRoundLength = 5f;
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
-
-    float totalplaytime;
-
     [SerializeField] private bool showScoreboardBetweenRounds = true;
 
     [Header("References")]
@@ -71,7 +68,7 @@ public class GameManager : NetworkBehaviour
     private void OnEndingEnter()
     {
         // Change camera to player who won.
-        state = GameState.Ending;
+        SetGameState(GameState.Ending);
         ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
 
         menuManager.DisplayWinnerClientRpc(roundWinner.username);
@@ -104,7 +101,7 @@ public class GameManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(3f);
         UnlockPlayerMovement();
-        state = GameState.Playing;
+        SetGameState(GameState.Playing);
     }
 
     public IEnumerator BetweenRoundTimer()
@@ -133,7 +130,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnPendingEnter()
     {
-        state = GameState.Pending;
+        SetGameState(GameState.Pending);
     }
 
     public void CheckGameStatus()
@@ -189,14 +186,14 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    private void SetGameStateClientRpc(GameState state)
+    private void SetGameState(GameState state)
     {
         this.state = state;
-        BroadcastClientGameStateClientRpc(state);
+        BroadcastGameStateClientRpc(state);
     }
 
     [ClientRpc]
-    private void BroadcastClientGameStateClientRpc(GameState state)
+    private void BroadcastGameStateClientRpc(GameState state)
     {
         this.state = state;
     }
