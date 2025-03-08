@@ -18,6 +18,8 @@ public class Player : NetworkBehaviour
     [SerializeField] private GameObject playerIndicator; // Used to set color texture
 
 
+
+
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
@@ -52,6 +54,7 @@ public class Player : NetworkBehaviour
         {
             ApplyPlayerData(networkPlayerData.Value);
         }
+
     }
 
     private void Awake()
@@ -64,6 +67,7 @@ public class Player : NetworkBehaviour
         Cursor.visible = !Cursor.visible; // toggle visibility
         Cursor.lockState = CursorLockMode.Locked;
         ConnectionManager.instance.isConnected = true;
+        menuManager.jumpUI.SetActive(true);
 
         if (IsOwner)
         {
@@ -218,5 +222,6 @@ public class Player : NetworkBehaviour
         {
             Destroy(floatingUsername.gameObject);
         }
+        menuManager.jumpUI.SetActive(false);
     }
 }
