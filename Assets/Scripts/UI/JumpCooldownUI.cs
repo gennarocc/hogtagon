@@ -91,7 +91,7 @@ public class JumpCooldownUI : MonoBehaviour
             }
             else
             {
-                cooldownText.text = "JUMP!";
+                cooldownText.text = "";
                 cooldownText.color = readyColor;
             }
         }

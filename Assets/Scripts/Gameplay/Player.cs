@@ -18,6 +18,8 @@ public class Player : NetworkBehaviour
     [SerializeField] private GameObject playerIndicator; // Used to set color texture
 
 
+
+
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
@@ -52,6 +54,7 @@ public class Player : NetworkBehaviour
         {
             ApplyPlayerData(networkPlayerData.Value);
         }
+
     }
 
     private void Awake()
@@ -87,6 +90,8 @@ public class Player : NetworkBehaviour
 
         Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
         localPlayerCameraTransform = localPlayer.mainCamera.transform;
+
+        menuManager.jumpUI.SetActive(true);
     }
 
     private void Update()
@@ -218,5 +223,6 @@ public class Player : NetworkBehaviour
         {
             Destroy(floatingUsername.gameObject);
         }
+        menuManager.jumpUI.SetActive(false);
     }
 }

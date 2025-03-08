@@ -16,6 +16,8 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private GameObject settingsMenuUI;
     [SerializeField] private GameObject tempUI;
 
+    [SerializeField] public GameObject jumpUI;
+
     [Header("Main Menu Components")]
     [SerializeField] private Button playButton;
     [SerializeField] private Button optionsButton;

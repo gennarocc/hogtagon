@@ -23,8 +23,8 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float velocity;
 
     [Header("Rocket Jump")]
-    [SerializeField] private float jumpForce = 10f; // How much upward force to apply
-    [SerializeField] private float jumpCooldown = 3f; // Time between jumps
+    [SerializeField] private float jumpForce = 5f; // How much upward force to apply
+    [SerializeField] private float jumpCooldown = 15f; // Time between jumps
     [SerializeField] private ParticleSystem jumpThrustParticles; // Particle effect for the jump
     [SerializeField] private GameObject jumpEffectPrefab; // Visual effect for jump (optional)
     [SerializeField] private Transform jumpEffectSpawnPoint; // Where to spawn the effect
@@ -55,6 +55,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] public ParticleSystem[] wheelParticleSystems = new ParticleSystem[2]; // RL, RR
     [SerializeField] public TrailRenderer[] tireSkids = new TrailRenderer[2]; // RL, RR
     [SerializeField] public GameObject Explosion;
+    [SerializeField] public ParticleSystem[] jumpParticleSystems = new ParticleSystem[2]; // RL, RR
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.RTPC rpm;
@@ -156,12 +157,6 @@ public class HogController : NetworkBehaviour
             jumpEffectSpawnPoint = transform;
         }
 
-        // Create particle system if not assigned
-        if (jumpThrustParticles == null)
-        {
-            jumpThrustParticles = CreateJumpThrustParticles();
-        }
-
         // Create jump light if not assigned
         if (jumpLight == null)
         {
@@ -186,7 +181,9 @@ public class HogController : NetworkBehaviour
             // Play Horn Sound
             HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
         }
-
+        // Check if player can jump and is not spectating
+        bool canPerformJump = canMove && canJump && !jumpOnCooldown &&
+                             !transform.root.gameObject.GetComponent<Player>().isSpectating;
         if ((Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton1)) &&
             canMove && canJump && !jumpOnCooldown && !transform.root.gameObject.GetComponent<Player>().isSpectating)
         {
@@ -613,112 +610,112 @@ public class HogController : NetworkBehaviour
     [ServerRpc]
     private void JumpServerRpc()
     {
-        Debug.Log($"Jump Server RPC - CanJump: {canJump}, JumpReady: {jumpReady.Value}, CanMove: {canMove}");
+        // Check if jump is allowed
+        if (!canJump || !jumpReady.Value) return;
 
-        // Check if jump is allowed on server
-        if (!canJump || !jumpReady.Value)
-        {
-            Debug.Log("Jump rejected by server");
-            return;
-        }
-
-        // Set jump state
+        // Set network state
         isJumping.Value = true;
         jumpReady.Value = false;
 
-        // Execute jump on all clients with debug info
-        JumpDebugClientRpc();
+        // Get reference to the player object
+        ulong clientId = OwnerClientId;
+
+        if (NetworkManager.ConnectedClients.ContainsKey(clientId))
+        {
+            var playerObject = NetworkManager.ConnectedClients[clientId].PlayerObject;
+            Rigidbody rb = playerObject.GetComponentInChildren<Rigidbody>();
+
+            if (rb != null)
+            {
+                // Store current horizontal velocity
+                Vector3 currentVelocity = rb.linearVelocity;
+                Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+
+                // Start with a position boost for immediate feedback
+                Vector3 currentPos = rb.position;
+                Vector3 targetPos = currentPos + Vector3.up * 1.5f; // Smaller initial boost
+                rb.MovePosition(targetPos);
+
+                // Apply a sharper upward impulse for faster rise
+                float upwardVelocity = jumpForce * 1.2f; // Faster rise
+
+                // Combine horizontal momentum with new vertical impulse
+                // Multiply horizontal speed to maintain or enhance momentum
+                Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
+                rb.linearVelocity = newVelocity;
+
+                // Add a bit more forward boost in the car's facing direction
+                rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+
+                // Increase gravity temporarily for faster fall
+                StartCoroutine(TemporarilyIncreaseGravity(rb));
+
+                Debug.Log($"Applied jump with preserving momentum: {horizontalVelocity}, new velocity: {newVelocity}");
+            }
+        }
+
+        // Execute visual effects on all clients
+        JumpEffectsClientRpc();
 
         // Start cooldown
         StartCoroutine(JumpCooldownServer());
     }
 
-    [ClientRpc]
-    private void JumpDebugClientRpc()
+    // private IEnumerator TemporarilyDisableWheelColliders(HogController hogController)
+    // {
+    //     // Disable wheel colliders temporarily to allow jump to happen
+    //     if (hogController != null && hogController.wheelColliders.Length > 0)
+    //     {
+    //         foreach (WheelCollider wheel in hogController.wheelColliders)
+    //         {
+    //             if (wheel != null)
+    //                 wheel.enabled = false;
+    //         }
+
+    //         // Wait for jump to reach apex
+    //         yield return new WaitForSeconds(0.5f);
+
+    //         // Re-enable wheel colliders
+    //         foreach (WheelCollider wheel in hogController.wheelColliders)
+    //         {
+    //             if (wheel != null)
+    //                 wheel.enabled = true;
+    //         }
+    //     }
+    // }
+
+    private IEnumerator TemporarilyIncreaseGravity(Rigidbody rb)
     {
-        Debug.Log($"Jump Debug - IsOwner: {IsOwner}, IsServer: {IsServer}, CanMove: {canMove}, " +
-                  $"Rigidbody: {rb != null}, IsKinematic: {rb?.isKinematic}, JumpForce: {jumpForce}");
+        // Store original gravity
+        float originalGravity = Physics.gravity.y;
 
-        // Execute normal jump
-        JumpExecuteClientRpc();
-    }
-    [ClientRpc]
-    private void JumpExecuteClientRpc()
-    {
-        // PHYSICS: Apply forces differently based on authority
-        if (rb != null)
-        {
-            // Server handles physics for non-owner objects
-            if (IsServer && !IsOwner)
-            {
-                Debug.Log($"Server applying jump force to non-owner object");
-                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-                rb.AddForce(transform.forward * (jumpForce * 0.3f), ForceMode.Impulse);
-            }
-            // Owner handles physics for own object
-            else if (IsOwner)
-            {
-                Debug.Log($"Owner applying jump force");
-                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-                rb.AddForce(transform.forward * (jumpForce * 0.3f), ForceMode.Impulse);
-            }
-        }
+        // Wait for the rise phase (about 0.3 seconds)
+        yield return new WaitForSeconds(0.3f);
 
-        // VISUAL EFFECTS: Always show on all clients
-        if (jumpThrustParticles != null)
-        {
-            jumpThrustParticles.Play();
-        }
+        // Apply stronger gravity for faster fall
+        Physics.gravity = new Vector3(0, originalGravity * 2.5f, 0);
 
-        // Spawn one-time visual effect
-        if (jumpEffectPrefab != null && jumpEffectSpawnPoint != null)
-        {
-            GameObject effect = Instantiate(jumpEffectPrefab, jumpEffectSpawnPoint.position, Quaternion.identity);
-            Destroy(effect, 2f); // Destroy after 2 seconds
-        }
+        // Wait for the fall phase
+        yield return new WaitForSeconds(0.5f);
 
-        // Handle jump light effect
-        if (jumpLight != null)
-        {
-            StartCoroutine(FlashJumpLight());
-        }
-
-        // Only manage local cooldown UI for the owner
-        if (IsOwner)
-        {
-            jumpOnCooldown = true;
-            jumpCooldownRemaining = jumpCooldown;
-        }
+        // Restore original gravity
+        Physics.gravity = new Vector3(0, originalGravity, 0);
     }
 
     [ClientRpc]
     private void JumpEffectsClientRpc()
     {
-        // Just handle effects, not physics
-        if (jumpThrustParticles != null)
-        {
-            jumpThrustParticles.Play();
-        }
 
-        // Spawn visual effect
-        if (jumpEffectPrefab != null && jumpEffectSpawnPoint != null)
-        {
-            GameObject effect = Instantiate(jumpEffectPrefab, jumpEffectSpawnPoint.position, Quaternion.identity);
-            Destroy(effect, 2f);
-        }
+        jumpParticleSystems[0].Play();
+        jumpParticleSystems[1].Play();
 
-        // Light effect
-        if (jumpLight != null)
-        {
-            StartCoroutine(FlashJumpLight());
-        }
-
-        // Manage cooldown UI for the owner
         if (IsOwner)
         {
             jumpOnCooldown = true;
             jumpCooldownRemaining = jumpCooldown;
 
+            // Play sound effect
+            // HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogJump);
         }
     }
     private IEnumerator JumpCooldownServer()
@@ -943,6 +940,10 @@ public class HogController : NetworkBehaviour
         particleObj.transform.localRotation = Quaternion.Euler(90, 0, 0); // Point downward
 
         ParticleSystem ps = particleObj.AddComponent<ParticleSystem>();
+
+        // IMPORTANT: Stop the particle system before configuring it
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
         var main = ps.main;
         main.duration = 0.5f;
         main.loop = false;
