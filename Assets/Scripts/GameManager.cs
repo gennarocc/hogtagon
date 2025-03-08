@@ -85,7 +85,7 @@ public class GameManager : NetworkBehaviour
         if (!gameMusicPlaying) 
         {
             gameMusicPlaying = true;
-            LevelMusicOn.Post(gameObject);
+            PlayLevelMusicClientRpc();
         }
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
@@ -196,5 +196,11 @@ public class GameManager : NetworkBehaviour
     private void BroadcastGameStateClientRpc(GameState state)
     {
         this.state = state;
+    }
+
+    [ClientRpc]
+    private void PlayLevelMusicClientRpc()
+    {
+       LevelMusicOn.Post(gameObject); 
     }
 }
