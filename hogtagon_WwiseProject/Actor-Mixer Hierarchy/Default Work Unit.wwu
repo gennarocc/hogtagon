@@ -1574,6 +1574,45 @@
 						</Folder>
 					</ChildrenList>
 				</Folder>
+				<Folder Name="Announcer" ID="{9645805C-C284-41B0-B66E-D8F0C1193E10}" ShortID="74537990">
+					<PropertyList>
+						<Property Name="Color" Type="int16" Value="6"/>
+						<Property Name="OverrideColor" Type="bool" Value="True"/>
+					</PropertyList>
+					<ChildrenList>
+						<Sound Name="player-elimination" ID="{AF9A5AE1-4C81-42BF-831E-0E19C76B995B}" ShortID="79429065">
+							<PropertyList>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="player-elimination" ID="{F0AF658F-E39D-48A0-A50D-1FF90DA48118}">
+									<PropertyList>
+										<Property Name="FadeInDuration" Type="Real64" Value="0.0548139221457991"/>
+										<Property Name="FadeOutDuration" Type="Real64" Value="0.174882513512788"/>
+										<Property Name="OverrideWavLoop" Type="bool" Value="True"/>
+										<Property Name="TrimBegin" Type="Real64" Value="0.178797793666059"/>
+									</PropertyList>
+									<Language>SFX</Language>
+									<AudioFile>player-elimination.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="177590292"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="player-elimination" ID="{F0AF658F-E39D-48A0-A50D-1FF90DA48118}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+					</ChildrenList>
+				</Folder>
 			</ChildrenList>
 		</WorkUnit>
 	</AudioObjects>

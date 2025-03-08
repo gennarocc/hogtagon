@@ -8,6 +8,7 @@ Event	ID	Name			Wwise Object Path	Notes
 	2587421243	HogImpact			\Default Work Unit\HogImpact	
 	3010988261	TireScreechOff			\Default Work Unit\TireScreechOff	
 	3164408517	uiClick			\Default Work Unit\uiClick	
+	3181948357	PlayerElimination			\Default Work Unit\PlayerElimination	
 	3567623486	HogHorn			\Default Work Unit\HogHorn	
 	3670274905	TireScreechOn			\Default Work Unit\TireScreechOn	
 	3921005316	PauseOff			\Default Work Unit\PauseOff	
@@ -27,6 +28,7 @@ In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	71018915	idle-rpm-loop	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\10\{1073E8F7-C22A-4F8B-C5DE-1F83FF2B11F4}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\idle-rpm-loop		2871924
 	90311213	ui-cancel	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\FA\{FA79BAE6-9C46-C389-95C8-EDA7E0977145}.wem		\Actor-Mixer Hierarchy\Default Work Unit\UI\ui-cancel		102064
 	157986807	ui-confirmation	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\B6\{B6D2F97E-FE56-A469-F01A-2474DD17519C}.wem		\Actor-Mixer Hierarchy\Default Work Unit\UI\ui-confirmation		192176
+	177590292	player-elimination	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\ED\{EDEA3880-100B-D195-B24F-404C24C3E280}.wem		\Actor-Mixer Hierarchy\Default Work Unit\Announcer\player-elimination		417576
 	178975780	6k-rpm-loop	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\47\{4780DB24-F5D9-3D8F-C651-E1BB65757714}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\6k-rpm-loop		1056176
 	179866252	car-explosion-1	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\3A\{3AC9F094-060F-FA50-3025-0617BF8F20D7}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\car-explosion\car-explosion-1		1541296
 	191368066	impact-3c	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\D1\{D17A5C15-B3C4-6EED-CF08-3053C75DFFB4}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\high-impact\impact-3c		787632

@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{F3DF727A-0D78-9C87-72D8-63A9A14519E6}",
+    "Hash": "{2F109FDA-9A7F-4C65-9EC3-26BF8B137620}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -38,6 +38,14 @@
       "Location": "Memory",
       "ShortName": "ui-confirmation.wav",
       "CachePath": "B6/{B6D2F97E-FE56-A469-F01A-2474DD17519C}.wem"
+     },
+     {
+      "Id": "177590292",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "player-elimination.wav",
+      "CachePath": "ED/{EDEA3880-100B-D195-B24F-404C24C3E280}.wem"
      },
      {
       "Id": "178975780",
@@ -466,6 +474,20 @@
       "DurationMax": "0"
      },
      {
+      "Id": "3181948357",
+      "Name": "PlayerElimination",
+      "ObjectPath": "\\Events\\Default Work Unit\\PlayerElimination",
+      "GUID": "{F2CA3A8B-C032-43D6-A6A9-0D40CF143F7C}",
+      "DurationType": "OneShot",
+      "DurationMin": "2.1742857",
+      "DurationMax": "2.1742857",
+      "MediaRefs": [
+       {
+        "Id": "177590292"
+       }
+      ]
+     },
+     {
       "Id": "3010988261",
       "Name": "TireScreechOff",
       "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOff",
@@ -583,6 +605,6 @@
     ]
    }
   ],
-  "FileHash": "{9B15F18B-CC16-0F9C-8B9E-E857AC068495}"
+  "FileHash": "{3534A501-8750-7082-4A5E-80E55336CEB4}"
  }
 }

@@ -6,6 +6,7 @@
 				<SoundBank Name="Main" ID="{1F271523-D06E-43F1-94DA-5F0AB2541AA1}">
 					<ObjectInclusionList>
 						<ObjectRef Name="HogImpact" ID="{350BE99D-610A-4072-B84D-C812854DA99F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="PlayerElimination" ID="{F2CA3A8B-C032-43D6-A6A9-0D40CF143F7C}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="CarExplosion" ID="{D3E88339-27D2-4421-BF62-7AF5F454891F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="EngineOff" ID="{7BBE8545-1595-449C-9FD0-2BDD92F52984}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="TireScreechOff" ID="{ACB3BAB1-7C05-44D4-A485-F0FEB8411A3B}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>

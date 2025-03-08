@@ -26,6 +26,7 @@ namespace AK
         static const AkUniqueID MIDROUNDON = 668901028U;
         static const AkUniqueID PAUSEOFF = 3921005316U;
         static const AkUniqueID PAUSEON = 80751710U;
+        static const AkUniqueID PLAYERELIMINATION = 3181948357U;
         static const AkUniqueID TIRESCREECHOFF = 3010988261U;
         static const AkUniqueID TIRESCREECHON = 3670274905U;
         static const AkUniqueID UICANCEL = 1933252553U;
