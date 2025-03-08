@@ -12026,13 +12026,12 @@ MonoBehaviour:
   cameraAngle: 0
   frontLeftRpm: 0
   velocity: 0
-  jumpForce: 5
-  jumpCooldown: 3
+  jumpForce: 7
+  jumpCooldown: 15
   jumpThrustParticles: {fileID: 0}
   jumpEffectPrefab: {fileID: 0}
   jumpEffectSpawnPoint: {fileID: 0}
   canJump: 1
-  jumpLight: {fileID: 0}
   steeringBufferSize: 6
   minDeadzone: 1
   maxDeadzone: 2

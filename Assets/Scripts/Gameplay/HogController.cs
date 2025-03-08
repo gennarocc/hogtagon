@@ -23,13 +23,12 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float velocity;
 
     [Header("Rocket Jump")]
-    [SerializeField] private float jumpForce = 5f; // How much upward force to apply
+    [SerializeField] private float jumpForce = 7f; // How much upward force to apply
     [SerializeField] private float jumpCooldown = 15f; // Time between jumps
     [SerializeField] private ParticleSystem jumpThrustParticles; // Particle effect for the jump
     [SerializeField] private GameObject jumpEffectPrefab; // Visual effect for jump (optional)
     [SerializeField] private Transform jumpEffectSpawnPoint; // Where to spawn the effect
     [SerializeField] private bool canJump = true; // Whether the player can jump
-    [SerializeField] private Light jumpLight; // Optional light effect
     public bool JumpOnCooldown => jumpOnCooldown;
     public float JumpCooldownRemaining => jumpCooldownRemaining;
     public float JumpCooldownTotal => jumpCooldown;
@@ -157,19 +156,6 @@ public class HogController : NetworkBehaviour
             jumpEffectSpawnPoint = transform;
         }
 
-        // Create jump light if not assigned
-        if (jumpLight == null)
-        {
-            GameObject lightObj = new GameObject("JumpLight");
-            lightObj.transform.parent = transform;
-            lightObj.transform.localPosition = Vector3.zero;
-            jumpLight = lightObj.AddComponent<Light>();
-            jumpLight.type = LightType.Point;
-            jumpLight.color = new Color(1f, 0.7f, 0.3f);
-            jumpLight.intensity = 3f;
-            jumpLight.range = 5f;
-            jumpLight.enabled = false;
-        }
     }
 
     private void Update()
@@ -687,19 +673,20 @@ public class HogController : NetworkBehaviour
     private IEnumerator TemporarilyIncreaseGravity(Rigidbody rb)
     {
         // Store original gravity
-        float originalGravity = Physics.gravity.y;
+        float gravity = -9.81f;
+        Debug.Log(gravity);
 
         // Wait for the rise phase (about 0.3 seconds)
         yield return new WaitForSeconds(0.3f);
 
         // Apply stronger gravity for faster fall
-        Physics.gravity = new Vector3(0, originalGravity * 2.5f, 0);
+        Physics.gravity = new Vector3(0, gravity * 2f, 0);
 
         // Wait for the fall phase
         yield return new WaitForSeconds(0.5f);
 
         // Restore original gravity
-        Physics.gravity = new Vector3(0, originalGravity, 0);
+        Physics.gravity = new Vector3(0, gravity, 0);
     }
 
     [ClientRpc]
@@ -909,78 +896,6 @@ public class HogController : NetworkBehaviour
         {
             Destroy(explosionInstance);
         }
-    }
-
-    private IEnumerator FlashJumpLight()
-    {
-        jumpLight.enabled = true;
-
-        // Fade light intensity over time
-        float duration = 0.5f;
-        float elapsed = 0f;
-        float startIntensity = jumpLight.intensity;
-
-        while (elapsed < duration)
-        {
-            float normalizedTime = elapsed / duration;
-            jumpLight.intensity = Mathf.Lerp(startIntensity, 0f, normalizedTime);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        jumpLight.enabled = false;
-    }
-
-    // Create particle system for the jump effect
-    private ParticleSystem CreateJumpThrustParticles()
-    {
-        GameObject particleObj = new GameObject("JumpThrustParticles");
-        particleObj.transform.SetParent(transform);
-        particleObj.transform.localPosition = new Vector3(0, -0.5f, 0); // Position under the car
-        particleObj.transform.localRotation = Quaternion.Euler(90, 0, 0); // Point downward
-
-        ParticleSystem ps = particleObj.AddComponent<ParticleSystem>();
-
-        // IMPORTANT: Stop the particle system before configuring it
-        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-
-        var main = ps.main;
-        main.duration = 0.5f;
-        main.loop = false;
-        main.startLifetime = 0.5f;
-        main.startSpeed = 5f;
-        main.startSize = 0.5f;
-        main.maxParticles = 100;
-
-        var emission = ps.emission;
-        emission.rateOverTime = 30f;
-        emission.SetBursts(new ParticleSystem.Burst[] {
-        new ParticleSystem.Burst(0f, 20f)
-    });
-
-        var shape = ps.shape;
-        shape.shapeType = ParticleSystemShapeType.Cone;
-        shape.angle = 15f;
-
-        var colorOverLifetime = ps.colorOverLifetime;
-        colorOverLifetime.enabled = true;
-
-        Gradient gradient = new Gradient();
-        gradient.SetKeys(
-            new GradientColorKey[] {
-            new GradientColorKey(new Color(1f, 0.8f, 0.3f), 0.0f),
-            new GradientColorKey(new Color(1f, 0.4f, 0.1f), 0.5f),
-            new GradientColorKey(new Color(0.7f, 0.1f, 0.1f), 1.0f)
-            },
-            new GradientAlphaKey[] {
-            new GradientAlphaKey(1.0f, 0.0f),
-            new GradientAlphaKey(0.8f, 0.5f),
-            new GradientAlphaKey(0.0f, 1.0f)
-            }
-        );
-        colorOverLifetime.color = gradient;
-
-        return ps;
     }
 
     #endregion

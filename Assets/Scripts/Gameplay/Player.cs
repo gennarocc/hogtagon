@@ -67,6 +67,7 @@ public class Player : NetworkBehaviour
         Cursor.visible = !Cursor.visible; // toggle visibility
         Cursor.lockState = CursorLockMode.Locked;
         ConnectionManager.instance.isConnected = true;
+        menuManager.jumpUI.SetActive(true);
 
         if (IsOwner)
         {
@@ -90,8 +91,6 @@ public class Player : NetworkBehaviour
 
         Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
         localPlayerCameraTransform = localPlayer.mainCamera.transform;
-
-        menuManager.jumpUI.SetActive(true);
     }
 
     private void Update()

@@ -87,7 +87,7 @@ public class JumpCooldownUI : MonoBehaviour
             if (onCooldown)
             {
                 cooldownText.text = Mathf.Ceil(remaining).ToString();
-                cooldownText.color = cooldownColor;
+                cooldownText.color = Color.magenta;
             }
             else
             {
