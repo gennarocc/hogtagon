@@ -22,6 +22,18 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
 
+    [Header("Rocket Jump")]
+    [SerializeField] private float jumpForce = 10f; // How much upward force to apply
+    [SerializeField] private float jumpCooldown = 3f; // Time between jumps
+    [SerializeField] private ParticleSystem jumpThrustParticles; // Particle effect for the jump
+    [SerializeField] private GameObject jumpEffectPrefab; // Visual effect for jump (optional)
+    [SerializeField] private Transform jumpEffectSpawnPoint; // Where to spawn the effect
+    [SerializeField] private bool canJump = true; // Whether the player can jump
+    [SerializeField] private Light jumpLight; // Optional light effect
+    public bool JumpOnCooldown => jumpOnCooldown;
+    public float JumpCooldownRemaining => jumpCooldownRemaining;
+    public float JumpCooldownTotal => jumpCooldown;
+
     [Header("Input Smoothing Settings")]
     [SerializeField, Range(1, 10)] public int steeringBufferSize = 5;
     [SerializeField, Range(0f, 20f)] public float minDeadzone = 3f;
@@ -62,6 +74,8 @@ public class HogController : NetworkBehaviour
 
     // Network variables
     private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    private NetworkVariable<bool> isJumping = new NetworkVariable<bool>(false);
+    private NetworkVariable<bool> jumpReady = new NetworkVariable<bool>(true);
 
     // Physics and control variables
     private float currentTorque;
@@ -70,6 +84,8 @@ public class HogController : NetworkBehaviour
     private float driftingAxis;
     private bool isTractionLocked = true;
     private bool driftingSoundOn = false;
+    private bool jumpOnCooldown = false;
+    private float jumpCooldownRemaining = 0f;
 
     // Cached physics values
     private Vector3 cachedVelocity;
@@ -134,6 +150,31 @@ public class HogController : NetworkBehaviour
         }
 
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
+
+        if (jumpEffectSpawnPoint == null)
+        {
+            jumpEffectSpawnPoint = transform;
+        }
+
+        // Create particle system if not assigned
+        if (jumpThrustParticles == null)
+        {
+            jumpThrustParticles = CreateJumpThrustParticles();
+        }
+
+        // Create jump light if not assigned
+        if (jumpLight == null)
+        {
+            GameObject lightObj = new GameObject("JumpLight");
+            lightObj.transform.parent = transform;
+            lightObj.transform.localPosition = Vector3.zero;
+            jumpLight = lightObj.AddComponent<Light>();
+            jumpLight.type = LightType.Point;
+            jumpLight.color = new Color(1f, 0.7f, 0.3f);
+            jumpLight.intensity = 3f;
+            jumpLight.range = 5f;
+            jumpLight.enabled = false;
+        }
     }
 
     private void Update()
@@ -144,6 +185,23 @@ public class HogController : NetworkBehaviour
         {
             // Play Horn Sound
             HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
+        }
+
+        if ((Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton1)) &&
+            canMove && canJump && !jumpOnCooldown && !transform.root.gameObject.GetComponent<Player>().isSpectating)
+        {
+            // Request jump on the server
+            JumpServerRpc();
+        }
+
+        // Update jump cooldown
+        if (jumpOnCooldown)
+        {
+            jumpCooldownRemaining -= Time.deltaTime;
+            if (jumpCooldownRemaining <= 0)
+            {
+                jumpOnCooldown = false;
+            }
         }
     }
 
@@ -212,14 +270,14 @@ public class HogController : NetworkBehaviour
         {
             return CalculateWeightedAverage(_steeringInputsList, weightingFactor);
         }
-        
+
         return rawCameraAngle;
     }
 
     private float CollectMovementInput()
     {
         float move = 0;
-        
+
         // Keyboard input
         if (Input.GetKey(KeyCode.W))
         {
@@ -360,14 +418,14 @@ public class HogController : NetworkBehaviour
         cachedSpeed = cachedVelocity.magnitude;
         localVelocityX = transform.InverseTransformDirection(cachedVelocity).x;
         cachedForwardVelocity = Vector3.Dot(cachedVelocity, transform.forward);
-        
+
         if (IsServer || IsOwner)
         {
             for (int i = 0; i < wheelColliders.Length; i++)
             {
                 cachedWheelRpms[i] = wheelColliders[i].rpm;
             }
-            
+
             frontLeftRpm = cachedWheelRpms[0];
             rpm.SetGlobalValue(frontLeftRpm);
             velocity = cachedSpeed;
@@ -447,7 +505,7 @@ public class HogController : NetworkBehaviour
 
     private float CalculateBehindFactor(float angle)
     {
-        float factor = angle > 0 
+        float factor = angle > 0
             ? (CAMERA_BEHIND_THRESHOLD - angle) / maxSteeringAngle
             : (CAMERA_BEHIND_THRESHOLD + angle) / maxSteeringAngle;
         return Mathf.Clamp01(factor);
@@ -487,10 +545,10 @@ public class HogController : NetworkBehaviour
     {
         CancelInvoke("RecoverTractionGradually");
         isTractionLocked = false;
-        
+
         // Gradually increase drifting effect
         driftingAxis = Mathf.Min(1f, driftingAxis + Time.deltaTime);
-        
+
         // Apply to all wheels
         if (driftingAxis < 1f)
         {
@@ -501,7 +559,7 @@ public class HogController : NetworkBehaviour
     private void RecoverTractionGradually()
     {
         driftingAxis = Mathf.Max(0f, driftingAxis - (Time.deltaTime / DRIFT_RECOVERY_RATE));
-        
+
         if (driftingAxis > 0f)
         {
             ApplyWheelFrictionMultiplier(driftingAxis * handbrakeDriftMultiplier);
@@ -580,10 +638,10 @@ public class HogController : NetworkBehaviour
         // Use existing steering angles from wheel colliders
         float frontSteeringAngle = (wheelColliders[0].steerAngle + wheelColliders[1].steerAngle) / 2f;
         float rearSteeringAngle = (wheelColliders[2].steerAngle + wheelColliders[3].steerAngle) / 2f;
-        
-        bool isReversing = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE && 
+
+        bool isReversing = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE &&
                            (IsOwner && (Input.GetKey(KeyCode.S) || (Input.GetJoystickNames().Length > 0 && Input.GetAxis("XRI_Right_Trigger") != 0)));
-        
+
         return new SteeringData
         {
             frontSteeringAngle = frontSteeringAngle,
@@ -616,7 +674,7 @@ public class HogController : NetworkBehaviour
             float circumference = 2f * Mathf.PI * wheelColliders[i].radius;
             float distanceTraveled = wheelColliders[i].rpm * Time.deltaTime * circumference / 60f;
             float rotationDegrees = (distanceTraveled / circumference) * 360f;
-            
+
             wheelTransforms[i].Rotate(rotationDegrees, 0f, 0f, Space.Self);
         }
     }
@@ -626,21 +684,21 @@ public class HogController : NetworkBehaviour
         // For non-owner clients, estimate wheel rotation based on rigidbody velocity
         float wheelRadius = 0.33f; // Assuming all wheels have the same radius, adjust as needed
         float velocity = Mathf.Abs(cachedForwardVelocity);
-        
+
         // Calculate RPM: (velocity in m/s) / (circumference in meters) * 60 seconds
         float estimatedRPM = (velocity / (2f * Mathf.PI * wheelRadius)) * 60f;
-        
+
         // Calculate rotation degrees
         float circumference = 2f * Mathf.PI * wheelRadius;
         float distanceTraveled = estimatedRPM * Time.deltaTime * circumference / 60f;
         float rotationDegrees = (distanceTraveled / circumference) * 360f;
-        
+
         // If moving in reverse, invert rotation direction
         if (cachedForwardVelocity < 0)
         {
             rotationDegrees = -rotationDegrees;
         }
-        
+
         // Apply rotation to all wheels
         for (int i = 0; i < wheelTransforms.Length; i++)
         {
@@ -691,7 +749,7 @@ public class HogController : NetworkBehaviour
             wheelParticleSystems[1].Stop();
             tireSkids[0].emitting = false;
             tireSkids[1].emitting = false;
-            if (driftingSoundOn) 
+            if (driftingSoundOn)
             {
                 HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
                 driftingSoundOn = false;
@@ -730,6 +788,141 @@ public class HogController : NetworkBehaviour
         {
             Destroy(explosionInstance);
         }
+    }
+
+    [ServerRpc]
+    private void JumpServerRpc()
+    {
+        // Check if jump is allowed on server
+        if (!canJump || !jumpReady.Value) return;
+
+        // Set jump state
+        isJumping.Value = true;
+        jumpReady.Value = false;
+
+        // Execute jump on all clients
+        JumpExecuteClientRpc();
+
+        // Start cooldown
+        StartCoroutine(JumpCooldownServer());
+    }
+
+    private IEnumerator JumpCooldownServer()
+    {
+        yield return new WaitForSeconds(jumpCooldown);
+        jumpReady.Value = true;
+        isJumping.Value = false;
+    }
+
+    [ClientRpc]
+    private void JumpExecuteClientRpc()
+    {
+        // Apply upward force to the car
+        if (rb != null)
+        {
+            // First, apply a strong upward impulse
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+
+            // Add a small forward boost in the direction the car is facing
+            rb.AddForce(transform.forward * (jumpForce * 0.3f), ForceMode.Impulse);
+        }
+
+        // Play particle effects
+        if (jumpThrustParticles != null)
+        {
+            jumpThrustParticles.Play();
+        }
+
+        // Spawn one-time visual effect
+        if (jumpEffectPrefab != null && jumpEffectSpawnPoint != null)
+        {
+            GameObject effect = Instantiate(jumpEffectPrefab, jumpEffectSpawnPoint.position, Quaternion.identity);
+            Destroy(effect, 2f); // Destroy after 2 seconds
+        }
+
+        // Handle jump light effect
+        if (jumpLight != null)
+        {
+            StartCoroutine(FlashJumpLight());
+        }
+
+        // Play sound effect
+        //HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogJump);
+
+        // Only manage local cooldown UI for the owner
+        if (IsOwner)
+        {
+            jumpOnCooldown = true;
+            jumpCooldownRemaining = jumpCooldown;
+        }
+    }
+
+    private IEnumerator FlashJumpLight()
+    {
+        jumpLight.enabled = true;
+
+        // Fade light intensity over time
+        float duration = 0.5f;
+        float elapsed = 0f;
+        float startIntensity = jumpLight.intensity;
+
+        while (elapsed < duration)
+        {
+            float normalizedTime = elapsed / duration;
+            jumpLight.intensity = Mathf.Lerp(startIntensity, 0f, normalizedTime);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        jumpLight.enabled = false;
+    }
+
+    // Create particle system for the jump effect
+    private ParticleSystem CreateJumpThrustParticles()
+    {
+        GameObject particleObj = new GameObject("JumpThrustParticles");
+        particleObj.transform.SetParent(transform);
+        particleObj.transform.localPosition = new Vector3(0, -0.5f, 0); // Position under the car
+        particleObj.transform.localRotation = Quaternion.Euler(90, 0, 0); // Point downward
+
+        ParticleSystem ps = particleObj.AddComponent<ParticleSystem>();
+        var main = ps.main;
+        main.duration = 0.5f;
+        main.loop = false;
+        main.startLifetime = 0.5f;
+        main.startSpeed = 5f;
+        main.startSize = 0.5f;
+        main.maxParticles = 100;
+
+        var emission = ps.emission;
+        emission.rateOverTime = 30f;
+        emission.SetBursts(new ParticleSystem.Burst[] {
+        new ParticleSystem.Burst(0f, 20f)
+    });
+
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 15f;
+
+        var colorOverLifetime = ps.colorOverLifetime;
+        colorOverLifetime.enabled = true;
+
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new GradientColorKey[] {
+            new GradientColorKey(new Color(1f, 0.8f, 0.3f), 0.0f),
+            new GradientColorKey(new Color(1f, 0.4f, 0.1f), 0.5f),
+            new GradientColorKey(new Color(0.7f, 0.1f, 0.1f), 1.0f)
+            },
+            new GradientAlphaKey[] {
+            new GradientAlphaKey(1.0f, 0.0f),
+            new GradientAlphaKey(0.8f, 0.5f),
+            new GradientAlphaKey(0.0f, 1.0f)
+            }
+        );
+        colorOverLifetime.color = gradient;
+
+        return ps;
     }
 
     #endregion
