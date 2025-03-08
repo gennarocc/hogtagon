@@ -153,7 +153,7 @@ public class HogController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0)) && !transform.root.gameObject.GetComponent<Player>().isSpectating)
+        if ((Input.GetKeyDown(KeyCode.F) || Input.GetKeyDown(KeyCode.JoystickButton0)) && !transform.root.gameObject.GetComponent<Player>().isSpectating)
         {
             // Play Horn Sound
             HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
@@ -215,7 +215,7 @@ public class HogController : NetworkBehaviour
             clientId = OwnerClientId,
             moveInput = CollectMovementInput(),
             brakeInput = CollectBrakeInput(),
-            handbrake = Input.GetKey(KeyCode.Space),
+            handbrake = Input.GetKey(KeyCode.Mouse1),
             rawCameraAngle = smoothedAngle
         };
     }
