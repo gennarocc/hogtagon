@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{612801B1-EF5C-3ED3-35EA-F8F494C03BCA}",
+    "Hash": "{2F109FDA-9A7F-4C65-9EC3-26BF8B137620}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -38,6 +38,14 @@
       "Location": "Memory",
       "ShortName": "ui-confirmation.wav",
       "CachePath": "B6/{B6D2F97E-FE56-A469-F01A-2474DD17519C}.wem"
+     },
+     {
+      "Id": "177590292",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "player-elimination.wav",
+      "CachePath": "ED/{EDEA3880-100B-D195-B24F-404C24C3E280}.wem"
      },
      {
       "Id": "178975780",
@@ -165,7 +173,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "tire-screeching-1.wav",
-      "CachePath": "6F/{6FDAE740-EE66-D1D4-B61A-B397F770DBAF}.wem"
+      "CachePath": "E1/{E169A183-2F34-2503-3096-4DEF78E0C984}.wem"
      },
      {
       "Id": "595717928",
@@ -269,7 +277,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "tire-screeching-2.wav",
-      "CachePath": "94/{94609950-8CE5-78B2-6EED-99A0D91745B2}.wem"
+      "CachePath": "FE/{FED87297-BDB3-5898-213F-F429ECC884F3}.wem"
      },
      {
       "Id": "1060462459",
@@ -466,6 +474,20 @@
       "DurationMax": "0"
      },
      {
+      "Id": "3181948357",
+      "Name": "PlayerElimination",
+      "ObjectPath": "\\Events\\Default Work Unit\\PlayerElimination",
+      "GUID": "{F2CA3A8B-C032-43D6-A6A9-0D40CF143F7C}",
+      "DurationType": "OneShot",
+      "DurationMin": "2.1742857",
+      "DurationMax": "2.1742857",
+      "MediaRefs": [
+       {
+        "Id": "177590292"
+       }
+      ]
+     },
+     {
       "Id": "3010988261",
       "Name": "TireScreechOff",
       "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOff",
@@ -583,6 +605,6 @@
     ]
    }
   ],
-  "FileHash": "{E4FC40CF-F328-6565-85CA-991A7403A379}"
+  "FileHash": "{C489D112-9653-F790-4221-AB23E1F2273E}"
  }
 }
