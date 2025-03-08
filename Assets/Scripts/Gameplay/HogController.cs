@@ -25,9 +25,6 @@ public class HogController : NetworkBehaviour
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
     [SerializeField] private float jumpCooldown = 15f; // Time between jumps
-    [SerializeField] private ParticleSystem jumpThrustParticles; // Particle effect for the jump
-    [SerializeField] private GameObject jumpEffectPrefab; // Visual effect for jump (optional)
-    [SerializeField] private Transform jumpEffectSpawnPoint; // Where to spawn the effect
     [SerializeField] private bool canJump = true; // Whether the player can jump
     public bool JumpOnCooldown => jumpOnCooldown;
     public float JumpCooldownRemaining => jumpCooldownRemaining;
@@ -150,12 +147,6 @@ public class HogController : NetworkBehaviour
         }
 
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
-
-        if (jumpEffectSpawnPoint == null)
-        {
-            jumpEffectSpawnPoint = transform;
-        }
-
     }
 
     private void Update()
@@ -647,29 +638,6 @@ public class HogController : NetworkBehaviour
         StartCoroutine(JumpCooldownServer());
     }
 
-    // private IEnumerator TemporarilyDisableWheelColliders(HogController hogController)
-    // {
-    //     // Disable wheel colliders temporarily to allow jump to happen
-    //     if (hogController != null && hogController.wheelColliders.Length > 0)
-    //     {
-    //         foreach (WheelCollider wheel in hogController.wheelColliders)
-    //         {
-    //             if (wheel != null)
-    //                 wheel.enabled = false;
-    //         }
-
-    //         // Wait for jump to reach apex
-    //         yield return new WaitForSeconds(0.5f);
-
-    //         // Re-enable wheel colliders
-    //         foreach (WheelCollider wheel in hogController.wheelColliders)
-    //         {
-    //             if (wheel != null)
-    //                 wheel.enabled = true;
-    //         }
-    //     }
-    // }
-
     private IEnumerator TemporarilyIncreaseGravity(Rigidbody rb)
     {
         // Store original gravity
@@ -692,7 +660,6 @@ public class HogController : NetworkBehaviour
     [ClientRpc]
     private void JumpEffectsClientRpc()
     {
-
         jumpParticleSystems[0].Play();
         jumpParticleSystems[1].Play();
 
@@ -706,17 +673,11 @@ public class HogController : NetworkBehaviour
         }
     }
     private IEnumerator JumpCooldownServer()
-
     {
-
         yield return new WaitForSeconds(jumpCooldown);
-
         jumpReady.Value = true;
-
         isJumping.Value = false;
-
     }
-
 
     #endregion
 
