@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{666B5571-7519-E5BF-2DB1-8939D2922B19}",
+    "Hash": "{F3DF727A-0D78-9C87-72D8-63A9A14519E6}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -446,6 +446,26 @@
       ]
      },
      {
+      "Id": "3921005316",
+      "Name": "PauseOff",
+      "ObjectPath": "\\Events\\Default Work Unit\\PauseOff",
+      "GUID": "{141FE736-21DB-4AEA-AE49-07A0FC668D73}",
+      "MaxAttenuation": "0",
+      "DurationType": "OneShot",
+      "DurationMin": "0",
+      "DurationMax": "0"
+     },
+     {
+      "Id": "80751710",
+      "Name": "PauseOn",
+      "ObjectPath": "\\Events\\Default Work Unit\\PauseOn",
+      "GUID": "{E8BED00B-F6C7-4750-AEA7-A9D46DF0E0A6}",
+      "MaxAttenuation": "0",
+      "DurationType": "OneShot",
+      "DurationMin": "0",
+      "DurationMax": "0"
+     },
+     {
       "Id": "3010988261",
       "Name": "TireScreechOff",
       "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOff",
@@ -563,6 +583,6 @@
     ]
    }
   ],
-  "FileHash": "{49197F46-FDE9-8091-31E9-4A4E2463AB79}"
+  "FileHash": "{A7BB1426-45B8-83EC-8356-CF90BC652F1B}"
  }
 }

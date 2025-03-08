@@ -22,13 +22,13 @@
 										<Property Name="LoopCount" Type="int16" Value="0"/>
 									</PropertyList>
 									<ChildrenList>
-										<MusicPlaylistItem Name="" ID="{98A14A15-0652-4B0F-BDC9-2A45E0092D49}" ShortID="753161549">
+										<MusicPlaylistItem Name="" ID="{B6BED23A-4F18-47EF-853F-5A9B1CA9C5E7}" ShortID="747340319">
 											<PropertyList>
 												<Property Name="PlaylistItemType" Type="int16" Value="1"/>
 											</PropertyList>
 											<ReferenceList>
 												<Reference Name="Segment">
-													<ObjectRef Name="menu" ID="{F9BDA889-66B8-4AE5-97DB-4F7162E301AF}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+													<ObjectRef Name="ost-menu_v2" ID="{A26CB59B-D82C-482C-AA6F-DBD6FB349194}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
 												</Reference>
 											</ReferenceList>
 										</MusicPlaylistItem>
@@ -53,9 +53,9 @@
 						</Reference>
 					</ReferenceList>
 					<ChildrenList>
-						<MusicSegment Name="menu" ID="{F9BDA889-66B8-4AE5-97DB-4F7162E301AF}" ShortID="185468629">
+						<MusicSegment Name="ost-menu_v2" ID="{A26CB59B-D82C-482C-AA6F-DBD6FB349194}" ShortID="907903514">
 							<PropertyList>
-								<Property Name="EndPosition" Type="Real64" Value="109238.104166667"/>
+								<Property Name="EndPosition" Type="Real64" Value="115238.104166667"/>
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
@@ -66,14 +66,14 @@
 								</Reference>
 							</ReferenceList>
 							<ChildrenList>
-								<MusicTrack Name="menu" ID="{C6D1DD96-2046-4D2B-A384-B01030B17E13}" ShortID="1030308087">
+								<MusicTrack Name="ost-menu_v2" ID="{9E0CE793-1C28-4A0B-AEBF-C1A6243A472B}" ShortID="703421598">
 									<ReferenceList>
 										<Reference Name="OutputBus">
 											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
 										</Reference>
 										<Reference Name="TransitionRoot">
 											<Custom>
-												<MusicTransition Name="Root" ID="{C398E71E-88D0-409C-92F8-EC067302D79E}">
+												<MusicTransition Name="Root" ID="{864D4F0B-699E-4B29-9DDF-42D3D765C147}">
 													<PropertyList>
 														<Property Name="IsFolder" Type="bool" Value="True"/>
 													</PropertyList>
@@ -83,11 +83,11 @@
 										</Reference>
 									</ReferenceList>
 									<ChildrenList>
-										<AudioFileSource Name="menu" ID="{67966B41-3265-4A7F-B2A5-9287DC0D7524}">
+										<AudioFileSource Name="ost-menu_v2" ID="{303CA815-89D5-4D93-B8B2-E55DC66FF230}">
 											<Language>SFX</Language>
-											<AudioFile>menu.wav</AudioFile>
+											<AudioFile>ost-menu_v2.wav</AudioFile>
 											<MediaIDList>
-												<MediaID ID="901638835"/>
+												<MediaID ID="1037598677"/>
 											</MediaIDList>
 										</AudioFileSource>
 									</ChildrenList>
@@ -95,18 +95,18 @@
 										<ObjectList Name="Sequences">
 											<Reference>
 												<Local>
-													<MusicTrackSequence Name="" ID="{79AE8162-447E-4608-953B-FE5D61E9CFCD}">
+													<MusicTrackSequence Name="" ID="{B633C2FB-EC20-4E9E-8841-FA3B5E78D313}">
 														<ObjectLists>
 															<ObjectList Name="Clips">
 																<Reference>
 																	<Local>
-																		<MusicClip Name="menu" ID="{4EA4200B-D6FF-45A2-8B9E-AB9EC5006A5F}">
+																		<MusicClip Name="ost-menu_v2" ID="{0EAD6E61-B127-4DDC-AD8B-3CB51F148C09}">
 																			<PropertyList>
-																				<Property Name="EndTrimOffset" Type="Real64" Value="109238.104166667"/>
-																				<Property Name="FadeInMode" Type="int16" Value="0"/>
+																				<Property Name="EndTrimOffset" Type="Real64" Value="115238.104166667"/>
+																				<Property Name="FadeInDuration" Type="Real64" Value="329.597068487204"/>
 																				<Property Name="FadeOutMode" Type="int16" Value="0"/>
 																			</PropertyList>
-																			<AudioSourceRef Name="menu" ID="{67966B41-3265-4A7F-B2A5-9287DC0D7524}"/>
+																			<AudioSourceRef Name="ost-menu_v2" ID="{303CA815-89D5-4D93-B8B2-E55DC66FF230}"/>
 																		</MusicClip>
 																	</Local>
 																</Reference>
@@ -123,15 +123,15 @@
 								<ObjectList Name="Cues">
 									<Reference>
 										<Local>
-											<MusicCue Name="Entry Cue" ID="{1C786304-2798-4D86-A93D-F35D74A115E3}"/>
+											<MusicCue Name="Entry Cue" ID="{0F04AA1C-D466-4910-97F2-52737E89E03C}"/>
 										</Local>
 									</Reference>
 									<Reference>
 										<Local>
-											<MusicCue Name="Exit Cue" ID="{878E2463-8B48-4619-93D7-5B4DA358A642}">
+											<MusicCue Name="Exit Cue" ID="{9F9FF0D5-2898-45A1-8916-DBA4077F89C4}">
 												<PropertyList>
 													<Property Name="CueType" Type="int16" Value="1"/>
-													<Property Name="TimeMs" Type="Real64" Value="109238.104166667"/>
+													<Property Name="TimeMs" Type="Real64" Value="115238.104166667"/>
 												</PropertyList>
 											</MusicCue>
 										</Local>
@@ -626,6 +626,11 @@
 						</MusicPlaylistContainer>
 						<MusicPlaylistContainer Name="3_plonky" ID="{7C6DA8E2-BADD-4688-BA04-1032115ADC99}" ShortID="1000012453">
 							<PropertyList>
+								<Property Name="Lowpass" Type="int16">
+									<ValueList>
+										<Value>15</Value>
+									</ValueList>
+								</Property>
 								<Property Name="PlaybackSpeed" Type="Real64">
 									<ValueList>
 										<Value>1.2</Value>

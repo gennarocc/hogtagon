@@ -1,7 +1,9 @@
 Event	ID	Name			Wwise Object Path	Notes
 	531512037	LevelMusicOff			\Default Work Unit\LevelMusicOff	
+	668901028	MidroundOn			\Default Work Unit\MidroundOn	
 	878061882	MenuMusicOn			\Default Work Unit\MenuMusicOn	
 	1021065561	LevelMusicOn			\Default Work Unit\LevelMusicOn	
+	1869858978	MidroundOff			\Default Work Unit\MidroundOff	
 	2510477776	MenuMusicOff			\Default Work Unit\MenuMusicOff	
 
 In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
@@ -11,7 +13,7 @@ In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	498960498	B_3-170bpm_L4_P4	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\3D\{3DDA8D24-F063-C7C6-1E8D-5B5312BABFDB}.wem		\Interactive Music Hierarchy\Music\level\3_plonky\B_3-170bpm_L4_P4\B_3-170bpm_L4_P4		2710748
 	605924318	D_3-170bpm_L4_P4	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\E7\{E7CE0912-F76F-6207-0374-1D206ED7C754}.wem		\Interactive Music Hierarchy\Music\level\3_plonky\D_3-170bpm_L4_P4\D_3-170bpm_L4_P4		2710748
 	735396579	F_3-170bpm_L4_P4	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\9E\{9E09DE94-1CEB-08B5-DC2C-438C7A37133F}.wem		\Interactive Music Hierarchy\Music\level\3_plonky\F_3-170bpm_L4_P4\F_3-170bpm_L4_P4		1626548
-	901638835	menu	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\E7\{E7B97265-93C5-1793-7161-E9AD545922E1}.wem		\Interactive Music Hierarchy\Music\0_menu\menu\menu		20973908
 	966578357	C_3-170bpm_L4_P4	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\36\{36CB31ED-FF06-3932-632B-CA53674004A0}.wem		\Interactive Music Hierarchy\Music\level\3_plonky\C_3-170bpm_L4_P4\C_3-170bpm_L4_P4		2710748
 	1005350950	E_3-170bpm_L4_P4	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\16\{161D85BF-4B23-2E85-371D-9E23BA7E2110}.wem		\Interactive Music Hierarchy\Music\level\3_plonky\E_3-170bpm_L4_P4\E_3-170bpm_L4_P4		813336
+	1037598677	ost-menu_v2	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\71\{71D33C98-EEA1-C6F4-562C-0F2CA01E2F68}.wem		\Interactive Music Hierarchy\Music\0_menu\ost-menu_v2\ost-menu_v2		22125972
 

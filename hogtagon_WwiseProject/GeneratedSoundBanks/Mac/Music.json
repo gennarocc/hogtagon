@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{F0049809-0D2F-467E-A817-D74CA9543625}",
     "Language": "SFX",
-    "Hash": "{E9812CB6-1516-60B5-4232-2608219D8BD0}",
+    "Hash": "{8F6337D4-E9A6-51C2-3AC4-9BAEAB1F5B30}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Music",
     "ShortName": "Music",
     "Path": "Music.bnk",
@@ -64,14 +64,6 @@
       "CachePath": "9E/{9E09DE94-1CEB-08B5-DC2C-438C7A37133F}.wem"
      },
      {
-      "Id": "901638835",
-      "Language": "SFX",
-      "Streaming": "false",
-      "Location": "Memory",
-      "ShortName": "menu.wav",
-      "CachePath": "E7/{E7B97265-93C5-1793-7161-E9AD545922E1}.wem"
-     },
-     {
       "Id": "966578357",
       "Language": "SFX",
       "Streaming": "false",
@@ -86,6 +78,14 @@
       "Location": "Memory",
       "ShortName": "E_3-170bpm_L4_P4.wav",
       "CachePath": "16/{161D85BF-4B23-2E85-371D-9E23BA7E2110}.wem"
+     },
+     {
+      "Id": "1037598677",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "ost-menu_v2.wav",
+      "CachePath": "71/{71D33C98-EEA1-C6F4-562C-0F2CA01E2F68}.wem"
      }
     ],
     "Events": [
@@ -150,13 +150,33 @@
       "DurationType": "Infinite",
       "MediaRefs": [
        {
-        "Id": "901638835"
+        "Id": "1037598677"
        }
       ]
+     },
+     {
+      "Id": "1869858978",
+      "Name": "MidroundOff",
+      "ObjectPath": "\\Events\\Default Work Unit\\MidroundOff",
+      "GUID": "{3114A31F-9387-4E49-9F91-AFAE8125B52C}",
+      "MaxAttenuation": "0",
+      "DurationType": "OneShot",
+      "DurationMin": "0",
+      "DurationMax": "0"
+     },
+     {
+      "Id": "668901028",
+      "Name": "MidroundOn",
+      "ObjectPath": "\\Events\\Default Work Unit\\MidroundOn",
+      "GUID": "{D9054DF8-BF62-433E-A094-BBE2D075E616}",
+      "MaxAttenuation": "0",
+      "DurationType": "OneShot",
+      "DurationMin": "0",
+      "DurationMax": "0"
      }
     ]
    }
   ],
-  "FileHash": "{920CFAB9-3A82-B501-0457-31575D7A944B}"
+  "FileHash": "{0C80504B-A07A-2809-C90F-ED0BCCA2F790}"
  }
 }
