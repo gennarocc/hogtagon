@@ -610,6 +610,130 @@ public class HogController : NetworkBehaviour
         }
     }
 
+    [ServerRpc]
+    private void JumpServerRpc()
+    {
+        Debug.Log($"Jump Server RPC - CanJump: {canJump}, JumpReady: {jumpReady.Value}, CanMove: {canMove}");
+
+        // Check if jump is allowed on server
+        if (!canJump || !jumpReady.Value)
+        {
+            Debug.Log("Jump rejected by server");
+            return;
+        }
+
+        // Set jump state
+        isJumping.Value = true;
+        jumpReady.Value = false;
+
+        // Execute jump on all clients with debug info
+        JumpDebugClientRpc();
+
+        // Start cooldown
+        StartCoroutine(JumpCooldownServer());
+    }
+
+    [ClientRpc]
+    private void JumpDebugClientRpc()
+    {
+        Debug.Log($"Jump Debug - IsOwner: {IsOwner}, IsServer: {IsServer}, CanMove: {canMove}, " +
+                  $"Rigidbody: {rb != null}, IsKinematic: {rb?.isKinematic}, JumpForce: {jumpForce}");
+
+        // Execute normal jump
+        JumpExecuteClientRpc();
+    }
+    [ClientRpc]
+    private void JumpExecuteClientRpc()
+    {
+        // PHYSICS: Apply forces differently based on authority
+        if (rb != null)
+        {
+            // Server handles physics for non-owner objects
+            if (IsServer && !IsOwner)
+            {
+                Debug.Log($"Server applying jump force to non-owner object");
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                rb.AddForce(transform.forward * (jumpForce * 0.3f), ForceMode.Impulse);
+            }
+            // Owner handles physics for own object
+            else if (IsOwner)
+            {
+                Debug.Log($"Owner applying jump force");
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                rb.AddForce(transform.forward * (jumpForce * 0.3f), ForceMode.Impulse);
+            }
+        }
+
+        // VISUAL EFFECTS: Always show on all clients
+        if (jumpThrustParticles != null)
+        {
+            jumpThrustParticles.Play();
+        }
+
+        // Spawn one-time visual effect
+        if (jumpEffectPrefab != null && jumpEffectSpawnPoint != null)
+        {
+            GameObject effect = Instantiate(jumpEffectPrefab, jumpEffectSpawnPoint.position, Quaternion.identity);
+            Destroy(effect, 2f); // Destroy after 2 seconds
+        }
+
+        // Handle jump light effect
+        if (jumpLight != null)
+        {
+            StartCoroutine(FlashJumpLight());
+        }
+
+        // Only manage local cooldown UI for the owner
+        if (IsOwner)
+        {
+            jumpOnCooldown = true;
+            jumpCooldownRemaining = jumpCooldown;
+        }
+    }
+
+    [ClientRpc]
+    private void JumpEffectsClientRpc()
+    {
+        // Just handle effects, not physics
+        if (jumpThrustParticles != null)
+        {
+            jumpThrustParticles.Play();
+        }
+
+        // Spawn visual effect
+        if (jumpEffectPrefab != null && jumpEffectSpawnPoint != null)
+        {
+            GameObject effect = Instantiate(jumpEffectPrefab, jumpEffectSpawnPoint.position, Quaternion.identity);
+            Destroy(effect, 2f);
+        }
+
+        // Light effect
+        if (jumpLight != null)
+        {
+            StartCoroutine(FlashJumpLight());
+        }
+
+        // Manage cooldown UI for the owner
+        if (IsOwner)
+        {
+            jumpOnCooldown = true;
+            jumpCooldownRemaining = jumpCooldown;
+
+        }
+    }
+    private IEnumerator JumpCooldownServer()
+
+    {
+
+        yield return new WaitForSeconds(jumpCooldown);
+
+        jumpReady.Value = true;
+
+        isJumping.Value = false;
+
+    }
+
+
     #endregion
 
     #region Visual Effects
@@ -787,73 +911,6 @@ public class HogController : NetworkBehaviour
         if (explosionInstance != null)
         {
             Destroy(explosionInstance);
-        }
-    }
-
-    [ServerRpc]
-    private void JumpServerRpc()
-    {
-        // Check if jump is allowed on server
-        if (!canJump || !jumpReady.Value) return;
-
-        // Set jump state
-        isJumping.Value = true;
-        jumpReady.Value = false;
-
-        // Execute jump on all clients
-        JumpExecuteClientRpc();
-
-        // Start cooldown
-        StartCoroutine(JumpCooldownServer());
-    }
-
-    private IEnumerator JumpCooldownServer()
-    {
-        yield return new WaitForSeconds(jumpCooldown);
-        jumpReady.Value = true;
-        isJumping.Value = false;
-    }
-
-    [ClientRpc]
-    private void JumpExecuteClientRpc()
-    {
-        // Apply upward force to the car
-        if (rb != null)
-        {
-            // First, apply a strong upward impulse
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-
-            // Add a small forward boost in the direction the car is facing
-            rb.AddForce(transform.forward * (jumpForce * 0.3f), ForceMode.Impulse);
-        }
-
-        // Play particle effects
-        if (jumpThrustParticles != null)
-        {
-            jumpThrustParticles.Play();
-        }
-
-        // Spawn one-time visual effect
-        if (jumpEffectPrefab != null && jumpEffectSpawnPoint != null)
-        {
-            GameObject effect = Instantiate(jumpEffectPrefab, jumpEffectSpawnPoint.position, Quaternion.identity);
-            Destroy(effect, 2f); // Destroy after 2 seconds
-        }
-
-        // Handle jump light effect
-        if (jumpLight != null)
-        {
-            StartCoroutine(FlashJumpLight());
-        }
-
-        // Play sound effect
-        //HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogJump);
-
-        // Only manage local cooldown UI for the owner
-        if (IsOwner)
-        {
-            jumpOnCooldown = true;
-            jumpCooldownRemaining = jumpCooldown;
         }
     }
 
