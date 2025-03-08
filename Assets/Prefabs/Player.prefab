@@ -139,7 +139,7 @@ GameObject:
   - component: {fileID: 1233816499970886941}
   m_Layer: 0
   m_Name: FreeLook Camera
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -452,7 +452,7 @@ GameObject:
   - component: {fileID: 362347677443509517}
   m_Layer: 0
   m_Name: LeftTireSkid
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -590,7 +590,7 @@ GameObject:
   - component: {fileID: 8551842992465795262}
   m_Layer: 0
   m_Name: Colliders
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -626,7 +626,7 @@ GameObject:
   - component: {fileID: 2553562073284689455}
   m_Layer: 0
   m_Name: RightTireSkid
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -844,7 +844,7 @@ GameObject:
   - component: {fileID: 6832065672850586991}
   m_Layer: 0
   m_Name: RearRightWheel
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1038,7 +1038,7 @@ GameObject:
   - component: {fileID: 4847451712802074695}
   m_Layer: 0
   m_Name: Main Camera
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1248,7 +1248,7 @@ GameObject:
   - component: {fileID: 6498465622018132530}
   m_Layer: 0
   m_Name: LeftJumpSmoke
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6044,7 +6044,7 @@ GameObject:
   - component: {fileID: 6251583506931057773}
   m_Layer: 0
   m_Name: Bumpers
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6150,7 +6150,7 @@ GameObject:
   - component: {fileID: 5587564612391741051}
   m_Layer: 0
   m_Name: CameraOffset
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6183,7 +6183,7 @@ GameObject:
   - component: {fileID: 7505519493020409115}
   m_Layer: 0
   m_Name: Windshield
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6269,7 +6269,7 @@ GameObject:
   - component: {fileID: 2077668940201031422}
   m_Layer: 0
   m_Name: RightTireSmoke_PS
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11148,7 +11148,7 @@ GameObject:
   - component: {fileID: 1498580116071784513}
   m_Layer: 0
   m_Name: Wheels
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11308,7 +11308,7 @@ GameObject:
   - component: {fileID: 2513074227899650122}
   m_Layer: 0
   m_Name: Body
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11434,7 +11434,7 @@ GameObject:
   - component: {fileID: 6846373815372823347}
   m_Layer: 0
   m_Name: Suspension
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11520,7 +11520,7 @@ GameObject:
   - component: {fileID: 5932910653615919216}
   m_Layer: 0
   m_Name: Head Lights
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11606,7 +11606,7 @@ GameObject:
   - component: {fileID: 2228922393621413926}
   m_Layer: 0
   m_Name: Seats
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11778,7 +11778,7 @@ GameObject:
   - component: {fileID: 943554702886911015}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11897,7 +11897,7 @@ GameObject:
   - component: {fileID: 7500573832422394504}
   m_Layer: 0
   m_Name: Hog
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12028,9 +12028,6 @@ MonoBehaviour:
   velocity: 0
   jumpForce: 7
   jumpCooldown: 15
-  jumpThrustParticles: {fileID: 0}
-  jumpEffectPrefab: {fileID: 0}
-  jumpEffectSpawnPoint: {fileID: 0}
   canJump: 1
   steeringBufferSize: 6
   minDeadzone: 1
@@ -12157,7 +12154,7 @@ GameObject:
   - component: {fileID: 7945259627787905534}
   m_Layer: 0
   m_Name: RearLeftWheel
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12356,7 +12353,7 @@ GameObject:
   - component: {fileID: 6906638998894907252}
   m_Layer: 0
   m_Name: LeftTireSmoke_PS
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17149,7 +17146,7 @@ GameObject:
   - component: {fileID: 1452508388861175705}
   m_Layer: 0
   m_Name: Mesh
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17185,7 +17182,7 @@ GameObject:
   - component: {fileID: 4296994293568657065}
   m_Layer: 0
   m_Name: FrontRightWheel
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17257,7 +17254,7 @@ GameObject:
   - component: {fileID: 1718532802686771525}
   m_Layer: 0
   m_Name: Tail Lights
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17341,7 +17338,7 @@ GameObject:
   - component: {fileID: 3661188709929093751}
   m_Layer: 0
   m_Name: CameraTarget
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17453,7 +17450,7 @@ GameObject:
   - component: {fileID: 8114381944568008645}
   m_Layer: 5
   m_Name: PlayerName
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17587,7 +17584,7 @@ GameObject:
   - component: {fileID: 1217631909650173895}
   m_Layer: 0
   m_Name: Cameras
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17621,7 +17618,7 @@ GameObject:
   - component: {fileID: 3983448297723184092}
   m_Layer: 0
   m_Name: Effects
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17660,7 +17657,7 @@ GameObject:
   - component: {fileID: 1599139024570357291}
   m_Layer: 0
   m_Name: RightJumpSmoke
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22454,7 +22451,7 @@ GameObject:
   - component: {fileID: 7947942277690021792}
   m_Layer: 0
   m_Name: FrontLeftWheel
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22587,7 +22584,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
       propertyPath: m_TagString
-      value: Player
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

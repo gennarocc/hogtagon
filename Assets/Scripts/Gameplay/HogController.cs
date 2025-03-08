@@ -356,7 +356,7 @@ public class HogController : NetworkBehaviour
         ApplyMotorTorque(input.moveInput, input.brakeInput);
         ApplySteering(steeringData);
 
-        isDrifting.Value = Mathf.Abs(localVelocityX) > .25f;
+        isDrifting.Value = Mathf.Abs(localVelocityX) > .45f;
 
         if (input.handbrake)
         {
@@ -820,7 +820,6 @@ public class HogController : NetworkBehaviour
             tireSkids[1].emitting = false;
             if (driftingSoundOn)
             {
-                HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
                 driftingSoundOn = false;
             }
         }

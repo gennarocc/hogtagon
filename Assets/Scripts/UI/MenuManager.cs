@@ -41,7 +41,8 @@ public class MenuManager : NetworkBehaviour
     [Header("Wwise")]
 
     [SerializeField] private AK.Wwise.Event MenuMusicOn;
-
+    [SerializeField] private AK.Wwise.Event PauseOn;
+    [SerializeField] private AK.Wwise.Event PauseOff;
     [SerializeField] private AK.Wwise.Event uiClick;
     [SerializeField] private AK.Wwise.Event uiConfirm;
     [SerializeField] private AK.Wwise.Event uiCancel;
@@ -162,6 +163,7 @@ public class MenuManager : NetworkBehaviour
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
         gameIsPaused = false;
+        PauseOff.Post(gameObject);
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
@@ -174,6 +176,7 @@ public class MenuManager : NetworkBehaviour
             Cursor.visible = true;
             pauseMenuUI.SetActive(true);
             gameIsPaused = true;
+            PauseOn.Post(gameObject);
         }
     }
 

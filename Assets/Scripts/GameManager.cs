@@ -15,6 +15,10 @@ public class GameManager : NetworkBehaviour
 
     [Header("Wwise")]
     [SerializeField] public AK.Wwise.Event LevelMusicOn;
+    [SerializeField] public AK.Wwise.Event LevelMusicOff;
+    [SerializeField] private AK.Wwise.Event MidroundOn;
+    [SerializeField] private AK.Wwise.Event MidroundOff;
+    [SerializeField] private AK.Wwise.Event PlayerEliminated;
 
     public static GameManager instance;
     private ulong roundWinnerClientId;
@@ -31,7 +35,7 @@ public class GameManager : NetworkBehaviour
         {
             Destroy(gameObject);
         }
-        
+
         TransitionToState(GameState.Pending);
     }
 
@@ -82,9 +86,8 @@ public class GameManager : NetworkBehaviour
 
     private void OnPlayingEnter()
     {
-        if (!gameMusicPlaying) 
+        if (!gameMusicPlaying)
         {
-            gameMusicPlaying = true;
             PlayLevelMusicClientRpc();
         }
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
@@ -102,6 +105,7 @@ public class GameManager : NetworkBehaviour
         yield return new WaitForSeconds(3f);
         UnlockPlayerMovement();
         SetGameState(GameState.Playing);
+        BroadcastMidroundOffClientRpc();
     }
 
     public IEnumerator BetweenRoundTimer()
@@ -130,6 +134,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnPendingEnter()
     {
+        StopLevelMusicClientRpc();
         SetGameState(GameState.Pending);
     }
 
@@ -142,6 +147,7 @@ public class GameManager : NetworkBehaviour
         {
             roundWinnerClientId = alive[0];
             TransitionToState(GameState.Ending);
+            MidroundOff.Post(gameObject);
         }
     }
 
@@ -149,8 +155,12 @@ public class GameManager : NetworkBehaviour
     {
         if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData player))
         {
+            if (player.state == PlayerState.Dead) return;
+
+            Debug.Log(player.username + " has been eliminated.");
             player.state = PlayerState.Dead;
             ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
+            BroadcastPlayerEliminatedSFXClientRpc();
         }
 
         CheckGameStatus();
@@ -196,11 +206,36 @@ public class GameManager : NetworkBehaviour
     private void BroadcastGameStateClientRpc(GameState state)
     {
         this.state = state;
+        if (state == GameState.Ending)
+        {
+            Debug.Log("MidRoundOn");
+            MidroundOn.Post(gameObject);
+        }
     }
 
     [ClientRpc]
     private void PlayLevelMusicClientRpc()
     {
-       LevelMusicOn.Post(gameObject); 
+        LevelMusicOn.Post(gameObject);
+        gameMusicPlaying = true;
+    }
+
+    [ClientRpc]
+    private void StopLevelMusicClientRpc()
+    {
+        LevelMusicOff.Post(gameObject);
+        gameMusicPlaying = false;
+    }
+
+    [ClientRpc]
+    private void BroadcastMidroundOffClientRpc()
+    {
+        MidroundOff.Post(gameObject);
+    }
+
+    [ClientRpc]
+    private void BroadcastPlayerEliminatedSFXClientRpc()
+    {
+        PlayerEliminated.Post(gameObject);
     }
 }

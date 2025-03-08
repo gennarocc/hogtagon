@@ -3278,6 +3278,22 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: ea399993d59357e489498370a898da31, type: 2}
+  LevelMusicOff:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 9937347e17893454499b7924e352cf75, type: 2}
+  MidroundOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 99054d673db32f44eaaadf8e0741f0a9, type: 2}
+  MidroundOff:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: f853e67395008534c9f8189c9bc6a291, type: 2}
+  PlayerEliminated:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 48dc6b92663b11a43b2b933e67c88b67, type: 2}
 --- !u!4 &423498034
 Transform:
   m_ObjectHideFlags: 0
@@ -5697,7 +5713,7 @@ MonoBehaviour:
   SfxVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 11400000, guid: 61ed68fcb39605a42b6f453c02938b91, type: 2}
+    WwiseObjectReference: {fileID: 11400000, guid: ae48f36e54c88224895036ce6bbf495b, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 
@@ -15052,6 +15068,14 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: 9a29dcbf8532d554ab7aa54612fc5ad5, type: 2}
+  PauseOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: a1f6b5ab4b001d749bb79361abc9a7fd, type: 2}
+  PauseOff:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 99f6a52fc9ea41e488d98391366d504f, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 
