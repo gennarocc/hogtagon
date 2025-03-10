@@ -154,9 +154,9 @@
                 {
                     "name": "up",
                     "id": "c46f40f7-2930-46ad-abc5-0702dd109a47",
-                    "path": "<Gamepad>/dpad/y",
+                    "path": "<Gamepad>/rightStick/y",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "StickDeadzone",
                     "groups": "",
                     "action": "Look",
                     "isComposite": false,
@@ -165,9 +165,9 @@
                 {
                     "name": "down",
                     "id": "b91a150a-0418-4bf3-927f-a1b7bc582f01",
-                    "path": "<Gamepad>/dpad/y",
+                    "path": "<Gamepad>/rightStick/y",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "StickDeadzone",
                     "groups": "",
                     "action": "Look",
                     "isComposite": false,
@@ -176,9 +176,9 @@
                 {
                     "name": "left",
                     "id": "6a348132-b237-4eaf-a68f-f7350dbeaa78",
-                    "path": "<Gamepad>/dpad/x",
+                    "path": "<Gamepad>/rightStick/x",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "StickDeadzone",
                     "groups": "",
                     "action": "Look",
                     "isComposite": false,
@@ -187,9 +187,9 @@
                 {
                     "name": "right",
                     "id": "d1ae10c6-1d7c-4111-96c6-9e3f1be30b77",
-                    "path": "<Gamepad>/dpad/x",
+                    "path": "<Gamepad>/rightStick/x",
                     "interactions": "",
-                    "processors": "",
+                    "processors": "StickDeadzone",
                     "groups": "",
                     "action": "Look",
                     "isComposite": false,
@@ -285,19 +285,30 @@
                 },
                 {
                     "name": "Navigate",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "a7433497-23d9-499f-81c4-e6655f2d40fe",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": false
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
                 {
                     "name": "",
                     "id": "d5bc1ea4-a573-488c-bf43-e2da6e309c45",
-                    "path": "",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "OpenMenu",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "27c49610-bfd2-432b-be6a-6964a23ec214",
+                    "path": "<Gamepad>/start",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -308,7 +319,7 @@
                 {
                     "name": "",
                     "id": "ec5b499e-e872-409b-8b5c-09e5d9eb08c3",
-                    "path": "",
+                    "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -319,7 +330,7 @@
                 {
                     "name": "",
                     "id": "b336e5c1-3b07-40e0-bcbc-9f745eccce7f",
-                    "path": "",
+                    "path": "<Gamepad>/buttonEast",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -330,7 +341,7 @@
                 {
                     "name": "",
                     "id": "3a1c5453-578a-404b-9f37-a5e05f8ae650",
-                    "path": "",
+                    "path": "<Gamepad>/leftStick",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
