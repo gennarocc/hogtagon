@@ -17,8 +17,6 @@ public class HogController : NetworkBehaviour
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
-    [SerializeField] public int handbrakeDriftMultiplier = 5;
-    [SerializeField] public float cameraAngle;
     [SerializeField] private float frontLeftRpm;
     [SerializeField] private float velocity;
 
@@ -63,7 +61,9 @@ public class HogController : NetworkBehaviour
     // Constants
     private const float CAMERA_BEHIND_THRESHOLD = 180f;
     private const float MIN_VELOCITY_FOR_REVERSE = -0.5f;
-    private const float DRIFT_RECOVERY_RATE = 1.5f;
+
+    // Input reference
+    private InputManager inputManager;
 
     // Input Smoothing
     private Queue<float> _recentSteeringInputs;
@@ -78,9 +78,6 @@ public class HogController : NetworkBehaviour
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
-    private float driftingAxis;
-    private bool isTractionLocked = true;
-    private bool driftingSoundOn = false;
     private bool jumpOnCooldown = false;
     private float jumpCooldownRemaining = 0f;
 
@@ -104,7 +101,6 @@ public class HogController : NetworkBehaviour
         public ulong clientId;
         public float moveInput;
         public float brakeInput;
-        public bool handbrake;
         public float rawCameraAngle;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
@@ -112,7 +108,6 @@ public class HogController : NetworkBehaviour
             serializer.SerializeValue(ref clientId);
             serializer.SerializeValue(ref moveInput);
             serializer.SerializeValue(ref brakeInput);
-            serializer.SerializeValue(ref handbrake);
             serializer.SerializeValue(ref rawCameraAngle);
         }
     }
@@ -131,6 +126,20 @@ public class HogController : NetworkBehaviour
 
     private void Start()
     {
+        // Get reference to the InputManager
+        inputManager = InputManager.Instance;
+        if (inputManager == null)
+        {
+            Debug.LogError("InputManager not found in the scene");
+        }
+
+        // Subscribe to input events
+        if (IsOwner && inputManager != null)
+        {
+            inputManager.JumpPressed += OnJumpPressed;
+            inputManager.HornPressed += OnHornPressed;
+        }
+
         // Initialize steering input buffer
         _recentSteeringInputs = new Queue<float>(steeringBufferSize);
 
@@ -149,24 +158,19 @@ public class HogController : NetworkBehaviour
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
     }
 
+    private void OnDestroy()
+    {
+        // Unsubscribe from events when destroyed
+        if (inputManager != null && IsOwner)
+        {
+            inputManager.JumpPressed -= OnJumpPressed;
+            inputManager.HornPressed -= OnHornPressed;
+        }
+    }
+
     private void Update()
     {
         if (!IsOwner) return;
-
-        if ((Input.GetKeyDown(KeyCode.F) || Input.GetKeyDown(KeyCode.JoystickButton0)) && !transform.root.gameObject.GetComponent<Player>().isSpectating)
-        {
-            // Play Horn Sound
-            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
-        }
-        // Check if player can jump and is not spectating
-        bool canPerformJump = canMove && canJump && !jumpOnCooldown &&
-                             !transform.root.gameObject.GetComponent<Player>().isSpectating;
-        if ((Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton1)) &&
-            canMove && canJump && !jumpOnCooldown && !transform.root.gameObject.GetComponent<Player>().isSpectating)
-        {
-            // Request jump on the server
-            JumpServerRpc();
-        }
 
         // Update jump cooldown
         if (jumpOnCooldown)
@@ -197,6 +201,29 @@ public class HogController : NetworkBehaviour
 
     #region Input Handling
 
+    private void OnHornPressed()
+    {
+        // Only play horn if not spectating
+        if (!transform.root.gameObject.GetComponent<Player>().isSpectating)
+        {
+            // Play Horn Sound
+            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
+        }
+    }
+
+    private void OnJumpPressed()
+    {
+        // Check if player can jump and is not spectating
+        bool canPerformJump = canMove && canJump && !jumpOnCooldown &&
+                             !transform.root.gameObject.GetComponent<Player>().isSpectating;
+                             
+        if (canPerformJump)
+        {
+            // Request jump on the server
+            JumpServerRpc();
+        }
+    }
+
     private void ClientMove()
     {
         ClientInput input = CollectPlayerInput();
@@ -205,27 +232,37 @@ public class HogController : NetworkBehaviour
 
     private ClientInput CollectPlayerInput()
     {
-        // Calculate raw camera angle relative to car
-        float rawCameraAngle = CalculateRawCameraAngle();
+        // Calculate camera angle based on look input
+        Vector2 lookInput = inputManager.LookInput;
+        float rawCameraAngle = CalculateRawCameraAngle(lookInput);
         float smoothedAngle = ApplyInputSmoothing(rawCameraAngle);
-        cameraAngle = smoothedAngle; // Store for visualization
 
         return new ClientInput
         {
             clientId = OwnerClientId,
-            moveInput = CollectMovementInput(),
-            brakeInput = CollectBrakeInput(),
-            handbrake = Input.GetKey(KeyCode.Mouse1),
+            moveInput = inputManager.ThrottleInput - inputManager.BrakeInput,
+            brakeInput = inputManager.BrakeInput,
             rawCameraAngle = smoothedAngle
         };
     }
 
-    private float CalculateRawCameraAngle()
+    private float CalculateRawCameraAngle(Vector2 lookInput)
     {
-        Vector3 cameraVector = transform.position - freeLookCamera.transform.position;
-        cameraVector.y = 0;
-        Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
-        return Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
+        // If using the input system's look values (for gamepad control)
+        if (inputManager.IsUsingGamepad && lookInput.sqrMagnitude > 0.01f)
+        {
+            // Convert look input to camera angle
+            // This is a simplified version - you might need to adjust based on your exact needs
+            return Mathf.Atan2(lookInput.x, lookInput.y) * Mathf.Rad2Deg;
+        }
+        else
+        {
+            // Use the traditional camera position calculation for mouse/keyboard
+            Vector3 cameraVector = transform.position - freeLookCamera.transform.position;
+            cameraVector.y = 0;
+            Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
+            return Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
+        }
     }
 
     private float ApplyInputSmoothing(float rawCameraAngle)
@@ -246,59 +283,6 @@ public class HogController : NetworkBehaviour
         }
 
         return rawCameraAngle;
-    }
-
-    private float CollectMovementInput()
-    {
-        float move = 0;
-
-        // Keyboard input
-        if (Input.GetKey(KeyCode.W))
-        {
-            move = 1f;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            move = -1f;
-        }
-
-        // Controller input (if controller is connected)
-        if (Input.GetJoystickNames().Length > 0)
-        {
-            // Right trigger for forward, Left trigger for reverse
-            float rightTrigger = Input.GetAxis("XRI_Right_Trigger");
-            float leftTrigger = Input.GetAxis("XRI_Left_Trigger");
-
-            if (rightTrigger != 0)
-            {
-                move = -rightTrigger;
-            }
-            if (leftTrigger != 0)
-            {
-                move = leftTrigger;
-            }
-
-            // Camera control with right stick
-            float rightStickX = Input.GetAxis("XRI_Right_Primary2DAxis_Horizontal");
-            float rightStickY = Input.GetAxis("XRI_Right_Primary2DAxis_Vertical");
-
-            if (rightStickX != 0)
-            {
-                freeLookCamera.m_XAxis.Value += rightStickX * 5 / 2;
-            }
-            if (rightStickY != 0)
-            {
-                freeLookCamera.m_YAxis.Value += rightStickY;
-            }
-        }
-
-        return move;
-    }
-
-    private float CollectBrakeInput()
-    {
-        // Add brake input collection if needed
-        return 0f;
     }
 
     private float CalculateWeightedAverage(List<float> values, float weightingFactor)
@@ -357,16 +341,6 @@ public class HogController : NetworkBehaviour
         ApplySteering(steeringData);
 
         isDrifting.Value = Mathf.Abs(localVelocityX) > .45f;
-
-        if (input.handbrake)
-        {
-            ApplyHandbrakeDrift();
-            isDrifting.Value = true;
-        }
-        else if (!isTractionLocked)
-        {
-            RecoverTractionGradually();
-        }
     }
 
     [ClientRpc]
@@ -376,7 +350,6 @@ public class HogController : NetworkBehaviour
         GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.CarExplosion); // Play Explosion Sound.
         canMove = false;
-        if (driftingSoundOn) HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
 
         Debug.Log("Exploding car for player - " + ConnectionManager.instance.GetClientUsername(OwnerClientId));
         StartCoroutine(ResetAfterExplosion(explosionInstance));
@@ -515,58 +488,6 @@ public class HogController : NetworkBehaviour
         wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, steeringData.rearSteeringAngle, steeringSpeed);
     }
 
-    private void ApplyHandbrakeDrift()
-    {
-        CancelInvoke("RecoverTractionGradually");
-        isTractionLocked = false;
-
-        // Gradually increase drifting effect
-        driftingAxis = Mathf.Min(1f, driftingAxis + Time.deltaTime);
-
-        // Apply to all wheels
-        if (driftingAxis < 1f)
-        {
-            ApplyWheelFrictionMultiplier(driftingAxis * handbrakeDriftMultiplier);
-        }
-    }
-
-    private void RecoverTractionGradually()
-    {
-        driftingAxis = Mathf.Max(0f, driftingAxis - (Time.deltaTime / DRIFT_RECOVERY_RATE));
-
-        if (driftingAxis > 0f)
-        {
-            ApplyWheelFrictionMultiplier(driftingAxis * handbrakeDriftMultiplier);
-            Invoke("RecoverTractionGradually", Time.deltaTime);
-        }
-        else
-        {
-            ResetWheelFriction();
-            driftingAxis = 0f;
-            isTractionLocked = true;
-        }
-    }
-
-    private void ApplyWheelFrictionMultiplier(float multiplier)
-    {
-        for (int i = 0; i < wheelColliders.Length; i++)
-        {
-            WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
-            friction.extremumSlip = Mathf.Max(originalExtremumSlip[i], originalExtremumSlip[i] * multiplier);
-            wheelColliders[i].sidewaysFriction = friction;
-        }
-    }
-
-    private void ResetWheelFriction()
-    {
-        for (int i = 0; i < wheelColliders.Length; i++)
-        {
-            WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
-            friction.extremumSlip = originalExtremumSlip[i];
-            wheelColliders[i].sidewaysFriction = friction;
-        }
-    }
-
     private void InitializeWheelFriction()
     {
         for (int i = 0; i < wheelColliders.Length; i++)
@@ -672,6 +593,7 @@ public class HogController : NetworkBehaviour
             // HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogJump);
         }
     }
+    
     private IEnumerator JumpCooldownServer()
     {
         yield return new WaitForSeconds(jumpCooldown);
@@ -708,8 +630,8 @@ public class HogController : NetworkBehaviour
         float frontSteeringAngle = (wheelColliders[0].steerAngle + wheelColliders[1].steerAngle) / 2f;
         float rearSteeringAngle = (wheelColliders[2].steerAngle + wheelColliders[3].steerAngle) / 2f;
 
-        bool isReversing = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE &&
-                           (IsOwner && (Input.GetKey(KeyCode.S) || (Input.GetJoystickNames().Length > 0 && Input.GetAxis("XRI_Right_Trigger") != 0)));
+        bool isReversing = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE && 
+                          (IsOwner && inputManager != null && inputManager.BrakeInput > 0);
 
         return new SteeringData
         {
@@ -786,11 +708,6 @@ public class HogController : NetworkBehaviour
             // Only play particle effects and skid marks if the wheels are grounded
             if (rearLeftGrounded)
             {
-                if (!driftingSoundOn && canMove)
-                {
-                    HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
-                    driftingSoundOn = true;
-                }
                 wheelParticleSystems[0].Play();
                 tireSkids[0].emitting = true;
             }
@@ -818,10 +735,6 @@ public class HogController : NetworkBehaviour
             wheelParticleSystems[1].Stop();
             tireSkids[0].emitting = false;
             tireSkids[1].emitting = false;
-            if (driftingSoundOn)
-            {
-                driftingSoundOn = false;
-            }
         }
     }
 
