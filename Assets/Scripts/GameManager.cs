@@ -41,16 +41,8 @@ public class GameManager : NetworkBehaviour
 
     public void Update()
     {
-        switch (state)
-        {
-            case GameState.Pending:
-                break;
-            case GameState.Playing:
-                gameTime += Time.deltaTime;
-                break;
-            case GameState.Ending:
-                break;
-        }
+        if (state == GameState.Playing)
+            gameTime += Time.deltaTime;
     }
 
     public void TransitionToState(GameState newState)
@@ -87,9 +79,8 @@ public class GameManager : NetworkBehaviour
     private void OnPlayingEnter()
     {
         if (!gameMusicPlaying)
-        {
             PlayLevelMusicClientRpc();
-        }
+
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
             LockPlayerMovement();
@@ -103,25 +94,30 @@ public class GameManager : NetworkBehaviour
     public IEnumerator RoundCountdown()
     {
         yield return new WaitForSeconds(3f);
+
+        // Unlock player movement
         UnlockPlayerMovement();
+
+        // Set the game state to playing
         SetGameState(GameState.Playing);
+
+        // Use the existing Resume method to handle cursor locking and input mode
+        if (menuManager != null)
+            menuManager.Resume();
+
         BroadcastMidroundOffClientRpc();
     }
 
     public IEnumerator BetweenRoundTimer()
     {
-        // Configuration values
         float showWinnerDuration = 2.0f;     // How long to show just the winner text
         float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
 
-        menuManager.HideScoreboardClientRpc();  //Don't love that I have to do this here but the scoreboard is popping up too early if I don't
-        // Show the winner text first for a few seconds
+        menuManager.HideScoreboardClientRpc();
         yield return new WaitForSeconds(showWinnerDuration);
 
         // Now show the scoreboard
         menuManager.ShowScoreboardClientRpc();
-
-        // Show the scoreboard for specified duration
         yield return new WaitForSeconds(showScoreboardDuration);
 
         // Hide scoreboard when starting new round
@@ -130,7 +126,6 @@ public class GameManager : NetworkBehaviour
         // Transition to next round
         OnPlayingEnter();
     }
-
 
     private void OnPendingEnter()
     {
@@ -169,31 +164,22 @@ public class GameManager : NetworkBehaviour
     private void RespawnAllPlayers()
     {
         Player[] players = FindObjectsByType<Player>(FindObjectsSortMode.None);
-
         foreach (Player player in players)
-        {
             player.Respawn();
-        }
     }
 
     private void LockPlayerMovement()
     {
         HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
-
         foreach (HogController player in players)
-        {
             player.canMove = false;
-        }
     }
 
     private void UnlockPlayerMovement()
     {
         HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
-
         foreach (HogController player in players)
-        {
             player.canMove = true;
-        }
     }
 
     private void SetGameState(GameState state)
@@ -207,10 +193,7 @@ public class GameManager : NetworkBehaviour
     {
         this.state = state;
         if (state == GameState.Ending)
-        {
-            Debug.Log("MidRoundOn");
             MidroundOn.Post(gameObject);
-        }
     }
 
     [ClientRpc]

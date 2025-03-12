@@ -71,6 +71,15 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""ShowScoreboard"",
+                    ""type"": ""Button"",
+                    ""id"": ""1301537f-0f25-489c-8c99-409eff56e46b"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -164,61 +173,6 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": ""2D Vector"",
-                    ""id"": ""db57b069-f287-4615-98b0-7287344dbe0d"",
-                    ""path"": ""2DVector"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": true,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""up"",
-                    ""id"": ""c46f40f7-2930-46ad-abc5-0702dd109a47"",
-                    ""path"": ""<Gamepad>/rightStick/y"",
-                    ""interactions"": """",
-                    ""processors"": ""StickDeadzone"",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""down"",
-                    ""id"": ""b91a150a-0418-4bf3-927f-a1b7bc582f01"",
-                    ""path"": ""<Gamepad>/rightStick/y"",
-                    ""interactions"": """",
-                    ""processors"": ""StickDeadzone"",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""left"",
-                    ""id"": ""6a348132-b237-4eaf-a68f-f7350dbeaa78"",
-                    ""path"": ""<Gamepad>/rightStick/x"",
-                    ""interactions"": """",
-                    ""processors"": ""StickDeadzone"",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""right"",
-                    ""id"": ""d1ae10c6-1d7c-4111-96c6-9e3f1be30b77"",
-                    ""path"": ""<Gamepad>/rightStick/x"",
-                    ""interactions"": """",
-                    ""processors"": ""StickDeadzone"",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""2D Vector"",
                     ""id"": ""31aeb5dc-de10-4fef-98a6-61b3494e2483"",
                     ""path"": ""2DVector"",
                     ""interactions"": """",
@@ -271,6 +225,39 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""action"": ""Look"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""52be239d-fca0-4e39-ba9d-6b891490c433"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": ""StickDeadzone"",
+                    ""groups"": """",
+                    ""action"": ""Look"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4d9c8aa3-0c15-4801-a270-041c491ba115"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ShowScoreboard"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b4d00fde-742c-485d-b5b4-844e8ffc8d7b"",
+                    ""path"": ""<Gamepad>/select"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ShowScoreboard"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -310,7 +297,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""type"": ""Value"",
                     ""id"": ""a7433497-23d9-499f-81c4-e6655f2d40fe"",
                     ""expectedControlType"": """",
-                    ""processors"": """",
+                    ""processors"": ""StickDeadzone"",
                     ""interactions"": """",
                     ""initialStateCheck"": true
                 }
@@ -383,6 +370,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         m_Gameplay_Jump = m_Gameplay.FindAction("Jump", throwIfNotFound: true);
         m_Gameplay_Honk = m_Gameplay.FindAction("Honk", throwIfNotFound: true);
         m_Gameplay_Look = m_Gameplay.FindAction("Look", throwIfNotFound: true);
+        m_Gameplay_ShowScoreboard = m_Gameplay.FindAction("ShowScoreboard", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_OpenMenu = m_UI.FindAction("OpenMenu", throwIfNotFound: true);
@@ -461,6 +449,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_Jump;
     private readonly InputAction m_Gameplay_Honk;
     private readonly InputAction m_Gameplay_Look;
+    private readonly InputAction m_Gameplay_ShowScoreboard;
     public struct GameplayActions
     {
         private @DefaultControls m_Wrapper;
@@ -470,6 +459,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         public InputAction @Jump => m_Wrapper.m_Gameplay_Jump;
         public InputAction @Honk => m_Wrapper.m_Gameplay_Honk;
         public InputAction @Look => m_Wrapper.m_Gameplay_Look;
+        public InputAction @ShowScoreboard => m_Wrapper.m_Gameplay_ShowScoreboard;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -494,6 +484,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @Look.started += instance.OnLook;
             @Look.performed += instance.OnLook;
             @Look.canceled += instance.OnLook;
+            @ShowScoreboard.started += instance.OnShowScoreboard;
+            @ShowScoreboard.performed += instance.OnShowScoreboard;
+            @ShowScoreboard.canceled += instance.OnShowScoreboard;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -513,6 +506,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @Look.started -= instance.OnLook;
             @Look.performed -= instance.OnLook;
             @Look.canceled -= instance.OnLook;
+            @ShowScoreboard.started -= instance.OnShowScoreboard;
+            @ShowScoreboard.performed -= instance.OnShowScoreboard;
+            @ShowScoreboard.canceled -= instance.OnShowScoreboard;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -607,6 +603,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         void OnJump(InputAction.CallbackContext context);
         void OnHonk(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
+        void OnShowScoreboard(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

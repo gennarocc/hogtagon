@@ -137,6 +137,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6880929354927071052}
   - component: {fileID: 1233816499970886941}
+  - component: {fileID: 4606407250224331411}
   m_Layer: 0
   m_Name: FreeLook Camera
   m_TagString: Untagged
@@ -267,6 +268,22 @@ MonoBehaviour:
   - {fileID: 2484624750500388944}
   - {fileID: 4567945253994121911}
   - {fileID: 5664238918436568289}
+--- !u!114 &4606407250224331411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 583119645913343258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb7194dc27b9df64c8beca7482ee8e0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PlayerIndex: -1
+  AutoEnableInputs: 1
+  XYAxis: {fileID: -5630151704836100654, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  ZAxis: {fileID: 0}
 --- !u!1 &789030245080448831
 GameObject:
   m_ObjectHideFlags: 0
@@ -12022,8 +12039,6 @@ MonoBehaviour:
   centerOfMass: {x: 0, y: 0.2, z: 0}
   maxSteeringAngle: 55
   steeringSpeed: 0.8
-  handbrakeDriftMultiplier: 8
-  cameraAngle: 0
   frontLeftRpm: 0
   velocity: 0
   jumpForce: 7
