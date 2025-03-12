@@ -103,8 +103,19 @@ public class GameManager : NetworkBehaviour
     public IEnumerator RoundCountdown()
     {
         yield return new WaitForSeconds(3f);
+
+        // Unlock player movement
         UnlockPlayerMovement();
+
+        // Set the game state to playing
         SetGameState(GameState.Playing);
+
+        // Use the existing Resume method to handle cursor locking and input mode
+        if (menuManager != null)
+        {
+            menuManager.Resume();
+        }
+
         BroadcastMidroundOffClientRpc();
     }
 

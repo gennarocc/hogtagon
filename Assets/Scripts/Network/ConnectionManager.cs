@@ -90,6 +90,19 @@ public class ConnectionManager : NetworkBehaviour
     {
         ClientDataListSerialized serializedList = DictionaryExtensions.ConvertDictionaryToSerializableList(clientDataDictionary);
         SendClientDataListClientRpc(clientId, serializedList);
+
+        // If this is our local client connecting, update menu state
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            isConnected = true;
+
+            // Tell MenuManager to update cursor state and switch to gameplay mode
+            if (menuManager != null)
+            {
+                Debug.Log("Local client connected - calling HandleConnectionStateChange to switch to gameplay mode");
+                menuManager.HandleConnectionStateChange(true);
+            }
+        }
     }
 
     private void OnClientDisconnectCallback(ulong clientId)
@@ -127,6 +140,17 @@ public class ConnectionManager : NetworkBehaviour
         {
             menuManager.MainMenu();
             menuManager.DisplayConnectionError(NetworkManager.Singleton.DisconnectReason);
+        }
+        // If this is our local client disconnecting, update menu state
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            isConnected = false;
+
+            // Tell MenuManager to update cursor state
+            if (menuManager != null)
+            {
+                menuManager.HandleConnectionStateChange(false);
+            }
         }
     }
 
