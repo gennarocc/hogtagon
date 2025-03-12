@@ -22,7 +22,6 @@ public class ConnectionManager : NetworkBehaviour
     private Dictionary<ulong, PlayerData> pendingPlayerData = new Dictionary<ulong, PlayerData>();
     public static ConnectionManager instance;
 
-
     private void Start()
     {
         NetworkManager.Singleton.ConnectionApprovalCallback += ConnectionApprovalCallback;
@@ -43,7 +42,6 @@ public class ConnectionManager : NetworkBehaviour
 
     private void ConnectionApprovalCallback(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
     {
-        Debug.Log(message: "New player connecting...");
         // The client identifier to be authenticated
         var clientId = request.ClientNetworkId;
         response.Approved = false;
@@ -51,9 +49,7 @@ public class ConnectionManager : NetworkBehaviour
         // Set player username
         string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
         if (decodedUsername.Length == 0)
-        {
             decodedUsername = "Player" + (GetPlayerCount() + 1);
-        }
 
         if (!CheckUsernameAvailability(decodedUsername))
         {
@@ -83,7 +79,6 @@ public class ConnectionManager : NetworkBehaviour
         response.Position = GameManager.instance.state == GameState.Playing ? new Vector3(0, 0, 0) : sp;
         response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - sp);
         response.CreatePlayerObject = true;
-
     }
 
     private void OnClientConnectedCallback(ulong clientId)
@@ -98,35 +93,30 @@ public class ConnectionManager : NetworkBehaviour
 
             // Tell MenuManager to update cursor state and switch to gameplay mode
             if (menuManager != null)
-            {
-                Debug.Log("Local client connected - calling HandleConnectionStateChange to switch to gameplay mode");
                 menuManager.HandleConnectionStateChange(true);
-            }
         }
     }
 
     private void OnClientDisconnectCallback(ulong clientId)
     {
         // Unassign Spawn Point
-        if (IsServer) SpawnPointManager.instance.UnassignSpawnPoint(clientId);
-        // Remove Data from Client Dictonary/List
+        if (IsServer)
+            SpawnPointManager.instance.UnassignSpawnPoint(clientId);
+
+        // Remove Data from Client Dictionary/List
         if (clientDataDictionary.ContainsKey(clientId))
         {
             // Store the username for the notification
             string username = "A player";
             if (TryGetPlayerData(clientId, out PlayerData playerData))
-            {
                 username = playerData.username;
-            }
 
             clientDataDictionary.Remove(clientId);
             RemovePlayerClientRpc(clientId);
 
             // Update the scoreboard
             if (scoreboard != null)
-            {
                 scoreboard.UpdatePlayerList();
-            }
 
             // If server and only one player left, reset to lobby state and show message
             if (IsServer && NetworkManager.Singleton.ConnectedClients.Count <= 1)
@@ -141,6 +131,7 @@ public class ConnectionManager : NetworkBehaviour
             menuManager.MainMenu();
             menuManager.DisplayConnectionError(NetworkManager.Singleton.DisconnectReason);
         }
+
         // If this is our local client disconnecting, update menu state
         if (clientId == NetworkManager.Singleton.LocalClientId)
         {
@@ -148,9 +139,7 @@ public class ConnectionManager : NetworkBehaviour
 
             // Tell MenuManager to update cursor state
             if (menuManager != null)
-            {
                 menuManager.HandleConnectionStateChange(false);
-            }
         }
     }
 
@@ -159,9 +148,7 @@ public class ConnectionManager : NetworkBehaviour
     {
         // Show message to host (and any remaining clients if there are any)
         if (menuManager != null)
-        {
             menuManager.DisplayHostAloneMessage(disconnectedPlayerName);
-        }
     }
 
     private void OnTransportFailure()
@@ -170,13 +157,16 @@ public class ConnectionManager : NetworkBehaviour
         menuManager.DisplayConnectionError("Connection Timeout");
         menuManager.MainMenu();
     }
+
     public bool CheckUsernameAvailability(string username)
     {
         // Check length. 
         if (username.Length > 10) return false;
+
         // Only alpha numeric characters.
         var regex = new Regex("^[a-zA-Z0-9]*$");
         if (!regex.IsMatch(username)) return false;
+
         // Isn't already in use.
         foreach (var player in clientDataDictionary.Values)
         {
@@ -191,16 +181,15 @@ public class ConnectionManager : NetworkBehaviour
     {
         if (NetworkManager.Singleton.LocalClientId == clientId)
         {
-            Debug.Log(message: "ClientDataList Recieved");
             // Purge any existing data.
-            if (clientDataDictionary.Count > 0) clientDataDictionary = new Dictionary<ulong, PlayerData>();
+            if (clientDataDictionary.Count > 0)
+                clientDataDictionary = new Dictionary<ulong, PlayerData>();
+
             // Deserialize data.
             Dictionary<ulong, PlayerData> clientData = DictionaryExtensions.ConvertSerializableListToDictionary(serializedList);
             foreach (var data in clientData) // Add data to local dictionary
-            {
                 clientDataDictionary.Add(data.Key, data.Value);
-                Debug.Log(message: "Adding existing player - : " + data.Value.username);
-            }
+
             AddPlayerServerRpc(clientId);
         }
     }
@@ -209,7 +198,6 @@ public class ConnectionManager : NetworkBehaviour
     private void AddPlayerServerRpc(ulong clientId)
     {
         PlayerData playerData = pendingPlayerData[clientId];
-        Debug.Log(message: "Player connected - " + playerData.username);
         clientDataDictionary.Add(clientId, playerData);
 
         // Find and set the player's NetworkVariable
@@ -222,7 +210,7 @@ public class ConnectionManager : NetworkBehaviour
             }
         }
 
-        // Still notify all clients about the new player for the client dictionary
+        // Notify all clients about the new player for the client dictionary
         UpdatePlayerDataClientRpc(clientId, playerData);
         pendingPlayerData.Remove(clientId);
     }
@@ -230,7 +218,6 @@ public class ConnectionManager : NetworkBehaviour
     [ClientRpc(Delivery = RpcDelivery.Reliable)]
     private void RemovePlayerClientRpc(ulong clientId)
     {
-        Debug.Log(message: "Removing Client - " + clientId);
         clientDataDictionary.Remove(clientId);
     }
 
@@ -239,15 +226,9 @@ public class ConnectionManager : NetworkBehaviour
     {
         // Update the client dictionary
         if (clientDataDictionary.ContainsKey(clientId))
-        {
             clientDataDictionary[clientId] = player;
-            Debug.Log(message: "Updating " + player.username + ",  State:  " + player.state);
-        }
         else
-        {
             clientDataDictionary.Add(clientId, player);
-            Debug.Log(message: "Player connected - " + player.username);
-        }
 
         scoreboard.UpdatePlayerList();
     }
@@ -274,13 +255,9 @@ public class ConnectionManager : NetworkBehaviour
         foreach (var player in sortedPlayers)
         {
             if (player.Value.state != PlayerState.Alive)
-            {
                 str += $"<color=#FF0000>{player.Value.username}</color>\n";
-            }
             else
-            {
                 str += player.Value.username + "\n";
-            }
         }
 
         return str;
@@ -295,9 +272,7 @@ public class ConnectionManager : NetworkBehaviour
 
         var str = "";
         foreach (var player in sortedPlayers)
-        {
             str += player.Value.score + "\n";
-        }
 
         return str;
     }
@@ -312,7 +287,8 @@ public class ConnectionManager : NetworkBehaviour
         List<ulong> aliveClients = new List<ulong>();
         foreach (var player in clientDataDictionary)
         {
-            if (player.Value.state == PlayerState.Alive) aliveClients.Add(player.Key);
+            if (player.Value.state == PlayerState.Alive)
+                aliveClients.Add(player.Key);
         }
         return aliveClients;
     }
@@ -321,7 +297,6 @@ public class ConnectionManager : NetworkBehaviour
     {
         if (!clientDataDictionary.ContainsKey(clientId))
         {
-            Debug.Log(message: "Client Id - " + clientId + " does not exist.");
             player = new PlayerData() { };
             return false;
         }
@@ -334,11 +309,8 @@ public class ConnectionManager : NetworkBehaviour
         foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
         {
             if (player.clientId == clientId)
-            {
                 return player;
-            }
         }
-        Debug.Log(message: "GetPlayer() could not find requested player - " + clientId);
         return null;
     }
 
@@ -346,18 +318,14 @@ public class ConnectionManager : NetworkBehaviour
     {
         assignedTextures.Clear();
         foreach (var playerData in clientDataDictionary.Values)
-        {
             assignedTextures.Add(playerData.colorIndex);
-        }
 
         // Find available texture
         List<int> availableIndices = new List<int>();
         for (int i = 0; i < hogTextures.Length; i++)
         {
             if (!assignedTextures.Contains(i))
-            {
                 availableIndices.Add(i);
-            }
         }
 
         if (availableIndices.Count > 0)
@@ -369,14 +337,10 @@ public class ConnectionManager : NetworkBehaviour
         return -1; // No available textures
     }
 
-
     public void UpdateLobbyLeaderBasedOnScore()
     {
         if (!IsServer)
-        {
-            Debug.LogWarning("UpdateLobbyLeaderBasedOnScore should only be called on the server.");
             return;
-        }
 
         // STEP 1: First, find the highest scoring player (without modifying anything)
         ulong highestScoringClientId = 0;
@@ -433,8 +397,6 @@ public class ConnectionManager : NetworkBehaviour
                 }
             }
         }
-
-        Debug.Log("Lobby leader updated. New leader: " + GetClientUsername(highestScoringClientId));
     }
 }
 
@@ -452,7 +414,7 @@ public struct PlayerData : INetworkSerializable
         // Ensure order matches the field declarations above
         serializer.SerializeValue(ref username);
         serializer.SerializeValue(ref score);
-        serializer.SerializeValue(ref colorIndex);      // Make sure colorIndex is serialized
+        serializer.SerializeValue(ref colorIndex);
         serializer.SerializeValue(ref state);
         serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref isLobbyLeader);
@@ -485,6 +447,7 @@ public struct ClientData : INetworkSerializable
 public class ClientDataListSerialized : INetworkSerializable
 {
     public List<ClientData> ClientDataList;
+
     public ClientDataListSerialized()
     {
         ClientDataList = new List<ClientData>();

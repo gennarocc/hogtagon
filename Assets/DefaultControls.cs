@@ -297,7 +297,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""type"": ""Value"",
                     ""id"": ""a7433497-23d9-499f-81c4-e6655f2d40fe"",
                     ""expectedControlType"": """",
-                    ""processors"": """",
+                    ""processors"": ""StickDeadzone"",
                     ""interactions"": """",
                     ""initialStateCheck"": true
                 }

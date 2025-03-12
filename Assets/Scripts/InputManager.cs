@@ -35,6 +35,7 @@ public class InputManager : MonoBehaviour
 
     // Device state
     private bool _usingGamepad = false;
+    private bool _controllerNavigationEnabled = true;
 
     // Public accessors
     public float ThrottleInput => _throttleInput;
@@ -48,93 +49,48 @@ public class InputManager : MonoBehaviour
         // Singleton setup
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning("Multiple InputManager instances found. Destroying duplicate.");
             Destroy(gameObject);
             return;
         }
 
-        Debug.Log("InputManager Awake - setting singleton instance");
         Instance = this;
-
-        // Initialize controls
         InitializeControls();
     }
 
     private void InitializeControls()
     {
-        Debug.Log("InputManager InitializeControls");
         controls = new DefaultControls();
 
-        // Gameplay controls - exactly matching your Input Actions Asset
-        controls.Gameplay.Throttle.performed += ctx =>
-        {
-            _throttleInput = ctx.ReadValue<float>();
-            Debug.Log($"Throttle input: {_throttleInput}");
-        };
+        // Gameplay controls
+        controls.Gameplay.Throttle.performed += ctx => _throttleInput = ctx.ReadValue<float>();
         controls.Gameplay.Throttle.canceled += ctx => _throttleInput = 0f;
 
-        controls.Gameplay.Brake.performed += ctx =>
-        {
-            _brakeInput = ctx.ReadValue<float>();
-            Debug.Log($"Brake input: {_brakeInput}");
-        };
+        controls.Gameplay.Brake.performed += ctx => _brakeInput = ctx.ReadValue<float>();
         controls.Gameplay.Brake.canceled += ctx => _brakeInput = 0f;
 
         // Jump action
-        controls.Gameplay.Jump.performed += ctx =>
-        {
-            Debug.Log("Jump pressed");
-            JumpPressed?.Invoke();
-        };
+        controls.Gameplay.Jump.performed += ctx => JumpPressed?.Invoke();
 
         // Honk handlers
         controls.Gameplay.Honk.performed += ctx =>
         {
             _isHonking = true;
-            Debug.Log("Honk pressed");
             HornPressed?.Invoke();
         };
         controls.Gameplay.Honk.canceled += ctx => _isHonking = false;
 
         // Look input
-        controls.Gameplay.Look.performed += ctx =>
-        {
-            _lookInput = ctx.ReadValue<Vector2>();
-            // Don't log look input as it would spam the console
-        };
+        controls.Gameplay.Look.performed += ctx => _lookInput = ctx.ReadValue<Vector2>();
         controls.Gameplay.Look.canceled += ctx => _lookInput = Vector2.zero;
 
         // ShowScoreboard
-        controls.Gameplay.ShowScoreboard.performed += ctx =>
-        {
-            Debug.Log("Scoreboard button pressed");
-            ScoreboardToggled?.Invoke(true);
-        };
-        controls.Gameplay.ShowScoreboard.canceled += ctx =>
-        {
-            Debug.Log("Scoreboard button released");
-            ScoreboardToggled?.Invoke(false);
-        };
+        controls.Gameplay.ShowScoreboard.performed += ctx => ScoreboardToggled?.Invoke(true);
+        controls.Gameplay.ShowScoreboard.canceled += ctx => ScoreboardToggled?.Invoke(false);
 
         // UI controls
-        controls.UI.OpenMenu.performed += ctx =>
-        {
-            Debug.Log("Menu button pressed via UI map");
-            MenuToggled?.Invoke();
-        };
-
-        controls.UI.Back.performed += ctx =>
-        {
-            Debug.Log("Back button pressed");
-            BackPressed?.Invoke();
-        };
-
-        controls.UI.Accept.performed += ctx =>
-        {
-            Debug.Log("Accept button pressed");
-            AcceptPressed?.Invoke();
-        };
-
+        controls.UI.OpenMenu.performed += ctx => MenuToggled?.Invoke();
+        controls.UI.Back.performed += ctx => BackPressed?.Invoke();
+        controls.UI.Accept.performed += ctx => AcceptPressed?.Invoke();
 
         // Initial device check
         _usingGamepad = Gamepad.current != null && Gamepad.current.enabled;
@@ -142,7 +98,6 @@ public class InputManager : MonoBehaviour
 
     private void OnEnable()
     {
-        Debug.Log("InputManager OnEnable - enabling initial action map");
         // Start with UI mode for main menu
         SwitchToUIMode();
     }
@@ -152,25 +107,18 @@ public class InputManager : MonoBehaviour
         controls.Disable();
     }
 
- 
     // Switch to gameplay controls
     public void SwitchToGameplayMode()
     {
         if (_currentInputState == InputState.Gameplay)
             return;
 
-        Debug.Log("Switching to GAMEPLAY input mode");
-
-        // First disable everything
+        // First disable everything, then enable gameplay
         controls.UI.Disable();
         controls.Gameplay.Disable();
-
-        // Then enable gameplay
         controls.Gameplay.Enable();
 
         _currentInputState = InputState.Gameplay;
-
-        Debug.Log($"Action maps after switching to gameplay: UI={controls.UI.enabled}, Gameplay={controls.Gameplay.enabled}");
     }
 
     // Switch to UI controls
@@ -179,13 +127,9 @@ public class InputManager : MonoBehaviour
         if (_currentInputState == InputState.UI)
             return;
 
-        Debug.Log("Switching to UI input mode");
-
-        // First disable everything
+        // First disable everything, then enable UI
         controls.UI.Disable();
         controls.Gameplay.Disable();
-
-        // Then enable UI
         controls.UI.Enable();
 
         _currentInputState = InputState.UI;
@@ -195,11 +139,9 @@ public class InputManager : MonoBehaviour
         _brakeInput = 0f;
         _lookInput = Vector2.zero;
         _isHonking = false;
-
-        Debug.Log($"Action maps after switching to UI: UI={controls.UI.enabled}, Gameplay={controls.Gameplay.enabled}");
     }
 
-    // Update to check for Escape key during gameplay
+    // Update to check for Escape key during gameplay and handle device detection
     private void Update()
     {
         // Monitor Escape key during gameplay to pause
@@ -207,14 +149,29 @@ public class InputManager : MonoBehaviour
         {
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
             {
-                Debug.Log("Escape key pressed during gameplay - toggling menu");
                 MenuToggled?.Invoke();
             }
         }
 
+        // Only process device detection and controller input if navigation is enabled
+        if (_controllerNavigationEnabled)
+        {
+            DetectInputDevice();
+        }
+        else
+        {
+            // When navigation is disabled (for text input), ensure we don't process 
+            // small stick drift as navigation input
+            _lookInput = Vector2.zero;
+        }
+    }
+
+    // Device detection
+    private void DetectInputDevice()
+    {
         // Check if we're using gamepad based on last input
-        if (Gamepad.current != null && (Gamepad.current.wasUpdatedThisFrame
-            && Gamepad.current.CheckStateIsAtDefault() == false))
+        if (Gamepad.current != null && Gamepad.current.wasUpdatedThisFrame
+            && Gamepad.current.CheckStateIsAtDefault() == false)
         {
             _usingGamepad = true;
         }
@@ -237,21 +194,13 @@ public class InputManager : MonoBehaviour
     public bool AreInputActionsEnabled()
     {
         if (controls == null) return false;
-
-        bool gameplayEnabled = controls.Gameplay.enabled;
-        bool uiEnabled = controls.UI.enabled;
-
-        Debug.Log($"Input actions status: Gameplay={gameplayEnabled}, UI={uiEnabled}");
-
-        return gameplayEnabled || uiEnabled; // At least one should be enabled
+        return controls.Gameplay.enabled || controls.UI.enabled;
     }
+
     public void ForceEnableCurrentActionMap()
     {
-        Debug.Log($"Force-enabling action map for state: {_currentInputState}");
-
         if (controls == null)
         {
-            Debug.LogError("Controls are null in ForceEnableCurrentActionMap!");
             controls = new DefaultControls();
             InitializeControls();
         }
@@ -266,7 +215,9 @@ public class InputManager : MonoBehaviour
             controls.Gameplay.Disable();
             controls.UI.Enable();
         }
-
-        Debug.Log($"After force-enable: UI={controls.UI.enabled}, Gameplay={controls.Gameplay.enabled}");
+    }
+    public void SetControllerNavigationEnabled(bool enabled)
+    {
+        _controllerNavigationEnabled = enabled;
     }
 }

@@ -4,6 +4,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using Cinemachine;
+using UnityEngine.EventSystems;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -15,7 +16,6 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
     [SerializeField] private GameObject tempUI;
-
     [SerializeField] public GameObject jumpUI;
 
     [Header("Main Menu Components")]
@@ -43,6 +43,12 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private Button defaultMainMenuButton;
     [SerializeField] private Button defaultSettingsMenuButton;
     [SerializeField] private Button defaultPlayMenuButton;
+    [Header("UI Navigation")]
+    [SerializeField] private EventSystem eventSystem;
+    private bool controllerSelectionEnabled = false;
+    [Header("Text Input Fields")]
+    [SerializeField] private TMP_InputField[] inputFields; // Assign your input fields here
+    private bool isEditingText = false;
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event MenuMusicOn;
@@ -64,27 +70,16 @@ public class MenuManager : NetworkBehaviour
     {
         // Find or get the InputManager
         inputManager = InputManager.Instance;
-        if (inputManager == null)
-        {
-            Debug.LogError("InputManager not found in scene!");
-        }
     }
 
     private void OnEnable()
     {
-        Debug.Log("MenuManager OnEnable - trying to subscribe to input events");
-
         // Try to find InputManager if it wasn't found in Awake
         if (inputManager == null)
-        {
             inputManager = InputManager.Instance;
-            Debug.Log("Looking for InputManager: " + (inputManager != null ? "Found" : "Not found"));
-        }
 
         if (inputManager != null)
         {
-            Debug.Log("MenuManager OnEnable - subscribing to input events");
-
             // Unsubscribe first to avoid duplicate subscriptions
             inputManager.MenuToggled -= OnMenuToggled;
             inputManager.BackPressed -= OnBackPressed;
@@ -96,12 +91,6 @@ public class MenuManager : NetworkBehaviour
             inputManager.BackPressed += OnBackPressed;
             inputManager.AcceptPressed += OnAcceptPressed;
             inputManager.ScoreboardToggled += HandleScoreboardToggle;
-
-            Debug.Log("Successfully subscribed to InputManager events");
-        }
-        else
-        {
-            Debug.LogError("Cannot subscribe to input events - inputManager is null!");
         }
     }
 
@@ -119,56 +108,69 @@ public class MenuManager : NetworkBehaviour
 
     private void Start()
     {
-        Debug.Log("MenuManager Start");
+        // Get reference to EventSystem if not assigned
+        if (eventSystem == null)
+            eventSystem = EventSystem.current;
 
+        // Clear selection by default
+        ClearSelection();
         // Try to find InputManager again if it wasn't found in Awake/OnEnable
         if (inputManager == null)
         {
             inputManager = InputManager.Instance;
-
             if (inputManager != null)
             {
                 // Subscribe to events if we just found the InputManager
-                Debug.Log("Found InputManager in Start, subscribing to events");
                 inputManager.MenuToggled += OnMenuToggled;
                 inputManager.BackPressed += OnBackPressed;
                 inputManager.AcceptPressed += OnAcceptPressed;
                 inputManager.ScoreboardToggled += HandleScoreboardToggle;
             }
-            else
-            {
-                Debug.LogError("InputManager still not found in Start!");
-            }
         }
 
         // Check if input actions are enabled
-        if (inputManager != null)
-        {
-            bool enabled = inputManager.AreInputActionsEnabled();
-            Debug.Log($"Input actions enabled check result: {enabled}");
-
-            if (!enabled)
-            {
-                Debug.LogWarning("Input actions are not enabled! Forcing UI mode...");
-                inputManager.ForceEnableCurrentActionMap();
-            }
-        }
+        if (inputManager != null && !inputManager.AreInputActionsEnabled())
+            inputManager.ForceEnableCurrentActionMap();
 
         // Initialize main menu
         ShowMainMenu();
-
         startCamera.cullingMask = 31;
 
         // Get camera reference if not set
         if (virtualCamera == null)
-        {
             virtualCamera = GetComponent<CinemachineVirtualCamera>();
-        }
     }
-
 
     private void Update()
     {
+        // Check for controller input to enable selection
+        if (inputManager != null && inputManager.IsUsingGamepad)
+        {
+            // Check if controller navigation input was detected
+            if (Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0 ||
+                Input.GetButton("Submit") || Input.GetButton("Cancel"))
+            {
+                // Enable controller selection and select appropriate button
+                controllerSelectionEnabled = true;
+
+                // Determine which menu is active and select its default button
+                if (mainMenuPanel.activeSelf && defaultMainMenuButton != null)
+                    eventSystem.SetSelectedGameObject(defaultMainMenuButton.gameObject);
+                else if (playMenuPanel.activeSelf && defaultPlayMenuButton != null)
+                    eventSystem.SetSelectedGameObject(defaultPlayMenuButton.gameObject);
+                else if (pauseMenuUI.activeSelf && defaultPauseMenuButton != null)
+                    eventSystem.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
+                else if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
+                    eventSystem.SetSelectedGameObject(defaultSettingsMenuButton.gameObject);
+            }
+        }
+        else if (Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
+        {
+            // If mouse moved, reset controller selection and clear highlighting
+            controllerSelectionEnabled = false;
+            ClearSelection();
+        }
+
         if (!mainMenuPanel.activeSelf)  // Only check these when not in main menu
         {
             // Start Game Button (Host only)
@@ -183,31 +185,22 @@ public class MenuManager : NetworkBehaviour
             if (ConnectionManager.instance.joinCode != null)
                 joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
         }
+        // Handle text input fields
+        HandleTextInput();
     }
 
     // Event handlers for input system callbacks
     private void OnMenuToggled()
     {
-        Debug.Log("Menu Toggle event received in MenuManager");
-
         // Don't toggle if we're in main menu
         if (mainMenuPanel.activeSelf)
-        {
-            Debug.Log("Main menu is active, ignoring menu toggle");
             return;
-        }
 
         // Toggle pause state
         if (gameIsPaused)
-        {
-            Debug.Log("Game is paused, resuming");
             Resume();
-        }
         else
-        {
-            Debug.Log("Game is not paused, pausing");
             Pause();
-        }
     }
 
     private void OnBackPressed()
@@ -227,9 +220,7 @@ public class MenuManager : NetworkBehaviour
             settingsMenuUI.SetActive(false);
             pauseMenuUI.SetActive(true);
             if (defaultPauseMenuButton != null)
-            {
                 defaultPauseMenuButton.Select();
-            }
         }
     }
 
@@ -247,9 +238,7 @@ public class MenuManager : NetworkBehaviour
         // Rotate main menu camera
         orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
         if (orbitalTransposer != null)
-        {
             orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
-        }
 
         playMenuPanel.SetActive(false);
         pauseMenuUI.SetActive(false);
@@ -260,20 +249,15 @@ public class MenuManager : NetworkBehaviour
 
         // Switch to UI input mode
         if (inputManager != null)
-        {
             inputManager.SwitchToUIMode();
-        }
 
         // Always show cursor in main menu
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         gameIsPaused = false;  // Reset pause state
 
-        // Set default selection
-        if (defaultMainMenuButton != null)
-        {
-            defaultMainMenuButton.Select();
-        }
+        // Handle button selection based on input
+        HandleButtonSelection(defaultMainMenuButton);
     }
 
     public void OnPlayClicked()
@@ -283,21 +267,14 @@ public class MenuManager : NetworkBehaviour
 
         // Lower the priority of the menu camera
         if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
-        {
             virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
-        }
 
         // Make sure we're in UI mode for the play menu
         if (inputManager != null)
-        {
             inputManager.SwitchToUIMode();
-        }
 
-        // Set default selection
-        if (defaultPlayMenuButton != null)
-        {
-            defaultPlayMenuButton.Select();
-        }
+        // Handle button selection based on input
+        HandleButtonSelection(defaultPlayMenuButton);
     }
 
     public void OnOptionsClicked()
@@ -307,52 +284,32 @@ public class MenuManager : NetworkBehaviour
 
         // Set appropriate default selection
         if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
-        {
             defaultSettingsMenuButton.Select();
-        }
     }
 
     public void Resume()
     {
-        Debug.Log("Resume called");
-
         // Reset button states before disabling menus
         if (pauseMenuUI.activeSelf && pauseMenuUI.GetComponent<ButtonStateResetter>() != null)
-        {
             pauseMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-        }
+
         if (settingsMenuUI.activeSelf && settingsMenuUI.GetComponent<ButtonStateResetter>() != null)
-        {
             settingsMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-        }
 
         // Disable UI elements
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
         gameIsPaused = false;
 
-        // Play sound if appropriate
+        // Play sound
         PauseOff.Post(gameObject);
 
         // Switch to gameplay input mode
         if (inputManager != null)
         {
-            Debug.Log("Resuming: Switching to gameplay input mode");
             inputManager.SwitchToGameplayMode();
-
-            // Verify the switch happened
-            bool inGameplayMode = inputManager.IsInGameplayMode();
-            Debug.Log($"After Resume: IsInGameplayMode = {inGameplayMode}");
-
-            if (!inGameplayMode)
-            {
-                Debug.LogError("Failed to switch to gameplay mode! Forcing switch...");
+            if (!inputManager.IsInGameplayMode())
                 inputManager.ForceEnableCurrentActionMap();
-            }
-        }
-        else
-        {
-            Debug.LogError("Cannot switch input mode - inputManager is null!");
         }
 
         // Lock cursor for gameplay
@@ -362,8 +319,6 @@ public class MenuManager : NetworkBehaviour
 
     void Pause()
     {
-        Debug.Log("Pause called");
-
         // Update cursor state
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -376,33 +331,13 @@ public class MenuManager : NetworkBehaviour
         // Switch to UI input mode
         if (inputManager != null)
         {
-            Debug.Log("Pausing: Switching to UI input mode");
             inputManager.SwitchToUIMode();
-
-            // Verify the switch happened
-            bool inGameplayMode = inputManager.IsInGameplayMode();
-            Debug.Log($"After Pause: IsInGameplayMode = {inGameplayMode}");
-
-            if (inGameplayMode)
-            {
-                Debug.LogError("Failed to switch to UI mode! Forcing switch...");
+            if (inputManager.IsInGameplayMode())
                 inputManager.ForceEnableCurrentActionMap();
-            }
-        }
-        else
-        {
-            Debug.LogError("Cannot switch input mode - inputManager is null!");
         }
 
-        // Set default button selection
-        if (defaultPauseMenuButton != null)
-        {
-            defaultPauseMenuButton.Select();
-        }
-        else
-        {
-            Debug.LogWarning("No default pause menu button assigned!");
-        }
+        // Handle button selection based on input
+        HandleButtonSelection(defaultPauseMenuButton);
     }
 
     public void StartGame()
@@ -418,15 +353,10 @@ public class MenuManager : NetworkBehaviour
             settingsMenuUI.SetActive(!settingsMenuUI.activeSelf);
             pauseMenuUI.SetActive(!pauseMenuUI.activeSelf);
 
-            // Set appropriate default selection
-            if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
-            {
-                defaultSettingsMenuButton.Select();
-            }
-            else if (pauseMenuUI.activeSelf && defaultPauseMenuButton != null)
-            {
-                defaultPauseMenuButton.Select();
-            }
+            if (settingsMenuUI.activeSelf)
+                HandleButtonSelection(defaultSettingsMenuButton);
+            else
+                HandleButtonSelection(defaultPauseMenuButton);
         }
         else
         {
@@ -483,17 +413,12 @@ public class MenuManager : NetworkBehaviour
     public void ShowScoreboardClientRpc()
     {
         scoreboard.UpdatePlayerList();
-        // Enable the scoreboard panel
         scoreboardUI.SetActive(true);
-
-        // Update the scoreboard data
-        scoreboard.UpdatePlayerList();
     }
 
     [ClientRpc]
     public void HideScoreboardClientRpc()
     {
-        // Disable the scoreboard panel
         scoreboardUI.SetActive(false);
     }
 
@@ -537,17 +462,14 @@ public class MenuManager : NetworkBehaviour
 
     public void DisplayHostAloneMessage(string disconnectedPlayerName)
     {
-        // Display a message in the existing UI
         tempUI.SetActive(true);
 
         // Use the winner text component to display the message
         if (winnerText != null)
-        {
             winnerText.text = $"{disconnectedPlayerName} disconnected.\nYou are the only player remaining.\nWaiting for more players to join...";
-        }
 
-        // Hide message after a few seconds (optional)
-        StartCoroutine(HideHostAloneMessage(8f)); // 8 seconds seems reasonable
+        // Hide message after a few seconds
+        StartCoroutine(HideHostAloneMessage(8f));
     }
 
     private IEnumerator HideHostAloneMessage(float delay)
@@ -556,14 +478,10 @@ public class MenuManager : NetworkBehaviour
 
         // Hide the message
         if (tempUI != null && tempUI.activeSelf)
-        {
             tempUI.SetActive(false);
-        }
 
         if (winnerText != null)
-        {
             winnerText.text = "";
-        }
     }
 
     public void DisplayConnectionError(string error)
@@ -589,46 +507,28 @@ public class MenuManager : NetworkBehaviour
 
     public void HandleConnectionStateChange(bool connected)
     {
-        Debug.Log($"Connection state changed: {connected}");
-
         // Update connection state
         ConnectionManager.instance.isConnected = connected;
 
         if (connected)
         {
-            // CRITICAL FIX: When a player connects and is spawned into the world,
-            // immediately switch to gameplay mode so they can control their car
+            // When newly connected, immediately switch to gameplay mode
             if (inputManager != null)
             {
-                Debug.Log("Player connected: Switching to GAMEPLAY input mode immediately");
                 inputManager.SwitchToGameplayMode();
-
-                // Verify switch happened
-                bool inGameplayMode = inputManager.IsInGameplayMode();
-                Debug.Log($"After connection: IsInGameplayMode = {inGameplayMode}");
-
-                if (!inGameplayMode)
-                {
-                    Debug.LogError("Failed to switch to gameplay mode on connection! Forcing switch...");
+                if (!inputManager.IsInGameplayMode())
                     inputManager.ForceEnableCurrentActionMap();
-                }
+            }
 
-                // Lock cursor for gameplay
-                Cursor.visible = false;
-                Cursor.lockState = CursorLockMode.Locked;
-            }
-            else
-            {
-                Debug.LogError("Cannot switch input mode - inputManager is null!");
-            }
+            // Lock cursor for gameplay
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
         }
         else
         {
             // When disconnected, switch to UI mode and show main menu
             if (inputManager != null)
-            {
                 inputManager.SwitchToUIMode();
-            }
 
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
@@ -638,17 +538,86 @@ public class MenuManager : NetworkBehaviour
 
     private void HandleScoreboardToggle(bool show)
     {
-        Debug.Log($"HandleScoreboardToggle({show})");
-
-        // Call your existing method
         if (ConnectionManager.instance.isConnected)
         {
             scoreboardUI.SetActive(show);
 
             if (show && scoreboard != null)
-            {
                 scoreboard.UpdatePlayerList();
+        }
+    }
+
+    private void ClearSelection()
+    {
+        if (eventSystem != null)
+            eventSystem.SetSelectedGameObject(null);
+    }
+
+    // Add this method for handling button selection
+    private void HandleButtonSelection(Button defaultButton)
+    {
+        // If using controller and selection is enabled, select the default button
+        if (inputManager != null && inputManager.IsUsingGamepad && controllerSelectionEnabled)
+        {
+            if (defaultButton != null && defaultButton.gameObject.activeInHierarchy && defaultButton.isActiveAndEnabled)
+                eventSystem.SetSelectedGameObject(defaultButton.gameObject);
+        }
+        else
+        {
+            // Otherwise, clear selection to prevent automatic highlighting
+            ClearSelection();
+        }
+    }
+    private void HandleTextInput()
+    {
+        // Check if any input field is currently selected
+        bool inputFieldSelected = false;
+
+        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
+        {
+            TMP_InputField inputField = EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>();
+            if (inputField != null)
+            {
+                inputFieldSelected = true;
+
+                // If we just started editing text
+                if (!isEditingText)
+                {
+                    isEditingText = true;
+                    // Temporarily disable controller navigation
+                    DisableControllerInput();
+                }
             }
+        }
+
+        // If we were editing text but are no longer
+        if (isEditingText && !inputFieldSelected)
+        {
+            isEditingText = false;
+            // Re-enable controller navigation
+            EnableControllerInput();
+        }
+    }
+
+    // Methods to disable/enable controller input
+    private void DisableControllerInput()
+    {
+        // This will prevent controller input from affecting UI navigation
+        // It doesn't disable controller completely, just ignores the input for navigation
+
+        if (inputManager != null)
+        {
+            // Create a method in InputManager to temporarily disable controller navigation
+            // This could be a simple flag that the Update method checks
+            inputManager.SetControllerNavigationEnabled(false);
+        }
+    }
+
+    private void EnableControllerInput()
+    {
+        if (inputManager != null)
+        {
+            inputManager.SetControllerNavigationEnabled(true);
         }
     }
 }
