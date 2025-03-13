@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : NetworkBehaviour
 {
@@ -156,6 +157,24 @@ public class GameManager : NetworkBehaviour
             player.state = PlayerState.Dead;
             ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
             BroadcastPlayerEliminatedSFXClientRpc();
+
+            // Add killfeed entry
+            var playerCollisionTracker = FindObjectOfType<PlayerCollisionTracker>();
+            if (playerCollisionTracker != null)
+            {
+                var lastCollision = playerCollisionTracker.GetLastCollision(clientId);
+                
+                if (lastCollision != null)
+                {
+                    // Player was killed by another player
+                    ShowKillFeedMessageClientRpc(lastCollision.collidingPlayerName, player.username, false);
+                }
+                else
+                {
+                    // Player killed themselves
+                    ShowKillFeedMessageClientRpc(player.username, "", true);
+                }
+            }
         }
 
         CheckGameStatus();
@@ -220,5 +239,22 @@ public class GameManager : NetworkBehaviour
     private void BroadcastPlayerEliminatedSFXClientRpc()
     {
         PlayerEliminated.Post(gameObject);
+    }
+
+    [ClientRpc]
+    private void ShowKillFeedMessageClientRpc(string killerName, string victimName, bool isSuicide)
+    {
+        var killFeed = FindObjectOfType<KillFeed>();
+        if (killFeed != null)
+        {
+            if (isSuicide)
+            {
+                killFeed.AddSuicideMessage(killerName);
+            }
+            else
+            {
+                killFeed.AddKillMessage(killerName, victimName);
+            }
+        }
     }
 }

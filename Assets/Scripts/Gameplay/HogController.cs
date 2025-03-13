@@ -746,6 +746,30 @@ public class HogController : NetworkBehaviour
     {
         if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
         {
+            // Get collision details
+            ulong targetPlayerClientId = this.GetComponent<NetworkObject>().OwnerClientId;
+            
+            // Try to get the colliding player's client ID
+            if (collision.gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            {
+                ulong collidingPlayerClientId = networkObject.OwnerClientId;
+                
+                // Get player name
+                if (ConnectionManager.instance.TryGetPlayerData(collidingPlayerClientId, out PlayerData collidingPlayerData))
+                {
+                    // Record the collision in the tracker
+                    var playerCollisionTracker = FindObjectOfType<PlayerCollisionTracker>();
+                    if (playerCollisionTracker != null)
+                    {
+                        playerCollisionTracker.RecordCollision(
+                            targetPlayerClientId,
+                            collidingPlayerClientId,
+                            collidingPlayerData.username
+                        );
+                    }
+                }
+            }
+            
             StartCoroutine(CollisionForceDebounce());
         }
 
