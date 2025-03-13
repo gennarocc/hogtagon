@@ -83,8 +83,30 @@ public class ConnectionManager : NetworkBehaviour
 
     private void OnClientConnectedCallback(ulong clientId)
     {
-        ClientDataListSerialized serializedList = DictionaryExtensions.ConvertDictionaryToSerializableList(clientDataDictionary);
-        SendClientDataListClientRpc(clientId, serializedList);
+        // If this is the host connecting, directly add their pending data
+        if (IsServer && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            PlayerData hostData = pendingPlayerData[clientId];
+            clientDataDictionary.Add(clientId, hostData);
+            
+            // Find and set the host's NetworkVariable
+            foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
+            {
+                if (player.clientId == clientId)
+                {
+                    player.SetPlayerData(hostData);  // This will update the NetworkVariable
+                    break;
+                }
+            }
+            
+            pendingPlayerData.Remove(clientId);
+        }
+        else
+        {
+            // For non-host clients, send them the current client data list
+            ClientDataListSerialized serializedList = DictionaryExtensions.ConvertDictionaryToSerializableList(clientDataDictionary);
+            SendClientDataListClientRpc(clientId, serializedList);
+        }
 
         // If this is our local client connecting, update menu state
         if (clientId == NetworkManager.Singleton.LocalClientId)

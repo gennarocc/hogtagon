@@ -14,56 +14,73 @@ public class ConnectToGame : MonoBehaviour
 {
     [SerializeField] private Camera startCamera;
     [SerializeField] private MenuManager menuManager;
-    [SerializeField] private TMP_InputField usernameInput;
-    [SerializeField] private TMP_InputField joinCodeInput;
-    [SerializeField] private Button hostLobby;
-    [SerializeField] private Button joinLobby;
-    [SerializeField] private GameObject connectionPending;
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event MenuMusicOff;
 
+    private PlayMenuPanel playMenuPanel;
+    private TMP_InputField usernameInput;
+    private TMP_InputField joinCodeInput;
+    private Button hostLobby;
+    private Button joinLobby;
+    private GameObject connectionPending;
+
     private async void Start()
     {
-        startCamera.cullingMask = 31;
-        joinLobby.interactable = false;
-        // Start Relay Service.
-        InitializationOptions hostOptions = new InitializationOptions().SetProfile("host");
-        InitializationOptions clientOptions = new InitializationOptions().SetProfile("client");
-        await UnityServices.InitializeAsync();
-        AuthenticationService.Instance.SignedIn += () =>
+        // Get references from PlayMenuPanel
+        playMenuPanel = GetComponent<PlayMenuPanel>();
+        if (playMenuPanel != null)
         {
-            Debug.Log(message: "Signed in " + AuthenticationService.Instance.PlayerId);
-        };
-        if (AuthenticationService.Instance.IsAuthorized)
-        {
-            Debug.Log("Authorized");
-            AuthenticationService.Instance.SignOut();
-            await UnityServices.InitializeAsync(clientOptions);
+            // Get references through reflection to access private fields
+            var fields = typeof(PlayMenuPanel).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            foreach (var field in fields)
+            {
+                if (field.Name.Contains("usernameInput")) usernameInput = field.GetValue(playMenuPanel) as TMP_InputField;
+                if (field.Name.Contains("joinCodeInput")) joinCodeInput = field.GetValue(playMenuPanel) as TMP_InputField;
+                if (field.Name.Contains("hostLobbyButton")) hostLobby = field.GetValue(playMenuPanel) as Button;
+                if (field.Name.Contains("joinLobbyButton")) joinLobby = field.GetValue(playMenuPanel) as Button;
+                if (field.Name.Contains("connectionPending")) connectionPending = field.GetValue(playMenuPanel) as GameObject;
+            }
         }
-        await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
+        startCamera.cullingMask = 31;
+        if (joinLobby != null) joinLobby.interactable = false;
+
+        // Start Relay Service
+        try
+        {
+            InitializationOptions options = new InitializationOptions()
+                .SetProfile(NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost ? "host" : "client");
+            
+            await UnityServices.InitializeAsync(options);
+            
+            if (AuthenticationService.Instance.IsSignedIn)
+            {
+                AuthenticationService.Instance.SignOut();
+            }
+            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            Debug.Log($"Signed in anonymously: {AuthenticationService.Instance.PlayerId}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to initialize Unity Services: {e.Message}");
+            if (playMenuPanel != null)
+            {
+                playMenuPanel.ShowConnectionError("Failed to initialize network services");
+            }
+        }
     }
 
     public void OnInputFieldValueChanged()
     {
-        if (joinCodeInput.text.Length == 6)
+        if (joinCodeInput != null && joinLobby != null)
         {
-            joinLobby.interactable = true;
-        }
-        else
-        {
-            joinLobby.interactable = false;
+            joinLobby.interactable = joinCodeInput.text.Length == 6;
         }
 
-        if (usernameInput.text.Length <= 10)
+        if (usernameInput != null && hostLobby != null)
         {
-            hostLobby.interactable = true;
-        }
-        else
-        {
-            // joinLobby.interactable = false;
-            // hostLobby.interactable = false;
+            hostLobby.interactable = !string.IsNullOrEmpty(usernameInput.text) && usernameInput.text.Length <= 10;
         }
     }
 
@@ -75,15 +92,18 @@ public class ConnectToGame : MonoBehaviour
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
             var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
             ConnectionManager.instance.joinCode = joinCode;
-            Debug.Log(message: "Join Code: " + joinCode);
+            Debug.Log($"Join Code: {joinCode}");
             NetworkManager.Singleton.StartHost();
         }
         catch (RelayServiceException e)
         {
-            Debug.Log("Error creating lobby");
-            connectionPending.SetActive(false);
-            menuManager.DisplayConnectionError(e.Message);
-            menuManager.MainMenu();
+            Debug.LogError($"Error creating lobby: {e.Message}");
+            if (playMenuPanel != null)
+            {
+                playMenuPanel.ShowConnectionPending(false);
+                playMenuPanel.ShowConnectionError(e.Message);
+            }
+            if (menuManager != null) menuManager.MainMenu();
         }
     }
 
@@ -91,37 +111,56 @@ public class ConnectToGame : MonoBehaviour
     {
         try
         {
-            Debug.Log(message: "Joining Relay with " + joinCode);
+            Debug.Log($"Joining Relay with code: {joinCode}");
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
             NetworkManager.Singleton.StartClient();
         }
         catch (RelayServiceException e)
         {
-            Debug.Log(e);
-            connectionPending.SetActive(false);
-            menuManager.DisplayConnectionError("No lobby found");
-            menuManager.MainMenu();
+            Debug.LogError($"Error joining lobby: {e.Message}");
+            if (playMenuPanel != null)
+            {
+                playMenuPanel.ShowConnectionPending(false);
+                playMenuPanel.ShowConnectionError("No lobby found");
+            }
+            if (menuManager != null) menuManager.MainMenu();
         }
-
     }
 
     public void StartClient()
     {
-        // Configure connection with username as payload;
+        if (usernameInput == null || string.IsNullOrEmpty(usernameInput.text))
+        {
+            if (playMenuPanel != null) playMenuPanel.ShowConnectionError("Please enter a username");
+            return;
+        }
+
+        if (joinCodeInput == null || string.IsNullOrEmpty(joinCodeInput.text))
+        {
+            if (playMenuPanel != null) playMenuPanel.ShowConnectionError("Please enter a join code");
+            return;
+        }
+
+        // Configure connection with username as payload
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
         JoinRelay(joinCodeInput.text);
-        connectionPending.SetActive(true);
-        MenuMusicOff.Post(gameObject);
+        if (playMenuPanel != null) playMenuPanel.ShowConnectionPending(true);
+        if (MenuMusicOff != null) MenuMusicOff.Post(gameObject);
     }
 
     public void StartHost()
     {
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
+        if (usernameInput == null || string.IsNullOrEmpty(usernameInput.text))
+        {
+            if (playMenuPanel != null) playMenuPanel.ShowConnectionError("Please enter a username");
+            return;
+        }
+
+        string username = usernameInput.text;
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
         CreateRelay();
-        connectionPending.SetActive(true);
-        MenuMusicOff.Post(gameObject);
+        if (playMenuPanel != null) playMenuPanel.ShowConnectionPending(true);
+        if (MenuMusicOff != null) MenuMusicOff.Post(gameObject);
     }
-
-
 }

@@ -1,39 +1,55 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 public class ButtonStateResetter : MonoBehaviour
 {
-    [SerializeField] private Button[] buttonsToReset;
+    private Button[] buttons;
 
-    private void OnEnable()
+    private void Awake()
     {
-        // Can optionally collect buttons automatically
-        if (buttonsToReset.Length == 0)
+        Debug.Log($"ButtonStateResetter Awake on {gameObject.name}");
+        // Get all buttons in this panel
+        buttons = GetComponentsInChildren<Button>(true);
+        if (buttons != null && buttons.Length > 0)
         {
-            buttonsToReset = GetComponentsInChildren<Button>(true);
+            Debug.Log($"Found {buttons.Length} buttons in {gameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"No buttons found in {gameObject.name}");
         }
     }
 
-        public void ResetAllButtonStates()
+    public void ResetAllButtonStates()
     {
-        foreach (Button button in buttonsToReset)
+        // Check if buttons array is initialized
+        if (buttons == null)
         {
-            // Force transition to normal state
-            button.OnPointerExit(new PointerEventData(EventSystem.current));
-            
-            // Reset selection state in EventSystem
-            if (EventSystem.current.currentSelectedGameObject == button.gameObject)
+            Debug.LogWarning($"Buttons array is null in {gameObject.name}, attempting to find buttons");
+            buttons = GetComponentsInChildren<Button>(true);
+        }
+
+        // If still null or empty, return
+        if (buttons == null || buttons.Length == 0)
+        {
+            Debug.LogWarning($"No buttons found in {gameObject.name}, cannot reset states");
+            return;
+        }
+
+        foreach (Button button in buttons)
+        {
+            if (button != null)
             {
-                EventSystem.current.SetSelectedGameObject(null);
-            }
-            
-            // Force the animator to go to normal state if using animator
-            Animator animator = button.GetComponent<Animator>();
-            if (animator != null)
-            {
-                animator.Play("Normal");
+                // Only reset animation if the button has an animator
+                if (button.animator != null)
+                {
+                    button.animator.Rebind();
+                    button.animator.Update(0f);
+                }
+
+                // Deselect the button
+                button.OnDeselect(null);
             }
         }
     }
-}
+} 

@@ -158,7 +158,7 @@ public class HogController : NetworkBehaviour
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
         // Unsubscribe from events when destroyed
         if (inputManager != null && IsOwner)

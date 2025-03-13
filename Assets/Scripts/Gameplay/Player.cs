@@ -17,9 +17,6 @@ public class Player : NetworkBehaviour
     [SerializeField] private GameObject body; // Used to set color texture
     [SerializeField] private GameObject playerIndicator; // Used to set color texture
 
-
-
-
     [Header("Camera")]
     [SerializeField] public CinemachineFreeLook mainCamera;
     [SerializeField] public AudioListener audioListener;
@@ -55,90 +52,96 @@ public class Player : NetworkBehaviour
             ApplyPlayerData(networkPlayerData.Value);
         }
 
+        // Set up camera for local player
+        if (IsOwner)
+        {
+            SetupLocalPlayerCamera();
+        }
     }
 
     private void Awake()
     {
-        menuManager = GameObject.Find("Menus").GetComponent<MenuManager>(); // ugh...
+        menuManager = GameObject.Find("Menus").GetComponent<MenuManager>();
     }
 
     private void Start()
     {
-        Cursor.visible = !Cursor.visible; // toggle visibility
-        Cursor.lockState = CursorLockMode.Locked;
-        ConnectionManager.instance.isConnected = true;
-        menuManager.jumpUI.SetActive(true);
-
         if (IsOwner)
         {
+            // Local player setup
+            Cursor.visible = !Cursor.visible;
+            Cursor.lockState = CursorLockMode.Locked;
+            ConnectionManager.instance.isConnected = true;
+            menuManager.jumpUI.SetActive(true);
             menuManager.startCamera.gameObject.SetActive(false);
             menuManager.connectionPending.SetActive(false);
-            audioListener.enabled = true;
-            mainCamera.Priority = 1;
-            // Set up FreeLook camera targets
-            if (mainCamera != null)
-            {
-                mainCamera.Follow = cameraTarget;
-                mainCamera.LookAt = cameraTarget;
-            }
         }
         else
         {
+            // Remote player setup
             mainCamera.Priority = 0;
+            audioListener.enabled = false;
         }
 
         cameraTarget.rotation = Quaternion.identity;
+    }
 
-        Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
-        localPlayerCameraTransform = localPlayer.mainCamera.transform;
+    private void SetupLocalPlayerCamera()
+    {
+        audioListener.enabled = true;
+        mainCamera.Priority = 1;
+
+        if (mainCamera != null)
+        {
+            mainCamera.Follow = cameraTarget;
+            mainCamera.LookAt = cameraTarget;
+        }
+
+        // Store local player camera transform for other players to use
+        localPlayerCameraTransform = mainCamera.transform;
     }
 
     private void Update()
     {
+        // Update camera target position
+        cameraTarget.position = cameraOffset.position;
+
         // Only update floating username position for non-local players
-        if (!IsOwner && localPlayerCameraTransform != null)
+        if (!IsOwner)
         {
-            // Position the username above the player
-            floatingUsername.transform.position = rb.position + new Vector3(0, 3f, 0);
-            floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - localPlayerCameraTransform.transform.position);
+            UpdateFloatingUsername();
         }
 
-        cameraTarget.position = cameraOffset.position;
+        // Handle camera states
+        UpdateCameraState();
+    }
+
+    private void UpdateFloatingUsername()
+    {
+        if (localPlayerCameraTransform == null)
+        {
+            // Try to get the local player's camera transform if not set
+            Player localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject?.GetComponent<Player>();
+            if (localPlayer != null && localPlayer.mainCamera != null)
+            {
+                localPlayerCameraTransform = localPlayer.mainCamera.transform;
+            }
+        }
+
+        if (localPlayerCameraTransform != null)
+        {
+            floatingUsername.transform.position = rb.position + new Vector3(0, 3f, 0);
+            floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - localPlayerCameraTransform.position);
+        }
+    }
+
+    private void UpdateCameraState()
+    {
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
-        // Set camera to spectator if dead
+        
         if (playerData.state != PlayerState.Alive && GameManager.instance.state != GameState.Pending)
         {
-            List<ulong> aliveClients = ConnectionManager.instance.GetAliveClients();
-
-            // Check if there are ANY alive clients before proceeding
-            if (aliveClients.Count > 0)
-            {
-                // Make sure spectatingPlayerIndex is within bounds
-                if (spectatingPlayerIndex >= aliveClients.Count)
-                    spectatingPlayerIndex = 0;
-
-                // Get the player to spectate
-                Player spectatePlayer = ConnectionManager.instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
-
-                // Only follow/look if we got a valid player
-                if (spectatePlayer != null)
-                {
-            mainCamera.Follow = spectatePlayer.cameraTarget;
-            mainCamera.LookAt = spectatePlayer.cameraTarget;
-                }
-
-                // Handle changing spectate target
-            if (Input.GetKeyDown(KeyCode.Mouse0))
-            {
-                    spectatingPlayerIndex = (spectatingPlayerIndex + 1) % aliveClients.Count;
-                }
-            }
-            else
-            {
-                // No alive players to spectate, fall back to own camera
-                mainCamera.Follow = cameraTarget;
-                mainCamera.LookAt = cameraTarget;
-            }
+            HandleSpectatorCamera();
         }
         else
         {
@@ -148,6 +151,40 @@ public class Player : NetworkBehaviour
         }
 
         playerIndicator.SetActive(playerData.isLobbyLeader);
+    }
+
+    private void HandleSpectatorCamera()
+    {
+        List<ulong> aliveClients = ConnectionManager.instance.GetAliveClients();
+
+        if (aliveClients.Count > 0)
+        {
+            // Make sure spectatingPlayerIndex is within bounds
+            if (spectatingPlayerIndex >= aliveClients.Count)
+                spectatingPlayerIndex = 0;
+
+            // Get the player to spectate
+            Player spectatePlayer = ConnectionManager.instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
+
+            // Only follow/look if we got a valid player
+            if (spectatePlayer != null)
+            {
+                mainCamera.Follow = spectatePlayer.cameraTarget;
+                mainCamera.LookAt = spectatePlayer.cameraTarget;
+            }
+
+            // Handle changing spectate target
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                spectatingPlayerIndex = (spectatingPlayerIndex + 1) % aliveClients.Count;
+            }
+        }
+        else
+        {
+            // No alive players to spectate, fall back to own camera
+            mainCamera.Follow = cameraTarget;
+            mainCamera.LookAt = cameraTarget;
+        }
     }
 
     public void Respawn()
@@ -217,7 +254,7 @@ public class Player : NetworkBehaviour
         // Call the base implementation first (important!)
         base.OnDestroy();
 
-        // Then do your custom cleanup
+        // Then do our custom cleanup
         if (floatingUsername != null && floatingUsername.gameObject != null)
         {
             Destroy(floatingUsername.gameObject);

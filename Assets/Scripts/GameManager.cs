@@ -81,13 +81,24 @@ public class GameManager : NetworkBehaviour
         if (!gameMusicPlaying)
             PlayLevelMusicClientRpc();
 
+        // Always reset game time
+        gameTime = 0f;
+
+        // If we have multiple players, start the countdown and game sequence
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
             LockPlayerMovement();
-            gameTime = 0f;
             RespawnAllPlayers();
             menuManager.StartCountdownClientRpc();
             StartCoroutine(RoundCountdown());
+        }
+        else
+        {
+            // Single player - just set the state and unlock movement
+            SetGameState(GameState.Playing);
+            UnlockPlayerMovement();
+            if (menuManager != null)
+                menuManager.Resume();
         }
     }
 

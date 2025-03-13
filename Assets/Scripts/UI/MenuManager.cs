@@ -10,18 +10,13 @@ public class MenuManager : NetworkBehaviour
 {
     public bool gameIsPaused = false;
 
-    [Header("Menu Panels")]
-    [SerializeField] private GameObject mainMenuPanel;
-    [SerializeField] private GameObject playMenuPanel;
-    [SerializeField] private GameObject pauseMenuUI;
-    [SerializeField] private GameObject settingsMenuUI;
+    [Header("Panels")]
+    public MainMenuPanel mainMenuPanel;
+    public PlayMenuPanel playMenuPanel;
+    public PauseMenuPanel pauseMenuPanel;
+    public SettingsPanel settingsPanel;
     [SerializeField] private GameObject tempUI;
     [SerializeField] public GameObject jumpUI;
-
-    [Header("Main Menu Components")]
-    [SerializeField] private Button playButton;
-    [SerializeField] private Button optionsButton;
-    [SerializeField] private Button quitButton;
 
     [Header("Game Menu Components")]
     [SerializeField] public Button startGameButton;
@@ -59,9 +54,11 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private AK.Wwise.Event uiCancel;
     private int countdownTime;
 
+    [Header("Camera")]
     [SerializeField] private CinemachineVirtualCamera virtualCamera;
     [SerializeField] private float rotationSpeed = 0.01f;
     private CinemachineOrbitalTransposer orbitalTransposer;
+    private bool isCameraRotating = false;
 
     // Reference to Input Manager
     private InputManager inputManager;
@@ -108,12 +105,18 @@ public class MenuManager : NetworkBehaviour
 
     private void Start()
     {
+        Debug.Log("MenuManager Start");
+        
         // Get reference to EventSystem if not assigned
         if (eventSystem == null)
+        {
             eventSystem = EventSystem.current;
+            Debug.Log("Found EventSystem: " + (eventSystem != null));
+        }
 
         // Clear selection by default
         ClearSelection();
+        
         // Try to find InputManager again if it wasn't found in Awake/OnEnable
         if (inputManager == null)
         {
@@ -125,20 +128,59 @@ public class MenuManager : NetworkBehaviour
                 inputManager.BackPressed += OnBackPressed;
                 inputManager.AcceptPressed += OnAcceptPressed;
                 inputManager.ScoreboardToggled += HandleScoreboardToggle;
+                Debug.Log("InputManager found and events subscribed");
+            }
+            else
+            {
+                Debug.LogWarning("InputManager not found!");
             }
         }
 
         // Check if input actions are enabled
         if (inputManager != null && !inputManager.AreInputActionsEnabled())
+        {
             inputManager.ForceEnableCurrentActionMap();
+            Debug.Log("Forced enable input action map");
+        }
+
+        // Initialize cameras
+        if (startCamera != null)
+        {
+            startCamera.gameObject.SetActive(true);
+            startCamera.cullingMask = 31;
+            Debug.Log($"Start camera initialized: {startCamera.name}");
+        }
+        else
+        {
+            Debug.LogError("Start camera reference is missing!");
+        }
+
+        // Initialize virtual camera
+        if (virtualCamera == null)
+        {
+            virtualCamera = GetComponent<CinemachineVirtualCamera>();
+            Debug.Log($"Found virtual camera: {virtualCamera.name}");
+        }
+
+        if (virtualCamera != null)
+        {
+            orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
+            if (orbitalTransposer != null)
+            {
+                Debug.Log("Found orbital transposer component");
+            }
+            else
+            {
+                Debug.LogWarning("Virtual camera is missing Orbital Transposer component!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Virtual camera reference is missing!");
+        }
 
         // Initialize main menu
         ShowMainMenu();
-        startCamera.cullingMask = 31;
-
-        // Get camera reference if not set
-        if (virtualCamera == null)
-            virtualCamera = GetComponent<CinemachineVirtualCamera>();
     }
 
     private void Update()
@@ -154,13 +196,13 @@ public class MenuManager : NetworkBehaviour
                 controllerSelectionEnabled = true;
 
                 // Determine which menu is active and select its default button
-                if (mainMenuPanel.activeSelf && defaultMainMenuButton != null)
+                if (mainMenuPanel != null && mainMenuPanel.gameObject.activeSelf && defaultMainMenuButton != null)
                     eventSystem.SetSelectedGameObject(defaultMainMenuButton.gameObject);
-                else if (playMenuPanel.activeSelf && defaultPlayMenuButton != null)
+                else if (playMenuPanel != null && playMenuPanel.gameObject.activeSelf && defaultPlayMenuButton != null)
                     eventSystem.SetSelectedGameObject(defaultPlayMenuButton.gameObject);
-                else if (pauseMenuUI.activeSelf && defaultPauseMenuButton != null)
+                else if (pauseMenuPanel != null && pauseMenuPanel.gameObject.activeSelf && defaultPauseMenuButton != null)
                     eventSystem.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
-                else if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
+                else if (settingsPanel != null && settingsPanel.gameObject.activeSelf && defaultSettingsMenuButton != null)
                     eventSystem.SetSelectedGameObject(defaultSettingsMenuButton.gameObject);
             }
         }
@@ -171,18 +213,28 @@ public class MenuManager : NetworkBehaviour
             ClearSelection();
         }
 
-        if (!mainMenuPanel.activeSelf)  // Only check these when not in main menu
+        if (mainMenuPanel != null && !mainMenuPanel.gameObject.activeSelf)  // Only check these when not in main menu
         {
             // Start Game Button (Host only)
-            if (NetworkManager.Singleton != null &&
+            // Enable start button only if:
+            // 1. We are the host
+            // 2. We have multiple players
+            // 3. We are in Pending state
+            if (startGameButton != null && NetworkManager.Singleton != null &&
                 NetworkManager.Singleton.IsServer &&
-                NetworkManager.Singleton.ConnectedClients.Count > 1)
+                NetworkManager.Singleton.ConnectedClients.Count > 1 &&
+                GameManager.instance != null &&
+                GameManager.instance.state == GameState.Pending)
+            {
                 startGameButton.interactable = true;
-            else
+            }
+            else if (startGameButton != null)
+            {
                 startGameButton.interactable = false;
+            }
 
             // Set join code
-            if (ConnectionManager.instance.joinCode != null)
+            if (joinCodeText != null && ConnectionManager.instance != null && ConnectionManager.instance.joinCode != null)
                 joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
         }
         // Handle text input fields
@@ -192,8 +244,11 @@ public class MenuManager : NetworkBehaviour
     // Event handlers for input system callbacks
     private void OnMenuToggled()
     {
-        // Don't toggle if we're in main menu
-        if (mainMenuPanel.activeSelf)
+        // Don't toggle if we're in main menu or if game is pending
+        if (mainMenuPanel != null && mainMenuPanel.gameObject.activeSelf)
+            return;
+            
+        if (GameManager.instance != null && GameManager.instance.state == GameState.Pending)
             return;
 
         // Toggle pause state
@@ -205,22 +260,26 @@ public class MenuManager : NetworkBehaviour
 
     private void OnBackPressed()
     {
-        if (playMenuPanel.activeSelf)
+        // Don't process back button if game is pending
+        if (GameManager.instance != null && GameManager.instance.state == GameState.Pending)
+            return;
+
+        if (playMenuPanel != null && playMenuPanel.gameObject.activeSelf)
         {
             // Reset button states before disabling menus
-            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+            if (mainMenuPanel != null) mainMenuPanel.ResetAllButtonStates();
             ShowMainMenu();
         }
-        else if (pauseMenuUI.activeSelf && !settingsMenuUI.activeSelf)
+        else if (pauseMenuPanel != null && pauseMenuPanel.gameObject.activeSelf && 
+                (settingsPanel == null || !settingsPanel.gameObject.activeSelf))
         {
             Resume();
         }
-        else if (settingsMenuUI.activeSelf)
+        else if (settingsPanel != null && settingsPanel.gameObject.activeSelf)
         {
-            settingsMenuUI.SetActive(false);
-            pauseMenuUI.SetActive(true);
-            if (defaultPauseMenuButton != null)
-                defaultPauseMenuButton.Select();
+            settingsPanel.Hide();
+            if (gameIsPaused && pauseMenuPanel != null)
+                pauseMenuPanel.Show();
         }
     }
 
@@ -231,21 +290,18 @@ public class MenuManager : NetworkBehaviour
 
     public void ShowMainMenu()
     {
-        mainMenuPanel.SetActive(true);
-        startCamera.gameObject.SetActive(true);
-        MenuMusicOn.Post(gameObject);
+        Debug.Log("Showing main menu");
+        HideAllPanels();
+        if (mainMenuPanel != null) mainMenuPanel.Show();
+        if (startCamera != null)
+        {
+            startCamera.gameObject.SetActive(true);
+            startCamera.cullingMask = 31;
+        }
+        if (MenuMusicOn != null) MenuMusicOn.Post(gameObject);
 
-        // Rotate main menu camera
-        orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
-        if (orbitalTransposer != null)
-            orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
-
-        playMenuPanel.SetActive(false);
-        pauseMenuUI.SetActive(false);
-        settingsMenuUI.SetActive(false);
-        scoreboardUI.SetActive(false);
-        tempUI.SetActive(false);
-        connectionPending.SetActive(false);
+        // Start camera rotation for main menu
+        StartCameraRotation();
 
         // Switch to UI input mode
         if (inputManager != null)
@@ -260,16 +316,43 @@ public class MenuManager : NetworkBehaviour
         HandleButtonSelection(defaultMainMenuButton);
     }
 
-    public void OnPlayClicked()
+    private void HideAllPanels()
     {
-        mainMenuPanel.SetActive(false);
-        playMenuPanel.SetActive(true);
+        if (mainMenuPanel != null) mainMenuPanel.Hide();
+        if (playMenuPanel != null) playMenuPanel.Hide();
+        if (pauseMenuPanel != null) pauseMenuPanel.Hide();
+        if (settingsPanel != null) settingsPanel.Hide();
+        if (scoreboardUI != null) scoreboardUI.SetActive(false);
+        if (tempUI != null) tempUI.SetActive(false);
+        if (jumpUI != null) jumpUI.SetActive(false);
+        if (connectionPending != null) connectionPending.SetActive(false);
+    }
 
-        // Lower the priority of the menu camera
-        if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
-            virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
+    public void PlayButtonClicked()
+    {
+        Debug.Log("Play button clicked - transitioning to play menu");
+        ButtonClickAudio();
+        
+        // Hide main menu and show play menu
+        if (mainMenuPanel != null) 
+        {
+            mainMenuPanel.Hide();
+            Debug.Log("Main menu hidden");
+        }
+        if (playMenuPanel != null) 
+        {
+            playMenuPanel.Show();
+            Debug.Log("Play menu shown");
+        }
 
-        // Make sure we're in UI mode for the play menu
+        // Ensure camera keeps rotating
+        if (!isCameraRotating)
+        {
+            StartCameraRotation();
+            Debug.Log("Ensuring camera rotation continues in play menu");
+        }
+
+        // Switch to UI mode for the play menu
         if (inputManager != null)
             inputManager.SwitchToUIMode();
 
@@ -277,32 +360,44 @@ public class MenuManager : NetworkBehaviour
         HandleButtonSelection(defaultPlayMenuButton);
     }
 
-    public void OnOptionsClicked()
+    public void OptionsButtonClicked()
     {
         ButtonClickAudio();
-        settingsMenuUI.SetActive(true);
+        if (settingsPanel != null) settingsPanel.Show();
 
         // Set appropriate default selection
-        if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
+        if (settingsPanel != null && settingsPanel.gameObject.activeSelf && defaultSettingsMenuButton != null)
             defaultSettingsMenuButton.Select();
     }
 
     public void Resume()
     {
-        // Reset button states before disabling menus
-        if (pauseMenuUI.activeSelf && pauseMenuUI.GetComponent<ButtonStateResetter>() != null)
-            pauseMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+        // Don't resume if game is pending
+        if (GameManager.instance != null && GameManager.instance.state == GameState.Pending)
+            return;
 
-        if (settingsMenuUI.activeSelf && settingsMenuUI.GetComponent<ButtonStateResetter>() != null)
-            settingsMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+        // Reset button states before disabling menus
+        if (pauseMenuPanel != null && pauseMenuPanel.gameObject.activeSelf)
+        {
+            var buttonResetter = pauseMenuPanel.GetComponent<ButtonStateResetter>();
+            if (buttonResetter != null) buttonResetter.ResetAllButtonStates();
+        }
+
+        if (settingsPanel != null && settingsPanel.gameObject.activeSelf)
+        {
+            var buttonResetter = settingsPanel.GetComponent<ButtonStateResetter>();
+            if (buttonResetter != null) buttonResetter.ResetAllButtonStates();
+        }
+
+        // Stop camera rotation when game resumes
+        StopCameraRotation();
 
         // Disable UI elements
-        pauseMenuUI.SetActive(false);
-        settingsMenuUI.SetActive(false);
+        HideAllPanels();
         gameIsPaused = false;
 
         // Play sound
-        PauseOff.Post(gameObject);
+        if (PauseOff != null) PauseOff.Post(gameObject);
 
         // Switch to gameplay input mode
         if (inputManager != null)
@@ -319,14 +414,18 @@ public class MenuManager : NetworkBehaviour
 
     void Pause()
     {
+        // Don't pause if game is pending
+        if (GameManager.instance != null && GameManager.instance.state == GameState.Pending)
+            return;
+
         // Update cursor state
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
         // Show pause menu
-        pauseMenuUI.SetActive(true);
+        if (pauseMenuPanel != null) pauseMenuPanel.Show();
         gameIsPaused = true;
-        PauseOn.Post(gameObject);
+        if (PauseOn != null) PauseOn.Post(gameObject);
 
         // Switch to UI input mode
         if (inputManager != null)
@@ -340,94 +439,94 @@ public class MenuManager : NetworkBehaviour
         HandleButtonSelection(defaultPauseMenuButton);
     }
 
-    public void StartGame()
+    public void StartGameButtonClicked()
     {
-        if (IsServer) GameManager.instance.TransitionToState(GameState.Playing);
-        Resume(); // This will also switch to gameplay mode
+        if (IsServer && GameManager.instance != null)
+        {
+            // Only allow starting game from pending state
+            if (GameManager.instance.state == GameState.Pending)
+            {
+                GameManager.instance.TransitionToState(GameState.Playing);
+                // Resume will be called after countdown in GameManager.RoundCountdown()
+                HideAllPanels();
+            }
+        }
     }
 
-    public void Settings()
+    public void SettingsButtonClicked()
     {
-        if (gameIsPaused)
-        {
-            settingsMenuUI.SetActive(!settingsMenuUI.activeSelf);
-            pauseMenuUI.SetActive(!pauseMenuUI.activeSelf);
-
-            if (settingsMenuUI.activeSelf)
-                HandleButtonSelection(defaultSettingsMenuButton);
-            else
-                HandleButtonSelection(defaultPauseMenuButton);
-        }
-        else
-        {
-            ShowMainMenu();
-        }
+        if (pauseMenuPanel != null) pauseMenuPanel.Hide();
+        if (settingsPanel != null) settingsPanel.Show();
     }
 
     public void CopyJoinCode()
     {
-        GUIUtility.systemCopyBuffer = ConnectionManager.instance.joinCode;
-        Debug.Log(message: "Join Code Copied");
+        if (ConnectionManager.instance != null && ConnectionManager.instance.joinCode != null)
+        {
+            GUIUtility.systemCopyBuffer = ConnectionManager.instance.joinCode;
+            Debug.Log(message: "Join Code Copied");
+        }
     }
 
     [ClientRpc]
     public void StartCountdownClientRpc()
     {
-        countdownTime = 3;
-        countdownText.text = countdownTime.ToString();
-        tempUI.SetActive(true);
-        StartCoroutine(CountdownToStart());
+        StartCoroutine(CountdownCoroutine());
     }
 
-    private IEnumerator CountdownToStart()
+    private IEnumerator CountdownCoroutine()
     {
+        countdownTime = 3;
+        if (tempUI != null) tempUI.SetActive(true);
+        if (countdownText != null) countdownText.text = countdownTime.ToString();
+
         while (countdownTime > 0)
         {
-            countdownText.text = countdownTime.ToString();
             yield return new WaitForSeconds(1f);
             countdownTime--;
+            if (countdownText != null) countdownText.text = countdownTime.ToString();
         }
 
-        countdownText.text = "Go!";
-        yield return new WaitForSeconds(1f);
-        countdownText.text = "";
-        tempUI.SetActive(false);
+        if (countdownText != null)
+        {
+            countdownText.text = "Go!";
+            yield return new WaitForSeconds(1f);
+            countdownText.text = "";
+        }
+        if (tempUI != null) tempUI.SetActive(false);
     }
 
     [ClientRpc]
     public void DisplayWinnerClientRpc(string player)
     {
-        tempUI.SetActive(true);
-        winnerText.text = player + " won the round";
-        StartCoroutine(BetweenRoundTime());
+        if (tempUI != null) tempUI.SetActive(true);
+        if (winnerText != null) winnerText.text = $"{player} won the round";
+        StartCoroutine(HideMessageAfterDelay(5f));
     }
 
-    public IEnumerator BetweenRoundTime()
+    private IEnumerator HideMessageAfterDelay(float delay)
     {
-        yield return new WaitForSeconds(5f);
-        winnerText.text = "";
-        tempUI.SetActive(false);
+        yield return new WaitForSeconds(delay);
+        if (tempUI != null) tempUI.SetActive(false);
+        if (winnerText != null) winnerText.text = "";
     }
 
     [ClientRpc]
     public void ShowScoreboardClientRpc()
     {
-        scoreboard.UpdatePlayerList();
-        scoreboardUI.SetActive(true);
+        if (scoreboard != null) scoreboard.UpdatePlayerList();
+        if (scoreboardUI != null) scoreboardUI.SetActive(true);
     }
 
     [ClientRpc]
     public void HideScoreboardClientRpc()
     {
-        scoreboardUI.SetActive(false);
+        if (scoreboardUI != null) scoreboardUI.SetActive(false);
     }
 
-    public void MainMenu()
+    public void MainMenuButtonClicked()
     {
-        Resume();
-        connectionPending.SetActive(false);
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        Disconnect();
         ShowMainMenu();
     }
 
@@ -435,26 +534,29 @@ public class MenuManager : NetworkBehaviour
     {
         if (IsServer)
         {
-            NetworkManager.Singleton.Shutdown();
+            if (NetworkManager.Singleton != null)
+                NetworkManager.Singleton.Shutdown();
         }
-        else
+        else if (NetworkManager.Singleton != null)
         {
             DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
         }
-        MainMenu();
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-        ConnectionManager.instance.isConnected = false;
+        MainMenuButtonClicked();
+        if (ConnectionManager.instance != null)
+            ConnectionManager.instance.isConnected = false;
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void DisconnectRequestServerRpc(ulong clientId)
     {
-        Debug.Log(message: "Disconnecting Client - " + clientId + " [" + ConnectionManager.instance.GetClientUsername(clientId) + "]");
-        NetworkManager.Singleton.DisconnectClient(clientId);
+        if (NetworkManager.Singleton != null && ConnectionManager.instance != null)
+        {
+            Debug.Log(message: "Disconnecting Client - " + clientId + " [" + ConnectionManager.instance.GetClientUsername(clientId) + "]");
+            NetworkManager.Singleton.DisconnectClient(clientId);
+        }
     }
 
-    public void QuitGame()
+    public void QuitButtonClicked()
     {
         Debug.Log("Quitting Game");
         Application.Quit();
@@ -462,53 +564,43 @@ public class MenuManager : NetworkBehaviour
 
     public void DisplayHostAloneMessage(string disconnectedPlayerName)
     {
-        tempUI.SetActive(true);
-
-        // Use the winner text component to display the message
+        if (tempUI != null) tempUI.SetActive(true);
         if (winnerText != null)
+        {
             winnerText.text = $"{disconnectedPlayerName} disconnected.\nYou are the only player remaining.\nWaiting for more players to join...";
-
-        // Hide message after a few seconds
-        StartCoroutine(HideHostAloneMessage(8f));
-    }
-
-    private IEnumerator HideHostAloneMessage(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        // Hide the message
-        if (tempUI != null && tempUI.activeSelf)
-            tempUI.SetActive(false);
-
-        if (winnerText != null)
-            winnerText.text = "";
+        }
+        StartCoroutine(HideMessageAfterDelay(8f));
     }
 
     public void DisplayConnectionError(string error)
     {
-        connectionRefusedReasonText.text = error;
-        uiCancel.Post(gameObject);
+        if (connectionRefusedReasonText != null)
+        {
+            connectionRefusedReasonText.text = error;
+        }
+        if (uiCancel != null) uiCancel.Post(gameObject);
     }
 
     public void ButtonClickAudio()
     {
-        uiClick.Post(gameObject);
+        if (uiClick != null) uiClick.Post(gameObject);
     }
 
     public void ButtonConfirmAudio()
     {
-        uiConfirm.Post(gameObject);
+        if (uiConfirm != null) uiConfirm.Post(gameObject);
     }
 
     public void ButtonCancelAudio()
     {
-        uiCancel.Post(gameObject);
+        if (uiCancel != null) uiCancel.Post(gameObject);
     }
 
     public void HandleConnectionStateChange(bool connected)
     {
         // Update connection state
-        ConnectionManager.instance.isConnected = connected;
+        if (ConnectionManager.instance != null)
+            ConnectionManager.instance.isConnected = connected;
 
         if (connected)
         {
@@ -538,9 +630,9 @@ public class MenuManager : NetworkBehaviour
 
     private void HandleScoreboardToggle(bool show)
     {
-        if (ConnectionManager.instance.isConnected)
+        if (ConnectionManager.instance != null && ConnectionManager.instance.isConnected)
         {
-            scoreboardUI.SetActive(show);
+            if (scoreboardUI != null) scoreboardUI.SetActive(show);
 
             if (show && scoreboard != null)
                 scoreboard.UpdatePlayerList();
@@ -559,10 +651,10 @@ public class MenuManager : NetworkBehaviour
         // If using controller and selection is enabled, select the default button
         if (inputManager != null && inputManager.IsUsingGamepad && controllerSelectionEnabled)
         {
-            if (defaultButton != null && defaultButton.gameObject.activeInHierarchy && defaultButton.isActiveAndEnabled)
+            if (defaultButton != null && defaultButton.gameObject.activeInHierarchy && defaultButton.isActiveAndEnabled && eventSystem != null)
                 eventSystem.SetSelectedGameObject(defaultButton.gameObject);
         }
-        else
+        else if (eventSystem != null)
         {
             // Otherwise, clear selection to prevent automatic highlighting
             ClearSelection();
@@ -618,6 +710,51 @@ public class MenuManager : NetworkBehaviour
         if (inputManager != null)
         {
             inputManager.SetControllerNavigationEnabled(true);
+        }
+    }
+
+    public void ResumeButtonClicked()
+    {
+        Resume();
+    }
+
+    public void MainMenu()
+    {
+        if (IsServer && NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+        else if (NetworkManager.Singleton != null)
+        {
+            DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
+        }
+        ShowMainMenu();
+        if (ConnectionManager.instance != null)
+            ConnectionManager.instance.isConnected = false;
+    }
+
+    public void OnPlayClicked()
+    {
+        PlayButtonClicked();
+    }
+
+    private void StartCameraRotation()
+    {
+        if (virtualCamera != null && orbitalTransposer != null)
+        {
+            orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
+            isCameraRotating = true;
+            Debug.Log($"Started camera rotation with speed: {rotationSpeed}");
+        }
+    }
+
+    private void StopCameraRotation()
+    {
+        if (virtualCamera != null && orbitalTransposer != null)
+        {
+            orbitalTransposer.m_XAxis.m_InputAxisValue = 0f;
+            isCameraRotating = false;
+            Debug.Log("Stopped camera rotation");
         }
     }
 }
