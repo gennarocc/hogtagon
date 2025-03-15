@@ -17,9 +17,14 @@ namespace AK
         static const AkUniqueID ENGINEOFF = 2388455330U;
         static const AkUniqueID ENGINEON = 2439330724U;
         static const AkUniqueID HOGHORN = 3567623486U;
-        static const AkUniqueID HOGIMPACT = 2587421243U;
+        static const AkUniqueID HOGIMPACTHIGH = 1467666939U;
+        static const AkUniqueID HOGIMPACTLOW = 3718586431U;
+        static const AkUniqueID HOGIMPACTMED = 3013779447U;
+        static const AkUniqueID HOGJUMP = 442344189U;
         static const AkUniqueID LEVELMUSICOFF = 531512037U;
         static const AkUniqueID LEVELMUSICON = 1021065561U;
+        static const AkUniqueID LOBBYMUSICOFF = 559864827U;
+        static const AkUniqueID LOBBYMUSICON = 3144723463U;
         static const AkUniqueID MENUMUSICOFF = 2510477776U;
         static const AkUniqueID MENUMUSICON = 878061882U;
         static const AkUniqueID MIDROUNDOFF = 1869858978U;
@@ -27,6 +32,9 @@ namespace AK
         static const AkUniqueID PAUSEOFF = 3921005316U;
         static const AkUniqueID PAUSEON = 80751710U;
         static const AkUniqueID PLAYERELIMINATION = 3181948357U;
+        static const AkUniqueID ROUND30SEC = 2325690181U;
+        static const AkUniqueID ROUNDSTART = 211290109U;
+        static const AkUniqueID ROUNDWIN = 3391830779U;
         static const AkUniqueID TIRESCREECHOFF = 3010988261U;
         static const AkUniqueID TIRESCREECHON = 3670274905U;
         static const AkUniqueID UICANCEL = 1933252553U;

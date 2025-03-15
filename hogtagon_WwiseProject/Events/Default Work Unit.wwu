@@ -84,11 +84,14 @@
 					</ChildrenList>
 				</Event>
 				<Event Name="HogImpact" ID="{350BE99D-610A-4072-B84D-C812854DA99F}">
+					<PropertyList>
+						<Property Name="Inclusion" Type="bool" Value="False"/>
+					</PropertyList>
 					<ChildrenList>
 						<Action Name="" ID="{F7B1ED56-2602-452C-AD1C-3CCCBE10C4AD}" ShortID="795912132">
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="hog-impact" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+									<ObjectRef Name="hog-impact_old" ID="{505262B6-D15C-4EA0-8F41-9ED117E6F94B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
@@ -281,7 +284,116 @@
 						<Action Name="" ID="{D67111A9-7F52-4E74-BD0A-8A958A143D6E}" ShortID="745374044">
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="player-elimination" ID="{AF9A5AE1-4C81-42BF-831E-0E19C76B995B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+									<ObjectRef Name="player-elimination" ID="{63794D57-4AFC-4E29-B0AF-72AD7930823A}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="HogImpactLow" ID="{8470C153-F0C5-427D-90A5-A13B00F889F7}">
+					<ChildrenList>
+						<Action Name="" ID="{144C252A-42BE-42D9-B2E0-5DAF1EE0A939}" ShortID="778808629">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="low-impact" ID="{7CF6B0FC-30BF-4329-AC78-6BE7897701A4}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="HogImpactMed" ID="{CD9038A7-C738-4214-81AE-E852DBB6E9F7}">
+					<ChildrenList>
+						<Action Name="" ID="{F90D9628-50B7-40CC-BB76-BEF7D5081D48}" ShortID="317890745">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="medium-impact" ID="{A628DF2D-F459-4E02-9D00-E4E57A7410DF}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="HogImpactHigh" ID="{2E6A007B-64E3-42A8-A11B-9B3B201492EF}">
+					<ChildrenList>
+						<Action Name="" ID="{F384C76A-53FF-44CE-AA57-4D0C6D43E6E7}" ShortID="637983860">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="HogJump" ID="{CD25EB60-CA7B-4CCA-BBDD-C141744312F7}">
+					<ChildrenList>
+						<Action Name="" ID="{E7057515-986E-4764-B98A-FE50CD986CB4}" ShortID="830062447">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog-jump" ID="{99DC7322-01AA-43F0-860C-B19D4397090C}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="RoundStart" ID="{238C69E0-53F9-48F9-BFE3-4B71C69ECA52}">
+					<ChildrenList>
+						<Action Name="" ID="{11F7E58C-76AD-46DA-85AE-58FDF4B19BD2}" ShortID="948545984">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="round-start" ID="{83DBBBF9-BCF6-417C-BFDE-9D9FE95E472C}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="Round30Sec" ID="{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}">
+					<ChildrenList>
+						<Action Name="" ID="{8409DEC8-CA21-4DED-BBBC-1F462E78F345}" ShortID="535017419">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="30secs-remaining" ID="{99F508C4-8B02-431A-836B-CBA6BA25931A}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="RoundWin" ID="{D4EC6709-3142-43E2-9F80-34259A033005}">
+					<ChildrenList>
+						<Action Name="" ID="{A6E5A38E-33FE-4CBD-81BA-F6468B71B1E5}" ShortID="543173238">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="winner" ID="{56337261-500F-448F-AD46-8C88FF1A6185}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="LobbyMusicOn" ID="{F7F2F008-6FD8-4DA4-9DCE-9B6AC2FF5E6E}">
+					<ChildrenList>
+						<Action Name="" ID="{455FB1D3-7BC9-4AA8-8D54-01DEF47F300E}" ShortID="492403057">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="3"/>
+								<Property Name="Scope" Type="int16" Value="1"/>
+							</PropertyList>
+							<ReferenceList/>
+						</Action>
+						<Action Name="" ID="{8DD1AE86-A0A3-4BA2-AAE8-B15D9D30C0FE}" ShortID="507764357">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="lobby" ID="{BEDB84E5-DDF5-4E9E-B8E9-855652E7A727}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="LobbyMusicOff" ID="{A76522A5-5C03-4072-90B0-7701B0CBB266}">
+					<ChildrenList>
+						<Action Name="" ID="{8786C63C-3046-4E4B-972B-C8DBBEE98C93}" ShortID="350420709">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="2"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="lobby" ID="{BEDB84E5-DDF5-4E9E-B8E9-855652E7A727}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
