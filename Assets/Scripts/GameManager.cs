@@ -30,6 +30,9 @@ public class GameManager : NetworkBehaviour
     // Event for game state changes
     public event Action<GameState> OnGameStateChanged;
 
+    // Kill feed management
+    private KillFeed killFeed;
+
     public void Start()
     {
         if (instance == null)
@@ -42,6 +45,9 @@ public class GameManager : NetworkBehaviour
             Destroy(gameObject);
         }
 
+        // Get KillFeed reference
+        killFeed = ServiceLocator.GetService<KillFeed>();
+        
         TransitionToState(GameState.Pending);
     }
 
@@ -53,6 +59,8 @@ public class GameManager : NetworkBehaviour
 
     public void TransitionToState(GameState newState)
     {
+        Debug.Log($"GameManager TransitionToState: {state} -> {newState}");
+        
         switch (newState)
         {
             case GameState.Pending:
@@ -65,15 +73,34 @@ public class GameManager : NetworkBehaviour
                 OnEndingEnter();
                 break;
         }
+    }
 
-        // Notify subscribers of state change
+    private void SetGameState(GameState newState)
+    {
+        Debug.Log($"GameManager SetGameState: {state} -> {newState}");
+        
+        // Update state
+        state = newState;
+        
+        // Broadcast to clients
+        BroadcastGameStateClientRpc(newState);
+        
+        // Notify subscribers
         OnGameStateChanged?.Invoke(newState);
     }
 
     private void OnEndingEnter()
     {
-        // Change camera to player who won.
+        Debug.Log("GameManager OnEndingEnter");
         SetGameState(GameState.Ending);
+        
+        // Pause kill feed and keep last message
+        if (killFeed != null)
+        {
+            killFeed.PauseAndKeepLastMessage();
+        }
+
+        // Change camera to player who won.
         ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
 
         menuManager.DisplayWinnerClientRpc(roundWinner.username);
@@ -87,23 +114,39 @@ public class GameManager : NetworkBehaviour
 
     private void OnPlayingEnter()
     {
+        Debug.Log("GameManager OnPlayingEnter");
+        
         if (!gameMusicPlaying)
             PlayLevelMusicClientRpc();
 
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
+            // Reset kill feed for new round
+            if (killFeed != null)
+            {
+                killFeed.ResetForNewRound();
+            }
+
             LockPlayerMovement();
             gameTime = 0f;
             RespawnAllPlayers();
             menuManager.StartCountdownClientRpc();
             StartCoroutine(RoundCountdown());
         }
+        else
+        {
+            Debug.LogWarning("Not enough players to start game");
+            TransitionToState(GameState.Pending);
+        }
     }
 
     public IEnumerator RoundCountdown()
     {
+        Debug.Log("GameManager RoundCountdown started");
         yield return new WaitForSeconds(3f);
 
+        Debug.Log("GameManager RoundCountdown finished - Transitioning to Playing");
+        
         // Unlock player movement
         UnlockPlayerMovement();
 
@@ -119,6 +162,8 @@ public class GameManager : NetworkBehaviour
 
     public IEnumerator BetweenRoundTimer()
     {
+        Debug.Log("GameManager BetweenRoundTimer started");
+        
         float showWinnerDuration = 2.0f;     // How long to show just the winner text
         float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
 
@@ -132,12 +177,14 @@ public class GameManager : NetworkBehaviour
         // Hide scoreboard when starting new round
         menuManager.HideScoreboardClientRpc();
 
+        Debug.Log("GameManager BetweenRoundTimer finished - Starting new round");
         // Transition to next round
-        OnPlayingEnter();
+        TransitionToState(GameState.Playing);
     }
 
     private void OnPendingEnter()
     {
+        Debug.Log("GameManager OnPendingEnter");
         StopLevelMusicClientRpc();
         SetGameState(GameState.Pending);
     }
@@ -216,16 +263,11 @@ public class GameManager : NetworkBehaviour
             player.canMove = true;
     }
 
-    private void SetGameState(GameState state)
-    {
-        this.state = state;
-        BroadcastGameStateClientRpc(state);
-    }
-
     [ClientRpc]
-    private void BroadcastGameStateClientRpc(GameState state)
+    private void BroadcastGameStateClientRpc(GameState newState)
     {
-        this.state = state;
+        Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
+        state = newState;
         if (state == GameState.Ending)
             MidroundOn.Post(gameObject);
     }
@@ -256,25 +298,33 @@ public class GameManager : NetworkBehaviour
         PlayerEliminated.Post(gameObject);
     }
 
+    // Kill feed message handling
+    public void ShowKillMessage(string killerName, string victimName, bool isSuicide)
+    {
+        if (!IsServer) return;
+        ShowKillFeedMessageClientRpc(killerName, victimName, isSuicide);
+    }
+
     [ClientRpc]
     private void ShowKillFeedMessageClientRpc(string killerName, string victimName, bool isSuicide)
     {
-        // Use ServiceLocator to find KillFeed
-        var killFeed = ServiceLocator.GetService<KillFeed>();
-        if (killFeed != null)
+        if (killFeed == null)
         {
-            if (isSuicide)
+            killFeed = ServiceLocator.GetService<KillFeed>();
+            if (killFeed == null)
             {
-                killFeed.AddSuicideMessage(killerName);
+                Debug.LogError("KillFeed service not found!");
+                return;
             }
-            else
-            {
-                killFeed.AddKillMessage(killerName, victimName);
-            }
+        }
+
+        if (isSuicide)
+        {
+            killFeed.AddSuicideMessage(killerName);
         }
         else
         {
-            Debug.LogError("KillFeed service not found!");
+            killFeed.AddKillMessage(killerName, victimName);
         }
     }
 }

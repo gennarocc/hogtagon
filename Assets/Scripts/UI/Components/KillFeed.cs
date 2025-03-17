@@ -4,9 +4,10 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Netcode;
 using Hogtagon.Core.Infrastructure;
 
-public class KillFeed : MonoBehaviour
+public class KillFeed : NetworkBehaviour
 {
     [Header("Settings")]
     [SerializeField] private int maxMessages = 5;
@@ -14,147 +15,247 @@ public class KillFeed : MonoBehaviour
     [SerializeField] private GameObject killFeedItemPrefab;
     [SerializeField] private Transform killFeedContainer;
 
-    private readonly string[] killMessages = {
+    [Header("Colors")]
+    [SerializeField] private Color backgroundColor = new Color(0, 0, 0, 0.5f);
+    [SerializeField] private Color textColor = Color.white;
+    [SerializeField] private Color killTextColor = new Color(1f, 0.2f, 0.2f);
+    [SerializeField] private Color suicideTextColor = new Color(1f, 0.92f, 0.016f);
+    [SerializeField] private Color victimTextColor = new Color(0.7f, 0.7f, 0.7f);
+
+    private static readonly string[] killMessages = {
         "DEMOLISHED",
         "EVISCERATED",
         "CLOBBERED",
         "OBLITERATED",
         "ANNIHILATED",
         "PULVERIZED",
-        "DECIMATED",
+        "DECIMATED"
     };
 
-    private readonly string[] suicideMessages = {
+    private static readonly string[] suicideMessages = {
         "took themselves out!",
         "couldn't handle the pressure!",
         "chose the easy way out!",
         "discovered gravity!",
         "made a fatal mistake!",
-        "failed spectacularly!",
+        "failed spectacularly!"
     };
 
-    private Queue<GameObject> activeMessages = new Queue<GameObject>();
-    private bool isPaused;
+    // Instance management
+    private static KillFeed instance;
+    
+    // Message tracking
+    private Queue<GameObject> activeMessages = new();
     private GameObject lastKillMessage;
+    private HashSet<ulong> processedMessageIds = new();
+    private ulong currentMessageId;
 
-    private void Awake() => ServiceLocator.RegisterService<KillFeed>(this);
+    // State
+    private bool isPaused;
 
-    private void Start()
+    private void Awake()
     {
-        if (GameManager.instance != null)
+        if (instance != null && instance != this)
         {
-            GameManager.instance.OnGameStateChanged += HandleGameStateChange;
+            Debug.LogWarning("Multiple KillFeed instances detected. Destroying duplicate.");
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+        ServiceLocator.RegisterService<KillFeed>(this);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        Debug.Log($"KillFeed OnNetworkSpawn - IsServer: {IsServer}, IsClient: {IsClient}");
+        ClearAllMessages();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        if (instance == this)
+        {
+            instance = null;
+            ServiceLocator.UnregisterService<KillFeed>();
         }
     }
 
     private void OnDestroy()
     {
-        ServiceLocator.UnregisterService<KillFeed>();
-        if (GameManager.instance != null)
+        if (instance == this)
         {
-            GameManager.instance.OnGameStateChanged -= HandleGameStateChange;
+            instance = null;
+            ServiceLocator.UnregisterService<KillFeed>();
         }
     }
 
-    private void HandleGameStateChange(GameState newState)
+    // Public methods for GameManager to control kill feed state
+    public void Pause()
     {
-        switch (newState)
-        {
-            case GameState.Pending:
-            case GameState.Playing:
-                isPaused = false;
-                ClearAllMessages();
-                break;
-            case GameState.Ending:
-                isPaused = true;
-                ClearAllMessagesExceptLast();
-                break;
-        }
+        ClearAllMessages();
+    }
+
+    public void PauseAndKeepLastMessage()
+    {
+        ClearAllMessagesExceptLast();
+    }
+
+    public void ResetForNewRound()
+    {
+        currentMessageId = 0;
+        ClearAllMessages();
     }
 
     private void ClearAllMessages()
     {
-        while (activeMessages.Count > 0)
+        Debug.Log($"KillFeed: Clearing all messages - ActiveCount: {activeMessages.Count}");
+        
+        foreach (var message in activeMessages)
         {
-            GameObject message = activeMessages.Dequeue();
-            if (message != null) Destroy(message);
+            if (message != null)
+            {
+                Destroy(message);
+            }
         }
+        activeMessages.Clear();
         lastKillMessage = null;
+        processedMessageIds.Clear();
     }
 
     private void ClearAllMessagesExceptLast()
     {
-        if (activeMessages.Count > 0)
+        if (activeMessages.Count <= 0) return;
+        
+        lastKillMessage = activeMessages.Last();
+        while (activeMessages.Count > 1)
         {
-            lastKillMessage = activeMessages.Last();
-            while (activeMessages.Count > 1)
+            var message = activeMessages.Dequeue();
+            if (message != null && message != lastKillMessage)
             {
-                GameObject message = activeMessages.Dequeue();
-                if (message != null && message != lastKillMessage)
-                {
-                    Destroy(message);
-                }
+                Destroy(message);
             }
-        }
-    }
-
-    private void AddMessage(GameObject messageObj, string messageText)
-    {
-        if (messageObj.TryGetComponent<TextMeshProUGUI>(out var textComponent))
-        {
-            textComponent.text = messageText;
-            lastKillMessage = messageObj;
-            activeMessages.Enqueue(messageObj);
-
-            if (activeMessages.Count > maxMessages)
-            {
-                GameObject oldestMessage = activeMessages.Dequeue();
-                if (oldestMessage != lastKillMessage) Destroy(oldestMessage);
-            }
-
-            StartCoroutine(RemoveMessageAfterDuration(messageObj));
         }
     }
 
     public void AddKillMessage(string killerName, string victimName)
     {
-        if (isPaused || !killFeedItemPrefab || !killFeedContainer)
-        {
-            Debug.LogWarning("KillFeed: Cannot add message - feed is paused or missing references");
-            return;
-        }
+        // Only server should generate and broadcast messages
+        if (!IsServer) return;
 
         string killMessage = killMessages[Random.Range(0, killMessages.Length)];
-        string messageText = $"{killerName} <color=red>{killMessage}</color> {victimName}";
+        string messageText = FormatKillMessage(killerName, killMessage, victimName);
         
-        GameObject messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
-        AddMessage(messageObj, messageText);
+        // Server generates the message and broadcasts to all clients (including itself)
+        DisplayMessageClientRpc(messageText, currentMessageId++);
     }
 
     public void AddSuicideMessage(string playerName)
     {
-        if (isPaused || !killFeedItemPrefab || !killFeedContainer)
+        // Only server should generate and broadcast messages
+        if (!IsServer) return;
+
+        string suicideMessage = suicideMessages[Random.Range(0, suicideMessages.Length)];
+        string messageText = FormatSuicideMessage(playerName, suicideMessage);
+        
+        // Server generates the message and broadcasts to all clients (including itself)
+        DisplayMessageClientRpc(messageText, currentMessageId++);
+    }
+
+    private string FormatKillMessage(string killerName, string killMessage, string victimName)
+    {
+        return $"<color=#{ColorUtility.ToHtmlStringRGB(textColor)}>{killerName}</color> " +
+               $"<color=#{ColorUtility.ToHtmlStringRGB(killTextColor)}>{killMessage}</color> " +
+               $"<color=#{ColorUtility.ToHtmlStringRGB(victimTextColor)}>{victimName}</color>";
+    }
+
+    private string FormatSuicideMessage(string playerName, string suicideMessage)
+    {
+        return $"<color=#{ColorUtility.ToHtmlStringRGB(suicideTextColor)}>{playerName}</color> " +
+               $"<color=#{ColorUtility.ToHtmlStringRGB(textColor)}>{suicideMessage}</color>";
+    }
+
+    [ClientRpc]
+    private void DisplayMessageClientRpc(string messageText, ulong messageId)
+    {
+        // Add debug logging to track message processing
+        Debug.Log($"KillFeed: Received message - ID: {messageId}, IsProcessed: {processedMessageIds.Contains(messageId)}, IsServer: {IsServer}, IsHost: {IsHost}");
+
+        if (processedMessageIds.Contains(messageId))
         {
-            Debug.LogWarning("KillFeed: Cannot add message - feed is paused or missing references");
+            Debug.Log($"KillFeed: Skipping duplicate message {messageId}");
             return;
         }
 
-        string suicideMessage = suicideMessages[Random.Range(0, suicideMessages.Length)];
-        string messageText = $"<color=yellow>{playerName}</color> {suicideMessage}";
-        
-        GameObject messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
-        AddMessage(messageObj, messageText);
+        CreateMessage(messageText, messageId);
     }
 
-    private IEnumerator RemoveMessageAfterDuration(GameObject message)
+    private void CreateMessage(string messageText, ulong messageId)
     {
+        if (!killFeedItemPrefab || !killFeedContainer)
+        {
+            Debug.LogWarning("KillFeed: Cannot add message - missing references");
+            return;
+        }
+
+        var messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
+        var textComponent = messageObj.GetComponentInChildren<TextMeshProUGUI>();
+        if (textComponent == null)
+        {
+            Debug.LogError("KillFeed: TextMeshProUGUI component not found in prefab!");
+            Destroy(messageObj);
+            return;
+        }
+
+        ConfigureMessageObject(messageObj, textComponent, messageText);
+        ManageMessageQueue(messageObj, messageId);
+    }
+
+    private void ConfigureMessageObject(GameObject messageObj, TextMeshProUGUI textComponent, string messageText)
+    {
+        textComponent.text = messageText;
+        textComponent.fontSize = 24;
+        textComponent.alignment = TextAlignmentOptions.Center;
+
+        if (textComponent.transform.parent.TryGetComponent<Image>(out var backgroundImage))
+        {
+            backgroundImage.color = backgroundColor;
+        }
+    }
+
+    private void ManageMessageQueue(GameObject messageObj, ulong messageId)
+    {
+        lastKillMessage = messageObj;
+        activeMessages.Enqueue(messageObj);
+        processedMessageIds.Add(messageId);
+
+        if (activeMessages.Count > maxMessages)
+        {
+            var oldestMessage = activeMessages.Dequeue();
+            if (oldestMessage != null && oldestMessage != lastKillMessage)
+            {
+                Destroy(oldestMessage);
+            }
+        }
+
+        StartCoroutine(RemoveMessageAfterDuration(messageObj, messageId));
+    }
+
+    private IEnumerator RemoveMessageAfterDuration(GameObject messageObj, ulong messageId)
+    {
+        if (messageObj == null) yield break;
+
         yield return new WaitForSeconds(messageDuration);
 
-        if (activeMessages.Contains(message))
+        if (messageObj != null)
         {
-            activeMessages = new Queue<GameObject>(activeMessages.Where(m => m != message));
-            if (message == lastKillMessage) lastKillMessage = null;
-            Destroy(message);
+            if (messageObj == lastKillMessage)
+            {
+                lastKillMessage = null;
+            }
+            Destroy(messageObj);
+            processedMessageIds.Remove(messageId);
         }
     }
 }

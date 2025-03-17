@@ -3426,8 +3426,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   collisionMemoryDuration: 10
-  proximityCheckDistance: 3
-  proximityCheckInterval: 0.5
 --- !u!1 &423662657
 GameObject:
   m_ObjectHideFlags: 0
@@ -5875,20 +5873,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fb40df94d33b30449620ecd8667ef69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputManager: {fileID: 0}
-  buttonStateResetter: {fileID: 0}
-  masterVolumeSlider: {fileID: 0}
-  sfxVolumeSlider: {fileID: 0}
-  musicVolumeSlider: {fileID: 0}
-  qualityDropdown: {fileID: 0}
-  fullscreenToggle: {fileID: 0}
-  resolutionDropdown: {fileID: 0}
-  vsyncToggle: {fileID: 0}
-  mouseSensitivitySlider: {fileID: 0}
-  invertYAxisToggle: {fileID: 0}
-  invertXAxisToggle: {fileID: 0}
-  menuManager: {fileID: 0}
-  settingsManager: {fileID: 0}
 --- !u!1 &761765017
 GameObject:
   m_ObjectHideFlags: 0
@@ -9816,23 +9800,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e6fd13e6b10caf45b6b0757005b451e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputManager: {fileID: 0}
-  buttonStateResetter: {fileID: 0}
-  startGameButton: {fileID: 0}
-  resumeButton: {fileID: 0}
-  settingsButton: {fileID: 0}
-  mainMenuButton: {fileID: 0}
-  PauseOn:
-    idInternal: 0
-    valueGuidInternal: []
-    WwiseObjectReference: {fileID: 0}
-    m_playingId: 0
-  PauseOff:
-    idInternal: 0
-    valueGuidInternal: []
-    WwiseObjectReference: {fileID: 0}
-    m_playingId: 0
-  menuManager: {fileID: 0}
 --- !u!1 &1258883570
 GameObject:
   m_ObjectHideFlags: 0
@@ -12622,10 +12589,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc5c75396e2d163499d7cb4b2735bbf6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   maxMessages: 5
   messageDuration: 5
-  killFeedItemPrefab: {fileID: 4921901221603241712, guid: cd1344b3f2ec5064090e67f4c9cd807c, type: 3}
+  killFeedItemPrefab: {fileID: 3020927866847666108, guid: c76c1037952db4d4f8cd34310c28537b, type: 3}
   killFeedContainer: {fileID: 44989516}
+  backgroundColor: {r: 0, g: 0, b: 0, a: 0.5}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  killTextColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  suicideTextColor: {r: 1, g: 0.92, b: 0.016, a: 1}
+  victimTextColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
 --- !u!114 &1598571665
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16167,17 +16140,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a178e0d6af5e2694e9cbf97bfb21f326, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputManager: {fileID: 0}
-  buttonStateResetter: {fileID: 0}
-  playButton: {fileID: 1698139703}
-  optionsButton: {fileID: 858861422}
-  quitButton: {fileID: 853980520}
-  MenuMusicOn:
-    idInternal: 0
-    valueGuidInternal: []
-    WwiseObjectReference: {fileID: 0}
-    m_playingId: 0
-  menuManager: {fileID: 0}
 --- !u!1 &2029470166
 GameObject:
   m_ObjectHideFlags: 0
