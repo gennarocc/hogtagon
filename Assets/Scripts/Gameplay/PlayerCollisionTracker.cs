@@ -1,21 +1,26 @@
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using Hogtagon.Core.Infrastructure;
 
 public class PlayerCollisionTracker : NetworkBehaviour
 {
-    [SerializeField] private float collisionMemoryDuration = 5f; // How long to remember who last hit a player
+    [SerializeField] private float collisionMemoryDuration = 10f;
     
     // Dictionary to store last player to collide with each player
     private Dictionary<ulong, CollisionRecord> lastCollisions = new Dictionary<ulong, CollisionRecord>();
-    
-    // Singleton pattern
-    public static PlayerCollisionTracker Instance { get; private set; }
 
     private void Awake()
     {
-        // Setup singleton instance
-        Instance = this;
+        // Register with ServiceLocator
+        ServiceLocator.RegisterService<PlayerCollisionTracker>(this);
+        Debug.Log("PlayerCollisionTracker registered with ServiceLocator");
+    }
+
+    private void OnDestroy()
+    {
+        // Unregister when destroyed
+        ServiceLocator.UnregisterService<PlayerCollisionTracker>();
     }
 
     // Data structure to track collision details
@@ -34,18 +39,31 @@ public class PlayerCollisionTracker : NetworkBehaviour
 
         public bool IsValid(float maxDuration)
         {
-            return Time.time - timestamp <= maxDuration;
+            float timeSinceCollision = Time.time - timestamp;
+            bool isValid = timeSinceCollision <= maxDuration;
+            Debug.Log($"Checking collision validity: Time.time={Time.time}, timestamp={timestamp}, timeSince={timeSinceCollision}, maxDuration={maxDuration}, isValid={isValid}");
+            return isValid;
         }
     }
 
     // Call this when a player collides with another player
     public void RecordCollision(ulong targetPlayerId, ulong collidingPlayerId, string collidingPlayerName)
     {
-        if (!IsServer) return;
+        if (!IsServer)
+        {
+            Debug.LogWarning("RecordCollision called on client, ignoring");
+            return;
+        }
 
         // Don't record self-collision
-        if (targetPlayerId == collidingPlayerId) return;
+        if (targetPlayerId == collidingPlayerId)
+        {
+            Debug.Log("Ignoring self-collision");
+            return;
+        }
 
+        Debug.Log($"Recording collision: Target={targetPlayerId} hit by {collidingPlayerName} (ID: {collidingPlayerId}) at time {Time.time}");
+        
         // Record the collision
         lastCollisions[targetPlayerId] = new CollisionRecord(
             collidingPlayerId,
@@ -57,14 +75,28 @@ public class PlayerCollisionTracker : NetworkBehaviour
     // Get the last player to collide with a specific player (returns null if no recent collision)
     public CollisionRecord GetLastCollision(ulong playerId)
     {
+        Debug.Log($"Checking last collision for player {playerId}");
+        
         if (lastCollisions.TryGetValue(playerId, out CollisionRecord record))
         {
+            Debug.Log($"Found collision record: Player {playerId} was hit by {record.collidingPlayerName} at {record.timestamp}");
+            
             // Check if the collision record is still valid (within time window)
             if (record.IsValid(collisionMemoryDuration))
             {
+                Debug.Log($"Collision record is valid, returning {record.collidingPlayerName}");
                 return record;
             }
+            else
+            {
+                Debug.Log("Collision record expired, returning null");
+            }
         }
+        else
+        {
+            Debug.Log($"No collision record found for player {playerId}");
+        }
+        
         return null;
     }
 
@@ -73,6 +105,7 @@ public class PlayerCollisionTracker : NetworkBehaviour
     {
         if (lastCollisions.ContainsKey(playerId))
         {
+            Debug.Log($"Clearing collision history for player {playerId}");
             lastCollisions.Remove(playerId);
         }
     }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
+using Hogtagon.Core.Infrastructure;
+using System;
 
 public class GameManager : NetworkBehaviour
 {
@@ -24,6 +26,9 @@ public class GameManager : NetworkBehaviour
     public static GameManager instance;
     private ulong roundWinnerClientId;
     private bool gameMusicPlaying;
+
+    // Event for game state changes
+    public event Action<GameState> OnGameStateChanged;
 
     public void Start()
     {
@@ -60,6 +65,9 @@ public class GameManager : NetworkBehaviour
                 OnEndingEnter();
                 break;
         }
+
+        // Notify subscribers of state change
+        OnGameStateChanged?.Invoke(newState);
     }
 
     private void OnEndingEnter()
@@ -158,22 +166,29 @@ public class GameManager : NetworkBehaviour
             ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
             BroadcastPlayerEliminatedSFXClientRpc();
 
-            // Add killfeed entry
-            var playerCollisionTracker = FindObjectOfType<PlayerCollisionTracker>();
+            // Add killfeed entry - Use ServiceLocator
+            var playerCollisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
             if (playerCollisionTracker != null)
             {
+                Debug.Log($"Checking collision history for player {clientId} with name {player.username}");
                 var lastCollision = playerCollisionTracker.GetLastCollision(clientId);
                 
                 if (lastCollision != null)
                 {
                     // Player was killed by another player
+                    Debug.Log($"Player {player.username} was killed by {lastCollision.collidingPlayerName}");
                     ShowKillFeedMessageClientRpc(lastCollision.collidingPlayerName, player.username, false);
                 }
                 else
                 {
                     // Player killed themselves
+                    Debug.Log($"Player {player.username} killed themselves (no collision record found)");
                     ShowKillFeedMessageClientRpc(player.username, "", true);
                 }
+            }
+            else
+            {
+                Debug.LogError("PlayerCollisionTracker service not found!");
             }
         }
 
@@ -244,7 +259,8 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void ShowKillFeedMessageClientRpc(string killerName, string victimName, bool isSuicide)
     {
-        var killFeed = FindObjectOfType<KillFeed>();
+        // Use ServiceLocator to find KillFeed
+        var killFeed = ServiceLocator.GetService<KillFeed>();
         if (killFeed != null)
         {
             if (isSuicide)
@@ -255,6 +271,10 @@ public class GameManager : NetworkBehaviour
             {
                 killFeed.AddKillMessage(killerName, victimName);
             }
+        }
+        else
+        {
+            Debug.LogError("KillFeed service not found!");
         }
     }
 }

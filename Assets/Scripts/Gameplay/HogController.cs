@@ -4,6 +4,7 @@ using Cinemachine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Hogtagon.Core.Infrastructure;
 
 public class HogController : NetworkBehaviour
 {
@@ -744,43 +745,55 @@ public class HogController : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (IsServer && !collisionForceOnCooldown && collision.gameObject.tag == "Player")
+        // Only process collisions on the server
+        if (!IsServer) return;
+
+        // Get the player information directly from the root object
+        var myPlayer = transform.root.gameObject.GetComponent<Player>();
+        var otherPlayer = collision.transform.root.gameObject.GetComponent<Player>();
+
+        if (myPlayer == null || otherPlayer == null) return;
+
+        Debug.Log($"[COLLISION] Player {myPlayer.clientId} collided with Player {otherPlayer.clientId}");
+
+        // Get the colliding player's name from ConnectionManager
+        if (ConnectionManager.instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
         {
-            // Get collision details
-            ulong targetPlayerClientId = this.GetComponent<NetworkObject>().OwnerClientId;
-            
-            // Try to get the colliding player's client ID
-            if (collision.gameObject.TryGetComponent<NetworkObject>(out NetworkObject networkObject))
+            // Record the collision in the tracker
+            var collisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
+            if (collisionTracker != null)
             {
-                ulong collidingPlayerClientId = networkObject.OwnerClientId;
-                
-                // Get player name
-                if (ConnectionManager.instance.TryGetPlayerData(collidingPlayerClientId, out PlayerData collidingPlayerData))
-                {
-                    // Record the collision in the tracker
-                    var playerCollisionTracker = FindObjectOfType<PlayerCollisionTracker>();
-                    if (playerCollisionTracker != null)
-                    {
-                        playerCollisionTracker.RecordCollision(
-                            targetPlayerClientId,
-                            collidingPlayerClientId,
-                            collidingPlayerData.username
-                        );
-                    }
-                }
+                collisionTracker.RecordCollision(myPlayer.clientId, otherPlayer.clientId, collidingPlayerData.username);
             }
-            
-            StartCoroutine(CollisionForceDebounce());
         }
 
+        // Play impact sound
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
     }
 
-    private IEnumerator CollisionForceDebounce()
+    private void OnTriggerEnter(Collider other)
     {
-        collisionForceOnCooldown = true;
-        yield return new WaitForSeconds(.5f);
-        collisionForceOnCooldown = false;
+        // Only process triggers on the server
+        if (!IsServer) return;
+
+        // Get the player information directly from the root object
+        var myPlayer = transform.root.gameObject.GetComponent<Player>();
+        var otherPlayer = other.transform.root.gameObject.GetComponent<Player>();
+
+        if (myPlayer == null || otherPlayer == null) return;
+
+        Debug.Log($"[TRIGGER] Player {myPlayer.clientId} triggered with Player {otherPlayer.clientId}");
+
+        // Get the colliding player's name from ConnectionManager
+        if (ConnectionManager.instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
+        {
+            // Record the collision in the tracker
+            var collisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
+            if (collisionTracker != null)
+            {
+                collisionTracker.RecordCollision(myPlayer.clientId, otherPlayer.clientId, collidingPlayerData.username);
+            }
+        }
     }
 
     private IEnumerator ResetAfterExplosion(GameObject explosionInstance)

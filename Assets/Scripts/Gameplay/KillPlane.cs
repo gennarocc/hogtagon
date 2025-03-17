@@ -26,14 +26,14 @@ public class KillPlane : MonoBehaviour
                 // Skip if client doesn't exist
                 if (!clientExists) return;
 
-                // If game has not started just respawn the player.
-                if (GameManager.instance.state == GameState.Pending) 
+                // Always call PlayerDied, which will handle the state appropriately
+                GameManager.instance.PlayerDied(networkObject.OwnerClientId);
+
+                // If in pending state, immediately respawn
+                if (GameManager.instance.state == GameState.Pending)
                 {
                     player.Respawn();
-                    return;
                 }
-                
-                GameManager.instance.PlayerDied(networkObject.OwnerClientId);
             }
             else
             {

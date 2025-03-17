@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Hogtagon.Core.Infrastructure;
 
 public class KillFeed : MonoBehaviour
 {
@@ -13,87 +14,147 @@ public class KillFeed : MonoBehaviour
     [SerializeField] private GameObject killFeedItemPrefab;
     [SerializeField] private Transform killFeedContainer;
 
+    private readonly string[] killMessages = {
+        "DEMOLISHED",
+        "EVISCERATED",
+        "CLOBBERED",
+        "OBLITERATED",
+        "ANNIHILATED",
+        "PULVERIZED",
+        "DECIMATED",
+    };
+
+    private readonly string[] suicideMessages = {
+        "took themselves out!",
+        "couldn't handle the pressure!",
+        "chose the easy way out!",
+        "discovered gravity!",
+        "made a fatal mistake!",
+        "failed spectacularly!",
+    };
+
     private Queue<GameObject> activeMessages = new Queue<GameObject>();
+    private bool isPaused;
+    private GameObject lastKillMessage;
 
-    // Singleton pattern for easy access
-    public static KillFeed Instance { get; private set; }
+    private void Awake() => ServiceLocator.RegisterService<KillFeed>(this);
 
-    private void Awake()
+    private void Start()
     {
-        // Setup singleton instance
-        Instance = this;
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.OnGameStateChanged += HandleGameStateChange;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        ServiceLocator.UnregisterService<KillFeed>();
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.OnGameStateChanged -= HandleGameStateChange;
+        }
+    }
+
+    private void HandleGameStateChange(GameState newState)
+    {
+        switch (newState)
+        {
+            case GameState.Pending:
+            case GameState.Playing:
+                isPaused = false;
+                ClearAllMessages();
+                break;
+            case GameState.Ending:
+                isPaused = true;
+                ClearAllMessagesExceptLast();
+                break;
+        }
+    }
+
+    private void ClearAllMessages()
+    {
+        while (activeMessages.Count > 0)
+        {
+            GameObject message = activeMessages.Dequeue();
+            if (message != null) Destroy(message);
+        }
+        lastKillMessage = null;
+    }
+
+    private void ClearAllMessagesExceptLast()
+    {
+        if (activeMessages.Count > 0)
+        {
+            lastKillMessage = activeMessages.Last();
+            while (activeMessages.Count > 1)
+            {
+                GameObject message = activeMessages.Dequeue();
+                if (message != null && message != lastKillMessage)
+                {
+                    Destroy(message);
+                }
+            }
+        }
+    }
+
+    private void AddMessage(GameObject messageObj, string messageText)
+    {
+        if (messageObj.TryGetComponent<TextMeshProUGUI>(out var textComponent))
+        {
+            textComponent.text = messageText;
+            lastKillMessage = messageObj;
+            activeMessages.Enqueue(messageObj);
+
+            if (activeMessages.Count > maxMessages)
+            {
+                GameObject oldestMessage = activeMessages.Dequeue();
+                if (oldestMessage != lastKillMessage) Destroy(oldestMessage);
+            }
+
+            StartCoroutine(RemoveMessageAfterDuration(messageObj));
+        }
     }
 
     public void AddKillMessage(string killerName, string victimName)
     {
-        if (killFeedItemPrefab == null || killFeedContainer == null)
+        if (isPaused || !killFeedItemPrefab || !killFeedContainer)
         {
-            Debug.LogError("KillFeed: Missing prefab or container reference");
+            Debug.LogWarning("KillFeed: Cannot add message - feed is paused or missing references");
             return;
         }
 
-        GameObject messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
-        TextMeshProUGUI messageText = messageObj.GetComponentInChildren<TextMeshProUGUI>();
+        string killMessage = killMessages[Random.Range(0, killMessages.Length)];
+        string messageText = $"{killerName} <color=red>{killMessage}</color> {victimName}";
         
-        if (messageText != null)
-        {
-            // Format: "Killer killed Victim"
-            messageText.text = $"{killerName} killed {victimName}";
-        }
-
-        // Add to queue and manage the max number of messages
-        activeMessages.Enqueue(messageObj);
-        if (activeMessages.Count > maxMessages)
-        {
-            GameObject oldestMessage = activeMessages.Dequeue();
-            Destroy(oldestMessage);
-        }
-
-        // Automatically remove after duration
-        StartCoroutine(RemoveMessageAfterDuration(messageObj));
+        GameObject messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
+        AddMessage(messageObj, messageText);
     }
 
     public void AddSuicideMessage(string playerName)
     {
-        if (killFeedItemPrefab == null || killFeedContainer == null)
+        if (isPaused || !killFeedItemPrefab || !killFeedContainer)
         {
-            Debug.LogError("KillFeed: Missing prefab or container reference");
+            Debug.LogWarning("KillFeed: Cannot add message - feed is paused or missing references");
             return;
         }
 
-        GameObject messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
-        TextMeshProUGUI messageText = messageObj.GetComponentInChildren<TextMeshProUGUI>();
+        string suicideMessage = suicideMessages[Random.Range(0, suicideMessages.Length)];
+        string messageText = $"<color=yellow>{playerName}</color> {suicideMessage}";
         
-        if (messageText != null)
-        {
-            // Format: "Player killed themselves"
-            messageText.text = $"{playerName} killed themselves";
-        }
-
-        // Add to queue and manage the max number of messages
-        activeMessages.Enqueue(messageObj);
-        if (activeMessages.Count > maxMessages)
-        {
-            GameObject oldestMessage = activeMessages.Dequeue();
-            Destroy(oldestMessage);
-        }
-
-        // Automatically remove after duration
-        StartCoroutine(RemoveMessageAfterDuration(messageObj));
+        GameObject messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
+        AddMessage(messageObj, messageText);
     }
 
     private IEnumerator RemoveMessageAfterDuration(GameObject message)
     {
         yield return new WaitForSeconds(messageDuration);
-        
+
         if (activeMessages.Contains(message))
         {
-            // Convert to list, remove the message, and recreate the queue
-            List<GameObject> messagesList = activeMessages.ToList();
-            messagesList.Remove(message);
-            activeMessages = new Queue<GameObject>(messagesList);
-            
+            activeMessages = new Queue<GameObject>(activeMessages.Where(m => m != message));
+            if (message == lastKillMessage) lastKillMessage = null;
             Destroy(message);
         }
     }
-} 
+}

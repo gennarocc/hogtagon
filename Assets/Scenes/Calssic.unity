@@ -576,7 +576,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 2
-  m_Spacing: 0
+  m_Spacing: 10
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -3426,6 +3426,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   collisionMemoryDuration: 10
+  proximityCheckDistance: 3
+  proximityCheckInterval: 0.5
 --- !u!1 &423662657
 GameObject:
   m_ObjectHideFlags: 0
