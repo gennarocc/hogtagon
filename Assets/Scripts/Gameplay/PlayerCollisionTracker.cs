@@ -5,7 +5,7 @@ using Hogtagon.Core.Infrastructure;
 
 public class PlayerCollisionTracker : NetworkBehaviour
 {
-    [SerializeField] private float collisionMemoryDuration = 10f;
+    [SerializeField] private float collisionMemoryDuration = 6f;
     
     // Dictionary to store last player to collide with each player
     private Dictionary<ulong, CollisionRecord> lastCollisions = new Dictionary<ulong, CollisionRecord>();

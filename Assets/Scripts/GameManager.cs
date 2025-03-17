@@ -33,6 +33,9 @@ public class GameManager : NetworkBehaviour
     // Kill feed management
     private KillFeed killFeed;
 
+    // Track which players have died to prevent duplicate death processing
+    private HashSet<ulong> processedDeaths = new HashSet<ulong>();
+
     public void Start()
     {
         if (instance == null)
@@ -116,6 +119,9 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("GameManager OnPlayingEnter");
         
+        // Clear processed deaths for new round
+        processedDeaths.Clear();
+        
         if (!gameMusicPlaying)
             PlayLevelMusicClientRpc();
 
@@ -185,6 +191,7 @@ public class GameManager : NetworkBehaviour
     private void OnPendingEnter()
     {
         Debug.Log("GameManager OnPendingEnter");
+        // We're not pausing the kill feed anymore to allow messages in Pending state
         StopLevelMusicClientRpc();
         SetGameState(GameState.Pending);
     }
@@ -204,42 +211,79 @@ public class GameManager : NetworkBehaviour
 
     public void PlayerDied(ulong clientId)
     {
+        // Only the server should process deaths
+        if (!IsServer) return;
+
+        // In Pending state, we allow multiple deaths for the same player
+        // In Playing state, we only process one death per player
+        if (state != GameState.Pending)
+        {
+            // Check if we've already processed this player's death for this round
+            if (processedDeaths.Contains(clientId))
+            {
+                Debug.Log($"Skipping duplicate death processing for client {clientId}");
+                return;
+            }
+
+            // Mark this player as processed
+            processedDeaths.Add(clientId);
+        }
+
         if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData player))
         {
-            if (player.state == PlayerState.Dead) return;
+            // Set player state to dead (but always allow pending state deaths)
+            if (player.state == PlayerState.Dead && state != GameState.Pending)
+            {
+                Debug.Log($"Player {player.username} is already marked as dead");
+                return;
+            }
 
-            Debug.Log(player.username + " has been eliminated.");
-            player.state = PlayerState.Dead;
-            ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
+            Debug.Log($"Processing death for {player.username} (ID: {clientId})");
+            
+            // Update player state (only in Playing state)
+            if (state == GameState.Playing)
+            {
+                player.state = PlayerState.Dead;
+                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
+            }
+            
+            // Play death sound
             BroadcastPlayerEliminatedSFXClientRpc();
 
-            // Add killfeed entry - Use ServiceLocator
-            var playerCollisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
-            if (playerCollisionTracker != null)
+            // Create kill feed message
+            if (killFeed == null)
             {
-                Debug.Log($"Checking collision history for player {clientId} with name {player.username}");
-                var lastCollision = playerCollisionTracker.GetLastCollision(clientId);
-                
-                if (lastCollision != null)
-                {
-                    // Player was killed by another player
-                    Debug.Log($"Player {player.username} was killed by {lastCollision.collidingPlayerName}");
-                    ShowKillFeedMessageClientRpc(lastCollision.collidingPlayerName, player.username, false);
-                }
-                else
-                {
-                    // Player killed themselves
-                    Debug.Log($"Player {player.username} killed themselves (no collision record found)");
-                    ShowKillFeedMessageClientRpc(player.username, "", true);
-                }
+                killFeed = ServiceLocator.GetService<KillFeed>();
             }
-            else
+
+            if (killFeed != null)
             {
-                Debug.LogError("PlayerCollisionTracker service not found!");
+                var playerCollisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
+                if (playerCollisionTracker != null)
+                {
+                    var lastCollision = playerCollisionTracker.GetLastCollision(clientId);
+                    
+                    if (lastCollision != null)
+                    {
+                        // Player was killed by another player
+                        Debug.Log($"Player {player.username} was killed by {lastCollision.collidingPlayerName}");
+                        killFeed.AddKillMessage(lastCollision.collidingPlayerName, player.username);
+                    }
+                    else
+                    {
+                        // Player killed themselves
+                        Debug.Log($"Player {player.username} killed themselves (no collision record found)");
+                        killFeed.AddSuicideMessage(player.username);
+                    }
+                }
             }
         }
 
-        CheckGameStatus();
+        // Only check game status for Playing state
+        if (state == GameState.Playing)
+        {
+            CheckGameStatus();
+        }
     }
 
     private void RespawnAllPlayers()
@@ -298,33 +342,27 @@ public class GameManager : NetworkBehaviour
         PlayerEliminated.Post(gameObject);
     }
 
-    // Kill feed message handling
+    // Kill feed message handling - removed in favor of direct calls above
     public void ShowKillMessage(string killerName, string victimName, bool isSuicide)
     {
+        // Method preserved for backward compatibility but not used
         if (!IsServer) return;
-        ShowKillFeedMessageClientRpc(killerName, victimName, isSuicide);
-    }
-
-    [ClientRpc]
-    private void ShowKillFeedMessageClientRpc(string killerName, string victimName, bool isSuicide)
-    {
+        
         if (killFeed == null)
         {
             killFeed = ServiceLocator.GetService<KillFeed>();
-            if (killFeed == null)
-            {
-                Debug.LogError("KillFeed service not found!");
-                return;
-            }
         }
 
-        if (isSuicide)
+        if (killFeed != null)
         {
-            killFeed.AddSuicideMessage(killerName);
-        }
-        else
-        {
-            killFeed.AddKillMessage(killerName, victimName);
+            if (isSuicide)
+            {
+                killFeed.AddSuicideMessage(killerName);
+            }
+            else
+            {
+                killFeed.AddKillMessage(killerName, victimName);
+            }
         }
     }
 }
