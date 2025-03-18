@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
+using Hogtagon.Core.Infrastructure;
+using System;
 
 public class GameManager : NetworkBehaviour
 {
@@ -24,6 +27,15 @@ public class GameManager : NetworkBehaviour
     private ulong roundWinnerClientId;
     private bool gameMusicPlaying;
 
+    // Event for game state changes
+    public event Action<GameState> OnGameStateChanged;
+
+    // Kill feed management
+    private KillFeed killFeed;
+
+    // Track which players have died to prevent duplicate death processing
+    private HashSet<ulong> processedDeaths = new HashSet<ulong>();
+
     public void Start()
     {
         if (instance == null)
@@ -36,6 +48,9 @@ public class GameManager : NetworkBehaviour
             Destroy(gameObject);
         }
 
+        // Get KillFeed reference
+        killFeed = ServiceLocator.GetService<KillFeed>();
+        
         TransitionToState(GameState.Pending);
     }
 
@@ -47,6 +62,8 @@ public class GameManager : NetworkBehaviour
 
     public void TransitionToState(GameState newState)
     {
+        Debug.Log($"GameManager TransitionToState: {state} -> {newState}");
+        
         switch (newState)
         {
             case GameState.Pending:
@@ -61,10 +78,32 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    private void SetGameState(GameState newState)
+    {
+        Debug.Log($"GameManager SetGameState: {state} -> {newState}");
+        
+        // Update state
+        state = newState;
+        
+        // Broadcast to clients
+        BroadcastGameStateClientRpc(newState);
+        
+        // Notify subscribers
+        OnGameStateChanged?.Invoke(newState);
+    }
+
     private void OnEndingEnter()
     {
-        // Change camera to player who won.
+        Debug.Log("GameManager OnEndingEnter");
         SetGameState(GameState.Ending);
+        
+        // Pause kill feed and keep last message
+        if (killFeed != null)
+        {
+            killFeed.PauseAndKeepLastMessage();
+        }
+
+        // Change camera to player who won.
         ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
 
         menuManager.DisplayWinnerClientRpc(roundWinner.username);
@@ -78,23 +117,42 @@ public class GameManager : NetworkBehaviour
 
     private void OnPlayingEnter()
     {
+        Debug.Log("GameManager OnPlayingEnter");
+        
+        // Clear processed deaths for new round
+        processedDeaths.Clear();
+        
         if (!gameMusicPlaying)
             PlayLevelMusicClientRpc();
 
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
+            // Reset kill feed for new round
+            if (killFeed != null)
+            {
+                killFeed.ResetForNewRound();
+            }
+
             LockPlayerMovement();
             gameTime = 0f;
             RespawnAllPlayers();
             menuManager.StartCountdownClientRpc();
             StartCoroutine(RoundCountdown());
         }
+        else
+        {
+            Debug.LogWarning("Not enough players to start game");
+            TransitionToState(GameState.Pending);
+        }
     }
 
     public IEnumerator RoundCountdown()
     {
+        Debug.Log("GameManager RoundCountdown started");
         yield return new WaitForSeconds(3f);
 
+        Debug.Log("GameManager RoundCountdown finished - Transitioning to Playing");
+        
         // Unlock player movement
         UnlockPlayerMovement();
 
@@ -110,6 +168,8 @@ public class GameManager : NetworkBehaviour
 
     public IEnumerator BetweenRoundTimer()
     {
+        Debug.Log("GameManager BetweenRoundTimer started");
+        
         float showWinnerDuration = 2.0f;     // How long to show just the winner text
         float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
 
@@ -123,12 +183,15 @@ public class GameManager : NetworkBehaviour
         // Hide scoreboard when starting new round
         menuManager.HideScoreboardClientRpc();
 
+        Debug.Log("GameManager BetweenRoundTimer finished - Starting new round");
         // Transition to next round
-        OnPlayingEnter();
+        TransitionToState(GameState.Playing);
     }
 
     private void OnPendingEnter()
     {
+        Debug.Log("GameManager OnPendingEnter");
+        // We're not pausing the kill feed anymore to allow messages in Pending state
         StopLevelMusicClientRpc();
         SetGameState(GameState.Pending);
     }
@@ -148,17 +211,79 @@ public class GameManager : NetworkBehaviour
 
     public void PlayerDied(ulong clientId)
     {
-        if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData player))
-        {
-            if (player.state == PlayerState.Dead) return;
+        // Only the server should process deaths
+        if (!IsServer) return;
 
-            Debug.Log(player.username + " has been eliminated.");
-            player.state = PlayerState.Dead;
-            ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
-            BroadcastPlayerEliminatedSFXClientRpc();
+        // In Pending state, we allow multiple deaths for the same player
+        // In Playing state, we only process one death per player
+        if (state != GameState.Pending)
+        {
+            // Check if we've already processed this player's death for this round
+            if (processedDeaths.Contains(clientId))
+            {
+                Debug.Log($"Skipping duplicate death processing for client {clientId}");
+                return;
+            }
+
+            // Mark this player as processed
+            processedDeaths.Add(clientId);
         }
 
-        CheckGameStatus();
+        if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData player))
+        {
+            // Set player state to dead (but always allow pending state deaths)
+            if (player.state == PlayerState.Dead && state != GameState.Pending)
+            {
+                Debug.Log($"Player {player.username} is already marked as dead");
+                return;
+            }
+
+            Debug.Log($"Processing death for {player.username} (ID: {clientId})");
+            
+            // Update player state (only in Playing state)
+            if (state == GameState.Playing)
+            {
+                player.state = PlayerState.Dead;
+                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
+            }
+            
+            // Play death sound
+            BroadcastPlayerEliminatedSFXClientRpc();
+
+            // Create kill feed message
+            if (killFeed == null)
+            {
+                killFeed = ServiceLocator.GetService<KillFeed>();
+            }
+
+            if (killFeed != null)
+            {
+                var playerCollisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
+                if (playerCollisionTracker != null)
+                {
+                    var lastCollision = playerCollisionTracker.GetLastCollision(clientId);
+                    
+                    if (lastCollision != null)
+                    {
+                        // Player was killed by another player
+                        Debug.Log($"Player {player.username} was killed by {lastCollision.collidingPlayerName}");
+                        killFeed.AddKillMessage(lastCollision.collidingPlayerName, player.username);
+                    }
+                    else
+                    {
+                        // Player killed themselves
+                        Debug.Log($"Player {player.username} killed themselves (no collision record found)");
+                        killFeed.AddSuicideMessage(player.username);
+                    }
+                }
+            }
+        }
+
+        // Only check game status for Playing state
+        if (state == GameState.Playing)
+        {
+            CheckGameStatus();
+        }
     }
 
     private void RespawnAllPlayers()
@@ -182,16 +307,11 @@ public class GameManager : NetworkBehaviour
             player.canMove = true;
     }
 
-    private void SetGameState(GameState state)
-    {
-        this.state = state;
-        BroadcastGameStateClientRpc(state);
-    }
-
     [ClientRpc]
-    private void BroadcastGameStateClientRpc(GameState state)
+    private void BroadcastGameStateClientRpc(GameState newState)
     {
-        this.state = state;
+        Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
+        state = newState;
         if (state == GameState.Ending)
             MidroundOn.Post(gameObject);
     }
@@ -220,5 +340,29 @@ public class GameManager : NetworkBehaviour
     private void BroadcastPlayerEliminatedSFXClientRpc()
     {
         PlayerEliminated.Post(gameObject);
+    }
+
+    // Kill feed message handling - removed in favor of direct calls above
+    public void ShowKillMessage(string killerName, string victimName, bool isSuicide)
+    {
+        // Method preserved for backward compatibility but not used
+        if (!IsServer) return;
+        
+        if (killFeed == null)
+        {
+            killFeed = ServiceLocator.GetService<KillFeed>();
+        }
+
+        if (killFeed != null)
+        {
+            if (isSuicide)
+            {
+                killFeed.AddSuicideMessage(killerName);
+            }
+            else
+            {
+                killFeed.AddKillMessage(killerName, victimName);
+            }
+        }
     }
 }
