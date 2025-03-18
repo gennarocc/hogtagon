@@ -15,6 +15,7 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private GameObject playMenuPanel;
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
+    [SerializeField] private GameObject newOptionsMenuUI;
     [SerializeField] private GameObject tempUI;
     [SerializeField] public GameObject jumpUI;
 
@@ -235,6 +236,10 @@ public class MenuManager : NetworkBehaviour
         startCamera.gameObject.SetActive(true);
         MenuMusicOn.Post(gameObject);
 
+        // Configure modern sci-fi UI appearance
+        // No need to manually set colors here as the MenuButtonHighlight component handles this now
+        // Simply ensure the buttons have the MenuButtonHighlight component attached in the editor
+        
         // Rotate main menu camera
         orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
         if (orbitalTransposer != null)
@@ -280,11 +285,37 @@ public class MenuManager : NetworkBehaviour
     public void OnOptionsClicked()
     {
         ButtonClickAudio();
-        settingsMenuUI.SetActive(true);
-
-        // Set appropriate default selection
-        if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
-            defaultSettingsMenuButton.Select();
+        
+        // Use the new tabbed options menu if available, otherwise fall back to old settings menu
+        if (newOptionsMenuUI != null)
+        {
+            newOptionsMenuUI.SetActive(true);
+            
+            // Make sure the tab controller initializes properly
+            TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
+            if (tabController != null)
+            {
+                // Force select the first tab to ensure proper initialization
+                tabController.SelectTab(0);
+            }
+            
+            // Handle button selection based on input
+            if (eventSystem != null && defaultSettingsMenuButton != null)
+            {
+                HandleButtonSelection(defaultSettingsMenuButton);
+            }
+        }
+        else
+        {
+            // Fall back to old settings menu
+            settingsMenuUI.SetActive(true);
+            
+            // Handle button selection based on input
+            if (eventSystem != null && defaultSettingsMenuButton != null)
+            {
+                HandleButtonSelection(defaultSettingsMenuButton);
+            }
+        }
     }
 
     public void Resume()
