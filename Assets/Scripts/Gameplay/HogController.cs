@@ -38,7 +38,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private CinemachineFreeLook freeLookCamera;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
-    [SerializeField] private HogVisualEffects vfxController;
+    // [SerializeField] private HogVisualEffects vfxController;
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event EngineOn;
@@ -68,8 +68,10 @@ public class HogController : NetworkBehaviour
     private int nextInputSequence = 0;
     private NetworkVariable<int> lastProcessedInputSequence = new NetworkVariable<int>(0);
     private Queue<InputState> pendingInputs = new Queue<InputState>();
-    private NetworkVariable<StateSnapshot> authorityState = new NetworkVariable<StateSnapshot>();
-    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    private NetworkVariable<StateSnapshot> authorityState = new NetworkVariable<StateSnapshot>(
+        new StateSnapshot(),
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server); private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
 
     // Visual smoothing for remote vehicles
     private Vector3 visualPositionTarget;
@@ -132,7 +134,7 @@ public class HogController : NetworkBehaviour
     {
         // Force exact fixed timestep for determinism
         Time.fixedDeltaTime = FIXED_PHYSICS_TIMESTEP;
-        
+
         // Configure physics parameters for determinism
         Physics.defaultSolverIterations = 6;
         Physics.defaultSolverVelocityIterations = 1;
@@ -144,7 +146,9 @@ public class HogController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        rb.isKinematic = false;
+
+        // Disable physics initially
+        rb.isKinematic = true;
 
         // Initialize immediately for server
         if (IsServer)
@@ -153,19 +157,21 @@ public class HogController : NetworkBehaviour
         }
         else
         {
+            // Client requests initial state from server
             RequestInitialSyncServerRpc();
+            Debug.Log($"[Client] Waiting for initial state from server...");
         }
-
-        EnableWheelColliders();
     }
 
     private void Start()
     {
         rb.centerOfMass = centerOfMass;
         InitializeWheelFriction();
-        vfxController.Initialize(transform, centerOfMass, OwnerClientId);
+        // vfxController.Initialize(transform, centerOfMass, OwnerClientId);
         EngineOn.Post(gameObject);
-        
+
+        Debug.Log(transform.root.gameObject.GetComponent<Player>().clientId + " spawned at - " + rb.position);
+
         // Initialize visual smoothing
         visualPositionTarget = transform.position;
         visualRotationTarget = transform.rotation;
@@ -215,11 +221,43 @@ public class HogController : NetworkBehaviour
 
     private void InitializeServerState()
     {
+        Debug.Log("[Server] Initializing hog state");
+
+        // Get the Player component to access spawn point
+        Player playerComponent = transform.root.GetComponent<Player>();
+        Vector3 initialPosition = transform.position; // Default fallback
+        Quaternion initialRotation = transform.rotation;
+
+        if (playerComponent != null)
+        {
+            // Get player data to use spawn point
+            if (ConnectionManager.instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
+            {
+                initialPosition = playerData.spawnPoint;
+                initialRotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - playerData.spawnPoint);
+
+                // Directly set the transform position for immediate effect
+                transform.position = initialPosition;
+                transform.rotation = initialRotation;
+
+                Debug.Log($"[Server] Setting initial position to spawn point: {initialPosition}");
+            }
+            else
+            {
+                Debug.LogWarning($"[Server] Could not find player data for client {playerComponent.clientId}");
+            }
+        }
+
+        // Initialize physics 
+        rb.position = initialPosition;
+        rb.rotation = initialRotation;
+        rb.isKinematic = false;
+
         // Set initial server state
         authorityState.Value = new StateSnapshot
         {
-            position = transform.position,
-            rotation = transform.rotation,
+            position = initialPosition,
+            rotation = initialRotation,
             velocity = Vector3.zero,
             angularVelocity = Vector3.zero,
             physicsFrame = 0,
@@ -228,6 +266,7 @@ public class HogController : NetworkBehaviour
 
         hasReceivedInitialSync = true;
         serverPhysicsFrame.Value = 0;
+        EnableWheelColliders();
     }
 
     private void InitializeWheelFriction()
@@ -247,12 +286,12 @@ public class HogController : NetworkBehaviour
     {
         // Increment physics frame counter
         currentPhysicsFrame++;
-        
+
         if (IsServer)
         {
             // Update server frame counter
             serverPhysicsFrame.Value = currentPhysicsFrame;
-            
+
             // Process any pending physics on server
             // (Vehicle owner's inputs are already processed when received)
         }
@@ -260,7 +299,7 @@ public class HogController : NetworkBehaviour
         {
             // Process inputs for current physics step
             ProcessOwnerInputs();
-            
+
             // Check for reconciliation against server state if needed
             CheckReconciliation();
         }
@@ -271,7 +310,7 @@ public class HogController : NetworkBehaviour
     {
         // Find pending inputs for this frame
         InputState? inputForFrame = null;
-        
+
         foreach (var input in pendingInputs)
         {
             // Use the most recent input for this frame
@@ -280,7 +319,7 @@ public class HogController : NetworkBehaviour
                 inputForFrame = input;
             }
         }
-        
+
         // If we have an input for this frame, apply it
         if (inputForFrame.HasValue)
         {
@@ -293,30 +332,30 @@ public class HogController : NetworkBehaviour
         // Save current physics settings
         float prevDeltaTime = Time.fixedDeltaTime;
         Time.fixedDeltaTime = input.deltaTime;
-        
+
         // Apply exact physics
         float steeringAngle = CalculateSteering(input.steeringInput, input.moveInput);
-        
+
         // Calculate exact torque with deterministic math
         float targetTorque = Mathf.Clamp(input.moveInput, -1f, 1f) * maxTorque;
-        float torqueDelta = input.moveInput != 0 ? 
-            (input.deltaTime * maxTorque * accelerationFactor) : 
+        float torqueDelta = input.moveInput != 0 ?
+            (input.deltaTime * maxTorque * accelerationFactor) :
             (input.deltaTime * maxTorque * decelerationFactor);
-            
+
         // Use deterministic MoveTowards
         if (Mathf.Abs(targetTorque - currentTorque) <= torqueDelta)
         {
-            currentTorque = targetTorque; 
+            currentTorque = targetTorque;
         }
         else
         {
             currentTorque += Mathf.Sign(targetTorque - currentTorque) * torqueDelta;
         }
-        
+
         // Apply to wheels
         ApplySteeringToWheels(steeringAngle);
         ApplyMotorTorqueToWheels(currentTorque);
-        
+
         // Handle handbrake with exact physics
         if (input.handbrakeInput)
         {
@@ -326,13 +365,13 @@ public class HogController : NetworkBehaviour
         {
             ApplyDeterministicTractionRecovery(input.deltaTime);
         }
-        
+
         // Restore physics settings
         Time.fixedDeltaTime = prevDeltaTime;
-        
+
         // Update local velocity for drift detection
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-        
+
         // Server updates drift state
         if (IsServer)
         {
@@ -344,7 +383,7 @@ public class HogController : NetworkBehaviour
     {
         float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
         bool isMovingInReverse = forwardVelocity < -0.5f;
-        
+
         // Invert steering for reverse driving
         if (isMovingInReverse && moveInput < 0)
         {
@@ -359,7 +398,7 @@ public class HogController : NetworkBehaviour
         // Front wheels steering
         wheelColliders[0].steerAngle = Mathf.Lerp(wheelColliders[0].steerAngle, steeringAngle, steeringSpeed);
         wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringAngle, steeringSpeed);
-        
+
         // Rear wheels counter-steering
         float rearSteeringAngle = steeringAngle * -0.35f;
         wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, rearSteeringAngle, steeringSpeed);
@@ -387,18 +426,18 @@ public class HogController : NetworkBehaviour
     {
         CancelInvoke("RecoverTraction");
         isTractionLocked = false;
-        
+
         // Deterministic drift calculation
         float newDriftingAxis = driftingAxis + deltaTime;
         float secureStartingPoint = newDriftingAxis * originalExtremumSlips[0] * handbrakeDriftMultiplier;
-        
+
         if (secureStartingPoint < originalExtremumSlips[0])
         {
             newDriftingAxis = originalExtremumSlips[0] / (originalExtremumSlips[0] * handbrakeDriftMultiplier);
         }
-        
+
         driftingAxis = Mathf.Min(newDriftingAxis, 1f);
-        
+
         // Apply to all wheels deterministically
         for (int i = 0; i < wheelColliders.Length; i++)
         {
@@ -413,7 +452,7 @@ public class HogController : NetworkBehaviour
         // Determine exact recovery amount
         float newDriftingAxis = driftingAxis - (deltaTime / 1.5f);
         driftingAxis = Mathf.Max(newDriftingAxis, 0f);
-        
+
         if (driftingAxis > 0f)
         {
             // Apply recovery to all wheels
@@ -426,7 +465,7 @@ public class HogController : NetworkBehaviour
                 );
                 wheelColliders[i].sidewaysFriction = friction;
             }
-            
+
             // Continue recovery next frame
             Invoke("RecoverTraction", deltaTime);
         }
@@ -439,7 +478,7 @@ public class HogController : NetworkBehaviour
                 friction.extremumSlip = originalExtremumSlips[i];
                 wheelColliders[i].sidewaysFriction = friction;
             }
-            
+
             driftingAxis = 0f;
             isTractionLocked = true;
         }
@@ -453,10 +492,10 @@ public class HogController : NetworkBehaviour
     {
         // Handle horn input
         CheckHornInput();
-        
+
         // Calculate camera angle
         cameraAngle = CalculateCameraAngle();
-        
+
         // Collect input
         var input = new InputState
         {
@@ -468,26 +507,26 @@ public class HogController : NetworkBehaviour
             handbrakeInput = Input.GetKey(KeyCode.Space),
             deltaTime = FIXED_PHYSICS_TIMESTEP
         };
-        
+
         // Store locally for prediction
         pendingInputs.Enqueue(input);
-        
+
         // Keep buffer size reasonable
         while (pendingInputs.Count > inputBufferSize)
         {
             pendingInputs.Dequeue();
         }
-        
+
         // Send to server for processing
         SendInputToServerRpc(input);
-        
+
         // Process controller camera controls
         UpdateCameraControls();
     }
 
     private void CheckHornInput()
     {
-        if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0)) && 
+        if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.JoystickButton0)) &&
             !transform.root.gameObject.GetComponent<Player>().isSpectating)
         {
             HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
@@ -550,14 +589,14 @@ public class HogController : NetworkBehaviour
     {
         // Only perform reconciliation if we have server state
         if (lastProcessedInputSequence.Value <= 0) return;
-        
+
         // Skip if no pending inputs
         if (pendingInputs.Count == 0) return;
-        
+
         // Calculate error between local and server state
         float positionError = Vector3.Distance(rb.position, authorityState.Value.position);
         float rotationError = Quaternion.Angle(rb.rotation, authorityState.Value.rotation);
-        
+
         // Determine if reconciliation is needed
         if (positionError > positionErrorThreshold || rotationError > rotationErrorThreshold)
         {
@@ -573,20 +612,20 @@ public class HogController : NetworkBehaviour
             Debug.Log($"Reconciling vehicle. Position error: {Vector3.Distance(rb.position, authorityState.Value.position):F2}, " +
                      $"Rotation error: {Quaternion.Angle(rb.rotation, authorityState.Value.rotation):F2}");
         }
-        
+
         // Remove already processed inputs
-        while (pendingInputs.Count > 0 && 
+        while (pendingInputs.Count > 0 &&
               pendingInputs.Peek().sequenceNumber <= lastProcessedInputSequence.Value)
         {
             pendingInputs.Dequeue();
         }
-        
+
         // Reset to server state
         rb.position = authorityState.Value.position;
         rb.rotation = authorityState.Value.rotation;
         rb.linearVelocity = authorityState.Value.velocity;
         rb.angularVelocity = authorityState.Value.angularVelocity;
-        
+
         // Reapply all pending inputs
         foreach (var input in pendingInputs)
         {
@@ -598,13 +637,13 @@ public class HogController : NetworkBehaviour
     {
         // Only for non-owner, non-server vehicles
         if (IsOwner || IsServer || !needsSmoothing) return;
-        
+
         // Apply smoothing to visual representation
-        transform.position = Vector3.Lerp(transform.position, visualPositionTarget, 
+        transform.position = Vector3.Lerp(transform.position, visualPositionTarget,
                                          Time.deltaTime * reconciliationLerpSpeed);
-        transform.rotation = Quaternion.Slerp(transform.rotation, visualRotationTarget, 
+        transform.rotation = Quaternion.Slerp(transform.rotation, visualRotationTarget,
                                              Time.deltaTime * reconciliationLerpSpeed);
-        
+
         // Check if we're close enough to stop smoothing
         if (Vector3.Distance(transform.position, visualPositionTarget) < 0.01f &&
             Quaternion.Angle(transform.rotation, visualRotationTarget) < 0.1f)
@@ -619,7 +658,7 @@ public class HogController : NetworkBehaviour
         visualPositionTarget = state.position;
         visualRotationTarget = state.rotation;
         needsSmoothing = true;
-        
+
         // Update rigidbody state directly
         rb.position = state.position;
         rb.rotation = state.rotation;
@@ -639,7 +678,7 @@ public class HogController : NetworkBehaviour
             Vector3 position;
             Quaternion rotation;
             wheelColliders[i].GetWorldPose(out position, out rotation);
-            
+
             wheelMeshes[i].position = position;
             wheelMeshes[i].rotation = rotation;
         }
@@ -649,16 +688,16 @@ public class HogController : NetworkBehaviour
     {
         bool rearLeftGrounded = wheelColliders[2].isGrounded;
         bool rearRightGrounded = wheelColliders[3].isGrounded;
-        
-        vfxController.UpdateDriftEffects(isDrifting.Value, rearLeftGrounded, rearRightGrounded, canMove);
+
+        // vfxController.UpdateDriftEffects(isDrifting.Value, rearLeftGrounded, rearRightGrounded, canMove);
     }
 
     [ClientRpc]
     public void ExplodeCarClientRpc()
     {
         canMove = false;
-        vfxController.CreateExplosion(canMove);
-        
+        // vfxController.CreateExplosion(canMove);
+
         StartCoroutine(ResetAfterExplosion());
     }
 
@@ -672,22 +711,22 @@ public class HogController : NetworkBehaviour
 
     #region Network RPCs
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]  // Change to not require ownership
     private void SendInputToServerRpc(InputState input, ServerRpcParams rpcParams = default)
     {
         // Validate sender
         ulong clientId = rpcParams.Receive.SenderClientId;
         if (clientId != OwnerClientId) return;
-        
+
         // Process sequence number
         if (input.sequenceNumber <= lastProcessedInputSequence.Value) return;
-        
+
         // Process this input immediately on server
         ApplyDeterministicPhysics(input);
-        
+
         // Update last processed input
         lastProcessedInputSequence.Value = input.sequenceNumber;
-        
+
         // Update authority state for reconciliation
         SendAuthoritySnapshot();
     }
@@ -706,51 +745,47 @@ public class HogController : NetworkBehaviour
         };
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void RequestInitialSyncServerRpc(ServerRpcParams rpcParams = default)
     {
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        
-        // Send initial state to requesting client
-        SendInitialStateClientRpc(
-            authorityState.Value,
-            new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new ulong[] { clientId }
-                }
-            }
-        );
+        // Send initial state to all clients (without targeting)
+        SendInitialStateClientRpc(authorityState.Value);
+
+        Debug.Log($"[Server] Sending initial state to clients: Position={authorityState.Value.position}");
     }
 
     [ClientRpc]
-    private void SendInitialStateClientRpc(StateSnapshot state, ClientRpcParams clientRpcParams = default)
+    private void SendInitialStateClientRpc(StateSnapshot state)
     {
         if (IsServer || hasReceivedInitialSync) return;
+
+        Debug.Log($"[Client] Received initial state: Position={state.position}, Rotation={state.rotation}");
 
         // Set position and rotation
         transform.position = state.position;
         transform.rotation = state.rotation;
-        
+
         // Set physics state
         rb.position = state.position;
         rb.rotation = state.rotation;
-        
-        // Apply velocity only for non-owners
-        if (!IsOwner)
-        {
-            rb.linearVelocity = state.velocity;
-            rb.angularVelocity = state.angularVelocity;
-            
-            // Set visual targets
-            visualPositionTarget = state.position;
-            visualRotationTarget = state.rotation;
-        }
-        
+        rb.isKinematic = false;
+
+        // Apply velocity
+        rb.linearVelocity = state.velocity;
+        rb.angularVelocity = state.angularVelocity;
+
+        // Set visual targets
+        visualPositionTarget = state.position;
+        visualRotationTarget = state.rotation;
+
+        // Enable wheel colliders
+        EnableWheelColliders();
+
         // Mark as initialized
         hasReceivedInitialSync = true;
         currentPhysicsFrame = state.physicsFrame;
+
+        Debug.Log($"[Client] Vehicle initialized at position: {rb.position}");
     }
 
     [ClientRpc]
