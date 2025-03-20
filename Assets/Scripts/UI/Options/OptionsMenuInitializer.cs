@@ -156,8 +156,14 @@ public class OptionsMenuInitializer : MonoBehaviour
     
     private void InitializeGameplaySettings()
     {
+        // Add gameplay settings here
+        // Camera sensitivity has been moved to Controls tab
+    }
+    
+    private void InitializeControlsSettings()
+    {
         // Camera Sensitivity
-        GameObject sensitivitySetting = menuCreator.CreateSettingItem("GAMEPLAY", "Camera Sensitivity");
+        GameObject sensitivitySetting = menuCreator.CreateSettingItem("CONTROLS", "Camera Sensitivity");
         Slider sensitivitySlider = menuCreator.AddSliderToSetting(sensitivitySetting, 0.1f, 2.0f, 1.0f);
         if (sensitivitySlider != null && menuController != null)
         {
@@ -168,12 +174,7 @@ public class OptionsMenuInitializer : MonoBehaviour
                 }
             });
         }
-        
-        // Add more gameplay settings here
-    }
-    
-    private void InitializeControlsSettings()
-    {
+
         // Example key binding settings
         GameObject moveForwardSetting = menuCreator.CreateSettingItem("CONTROLS", "Move Forward");
         menuCreator.AddKeyBindingToSetting(moveForwardSetting, "W");

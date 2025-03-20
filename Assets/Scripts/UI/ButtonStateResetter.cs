@@ -15,10 +15,15 @@ public class ButtonStateResetter : MonoBehaviour
         }
     }
 
-        public void ResetAllButtonStates()
+    public void ResetAllButtonStates()
     {
         foreach (Button button in buttonsToReset)
         {
+            if (button == null) continue;
+            
+            // Make sure button is interactive
+            button.interactable = true;
+            
             // Force transition to normal state
             button.OnPointerExit(new PointerEventData(EventSystem.current));
             
@@ -34,6 +39,16 @@ public class ButtonStateResetter : MonoBehaviour
             {
                 animator.Play("Normal");
             }
+            
+            // Reset any MenuButtonHighlight component
+            MenuButtonHighlight highlight = button.GetComponent<MenuButtonHighlight>();
+            if (highlight != null)
+            {
+                highlight.ForceUnhighlightButton();
+            }
         }
+        
+        // Clear any selection in the event system
+        EventSystem.current.SetSelectedGameObject(null);
     }
 }

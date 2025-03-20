@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Cinemachine;
 using UnityEngine.EventSystems;
+using System.Linq;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -223,6 +224,38 @@ public class MenuManager : NetworkBehaviour
             if (defaultPauseMenuButton != null)
                 defaultPauseMenuButton.Select();
         }
+        else if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
+        {
+            // Close the new options menu and return to main menu
+            newOptionsMenuUI.SetActive(false);
+            
+            // Reset all button states in main menu
+            if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
+                mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+            
+            // Show main menu
+            mainMenuPanel.SetActive(true);
+            
+            // Clear any selected objects in the event system
+            if (eventSystem != null)
+                eventSystem.SetSelectedGameObject(null);
+            
+            // Reset the button states directly to ensure they're clickable
+            if (optionsButton != null)
+            {
+                optionsButton.OnPointerExit(new UnityEngine.EventSystems.PointerEventData(eventSystem));
+                optionsButton.interactable = true;
+            }
+            
+            if (playButton != null)
+                playButton.interactable = true;
+            
+            if (quitButton != null)
+                quitButton.interactable = true;
+            
+            // Reset the selections
+            HandleButtonSelection(defaultMainMenuButton);
+        }
     }
 
     private void OnAcceptPressed()
@@ -232,25 +265,34 @@ public class MenuManager : NetworkBehaviour
 
     public void ShowMainMenu()
     {
+        // First reset the button states in the main menu
+        if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
+            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+        
+        // Make the main menu active
         mainMenuPanel.SetActive(true);
         startCamera.gameObject.SetActive(true);
         MenuMusicOn.Post(gameObject);
 
-        // Configure modern sci-fi UI appearance
-        // No need to manually set colors here as the MenuButtonHighlight component handles this now
-        // Simply ensure the buttons have the MenuButtonHighlight component attached in the editor
+        // Make sure all buttons are interactable
+        if (playButton != null) playButton.interactable = true;
+        if (optionsButton != null) optionsButton.interactable = true;
+        if (quitButton != null) quitButton.interactable = true;
         
         // Rotate main menu camera
         orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
         if (orbitalTransposer != null)
             orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
 
+        // Deactivate all other menu panels
         playMenuPanel.SetActive(false);
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
         scoreboardUI.SetActive(false);
         tempUI.SetActive(false);
         connectionPending.SetActive(false);
+        if (newOptionsMenuUI != null)
+            newOptionsMenuUI.SetActive(false);
 
         // Switch to UI input mode
         if (inputManager != null)
@@ -260,6 +302,10 @@ public class MenuManager : NetworkBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         gameIsPaused = false;  // Reset pause state
+        
+        // Clear any selected game objects
+        if (eventSystem != null)
+            eventSystem.SetSelectedGameObject(null);
 
         // Handle button selection based on input
         HandleButtonSelection(defaultMainMenuButton);
@@ -289,17 +335,52 @@ public class MenuManager : NetworkBehaviour
         // Use the new tabbed options menu if available, otherwise fall back to old settings menu
         if (newOptionsMenuUI != null)
         {
+            // Force deactivate first to ensure a clean state
+            newOptionsMenuUI.SetActive(false);
+            
+            // Reset UI state
+            if (eventSystem != null)
+                eventSystem.SetSelectedGameObject(null);
+            
+            // Enable the options menu GameObject and all its children
             newOptionsMenuUI.SetActive(true);
             
-            // Make sure the tab controller initializes properly
+            // Force enable all direct children in the hierarchy
+            foreach (Transform child in newOptionsMenuUI.transform)
+            {
+                child.gameObject.SetActive(true);
+            }
+            
+            // Force enable all panels
             TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
             if (tabController != null)
             {
-                // Force select the first tab to ensure proper initialization
+                // Ensure tab controller GameObject is active
+                tabController.gameObject.SetActive(true);
+                
+                // Find all content panels and make sure they exist
+                Transform contentTransform = tabController.transform.Find("Content");
+                if (contentTransform != null)
+                {
+                    contentTransform.gameObject.SetActive(true);
+                    
+                    // Force the content panels to properly initialize
+                    Transform videoPanel = contentTransform.Find("VideoPanel");
+                    if (videoPanel != null)
+                    {
+                        // Force video panel active
+                        videoPanel.gameObject.SetActive(true);
+                    }
+                }
+                
+                // Force select the Video tab
                 tabController.SelectTab(0);
             }
             
-            // Handle button selection based on input
+            // Hide main menu
+            mainMenuPanel.SetActive(false);
+            
+            // Handle button selection
             if (eventSystem != null && defaultSettingsMenuButton != null)
             {
                 HandleButtonSelection(defaultSettingsMenuButton);
