@@ -125,20 +125,42 @@ public class Player : NetworkBehaviour
 
     public void Respawn()
     {
-        // Get updated playerData from connectionManager.
+        // Get updated playerData from connectionManager
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
-        if (!IsServer) return;
-        Debug.Log("Respawning Player");
-        rb.position = playerData.spawnPoint;
-        rb.transform.LookAt(SpawnPointManager.instance.transform);
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
 
-        // Set player state to alive and update clients
-        if (playerData.state != PlayerState.Alive)
+        if (IsServer)
         {
-            playerData.state = PlayerState.Alive;
-            ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            // Server-side respawn logic
+            Debug.Log("Server respawning Player");
+            rb.position = playerData.spawnPoint;
+            rb.transform.LookAt(SpawnPointManager.instance.transform);
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            // Set player state to alive and update clients
+            if (playerData.state != PlayerState.Alive)
+            {
+                playerData.state = PlayerState.Alive;
+                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            }
+        }
+        else if (IsOwner)
+        {
+            // Client-side respawn request
+            Debug.Log("Client requesting respawn");
+
+            // Find the HogController component in children
+            HogController hogController = GetComponentInChildren<HogController>();
+
+            if (hogController != null)
+            {
+                // Request respawn via HogController
+                hogController.RequestRespawnServerRpc();
+            }
+            else
+            {
+                Debug.LogError("Could not find HogController component for respawn");
+            }
         }
     }
 

@@ -3,8 +3,6 @@ using Unity.Netcode;
 using Cinemachine;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 [RequireComponent(typeof(Rigidbody))]
 public class HogController : NetworkBehaviour
@@ -18,20 +16,14 @@ public class HogController : NetworkBehaviour
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
-    [SerializeField] public int handbrakeDriftMultiplier = 5;
-    [SerializeField] private float frontLeftRpm;
-    [SerializeField] private float velocity;
-
-    [Header("Acceleration and Deceleration")]
     [SerializeField, Range(0.1f, 10f)] private float accelerationFactor = 2f;
     [SerializeField, Range(0.1f, 5f)] private float decelerationFactor = 1f;
 
-    [Header("Network Reconciliation")]
-    [SerializeField] private float positionErrorThreshold = 1.0f;
-    [SerializeField] private float rotationErrorThreshold = 15.0f;
-    [SerializeField] private float reconciliationLerpSpeed = 10f;
+    [Header("Network")]
+    [SerializeField] private float serverValidationThreshold = 5.0f;  // How far client can move before server corrections
+    [SerializeField] private float clientUpdateInterval = 0.05f;      // How often client sends updates (20Hz)
+    [SerializeField] private float stateUpdateInterval = 0.1f;        // How often server broadcasts state (10Hz)
     [SerializeField] private bool debugMode = false;
-    [SerializeField] private int inputBufferSize = 60; // 1 second at 60Hz
 
     [Header("References")]
     [SerializeField] private Rigidbody rb;
@@ -50,77 +42,51 @@ public class HogController : NetworkBehaviour
     private float currentTorque;
     private float localVelocityX;
     private bool collisionForceOnCooldown = false;
-    private float driftingAxis;
-    private bool isTractionLocked = true;
     private float cameraAngle;
 
     // Wheel friction variables
     private WheelFrictionCurve[] originalWheelFrictions = new WheelFrictionCurve[4];
     private float[] originalExtremumSlips = new float[4];
 
-    // Deterministic physics variables
-    private const float FIXED_PHYSICS_TIMESTEP = 0.01666667f; // Exactly 1/60 second
-    private float accumulatedTime = 0f;
-    private uint currentPhysicsFrame = 0;
-    private NetworkVariable<uint> serverPhysicsFrame = new NetworkVariable<uint>(0);
-
-    // Input-sync variables
-    private int nextInputSequence = 0;
-    private NetworkVariable<int> lastProcessedInputSequence = new NetworkVariable<int>(0);
-    private Queue<InputState> pendingInputs = new Queue<InputState>();
-    private NetworkVariable<StateSnapshot> authorityState = new NetworkVariable<StateSnapshot>(
+    // Network variables
+    private float _stateUpdateTimer = 0f;
+    private float _clientUpdateTimer = 0f;
+    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    private NetworkVariable<StateSnapshot> vehicleState = new NetworkVariable<StateSnapshot>(
         new StateSnapshot(),
         NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server); private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+        NetworkVariableWritePermission.Owner);
 
-    // Visual smoothing for remote vehicles
+    // Variables for non-owner clients
     private Vector3 visualPositionTarget;
     private Quaternion visualRotationTarget;
+    private Vector3 visualVelocityTarget;
     private bool needsSmoothing = false;
+    [SerializeField] private float visualSmoothingSpeed = 10f;
 
     #endregion
 
     #region Network Structs
 
-    public struct InputState : INetworkSerializable
-    {
-        public int sequenceNumber;
-        public double timestamp;
-        public uint physicsFrame;
-        public float moveInput;
-        public float steeringInput;
-        public bool handbrakeInput;
-        public float deltaTime;
-
-        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-        {
-            serializer.SerializeValue(ref sequenceNumber);
-            serializer.SerializeValue(ref timestamp);
-            serializer.SerializeValue(ref physicsFrame);
-            serializer.SerializeValue(ref moveInput);
-            serializer.SerializeValue(ref steeringInput);
-            serializer.SerializeValue(ref handbrakeInput);
-            serializer.SerializeValue(ref deltaTime);
-        }
-    }
-
     public struct StateSnapshot : INetworkSerializable
     {
-        public int lastProcessedInput;
-        public uint physicsFrame;
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 velocity;
         public Vector3 angularVelocity;
+        public float steeringAngle;
+        public float motorTorque;
+        public uint updateId;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
-            serializer.SerializeValue(ref lastProcessedInput);
-            serializer.SerializeValue(ref physicsFrame);
             serializer.SerializeValue(ref position);
             serializer.SerializeValue(ref rotation);
             serializer.SerializeValue(ref velocity);
             serializer.SerializeValue(ref angularVelocity);
+            serializer.SerializeValue(ref steeringAngle);
+            serializer.SerializeValue(ref motorTorque);
+            serializer.SerializeValue(ref updateId);
         }
     }
 
@@ -128,38 +94,28 @@ public class HogController : NetworkBehaviour
 
     #region Lifecycle Methods
 
-    // One-time setup of physics settings on app startup
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void ConfigurePhysicsSettings()
-    {
-        // Force exact fixed timestep for determinism
-        Time.fixedDeltaTime = FIXED_PHYSICS_TIMESTEP;
-
-        // Configure physics parameters for determinism
-        Physics.defaultSolverIterations = 6;
-        Physics.defaultSolverVelocityIterations = 1;
-        Physics.defaultMaxAngularSpeed = 50f;
-        Physics.sleepThreshold = 0.005f;
-        Physics.defaultContactOffset = 0.01f;
-    }
-
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-        // Disable physics initially
-        rb.isKinematic = true;
+        // Register for state change callback
+        vehicleState.OnValueChanged += OnVehicleStateChanged;
 
-        // Initialize immediately for server
-        if (IsServer)
+        // Initialize the vehicle
+        if (IsOwner)
         {
-            InitializeServerState();
+            // Owner initializes immediately
+            InitializeOwnerVehicle();
+        }
+        else if (IsServer && !IsOwner)
+        {
+            // Server initializes non-owned vehicles
+            InitializeServerControlledVehicle();
         }
         else
         {
-            // Client requests initial state from server
-            RequestInitialSyncServerRpc();
-            Debug.Log($"[Client] Waiting for initial state from server...");
+            // Remote client needs server to tell it what to do
+            RequestInitialStateServerRpc();
         }
     }
 
@@ -167,106 +123,155 @@ public class HogController : NetworkBehaviour
     {
         rb.centerOfMass = centerOfMass;
         InitializeWheelFriction();
-        // vfxController.Initialize(transform, centerOfMass, OwnerClientId);
-        EngineOn.Post(gameObject);
 
-        Debug.Log(transform.root.gameObject.GetComponent<Player>().clientId + " spawned at - " + rb.position);
+        if (EngineOn != null)
+        {
+            EngineOn.Post(gameObject);
+        }
 
-        // Initialize visual smoothing
+        // Initialize visual smoothing targets
         visualPositionTarget = transform.position;
         visualRotationTarget = transform.rotation;
+        visualVelocityTarget = Vector3.zero;
+
+        if (debugMode && IsOwner)
+        {
+            Debug.Log($"Owner vehicle spawned at {rb.position}");
+        }
     }
 
     private void Update()
     {
-        // Wait for initial sync
+        // Wait until properly initialized
         if (!hasReceivedInitialSync) return;
 
-        // Handle owner input generation
         if (IsOwner)
         {
-            CollectAndSendInput();
+            // Owner controls the vehicle
+            HandleOwnerInput();
+
+            // Periodically send state to server for validation and broadcasting
+            _clientUpdateTimer += Time.deltaTime;
+            if (_clientUpdateTimer >= clientUpdateInterval)
+            {
+                _clientUpdateTimer = 0f;
+                SendStateToServer();
+            }
         }
-
-        // Accumulate time for deterministic physics steps
-        accumulatedTime += Time.deltaTime;
-
-        // Process deterministic physics steps
-        while (accumulatedTime >= FIXED_PHYSICS_TIMESTEP)
+        else if (IsServer && !IsOwner)
         {
-            ProcessPhysicsStep();
-            accumulatedTime -= FIXED_PHYSICS_TIMESTEP;
+            // Server controls non-owned vehicles
+            // For non-player vehicles like AI or dropped vehicles
+
+            // Send broadcasts periodically
+            _stateUpdateTimer += Time.deltaTime;
+            if (_stateUpdateTimer >= stateUpdateInterval)
+            {
+                _stateUpdateTimer = 0f;
+                BroadcastServerStateClientRpc(vehicleState.Value);
+            }
+        }
+        else
+        {
+            // Remote client - smooth visual representation of other vehicles
+            SmoothRemoteVehicleVisuals();
         }
 
-        // Visual updates that don't need fixed timestep
+        // Common updates
         AnimateWheels();
         UpdateDriftEffects();
-        SmoothVisualForRemoteVehicles();
+    }
+
+    private void FixedUpdate()
+    {
+        // Physics updates only for owner and server
+        if (!hasReceivedInitialSync) return;
+
+        if (IsOwner)
+        {
+            // Owner physics already handled by input
+        }
+        else if (IsServer && !IsOwner)
+        {
+            // Server applies physics for non-owned vehicles
+            ApplyServerPhysics();
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (IsServer && !collisionForceOnCooldown && collision.gameObject.CompareTag("Player"))
+        // Handle collisions
+        if (collision.gameObject.CompareTag("Player"))
         {
-            StartCoroutine(CollisionDebounce());
-            SendAuthoritySnapshot();
-        }
+            // Play sound effect
+            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
 
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
+            if (IsOwner)
+            {
+                // Client sends immediate update on collision
+                SendStateToServer();
+            }
+
+            if (IsServer)
+            {
+                // Server broadcasts the collision immediately
+                BroadcastServerStateClientRpc(vehicleState.Value);
+            }
+        }
     }
 
     #endregion
 
     #region Initialization
 
-    private void InitializeServerState()
+    private void InitializeOwnerVehicle()
     {
-        Debug.Log("[Server] Initializing hog state");
+        // Configure physics
+        rb.isKinematic = false;
+        EnableWheelColliders();
 
+        // Mark as initialized
+        hasReceivedInitialSync = true;
+
+        if (debugMode)
+        {
+            Debug.Log("[Owner] Vehicle initialized");
+        }
+    }
+
+    private void InitializeServerControlledVehicle()
+    {
         // Get the Player component to access spawn point
         Player playerComponent = transform.root.GetComponent<Player>();
-        Vector3 initialPosition = transform.position; // Default fallback
-        Quaternion initialRotation = transform.rotation;
 
         if (playerComponent != null)
         {
             // Get player data to use spawn point
             if (ConnectionManager.instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
             {
-                initialPosition = playerData.spawnPoint;
-                initialRotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - playerData.spawnPoint);
+                Vector3 initialPosition = playerData.spawnPoint;
+                Quaternion initialRotation = Quaternion.LookRotation(
+                    SpawnPointManager.instance.transform.position - playerData.spawnPoint);
 
-                // Directly set the transform position for immediate effect
+                // Set transform and physics state
                 transform.position = initialPosition;
                 transform.rotation = initialRotation;
+                rb.position = initialPosition;
+                rb.rotation = initialRotation;
 
-                Debug.Log($"[Server] Setting initial position to spawn point: {initialPosition}");
-            }
-            else
-            {
-                Debug.LogWarning($"[Server] Could not find player data for client {playerComponent.clientId}");
+                if (debugMode)
+                {
+                    Debug.Log($"[Server] Setting non-owner vehicle position to spawn point: {initialPosition}");
+                }
             }
         }
 
-        // Initialize physics 
-        rb.position = initialPosition;
-        rb.rotation = initialRotation;
+        // Configure physics
         rb.isKinematic = false;
-
-        // Set initial server state
-        authorityState.Value = new StateSnapshot
-        {
-            position = initialPosition,
-            rotation = initialRotation,
-            velocity = Vector3.zero,
-            angularVelocity = Vector3.zero,
-            physicsFrame = 0,
-            lastProcessedInput = 0
-        };
-
-        hasReceivedInitialSync = true;
-        serverPhysicsFrame.Value = 0;
         EnableWheelColliders();
+
+        // Mark as initialized
+        hasReceivedInitialSync = true;
     }
 
     private void InitializeWheelFriction()
@@ -280,69 +285,32 @@ public class HogController : NetworkBehaviour
 
     #endregion
 
-    #region Deterministic Physics Processing
+    #region Input Handling
 
-    private void ProcessPhysicsStep()
+    private void HandleOwnerInput()
     {
-        // Increment physics frame counter
-        currentPhysicsFrame++;
+        // Handle horn input
+        CheckHornInput();
 
-        if (IsServer)
-        {
-            // Update server frame counter
-            serverPhysicsFrame.Value = currentPhysicsFrame;
+        // Get movement input
+        float moveInput = GetMovementInput();
 
-            // Process any pending physics on server
-            // (Vehicle owner's inputs are already processed when received)
-        }
-        else if (IsOwner)
-        {
-            // Process inputs for current physics step
-            ProcessOwnerInputs();
+        // Get steering input
+        cameraAngle = CalculateCameraAngle();
+        float steeringInput = cameraAngle;
 
-            // Check for reconciliation against server state if needed
-            CheckReconciliation();
-        }
-        // Non-owner clients don't simulate physics - they just receive state
-    }
+        // Calculate steering angle
+        float steeringAngle = CalculateSteering(steeringInput, moveInput);
 
-    private void ProcessOwnerInputs()
-    {
-        // Find pending inputs for this frame
-        InputState? inputForFrame = null;
+        // Apply steering to wheels
+        ApplySteeringToWheels(steeringAngle);
 
-        foreach (var input in pendingInputs)
-        {
-            // Use the most recent input for this frame
-            if (input.physicsFrame <= currentPhysicsFrame)
-            {
-                inputForFrame = input;
-            }
-        }
+        // Calculate and apply torque
+        float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
+        float torqueDelta = moveInput != 0 ?
+            (Time.deltaTime * maxTorque * accelerationFactor) :
+            (Time.deltaTime * maxTorque * decelerationFactor);
 
-        // If we have an input for this frame, apply it
-        if (inputForFrame.HasValue)
-        {
-            ApplyDeterministicPhysics(inputForFrame.Value);
-        }
-    }
-
-    private void ApplyDeterministicPhysics(InputState input)
-    {
-        // Save current physics settings
-        float prevDeltaTime = Time.fixedDeltaTime;
-        Time.fixedDeltaTime = input.deltaTime;
-
-        // Apply exact physics
-        float steeringAngle = CalculateSteering(input.steeringInput, input.moveInput);
-
-        // Calculate exact torque with deterministic math
-        float targetTorque = Mathf.Clamp(input.moveInput, -1f, 1f) * maxTorque;
-        float torqueDelta = input.moveInput != 0 ?
-            (input.deltaTime * maxTorque * accelerationFactor) :
-            (input.deltaTime * maxTorque * decelerationFactor);
-
-        // Use deterministic MoveTowards
         if (Mathf.Abs(targetTorque - currentTorque) <= torqueDelta)
         {
             currentTorque = targetTorque;
@@ -352,175 +320,13 @@ public class HogController : NetworkBehaviour
             currentTorque += Mathf.Sign(targetTorque - currentTorque) * torqueDelta;
         }
 
-        // Apply to wheels
-        ApplySteeringToWheels(steeringAngle);
         ApplyMotorTorqueToWheels(currentTorque);
-
-        // Handle handbrake with exact physics
-        if (input.handbrakeInput)
-        {
-            ApplyDeterministicHandbrake(input.deltaTime);
-        }
-        else if (!input.handbrakeInput && !isTractionLocked)
-        {
-            ApplyDeterministicTractionRecovery(input.deltaTime);
-        }
-
-        // Restore physics settings
-        Time.fixedDeltaTime = prevDeltaTime;
 
         // Update local velocity for drift detection
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
+        isDrifting.Value = localVelocityX > 0.25f;
 
-        // Server updates drift state
-        if (IsServer)
-        {
-            isDrifting.Value = localVelocityX > 0.25f;
-        }
-    }
-
-    private float CalculateSteering(float steeringInput, float moveInput)
-    {
-        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
-        bool isMovingInReverse = forwardVelocity < -0.5f;
-
-        // Invert steering for reverse driving
-        if (isMovingInReverse && moveInput < 0)
-        {
-            steeringInput = -steeringInput;
-        }
-
-        return Mathf.Clamp(steeringInput, -maxSteeringAngle, maxSteeringAngle);
-    }
-
-    private void ApplySteeringToWheels(float steeringAngle)
-    {
-        // Front wheels steering
-        wheelColliders[0].steerAngle = Mathf.Lerp(wheelColliders[0].steerAngle, steeringAngle, steeringSpeed);
-        wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringAngle, steeringSpeed);
-
-        // Rear wheels counter-steering
-        float rearSteeringAngle = steeringAngle * -0.35f;
-        wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, rearSteeringAngle, steeringSpeed);
-        wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, rearSteeringAngle, steeringSpeed);
-    }
-
-    private void ApplyMotorTorqueToWheels(float torqueValue)
-    {
-        if (!canMove)
-        {
-            foreach (var wheel in wheelColliders)
-            {
-                wheel.motorTorque = 0;
-            }
-            return;
-        }
-
-        foreach (var wheel in wheelColliders)
-        {
-            wheel.motorTorque = torqueValue;
-        }
-    }
-
-    private void ApplyDeterministicHandbrake(float deltaTime)
-    {
-        CancelInvoke("RecoverTraction");
-        isTractionLocked = false;
-
-        // Deterministic drift calculation
-        float newDriftingAxis = driftingAxis + deltaTime;
-        float secureStartingPoint = newDriftingAxis * originalExtremumSlips[0] * handbrakeDriftMultiplier;
-
-        if (secureStartingPoint < originalExtremumSlips[0])
-        {
-            newDriftingAxis = originalExtremumSlips[0] / (originalExtremumSlips[0] * handbrakeDriftMultiplier);
-        }
-
-        driftingAxis = Mathf.Min(newDriftingAxis, 1f);
-
-        // Apply to all wheels deterministically
-        for (int i = 0; i < wheelColliders.Length; i++)
-        {
-            WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
-            friction.extremumSlip = originalExtremumSlips[i] * handbrakeDriftMultiplier * driftingAxis;
-            wheelColliders[i].sidewaysFriction = friction;
-        }
-    }
-
-    private void ApplyDeterministicTractionRecovery(float deltaTime)
-    {
-        // Determine exact recovery amount
-        float newDriftingAxis = driftingAxis - (deltaTime / 1.5f);
-        driftingAxis = Mathf.Max(newDriftingAxis, 0f);
-
-        if (driftingAxis > 0f)
-        {
-            // Apply recovery to all wheels
-            for (int i = 0; i < wheelColliders.Length; i++)
-            {
-                WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
-                friction.extremumSlip = Mathf.Max(
-                    originalExtremumSlips[i],
-                    originalExtremumSlips[i] * handbrakeDriftMultiplier * driftingAxis
-                );
-                wheelColliders[i].sidewaysFriction = friction;
-            }
-
-            // Continue recovery next frame
-            Invoke("RecoverTraction", deltaTime);
-        }
-        else
-        {
-            // Reset friction when fully recovered
-            for (int i = 0; i < wheelColliders.Length; i++)
-            {
-                WheelFrictionCurve friction = wheelColliders[i].sidewaysFriction;
-                friction.extremumSlip = originalExtremumSlips[i];
-                wheelColliders[i].sidewaysFriction = friction;
-            }
-
-            driftingAxis = 0f;
-            isTractionLocked = true;
-        }
-    }
-
-    #endregion
-
-    #region Input Handling
-
-    private void CollectAndSendInput()
-    {
-        // Handle horn input
-        CheckHornInput();
-
-        // Calculate camera angle
-        cameraAngle = CalculateCameraAngle();
-
-        // Collect input
-        var input = new InputState
-        {
-            sequenceNumber = nextInputSequence++,
-            timestamp = Time.timeAsDouble,
-            physicsFrame = currentPhysicsFrame,
-            moveInput = GetMovementInput(),
-            steeringInput = cameraAngle,
-            handbrakeInput = Input.GetKey(KeyCode.Space),
-            deltaTime = FIXED_PHYSICS_TIMESTEP
-        };
-
-        // Store locally for prediction
-        pendingInputs.Enqueue(input);
-
-        // Keep buffer size reasonable
-        while (pendingInputs.Count > inputBufferSize)
-        {
-            pendingInputs.Dequeue();
-        }
-
-        // Send to server for processing
-        SendInputToServerRpc(input);
-
-        // Process controller camera controls
+        // Process camera controls
         UpdateCameraControls();
     }
 
@@ -583,87 +389,364 @@ public class HogController : NetworkBehaviour
 
     #endregion
 
-    #region Reconciliation
+    #region Vehicle Physics
 
-    private void CheckReconciliation()
+    private float CalculateSteering(float steeringInput, float moveInput)
     {
-        // Only perform reconciliation if we have server state
-        if (lastProcessedInputSequence.Value <= 0) return;
+        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
+        bool isMovingInReverse = forwardVelocity < -0.5f;
 
-        // Skip if no pending inputs
-        if (pendingInputs.Count == 0) return;
-
-        // Calculate error between local and server state
-        float positionError = Vector3.Distance(rb.position, authorityState.Value.position);
-        float rotationError = Quaternion.Angle(rb.rotation, authorityState.Value.rotation);
-
-        // Determine if reconciliation is needed
-        if (positionError > positionErrorThreshold || rotationError > rotationErrorThreshold)
+        // Invert steering for reverse driving
+        if (isMovingInReverse && moveInput < 0)
         {
-            PerformReconciliation();
+            steeringInput = -steeringInput;
+        }
+
+        return Mathf.Clamp(steeringInput, -maxSteeringAngle, maxSteeringAngle);
+    }
+
+    private void ApplySteeringToWheels(float steeringAngle)
+    {
+        // Front wheels steering
+        wheelColliders[0].steerAngle = Mathf.Lerp(wheelColliders[0].steerAngle, steeringAngle, steeringSpeed);
+        wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringAngle, steeringSpeed);
+
+        // Rear wheels counter-steering
+        float rearSteeringAngle = steeringAngle * -0.35f;
+        wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, rearSteeringAngle, steeringSpeed);
+        wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, rearSteeringAngle, steeringSpeed);
+    }
+
+    private void ApplyMotorTorqueToWheels(float torqueValue)
+    {
+        if (!canMove)
+        {
+            foreach (var wheel in wheelColliders)
+            {
+                wheel.motorTorque = 0;
+            }
+            return;
+        }
+
+        foreach (var wheel in wheelColliders)
+        {
+            wheel.motorTorque = torqueValue;
         }
     }
 
-    private void PerformReconciliation()
+    private void ApplyServerPhysics()
     {
-        // Log for debugging
+        // Server applies physics for non-owned vehicles
+        // This is used for server-side validation and for AI vehicles
+        if (!IsOwner && IsServer)
+        {
+            // Apply steering and motor torque
+            ApplySteeringToWheels(vehicleState.Value.steeringAngle);
+            ApplyMotorTorqueToWheels(vehicleState.Value.motorTorque);
+        }
+    }
+
+    #endregion
+
+    #region Respawn Methods
+
+    // Client calls this when they want to respawn
+    [ServerRpc(RequireOwnership = true)]
+    public void RequestRespawnServerRpc()
+    {
+        // Get player data from connection manager
+        Player playerComponent = transform.root.GetComponent<Player>();
+
+        if (playerComponent != null)
+        {
+            // Get the latest player data
+            if (ConnectionManager.instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
+            {
+                // Set respawn position and rotation
+                Vector3 respawnPosition = playerData.spawnPoint;
+                Quaternion respawnRotation = Quaternion.LookRotation(
+                    SpawnPointManager.instance.transform.position - playerData.spawnPoint);
+
+                // Update player state
+                playerData.state = PlayerState.Alive;
+                ConnectionManager.instance.UpdatePlayerDataClientRpc(playerComponent.clientId, playerData);
+
+                // Execute respawn for everyone
+                ExecuteRespawnClientRpc(respawnPosition, respawnRotation);
+            }
+        }
+    }
+
+    [ClientRpc]
+    public void ExecuteRespawnClientRpc(Vector3 respawnPosition, Quaternion respawnRotation)
+    {
+        // Reset physics state
+        rb.isKinematic = true;
+        rb.position = respawnPosition;
+        rb.rotation = respawnRotation;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        // Update transform position
+        transform.position = respawnPosition;
+        transform.rotation = respawnRotation;
+
+        // Reset driving state
+        currentTorque = 0f;
+
+        // Enable movement
+        canMove = true;
+
+        // Update visual targets for non-owners
+        if (!IsOwner)
+        {
+            visualPositionTarget = respawnPosition;
+            visualRotationTarget = respawnRotation;
+            visualVelocityTarget = Vector3.zero;
+        }
+
+        // Update state snapshot for owner
+        if (IsOwner)
+        {
+            // Create and send updated state
+            var snapshot = new StateSnapshot
+            {
+                position = respawnPosition,
+                rotation = respawnRotation,
+                velocity = Vector3.zero,
+                angularVelocity = Vector3.zero,
+                steeringAngle = 0f,
+                motorTorque = 0f,
+                updateId = (uint)Time.frameCount
+            };
+
+            // Set state and send to server
+            vehicleState.Value = snapshot;
+        }
+
+        // Re-enable physics after a short delay
+        StartCoroutine(EnablePhysicsAfterRespawn());
+    }
+
+    private IEnumerator EnablePhysicsAfterRespawn()
+    {
+        // Short delay to ensure everything is in place
+        yield return new WaitForSeconds(0.1f);
+
+        // Re-enable physics
+        rb.isKinematic = false;
+
+        // Make sure wheel colliders are enabled
+        EnableWheelColliders();
+
         if (debugMode)
         {
-            Debug.Log($"Reconciling vehicle. Position error: {Vector3.Distance(rb.position, authorityState.Value.position):F2}, " +
-                     $"Rotation error: {Quaternion.Angle(rb.rotation, authorityState.Value.rotation):F2}");
-        }
-
-        // Remove already processed inputs
-        while (pendingInputs.Count > 0 &&
-              pendingInputs.Peek().sequenceNumber <= lastProcessedInputSequence.Value)
-        {
-            pendingInputs.Dequeue();
-        }
-
-        // Reset to server state
-        rb.position = authorityState.Value.position;
-        rb.rotation = authorityState.Value.rotation;
-        rb.linearVelocity = authorityState.Value.velocity;
-        rb.angularVelocity = authorityState.Value.angularVelocity;
-
-        // Reapply all pending inputs
-        foreach (var input in pendingInputs)
-        {
-            ApplyDeterministicPhysics(input);
+            Debug.Log($"Physics re-enabled after respawn at {rb.position}");
         }
     }
 
-    private void SmoothVisualForRemoteVehicles()
+    #endregion
+
+    #region Network State Management
+
+    private void SendStateToServer()
     {
-        // Only for non-owner, non-server vehicles
-        if (IsOwner || IsServer || !needsSmoothing) return;
+        if (!IsOwner) return;
 
-        // Apply smoothing to visual representation
-        transform.position = Vector3.Lerp(transform.position, visualPositionTarget,
-                                         Time.deltaTime * reconciliationLerpSpeed);
-        transform.rotation = Quaternion.Slerp(transform.rotation, visualRotationTarget,
-                                             Time.deltaTime * reconciliationLerpSpeed);
-
-        // Check if we're close enough to stop smoothing
-        if (Vector3.Distance(transform.position, visualPositionTarget) < 0.01f &&
-            Quaternion.Angle(transform.rotation, visualRotationTarget) < 0.1f)
+        // Create current state snapshot
+        var snapshot = new StateSnapshot
         {
-            needsSmoothing = false;
+            position = rb.position,
+            rotation = rb.rotation,
+            velocity = rb.linearVelocity,
+            angularVelocity = rb.angularVelocity,
+            steeringAngle = wheelColliders[0].steerAngle,
+            motorTorque = wheelColliders[0].motorTorque,
+            updateId = (uint)Time.frameCount // Simple unique ID
+        };
+
+        // Send to server and update network variable
+        vehicleState.Value = snapshot;
+
+        // Also directly inform server for validation
+        SendStateForValidationServerRpc(snapshot);
+    }
+
+    private void OnVehicleStateChanged(StateSnapshot previousValue, StateSnapshot newValue)
+    {
+        // Only non-owners need to react to state changes
+        if (IsOwner) return;
+
+        if (IsServer)
+        {
+            // Server validates owner's state
+            ValidateOwnerState(newValue);
+        }
+        else
+        {
+            // Remote client applies state for visual representation
+            ApplyRemoteState(newValue);
+        }
+    }
+
+    private void ValidateOwnerState(StateSnapshot ownerState)
+    {
+        if (!IsServer) return;
+
+        // Simple validation - check if position is within valid range
+        Vector3 currentPos = rb.position;
+        float distance = Vector3.Distance(currentPos, ownerState.position);
+
+        if (distance > serverValidationThreshold)
+        {
+            if (debugMode)
+            {
+                Debug.LogWarning($"[Server] Detected invalid position from owner. Distance: {distance}m");
+            }
+
+            // Option 1: Correct the client (stricter approach)
+            // CorrectClientPositionClientRpc(currentPos);
+
+            // Option 2: Trust the client but log the issue (more lenient)
+            // Just accept the position but log it
+            rb.position = ownerState.position;
+            rb.rotation = ownerState.rotation;
+            rb.linearVelocity = ownerState.velocity;
+            rb.angularVelocity = ownerState.angularVelocity;
+
+            // Broadcast to other clients
+            BroadcastServerStateClientRpc(ownerState);
+        }
+        else
+        {
+            // State is valid, apply it on the server
+            rb.position = ownerState.position;
+            rb.rotation = ownerState.rotation;
+            rb.linearVelocity = ownerState.velocity;
+            rb.angularVelocity = ownerState.angularVelocity;
+
+            // Broadcast to other clients (less frequently)
+            _stateUpdateTimer += Time.deltaTime;
+            if (_stateUpdateTimer >= stateUpdateInterval)
+            {
+                _stateUpdateTimer = 0f;
+                BroadcastServerStateClientRpc(ownerState);
+            }
         }
     }
 
     private void ApplyRemoteState(StateSnapshot state)
     {
-        // For non-owner vehicles, set targets for smooth interpolation
+        // For remote client representation of other players' vehicles
         visualPositionTarget = state.position;
         visualRotationTarget = state.rotation;
+        visualVelocityTarget = state.velocity;
         needsSmoothing = true;
+    }
 
-        // Update rigidbody state directly
+    private void SmoothRemoteVehicleVisuals()
+    {
+        if (IsOwner || IsServer || !needsSmoothing) return;
+
+        // Smoothly update visuals for remote client
+        transform.position = Vector3.Lerp(transform.position, visualPositionTarget,
+                                        Time.deltaTime * visualSmoothingSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, visualRotationTarget,
+                                           Time.deltaTime * visualSmoothingSpeed);
+
+        // Apply visual wheel effects
+        ApplySteeringToWheels(vehicleState.Value.steeringAngle);
+
+        // Continue smoothing while the difference is significant
+        needsSmoothing =
+            Vector3.Distance(transform.position, visualPositionTarget) > 0.01f ||
+            Quaternion.Angle(transform.rotation, visualRotationTarget) > 0.1f;
+    }
+
+    #endregion
+
+    #region Network RPCs
+
+    [ServerRpc(RequireOwnership = true)]
+    private void SendStateForValidationServerRpc(StateSnapshot state)
+    {
+        // This RPC is just to notify the server to validate the state
+        // The actual state is already sent via NetworkVariable
+        if (debugMode)
+        {
+            Debug.Log($"[Server] Received state for validation: {state.position}");
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestInitialStateServerRpc()
+    {
+        // Client requests initial state from server
+        if (debugMode)
+        {
+            Debug.Log("[Server] Client requested initial state");
+        }
+
+        // Send the current state to the requesting client
+        SendInitialStateClientRpc(vehicleState.Value);
+    }
+
+    [ClientRpc]
+    private void SendInitialStateClientRpc(StateSnapshot state)
+    {
+        // Skip server and owner (they don't need initialization)
+        if (IsServer || IsOwner || hasReceivedInitialSync) return;
+
+        // Apply initial state
         rb.position = state.position;
         rb.rotation = state.rotation;
         rb.linearVelocity = state.velocity;
         rb.angularVelocity = state.angularVelocity;
+
+        // Set visual targets
+        visualPositionTarget = state.position;
+        visualRotationTarget = state.rotation;
+        visualVelocityTarget = state.velocity;
+
+        // Enable physics
+        rb.isKinematic = false;
+        EnableWheelColliders();
+
+        // Mark as initialized
+        hasReceivedInitialSync = true;
+
+        if (debugMode)
+        {
+            Debug.Log($"[Client] Received initial state: {state.position}");
+        }
+    }
+
+    [ClientRpc]
+    private void BroadcastServerStateClientRpc(StateSnapshot state)
+    {
+        // Skip server and owner (they already have the state)
+        if (IsServer || IsOwner) return;
+
+        // Apply state for remote vehicles
+        ApplyRemoteState(state);
+    }
+
+    [ClientRpc]
+    private void CorrectClientPositionClientRpc(Vector3 correctedPosition)
+    {
+        // Only the owner responds to correction
+        if (!IsOwner) return;
+
+        if (debugMode)
+        {
+            Debug.LogWarning($"[Client] Position corrected by server. New position: {correctedPosition}");
+        }
+
+        // Apply correction
+        rb.position = correctedPosition;
+
+        // Send updated state
+        SendStateToServer();
     }
 
     #endregion
@@ -705,97 +788,6 @@ public class HogController : NetworkBehaviour
     {
         yield return new WaitForSeconds(3f);
         canMove = true;
-    }
-
-    #endregion
-
-    #region Network RPCs
-
-    [ServerRpc(RequireOwnership = false)]  // Change to not require ownership
-    private void SendInputToServerRpc(InputState input, ServerRpcParams rpcParams = default)
-    {
-        // Validate sender
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        if (clientId != OwnerClientId) return;
-
-        // Process sequence number
-        if (input.sequenceNumber <= lastProcessedInputSequence.Value) return;
-
-        // Process this input immediately on server
-        ApplyDeterministicPhysics(input);
-
-        // Update last processed input
-        lastProcessedInputSequence.Value = input.sequenceNumber;
-
-        // Update authority state for reconciliation
-        SendAuthoritySnapshot();
-    }
-
-    private void SendAuthoritySnapshot()
-    {
-        // Update authority state for clients
-        authorityState.Value = new StateSnapshot
-        {
-            lastProcessedInput = lastProcessedInputSequence.Value,
-            physicsFrame = currentPhysicsFrame,
-            position = rb.position,
-            rotation = rb.rotation,
-            velocity = rb.linearVelocity,
-            angularVelocity = rb.angularVelocity
-        };
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestInitialSyncServerRpc(ServerRpcParams rpcParams = default)
-    {
-        // Send initial state to all clients (without targeting)
-        SendInitialStateClientRpc(authorityState.Value);
-
-        Debug.Log($"[Server] Sending initial state to clients: Position={authorityState.Value.position}");
-    }
-
-    [ClientRpc]
-    private void SendInitialStateClientRpc(StateSnapshot state)
-    {
-        if (IsServer || hasReceivedInitialSync) return;
-
-        Debug.Log($"[Client] Received initial state: Position={state.position}, Rotation={state.rotation}");
-
-        // Set position and rotation
-        transform.position = state.position;
-        transform.rotation = state.rotation;
-
-        // Set physics state
-        rb.position = state.position;
-        rb.rotation = state.rotation;
-        rb.isKinematic = false;
-
-        // Apply velocity
-        rb.linearVelocity = state.velocity;
-        rb.angularVelocity = state.angularVelocity;
-
-        // Set visual targets
-        visualPositionTarget = state.position;
-        visualRotationTarget = state.rotation;
-
-        // Enable wheel colliders
-        EnableWheelColliders();
-
-        // Mark as initialized
-        hasReceivedInitialSync = true;
-        currentPhysicsFrame = state.physicsFrame;
-
-        Debug.Log($"[Client] Vehicle initialized at position: {rb.position}");
-    }
-
-    [ClientRpc]
-    public void BroadcastHardSyncClientRpc()
-    {
-        if (!IsServer && !IsOwner)
-        {
-            // For non-owner clients, apply state directly
-            ApplyRemoteState(authorityState.Value);
-        }
     }
 
     #endregion
