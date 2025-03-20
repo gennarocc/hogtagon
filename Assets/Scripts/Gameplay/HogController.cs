@@ -808,14 +808,5 @@ public class HogController : NetworkBehaviour
             wheel.enabled = true;
         }
     }
-
-    private void DisableWheelColliders()
-    {
-        foreach (var wheel in wheelColliders)
-        {
-            wheel.enabled = false;
-        }
-    }
-
     #endregion
 }
