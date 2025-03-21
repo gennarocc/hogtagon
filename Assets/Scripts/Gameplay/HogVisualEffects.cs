@@ -35,7 +35,6 @@ public class HogVisualEffects : MonoBehaviour
             {
                 if (!driftingSoundOn && canMove)
                 {
-                    HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOn);
                     driftingSoundOn = true;
                 }
                 rearLeftWheelParticleSystem.Play();
@@ -45,7 +44,6 @@ public class HogVisualEffects : MonoBehaviour
             {
                 if (driftingSoundOn)
                 {
-                    HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
                     driftingSoundOn = false;
                 }
                 rearLeftWheelParticleSystem.Stop();

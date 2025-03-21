@@ -4358,32 +4358,32 @@ MonoBehaviour:
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: b200eea1a6fae5f4ca59f63de35c8a99, type: 2}
   - type: 1
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: 3b5e6672c5ed26e4eb2f6d93faf139f8, type: 2}
   - type: 2
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: 49d4e7184a1a320499f6d72397dacc0a, type: 2}
   - type: 3
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: a3a89f555b1962c42afa2229b28255a1, type: 2}
   - type: 4
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
   - type: 5
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: ad9bafa82afe869438b5285241574cfc, type: 2}
   - type: 6
     audioEvent:
       idInternal: 0
@@ -5154,23 +5154,23 @@ MonoBehaviour:
   MasterVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 6c68db4f9a756e847954490e04e5d673, type: 2}
   MusicVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 61ed68fcb39605a42b6f453c02938b91, type: 2}
   SfxVolume:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: ae48f36e54c88224895036ce6bbf495b, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: aea576d8c070a6b48901a2b64568f58e, type: 2}
   uiConfirm:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 48af205587f718240b144393ab35a700, type: 2}
   uiCancel:
     idInternal: 0
     valueGuidInternal: 
@@ -10772,7 +10772,7 @@ MonoBehaviour:
   MenuMusicOff:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: f87528b60581a3044ae9486b356f4970, type: 2}
 --- !u!114 &1508066504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14160,27 +14160,27 @@ MonoBehaviour:
   MenuMusicOn:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 9a29dcbf8532d554ab7aa54612fc5ad5, type: 2}
   PauseOn:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: b6b6941341adfc345b45a26bad78d41d, type: 2}
   PauseOff:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: a1e6c350cd35d5b45aa8793da6ce5ce5, type: 2}
   uiClick:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: aea576d8c070a6b48901a2b64568f58e, type: 2}
   uiConfirm:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 48af205587f718240b144393ab35a700, type: 2}
   uiCancel:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: a44cab77c37739a49ac20c92c3390560, type: 2}
   virtualCamera: {fileID: 1466989457}
   rotationSpeed: 0.01
 --- !u!1 &1951360265

@@ -12006,11 +12006,11 @@ MonoBehaviour:
   - {fileID: 6018523294074852569}
   - {fileID: 6060384585544935324}
   - {fileID: 3707604260707810283}
-  vfxController: {fileID: 0}
+  vfxController: {fileID: 4054323512148124486}
   rpm:
     idInternal: 0
     valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
+    WwiseObjectReference: {fileID: 11400000, guid: 6f55246155700064bafd21a7a4a31cfc, type: 2}
 --- !u!114 &4054323512148124486
 MonoBehaviour:
   m_ObjectHideFlags: 0
