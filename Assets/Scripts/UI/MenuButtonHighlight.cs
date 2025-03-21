@@ -1,0 +1,345 @@
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using TMPro;
+using System.Collections;
+
+[RequireComponent(typeof(Button))]
+public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
+{
+    [Header("Highlight Settings")]
+    [SerializeField] private Color normalColor = new Color(0.0f, 0.8f, 0.0f, 0.7f);
+    [SerializeField] private Color highlightedColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
+    [SerializeField] private float outlineWidth = 2f;
+    [SerializeField] private float animationSpeed = 5f;
+    
+    // Create a separate GameObjects for the outline borders
+    private GameObject topBorder;
+    private GameObject rightBorder;
+    private GameObject bottomBorder;
+    private GameObject leftBorder;
+    
+    private Button button;
+    private TextMeshProUGUI buttonText;
+    private Image buttonImage;
+    private bool isHighlighted = false;
+    private static MenuButtonHighlight currentlyHighlighted = null;
+    private static Color sharedNormalColor = new Color(0.0f, 0.8f, 0.0f, 0.7f); // Ensure all buttons use this exact same color
+    
+    private void Awake()
+    {
+        button = GetComponent<Button>();
+        buttonText = GetComponentInChildren<TextMeshProUGUI>();
+        buttonImage = GetComponent<Image>();
+        
+        // Override the inspector-set color with the shared static color to ensure consistency
+        normalColor = sharedNormalColor;
+        
+        // Make button background completely transparent
+        if (buttonImage != null)
+        {
+            // Change button to use transparent background
+            Color buttonColor = buttonImage.color;
+            buttonColor.a = 0.0f; // Fully transparent
+            buttonImage.color = buttonColor;
+        }
+        
+        // Create four border GameObjects for the outline
+        CreateBorders();
+        
+        // Set borders to invisible by default
+        SetBordersVisible(false);
+        
+        // Set initial text color
+        if (buttonText != null)
+        {
+            // Force exact same color for all buttons
+            buttonText.color = sharedNormalColor;
+            buttonText.fontStyle = FontStyles.Normal;
+            
+            // Force material to be correct
+            if (buttonText.fontSharedMaterial != null)
+            {
+                // Ensure we're not using different font materials
+                Material fontMat = buttonText.fontSharedMaterial;
+                buttonText.fontMaterial = fontMat;
+            }
+        }
+        
+        // Update the button colors to use transparency
+        ColorBlock colors = button.colors;
+        colors.normalColor = new Color(1, 1, 1, 0.0f); // Fully transparent
+        colors.highlightedColor = new Color(1, 1, 1, 0.0f); // Fully transparent
+        colors.selectedColor = new Color(1, 1, 1, 0.0f); // Fully transparent 
+        colors.pressedColor = new Color(1, 1, 1, 0.0f); // Fully transparent
+        button.colors = colors;
+    }
+    
+    private void Start()
+    {
+        // Ensure all buttons start in non-highlighted state
+        StartCoroutine(ResetAllButtonsDelayed());
+    }
+    
+    private IEnumerator ResetAllButtonsDelayed()
+    {
+        // Wait for two frames to ensure all UI elements are initialized
+        yield return null;
+        yield return null;
+        
+        // Reset all buttons
+        MenuButtonHighlight[] allButtons = FindObjectsOfType<MenuButtonHighlight>();
+        foreach (MenuButtonHighlight btn in allButtons)
+        {
+            btn.ForceUnhighlightButton();
+        }
+        
+        // Clear any selection (this is important to prevent Unity from auto-selecting)
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+        
+        // Wait another frame then normalize all colors again
+        yield return null;
+        NormalizeAllButtonColors();
+    }
+    
+    // Static method to ensure all buttons have exactly the same color
+    public static void NormalizeAllButtonColors()
+    {
+        MenuButtonHighlight[] allButtons = FindObjectsOfType<MenuButtonHighlight>();
+        foreach (MenuButtonHighlight btn in allButtons)
+        {
+            if (!btn.isHighlighted && btn.buttonText != null)
+            {
+                // Force exact same shared color
+                btn.buttonText.color = sharedNormalColor;
+            }
+        }
+    }
+    
+    private void OnEnable()
+    {
+        // Reset to non-highlighted state when enabled
+        ForceUnhighlightButton();
+    }
+    
+    private void OnDisable()
+    {
+        // Make sure we don't stay as the currently highlighted button if disabled
+        if (currentlyHighlighted == this)
+        {
+            currentlyHighlighted = null;
+        }
+    }
+    
+    private void CreateBorders()
+    {
+        // Get the RectTransform of the button
+        RectTransform rt = GetComponent<RectTransform>();
+        
+        // TOP BORDER
+        topBorder = new GameObject("TopBorder");
+        topBorder.transform.SetParent(transform, false);
+        RectTransform topRT = topBorder.AddComponent<RectTransform>();
+        topRT.anchorMin = new Vector2(0, 1);
+        topRT.anchorMax = new Vector2(1, 1);
+        topRT.pivot = new Vector2(0.5f, 1f);
+        topRT.sizeDelta = new Vector2(0, outlineWidth);
+        topRT.anchoredPosition = new Vector2(0, 0);
+        Image topImage = topBorder.AddComponent<Image>();
+        topImage.color = new Color(0, 0, 0, 0); // Start transparent
+        
+        // RIGHT BORDER
+        rightBorder = new GameObject("RightBorder");
+        rightBorder.transform.SetParent(transform, false);
+        RectTransform rightRT = rightBorder.AddComponent<RectTransform>();
+        rightRT.anchorMin = new Vector2(1, 0);
+        rightRT.anchorMax = new Vector2(1, 1);
+        rightRT.pivot = new Vector2(1f, 0.5f);
+        rightRT.sizeDelta = new Vector2(outlineWidth, 0);
+        rightRT.anchoredPosition = new Vector2(0, 0);
+        Image rightImage = rightBorder.AddComponent<Image>();
+        rightImage.color = new Color(0, 0, 0, 0); // Start transparent
+        
+        // BOTTOM BORDER
+        bottomBorder = new GameObject("BottomBorder");
+        bottomBorder.transform.SetParent(transform, false);
+        RectTransform bottomRT = bottomBorder.AddComponent<RectTransform>();
+        bottomRT.anchorMin = new Vector2(0, 0);
+        bottomRT.anchorMax = new Vector2(1, 0);
+        bottomRT.pivot = new Vector2(0.5f, 0f);
+        bottomRT.sizeDelta = new Vector2(0, outlineWidth);
+        bottomRT.anchoredPosition = new Vector2(0, 0);
+        Image bottomImage = bottomBorder.AddComponent<Image>();
+        bottomImage.color = new Color(0, 0, 0, 0); // Start transparent
+        
+        // LEFT BORDER
+        leftBorder = new GameObject("LeftBorder");
+        leftBorder.transform.SetParent(transform, false);
+        RectTransform leftRT = leftBorder.AddComponent<RectTransform>();
+        leftRT.anchorMin = new Vector2(0, 0);
+        leftRT.anchorMax = new Vector2(0, 1);
+        leftRT.pivot = new Vector2(0f, 0.5f);
+        leftRT.sizeDelta = new Vector2(outlineWidth, 0);
+        leftRT.anchoredPosition = new Vector2(0, 0);
+        Image leftImage = leftBorder.AddComponent<Image>();
+        leftImage.color = new Color(0, 0, 0, 0); // Start transparent
+    }
+    
+    private void SetBordersVisible(bool visible)
+    {
+        Color color = visible ? highlightedColor : new Color(0, 0, 0, 0);
+        
+        if (topBorder != null) topBorder.GetComponent<Image>().color = color;
+        if (rightBorder != null) rightBorder.GetComponent<Image>().color = color;
+        if (bottomBorder != null) bottomBorder.GetComponent<Image>().color = color;
+        if (leftBorder != null) leftBorder.GetComponent<Image>().color = color;
+    }
+    
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        HighlightButton();
+    }
+    
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        // Only unhighlight if not currently selected
+        if (EventSystem.current.currentSelectedGameObject != gameObject)
+        {
+            UnhighlightButton();
+        }
+    }
+    
+    public void OnSelect(BaseEventData eventData)
+    {
+        HighlightButton();
+    }
+    
+    public void OnDeselect(BaseEventData eventData)
+    {
+        UnhighlightButton();
+    }
+    
+    private void HighlightButton()
+    {
+        // If there's a currently highlighted button that isn't this one, unhighlight it
+        if (currentlyHighlighted != null && currentlyHighlighted != this)
+        {
+            currentlyHighlighted.UnhighlightButton();
+        }
+        
+        // Set this as the currently highlighted button
+        currentlyHighlighted = this;
+        isHighlighted = true;
+        
+        // Change text color and style
+        if (buttonText != null)
+        {
+            buttonText.color = highlightedColor;
+            buttonText.fontStyle = FontStyles.Bold;
+        }
+        
+        // Add arrow to the left of the button text
+        if (buttonText != null && !buttonText.text.StartsWith(">"))
+        {
+            buttonText.text = "> " + buttonText.text;
+        }
+        
+        // Show outline on hover/selection
+        SetBordersVisible(true);
+        
+        // Now normalize all other buttons to ensure consistency
+        NormalizeAllButtonColors();
+        
+        // Debug log to confirm the method is being called
+        Debug.Log("Button highlighted: " + gameObject.name);
+    }
+    
+    public void UnhighlightButton()
+    {
+        // Only clear currentlyHighlighted if it's this button
+        if (currentlyHighlighted == this)
+        {
+            currentlyHighlighted = null;
+        }
+        
+        isHighlighted = false;
+        
+        // Reset text color and style
+        if (buttonText != null)
+        {
+            // Use the shared color value to ensure absolute consistency
+            buttonText.color = sharedNormalColor;
+            buttonText.fontStyle = FontStyles.Normal;
+            
+            // Remove arrow
+            if (buttonText.text.StartsWith("> "))
+            {
+                buttonText.text = buttonText.text.Substring(2);
+            }
+        }
+        
+        // Hide outline when not highlighted
+        SetBordersVisible(false);
+        
+        // Now normalize all buttons to ensure consistency
+        NormalizeAllButtonColors();
+    }
+    
+    // Use this method when we want to force unhighlight
+    public void ForceUnhighlightButton()
+    {
+        // Avoid deselecting a button if it's the current UI selection
+        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+        
+        UnhighlightButton();
+    }
+    
+    private void Update()
+    {
+        // Animate the outline if button is highlighted
+        if (isHighlighted)
+        {
+            // Pulse effect on the outline
+            float pulse = Mathf.Sin(Time.time * animationSpeed) * 0.5f + 0.5f;
+            Color pulseColor = highlightedColor;
+            pulseColor.a = Mathf.Lerp(0.7f, 1.0f, pulse);
+            
+            if (topBorder != null) topBorder.GetComponent<Image>().color = pulseColor;
+            if (rightBorder != null) rightBorder.GetComponent<Image>().color = pulseColor;
+            if (bottomBorder != null) bottomBorder.GetComponent<Image>().color = pulseColor;
+            if (leftBorder != null) leftBorder.GetComponent<Image>().color = pulseColor;
+        }
+        
+        // Double-check text color if not highlighted (to ensure consistent alpha)
+        if (!isHighlighted && buttonText != null)
+        {
+            // Direct comparison of color values to force equality and avoid precision issues
+            if (!ColorEquals(buttonText.color, sharedNormalColor, 0.01f))
+            {
+                buttonText.color = sharedNormalColor; // Ensure exact color match
+                Debug.Log("Fixed color on " + gameObject.name + " - was " + buttonText.color + " now " + sharedNormalColor);
+            }
+        }
+        
+        // Safety check - if this button appears highlighted but isn't currentlyHighlighted, fix it
+        if (isHighlighted && currentlyHighlighted != this)
+        {
+            ForceUnhighlightButton();
+        }
+    }
+    
+    // Helper method for more reliable color comparison
+    private bool ColorEquals(Color a, Color b, float tolerance = 0.0001f)
+    {
+        return Mathf.Abs(a.r - b.r) < tolerance &&
+               Mathf.Abs(a.g - b.g) < tolerance &&
+               Mathf.Abs(a.b - b.b) < tolerance &&
+               Mathf.Abs(a.a - b.a) < tolerance;
+    }
+} 

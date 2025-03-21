@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Cinemachine;
 using UnityEngine.EventSystems;
+using System.Linq;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -15,6 +16,7 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private GameObject playMenuPanel;
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
+    [SerializeField] private GameObject newOptionsMenuUI;
     [SerializeField] private GameObject tempUI;
     [SerializeField] public GameObject jumpUI;
 
@@ -112,6 +114,9 @@ public class MenuManager : NetworkBehaviour
         if (eventSystem == null)
             eventSystem = EventSystem.current;
 
+        // Set up explicit navigation for main menu buttons
+        SetupButtonNavigation();
+
         // Clear selection by default
         ClearSelection();
         // Try to find InputManager again if it wasn't found in Awake/OnEnable
@@ -139,6 +144,34 @@ public class MenuManager : NetworkBehaviour
         // Get camera reference if not set
         if (virtualCamera == null)
             virtualCamera = GetComponent<CinemachineVirtualCamera>();
+    }
+
+    // Set up explicit navigation between buttons for gamepad
+    private void SetupButtonNavigation()
+    {
+        if (playButton != null && optionsButton != null && quitButton != null)
+        {
+            // Configure navigation for Play button
+            Navigation playNav = playButton.navigation;
+            playNav.mode = Navigation.Mode.Explicit;
+            playNav.selectOnDown = optionsButton;
+            playNav.selectOnUp = quitButton;
+            playButton.navigation = playNav;
+            
+            // Configure navigation for Options button
+            Navigation optionsNav = optionsButton.navigation;
+            optionsNav.mode = Navigation.Mode.Explicit;
+            optionsNav.selectOnDown = quitButton;
+            optionsNav.selectOnUp = playButton;
+            optionsButton.navigation = optionsNav;
+            
+            // Configure navigation for Quit button
+            Navigation quitNav = quitButton.navigation;
+            quitNav.mode = Navigation.Mode.Explicit;
+            quitNav.selectOnDown = playButton;
+            quitNav.selectOnUp = optionsButton;
+            quitButton.navigation = quitNav;
+        }
     }
 
     private void Update()
@@ -222,30 +255,89 @@ public class MenuManager : NetworkBehaviour
             if (defaultPauseMenuButton != null)
                 defaultPauseMenuButton.Select();
         }
+        else if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
+        {
+            // Close the new options menu and return to main menu
+            newOptionsMenuUI.SetActive(false);
+            
+            // Reset all button states in main menu
+            if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
+                mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+            
+            // Show main menu
+            mainMenuPanel.SetActive(true);
+            
+            // Clear any selected objects in the event system
+            if (eventSystem != null)
+                eventSystem.SetSelectedGameObject(null);
+            
+            // Reset the button states directly to ensure they're clickable
+            if (optionsButton != null)
+            {
+                optionsButton.OnPointerExit(new UnityEngine.EventSystems.PointerEventData(eventSystem));
+                optionsButton.interactable = true;
+            }
+            
+            if (playButton != null)
+                playButton.interactable = true;
+            
+            if (quitButton != null)
+                quitButton.interactable = true;
+            
+            // Reset the selections
+            HandleButtonSelection(defaultMainMenuButton);
+        }
     }
 
     private void OnAcceptPressed()
     {
         // Handle accept button presses if needed
+        // Check if we're in the options menu
+        if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
+        {
+            // Don't do anything - let the individual UI elements handle their own click events
+            // This prevents the back functionality from triggering when pressing A on buttons
+            return;
+        }
     }
 
     public void ShowMainMenu()
     {
+        // First reset the button states in the main menu
+        if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
+            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+        
+        // Make the main menu active
         mainMenuPanel.SetActive(true);
         startCamera.gameObject.SetActive(true);
         MenuMusicOn.Post(gameObject);
 
-        // Rotate main menu camera
-        orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
-        if (orbitalTransposer != null)
-            orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
+        // Make sure all buttons are interactable
+        if (playButton != null) playButton.interactable = true;
+        if (optionsButton != null) optionsButton.interactable = true;
+        if (quitButton != null) quitButton.interactable = true;
+        
+        // Restore main menu camera priority
+        if (virtualCamera != null)
+        {
+            // Set high priority to ensure it takes precedence
+            virtualCamera.Priority = 20;
+            
+            // Rotate main menu camera
+            orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
+            if (orbitalTransposer != null)
+                orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
+        }
 
+        // Deactivate all other menu panels
         playMenuPanel.SetActive(false);
         pauseMenuUI.SetActive(false);
         settingsMenuUI.SetActive(false);
         scoreboardUI.SetActive(false);
         tempUI.SetActive(false);
         connectionPending.SetActive(false);
+        if (newOptionsMenuUI != null)
+            newOptionsMenuUI.SetActive(false);
 
         // Switch to UI input mode
         if (inputManager != null)
@@ -255,7 +347,14 @@ public class MenuManager : NetworkBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         gameIsPaused = false;  // Reset pause state
+        
+        // Clear any selected game objects
+        if (eventSystem != null)
+            eventSystem.SetSelectedGameObject(null);
 
+        // Force controller selection to be enabled
+        controllerSelectionEnabled = true;
+        
         // Handle button selection based on input
         HandleButtonSelection(defaultMainMenuButton);
     }
@@ -279,12 +378,100 @@ public class MenuManager : NetworkBehaviour
 
     public void OnOptionsClicked()
     {
-        ButtonClickAudio();
-        settingsMenuUI.SetActive(true);
+        // When using gamepad, if the Options button is directly clicked, make sure we respect that
+        if (mainMenuPanel.activeSelf && eventSystem != null && inputManager != null)
+        {
+            GameObject selected = eventSystem.currentSelectedGameObject;
+            
+            // Only do this redirect check if not using gamepad OR if we're sure the play button triggered this
+            if (!inputManager.IsUsingGamepad && selected != null && selected != optionsButton.gameObject && 
+                selected == playButton.gameObject)
+            {
+                // We're actually clicking the Play button (with mouse)
+                OnPlayClicked();
+                return;
+            }
+        }
 
-        // Set appropriate default selection
-        if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
-            defaultSettingsMenuButton.Select();
+        ButtonClickAudio();
+        
+        // Use the new tabbed options menu if available, otherwise fall back to old settings menu
+        if (newOptionsMenuUI != null)
+        {
+            // Force deactivate first to ensure a clean state
+            newOptionsMenuUI.SetActive(false);
+            
+            // Reset UI state
+            if (eventSystem != null)
+                eventSystem.SetSelectedGameObject(null);
+            
+            // Enable the options menu GameObject and all its children
+            newOptionsMenuUI.SetActive(true);
+            
+            // Force controller selection to be enabled for the options menu
+            controllerSelectionEnabled = true;
+            
+            // Force enable all direct children in the hierarchy
+            foreach (Transform child in newOptionsMenuUI.transform)
+            {
+                child.gameObject.SetActive(true);
+            }
+            
+            // Force enable all panels
+            TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
+            if (tabController != null)
+            {
+                // Ensure tab controller GameObject is active
+                tabController.gameObject.SetActive(true);
+                
+                // Find all content panels and make sure they exist
+                Transform contentTransform = tabController.transform.Find("Content");
+                if (contentTransform != null)
+                {
+                    contentTransform.gameObject.SetActive(true);
+                    
+                    // Force enable the Video panel using the actual name in the hierarchy
+                    Transform videoPanel = contentTransform.Find("VideoPanel");
+                    if (videoPanel != null)
+                    {
+                        // Force video panel active
+                        videoPanel.gameObject.SetActive(true);
+                        
+                        // Make sure other panels are inactive
+                        foreach (Transform panel in contentTransform)
+                        {
+                            if (panel != videoPanel && panel.name.Contains("Panel"))
+                            {
+                                panel.gameObject.SetActive(false);
+                            }
+                        }
+                    }
+                }
+                
+                // Force select the Video tab
+                tabController.SelectTab(0);
+            }
+            
+            // Hide main menu
+            mainMenuPanel.SetActive(false);
+            
+            // Handle button selection
+            if (eventSystem != null && defaultSettingsMenuButton != null)
+            {
+                HandleButtonSelection(defaultSettingsMenuButton);
+            }
+        }
+        else
+        {
+            // Fall back to old settings menu
+            settingsMenuUI.SetActive(true);
+            
+            // Handle button selection based on input
+            if (eventSystem != null && defaultSettingsMenuButton != null)
+            {
+                HandleButtonSelection(defaultSettingsMenuButton);
+            }
+        }
     }
 
     public void Resume()
@@ -560,7 +747,13 @@ public class MenuManager : NetworkBehaviour
         if (inputManager != null && inputManager.IsUsingGamepad && controllerSelectionEnabled)
         {
             if (defaultButton != null && defaultButton.gameObject.activeInHierarchy && defaultButton.isActiveAndEnabled)
-                eventSystem.SetSelectedGameObject(defaultButton.gameObject);
+            {
+                // Clear current selection first to prevent any side effects
+                eventSystem.SetSelectedGameObject(null);
+                
+                // Set the new selection after a small delay to ensure clean state
+                StartCoroutine(SelectButtonDelayed(defaultButton, 0.05f));
+            }
         }
         else
         {
@@ -568,6 +761,23 @@ public class MenuManager : NetworkBehaviour
             ClearSelection();
         }
     }
+
+    private IEnumerator SelectButtonDelayed(Button button, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        if (button != null && button.gameObject.activeInHierarchy && button.isActiveAndEnabled)
+        {
+            eventSystem.SetSelectedGameObject(button.gameObject);
+            
+            // Force refresh the navigation
+            if (button == playButton || button == optionsButton || button == quitButton)
+            {
+                SetupButtonNavigation();
+            }
+        }
+    }
+
     private void HandleTextInput()
     {
         // Check if any input field is currently selected

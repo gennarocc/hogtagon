@@ -14,7 +14,6 @@ public class ConnectToGame : MonoBehaviour
 {
     [SerializeField] private Camera startCamera;
     [SerializeField] private MenuManager menuManager;
-    [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TMP_InputField joinCodeInput;
     [SerializeField] private Button hostLobby;
     [SerializeField] private Button joinLobby;
@@ -56,15 +55,8 @@ public class ConnectToGame : MonoBehaviour
             joinLobby.interactable = false;
         }
 
-        if (usernameInput.text.Length <= 10)
-        {
-            hostLobby.interactable = true;
-        }
-        else
-        {
-            // joinLobby.interactable = false;
-            // hostLobby.interactable = false;
-        }
+        // Always keep host button enabled since we now use PlayerPrefs for username
+        hostLobby.interactable = true;
     }
 
     private async void CreateRelay()
@@ -108,8 +100,11 @@ public class ConnectToGame : MonoBehaviour
 
     public void StartClient()
     {
+        // Get username from PlayerPrefs
+        string username = PlayerPrefs.GetString("Username", "Player");
+        
         // Configure connection with username as payload;
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
         JoinRelay(joinCodeInput.text);
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
@@ -117,11 +112,13 @@ public class ConnectToGame : MonoBehaviour
 
     public void StartHost()
     {
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(usernameInput.text);
+        // Get username from PlayerPrefs
+        string username = PlayerPrefs.GetString("Username", "Player");
+        
+        // Configure connection with username as payload
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
         CreateRelay();
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
     }
-
-
 }
