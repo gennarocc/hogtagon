@@ -216,8 +216,8 @@ public class MenuManager : NetworkBehaviour
                 startGameButton.interactable = false;
 
             // Set join code
-            if (ConnectionManager.instance.joinCode != null)
-                joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
+            if (ConnectionManager.Instance.joinCode != null)
+                joinCodeText.text = "Code: " + ConnectionManager.Instance.joinCode;
         }
         // Handle text input fields
         HandleTextInput();
@@ -530,7 +530,7 @@ public class MenuManager : NetworkBehaviour
 
     public void StartGame()
     {
-        if (IsServer) GameManager.instance.TransitionToState(GameState.Playing);
+        if (IsServer) GameManager.Instance.TransitionToState(GameState.Playing);
         Resume(); // This will also switch to gameplay mode
     }
 
@@ -554,7 +554,7 @@ public class MenuManager : NetworkBehaviour
 
     public void CopyJoinCode()
     {
-        GUIUtility.systemCopyBuffer = ConnectionManager.instance.joinCode;
+        GUIUtility.systemCopyBuffer = ConnectionManager.Instance.joinCode;
         Debug.Log(message: "Join Code Copied");
     }
 
@@ -632,13 +632,13 @@ public class MenuManager : NetworkBehaviour
         MainMenu();
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-        ConnectionManager.instance.isConnected = false;
+        ConnectionManager.Instance.isConnected = false;
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void DisconnectRequestServerRpc(ulong clientId)
     {
-        Debug.Log(message: "Disconnecting Client - " + clientId + " [" + ConnectionManager.instance.GetClientUsername(clientId) + "]");
+        Debug.Log(message: "Disconnecting Client - " + clientId + " [" + ConnectionManager.Instance.GetClientUsername(clientId) + "]");
         NetworkManager.Singleton.DisconnectClient(clientId);
     }
 
@@ -696,7 +696,7 @@ public class MenuManager : NetworkBehaviour
     public void HandleConnectionStateChange(bool connected)
     {
         // Update connection state
-        ConnectionManager.instance.isConnected = connected;
+        ConnectionManager.Instance.isConnected = connected;
 
         if (connected)
         {
@@ -726,7 +726,7 @@ public class MenuManager : NetworkBehaviour
 
     private void HandleScoreboardToggle(bool show)
     {
-        if (ConnectionManager.instance.isConnected)
+        if (ConnectionManager.Instance.isConnected)
         {
             scoreboardUI.SetActive(show);
 

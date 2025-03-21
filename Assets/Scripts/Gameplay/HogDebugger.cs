@@ -293,7 +293,7 @@ public class HogDebugger : NetworkBehaviour
     {
         if (playerComponent == null) return "Unknown";
         
-        ConnectionManager.instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData);
+        ConnectionManager.Instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData);
         return playerData.state.ToString();
     }
     

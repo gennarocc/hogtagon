@@ -11,13 +11,13 @@ public class KillBall : NetworkBehaviour
     
     private void Update()
     {
-        if (GameManager.instance.state == GameState.Pending)
+        if (GameManager.Instance.state == GameState.Pending)
         {
             // Ensure we always reset to the initial size in Pending state
             transform.localScale = pendingSize;
             return;
         }
-        float scaleLerp = Mathf.Clamp01(GameManager.instance.gameTime / duration);
+        float scaleLerp = Mathf.Clamp01(GameManager.Instance.gameTime / duration);
         transform.localScale = Vector3.Lerp(initialSize, targetSize, scaleLerp);
     }
 
@@ -64,9 +64,9 @@ public class KillBall : NetworkBehaviour
         rb.AddTorque(randomTorque, ForceMode.Impulse);
 
         // Set player to dead
-        if (GameManager.instance.state == GameState.Playing)
+        if (GameManager.Instance.state == GameState.Playing)
         {
-            GameManager.instance.PlayerDied(clientId);
+            GameManager.Instance.PlayerDied(clientId);
         }
 
         // Get the NetworkHogController instead of HogController

@@ -66,7 +66,7 @@ public class ConnectToGame : MonoBehaviour
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(8);
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
             var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            ConnectionManager.instance.joinCode = joinCode;
+            ConnectionManager.Instance.joinCode = joinCode;
             Debug.Log(message: "Join Code: " + joinCode);
             NetworkManager.Singleton.StartHost();
         }
