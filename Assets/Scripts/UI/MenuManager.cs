@@ -6,9 +6,11 @@ using UnityEngine.UI;
 using Cinemachine;
 using UnityEngine.EventSystems;
 using System.Linq;
+using System.Collections.Generic;
 
 public class MenuManager : NetworkBehaviour
 {
+    public static MenuManager instance;
     public bool gameIsPaused = false;
 
     [Header("Menu Panels")]
@@ -19,6 +21,7 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private GameObject newOptionsMenuUI;
     [SerializeField] private GameObject tempUI;
     [SerializeField] public GameObject jumpUI;
+    [SerializeField] private GameObject lobbySettingsMenuUI; // New Lobby Settings Menu
 
     [Header("Main Menu Components")]
     [SerializeField] private Button playButton;
@@ -69,10 +72,82 @@ public class MenuManager : NetworkBehaviour
     // Reference to Input Manager
     private InputManager inputManager;
 
+    // Add a timestamp to track when the menu was last toggled
+    private float lastMenuToggleTime = 0f;
+    private float menuToggleCooldown = 0.5f;
+
+    // Add tracking for whether settings was opened from pause menu
+    private bool settingsOpenedFromPauseMenu = false;
+
+    // These references are kept for backward compatibility
+    private Camera mainCamera;
+    private Cinemachine.CinemachineInputProvider cameraInputProvider;
+    private Cinemachine.CinemachineBrain cinemachineBrain;
+    
+    [Header("Lobby Settings")]
+    [SerializeField] private TextMeshProUGUI lobbyCodeDisplay;
+    [SerializeField] private Button lobbyCodeCopyButton;
+    [SerializeField] private Button startGameFromLobbyButton;
+    [SerializeField] private TextMeshProUGUI connectedPlayersText;
+    [SerializeField] private Toggle freeForAllToggle;
+    [SerializeField] private Toggle teamBattleToggle;
+    [SerializeField] private GameObject teamSettingsPanel;
+    [SerializeField] private Slider teamCountSlider;
+    [SerializeField] private TextMeshProUGUI teamCountText;
+
+    // Game mode settings
+    private GameMode _selectedGameMode = GameMode.FreeForAll;
+    private int _teamCount = 2;
+
+    // Game Mode enum
+    public enum GameMode { FreeForAll, TeamBattle }
+    
+    // Public properties for game mode settings
+    public GameMode selectedGameMode => _selectedGameMode;
+    public int teamCount => _teamCount;
+
     private void Awake()
     {
-        // Find or get the InputManager
+        // Set singleton instance
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+        
+        // Find the input manager
         inputManager = InputManager.Instance;
+        
+        // Find the player's camera input provider
+        var playerCameras = FindObjectsByType<Cinemachine.CinemachineFreeLook>(FindObjectsSortMode.None);
+        var playerCamera = playerCameras.Length > 0 ? playerCameras[0] : null;
+        if (playerCamera != null)
+        {
+            cameraInputProvider = playerCamera.GetComponent<Cinemachine.CinemachineInputProvider>();
+            if (cameraInputProvider == null)
+                Debug.LogWarning("CinemachineInputProvider not found on player camera");
+        }
+        else
+        {
+            Debug.LogWarning("CinemachineFreeLook camera not found in scene");
+        }
+        
+        // Find the main camera's CinemachineBrain
+        var mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            cinemachineBrain = mainCamera.GetComponent<Cinemachine.CinemachineBrain>();
+            if (cinemachineBrain == null)
+                Debug.LogWarning("CinemachineBrain not found on main camera");
+        }
+        else
+        {
+            Debug.LogWarning("Main camera not found in scene");
+        }
     }
 
     private void OnEnable()
@@ -133,7 +208,7 @@ public class MenuManager : NetworkBehaviour
                 inputManager.ScoreboardToggled += HandleScoreboardToggle;
             }
         }
-
+        
         // Check if input actions are enabled
         if (inputManager != null && !inputManager.AreInputActionsEnabled())
             inputManager.ForceEnableCurrentActionMap();
@@ -177,6 +252,18 @@ public class MenuManager : NetworkBehaviour
 
     private void Update()
     {
+        // Persistent cursor lock enforcement when game is running (not paused)
+        if (!gameIsPaused && !mainMenuPanel.activeSelf && ConnectionManager.instance.isConnected)
+        {
+            // If cursor should be locked but isn't, force it
+            if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible)
+            {
+                Debug.Log("[MenuManager] Update detected unlocked cursor - forcing lock");
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+        
         // Check for controller input to enable selection
         if (inputManager != null && inputManager.IsUsingGamepad)
         {
@@ -219,6 +306,14 @@ public class MenuManager : NetworkBehaviour
             if (ConnectionManager.instance.joinCode != null)
                 joinCodeText.text = "Code: " + ConnectionManager.instance.joinCode;
         }
+        
+        // Update lobby UI if visible
+        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf)
+        {
+            UpdateConnectedPlayersText();
+            UpdateStartGameButtonInteractability();
+        }
+        
         // Handle text input fields
         HandleTextInput();
     }
@@ -228,304 +323,186 @@ public class MenuManager : NetworkBehaviour
     {
         // Don't toggle if we're in main menu
         if (mainMenuPanel.activeSelf)
-            return;
-
-        // Toggle pause state
-        if (gameIsPaused)
-            Resume();
-        else
-            Pause();
-    }
-
-    private void OnBackPressed()
-    {
-        if (playMenuPanel.activeSelf)
         {
-            // Reset button states before disabling menus
-            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-            ShowMainMenu();
-        }
-        else if (pauseMenuUI.activeSelf && !settingsMenuUI.activeSelf)
-        {
-            Resume();
-        }
-        else if (settingsMenuUI.activeSelf)
-        {
-            settingsMenuUI.SetActive(false);
-            pauseMenuUI.SetActive(true);
-            if (defaultPauseMenuButton != null)
-                defaultPauseMenuButton.Select();
-        }
-        else if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
-        {
-            // Close the new options menu and return to main menu
-            newOptionsMenuUI.SetActive(false);
-            
-            // Reset all button states in main menu
-            if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
-                mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-            
-            // Show main menu
-            mainMenuPanel.SetActive(true);
-            
-            // Clear any selected objects in the event system
-            if (eventSystem != null)
-                eventSystem.SetSelectedGameObject(null);
-            
-            // Reset the button states directly to ensure they're clickable
-            if (optionsButton != null)
-            {
-                optionsButton.OnPointerExit(new UnityEngine.EventSystems.PointerEventData(eventSystem));
-                optionsButton.interactable = true;
-            }
-            
-            if (playButton != null)
-                playButton.interactable = true;
-            
-            if (quitButton != null)
-                quitButton.interactable = true;
-            
-            // Reset the selections
-            HandleButtonSelection(defaultMainMenuButton);
-        }
-    }
-
-    private void OnAcceptPressed()
-    {
-        // Handle accept button presses if needed
-        // Check if we're in the options menu
-        if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
-        {
-            // Don't do anything - let the individual UI elements handle their own click events
-            // This prevents the back functionality from triggering when pressing A on buttons
             return;
         }
-    }
 
-    public void ShowMainMenu()
-    {
-        // First reset the button states in the main menu
-        if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
-            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-        
-        // Make the main menu active
-        mainMenuPanel.SetActive(true);
-        startCamera.gameObject.SetActive(true);
-        MenuMusicOn.Post(gameObject);
-
-        // Make sure all buttons are interactable
-        if (playButton != null) playButton.interactable = true;
-        if (optionsButton != null) optionsButton.interactable = true;
-        if (quitButton != null) quitButton.interactable = true;
-        
-        // Restore main menu camera priority
-        if (virtualCamera != null)
+        // Apply cooldown to prevent rapid toggling
+        if (Time.unscaledTime - lastMenuToggleTime < menuToggleCooldown)
         {
-            // Set high priority to ensure it takes precedence
-            virtualCamera.Priority = 20;
-            
-            // Rotate main menu camera
-            orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
-            if (orbitalTransposer != null)
-                orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
+            return;
         }
-
-        // Deactivate all other menu panels
-        playMenuPanel.SetActive(false);
-        pauseMenuUI.SetActive(false);
-        settingsMenuUI.SetActive(false);
-        scoreboardUI.SetActive(false);
-        tempUI.SetActive(false);
-        connectionPending.SetActive(false);
-        if (newOptionsMenuUI != null)
-            newOptionsMenuUI.SetActive(false);
-
-        // Switch to UI input mode
-        if (inputManager != null)
-            inputManager.SwitchToUIMode();
-
-        // Always show cursor in main menu
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-        gameIsPaused = false;  // Reset pause state
         
-        // Clear any selected game objects
-        if (eventSystem != null)
-            eventSystem.SetSelectedGameObject(null);
+        lastMenuToggleTime = Time.unscaledTime;
 
-        // Force controller selection to be enabled
-        controllerSelectionEnabled = true;
+        // Check if settings menu is active
+        bool settingsActive = (settingsMenuUI != null && settingsMenuUI.activeSelf) || 
+                             (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf);
         
-        // Handle button selection based on input
-        HandleButtonSelection(defaultMainMenuButton);
-    }
-
-    public void OnPlayClicked()
-    {
-        mainMenuPanel.SetActive(false);
-        playMenuPanel.SetActive(true);
-
-        // Lower the priority of the menu camera
-        if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
-            virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
-
-        // Make sure we're in UI mode for the play menu
-        if (inputManager != null)
-            inputManager.SwitchToUIMode();
-
-        // Handle button selection based on input
-        HandleButtonSelection(defaultPlayMenuButton);
-    }
-
-    public void OnOptionsClicked()
-    {
-        // When using gamepad, if the Options button is directly clicked, make sure we respect that
-        if (mainMenuPanel.activeSelf && eventSystem != null && inputManager != null)
+        // If settings is active, close it and show pause menu
+        if (settingsActive)
         {
-            GameObject selected = eventSystem.currentSelectedGameObject;
-            
-            // Only do this redirect check if not using gamepad OR if we're sure the play button triggered this
-            if (!inputManager.IsUsingGamepad && selected != null && selected != optionsButton.gameObject && 
-                selected == playButton.gameObject)
-            {
-                // We're actually clicking the Play button (with mouse)
-                OnPlayClicked();
-                return;
-            }
-        }
-
-        ButtonClickAudio();
-        
-        // Use the new tabbed options menu if available, otherwise fall back to old settings menu
-        if (newOptionsMenuUI != null)
-        {
-            // Force deactivate first to ensure a clean state
-            newOptionsMenuUI.SetActive(false);
-            
-            // Reset UI state
-            if (eventSystem != null)
-                eventSystem.SetSelectedGameObject(null);
-            
-            // Enable the options menu GameObject and all its children
-            newOptionsMenuUI.SetActive(true);
-            
-            // Force controller selection to be enabled for the options menu
-            controllerSelectionEnabled = true;
-            
-            // Force enable all direct children in the hierarchy
-            foreach (Transform child in newOptionsMenuUI.transform)
-            {
-                child.gameObject.SetActive(true);
-            }
-            
-            // Force enable all panels
-            TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
-            if (tabController != null)
-            {
-                // Ensure tab controller GameObject is active
-                tabController.gameObject.SetActive(true);
+            if (settingsMenuUI != null)
+                settingsMenuUI.SetActive(false);
+            if (newOptionsMenuUI != null)
+                newOptionsMenuUI.SetActive(false);
                 
-                // Find all content panels and make sure they exist
-                Transform contentTransform = tabController.transform.Find("Content");
-                if (contentTransform != null)
+            // Force show pause menu
+            if (pauseMenuUI != null)
+            {
+                pauseMenuUI.SetActive(true);
+                
+                // Enable all child components
+                foreach (Transform child in pauseMenuUI.transform)
                 {
-                    contentTransform.gameObject.SetActive(true);
-                    
-                    // Force enable the Video panel using the actual name in the hierarchy
-                    Transform videoPanel = contentTransform.Find("VideoPanel");
-                    if (videoPanel != null)
-                    {
-                        // Force video panel active
-                        videoPanel.gameObject.SetActive(true);
-                        
-                        // Make sure other panels are inactive
-                        foreach (Transform panel in contentTransform)
-                        {
-                            if (panel != videoPanel && panel.name.Contains("Panel"))
-                            {
-                                panel.gameObject.SetActive(false);
-                            }
-                        }
-                    }
+                    child.gameObject.SetActive(true);
                 }
                 
-                // Force select the Video tab
-                tabController.SelectTab(0);
+                // Set selection
+                if (defaultPauseMenuButton != null)
+                    HandleButtonSelection(defaultPauseMenuButton);
             }
             
-            // Hide main menu
-            mainMenuPanel.SetActive(false);
-            
-            // Handle button selection
-            if (eventSystem != null && defaultSettingsMenuButton != null)
-            {
-                HandleButtonSelection(defaultSettingsMenuButton);
-            }
+            // Ensure we're paused
+            gameIsPaused = true;
+            return;
+        }
+
+        // Normal pause toggle logic
+        if (gameIsPaused)
+        {
+            // Important: Make this match the Resume button's code path
+            // Call Resume directly without any additional code - same path as Resume button
+            Resume();
         }
         else
         {
-            // Fall back to old settings menu
-            settingsMenuUI.SetActive(true);
-            
-            // Handle button selection based on input
-            if (eventSystem != null && defaultSettingsMenuButton != null)
+            if (PauseMenuPanel.CanOpenPauseMenu())
             {
-                HandleButtonSelection(defaultSettingsMenuButton);
+                Pause();
+            }
+            else
+            {
+                // Even if we can't open the pause menu, unlock the cursor
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
         }
     }
 
     public void Resume()
     {
-        // Reset button states before disabling menus
-        if (pauseMenuUI.activeSelf && pauseMenuUI.GetComponent<ButtonStateResetter>() != null)
-            pauseMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-
-        if (settingsMenuUI.activeSelf && settingsMenuUI.GetComponent<ButtonStateResetter>() != null)
-            settingsMenuUI.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-
-        // Disable UI elements
-        pauseMenuUI.SetActive(false);
-        settingsMenuUI.SetActive(false);
+        // Hide all menus
+        if (pauseMenuUI != null)
+        {
+            pauseMenuUI.SetActive(false);
+        }
+        
+        // Lock cursor when resuming
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        
+        // Enable camera input
+        EnableCameraInput();
+        
         gameIsPaused = false;
-
-        // Play sound
-        PauseOff.Post(gameObject);
-
-        // Switch to gameplay input mode
+        
+        // Play sound effect if available
+        if (PauseOff != null)
+        {
+            PauseOff.Post(gameObject);
+        }
+        
+        // Switch back to gameplay input mode
         if (inputManager != null)
         {
             inputManager.SwitchToGameplayMode();
-            if (!inputManager.IsInGameplayMode())
+            if (inputManager.IsInGameplayMode())
                 inputManager.ForceEnableCurrentActionMap();
         }
-
-        // Lock cursor for gameplay
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+    }
+    
+    private IEnumerator EnforceCursorLockAfterResume()
+    {
+        // This method has been simplified and is kept for compatibility
+        yield break;
     }
 
     void Pause()
     {
-        // Update cursor state
+        if (pauseMenuUI == null)
+        {
+            Debug.LogError("pauseMenuUI reference is null!");
+            return;
+        }
+        
+        // Update cursor state - make sure it's visible and unlocked
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
         // Show pause menu
         pauseMenuUI.SetActive(true);
+        
+        // Disable camera input - this is key to stopping camera rotation
+        DisableCameraInput();
+        
+        // Check if the pause menu is actually active
+        if (pauseMenuUI.activeSelf)
+        {
+            // Enable all child components explicitly
+            foreach (Transform child in pauseMenuUI.transform)
+            {
+                child.gameObject.SetActive(true);
+            }
+            
+            // Find the default pause menu button
+            Button defaultButton = null;
+            foreach (Button button in pauseMenuUI.GetComponentsInChildren<Button>())
+            {
+                if (button.name.Contains("Resume"))
+                {
+                    defaultButton = button;
+                    break;
+                }
+            }
+            
+            // Manually clear the event system selection
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+                
+                // Select the default button
+                if (defaultButton != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(defaultButton.gameObject);
+                }
+                else if (defaultPauseMenuButton != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
+                }
+            }
+        }
+        
         gameIsPaused = true;
-        PauseOn.Post(gameObject);
+        
+        // Play sound effect if available
+        if (PauseOn != null)
+        {
+            PauseOn.Post(gameObject);
+        }
 
-        // Switch to UI input mode
+        // Switch to UI input mode - This directly disables the Player action map
         if (inputManager != null)
         {
+            // This will handle disabling the player action map and enabling UI action map
             inputManager.SwitchToUIMode();
             if (inputManager.IsInGameplayMode())
                 inputManager.ForceEnableCurrentActionMap();
         }
-
-        // Handle button selection based on input
-        HandleButtonSelection(defaultPauseMenuButton);
+        
+        // Double-check cursor state after input mode switch
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
 
     public void StartGame()
@@ -536,18 +513,95 @@ public class MenuManager : NetworkBehaviour
 
     public void Settings()
     {
+        Debug.Log("Settings method called. gameIsPaused=" + gameIsPaused);
+        
+        // First check if we're in the pause menu
         if (gameIsPaused)
         {
-            settingsMenuUI.SetActive(!settingsMenuUI.activeSelf);
-            pauseMenuUI.SetActive(!pauseMenuUI.activeSelf);
-
-            if (settingsMenuUI.activeSelf)
-                HandleButtonSelection(defaultSettingsMenuButton);
+            // We're in the pause menu, so settings should return to pause menu when closed
+            settingsOpenedFromPauseMenu = true;
+            Debug.Log("Setting settingsOpenedFromPauseMenu to TRUE - Settings opened from pause menu");
+            
+            // We're in the pause menu, toggle between pause menu and settings menu
+            if (newOptionsMenuUI != null)
+            {
+                // Use the new tabbed options menu if available
+                pauseMenuUI.SetActive(false);
+                newOptionsMenuUI.SetActive(true);
+                
+                // Force controller selection to be enabled for the options menu
+                controllerSelectionEnabled = true;
+                
+                // Note: Camera freezing is now handled by CameraFreezeBehavior
+                
+                // Force enable all direct children in the hierarchy
+                foreach (Transform child in newOptionsMenuUI.transform)
+                {
+                    child.gameObject.SetActive(true);
+                }
+                
+                // Initialize the tab controller
+                TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
+                if (tabController != null)
+                {
+                    // Ensure tab controller GameObject is active
+                    tabController.gameObject.SetActive(true);
+                    
+                    // Find all content panels and make sure they exist
+                    Transform contentTransform = tabController.transform.Find("Content");
+                    if (contentTransform != null)
+                    {
+                        contentTransform.gameObject.SetActive(true);
+                        
+                        // Force enable the Video panel as default
+                        Transform videoPanel = contentTransform.Find("VideoPanel");
+                        if (videoPanel != null)
+                        {
+                            // Force video panel active
+                            videoPanel.gameObject.SetActive(true);
+                            
+                            // Make sure other panels are inactive
+                            foreach (Transform panel in contentTransform)
+                            {
+                                if (panel != videoPanel && panel.name.Contains("Panel"))
+                                {
+                                    panel.gameObject.SetActive(false);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Force select the Video tab
+                    tabController.SelectTab(0);
+                }
+                
+                // Handle button selection for settings menu
+                if (defaultSettingsMenuButton != null)
+                {
+                    HandleButtonSelection(defaultSettingsMenuButton);
+                }
+            }
             else
-                HandleButtonSelection(defaultPauseMenuButton);
+            {
+                // Use the old settings menu
+                settingsMenuUI.SetActive(true);
+                pauseMenuUI.SetActive(false);
+                
+                // Note: Camera freezing is now handled by CameraFreezeBehavior
+                
+                // Handle button selection for settings menu
+                if (defaultSettingsMenuButton != null)
+                {
+                    HandleButtonSelection(defaultSettingsMenuButton);
+                }
+            }
         }
         else
         {
+            // We're not in the pause menu, opened from main menu
+            settingsOpenedFromPauseMenu = false;
+            
+            // Open the main menu
             ShowMainMenu();
         }
     }
@@ -829,6 +883,693 @@ public class MenuManager : NetworkBehaviour
         if (inputManager != null)
         {
             inputManager.SetControllerNavigationEnabled(true);
+        }
+    }
+
+    // Method to check if any menu panel is active (except pauseMenuUI)
+    public bool IsAnyMenuActive()
+    {
+        // Make sure pauseMenuUI isn't included in this check
+        return (mainMenuPanel != null && mainMenuPanel.activeSelf ||
+                playMenuPanel != null && playMenuPanel.activeSelf ||
+                settingsMenuUI != null && settingsMenuUI.activeSelf ||
+                newOptionsMenuUI != null && newOptionsMenuUI.activeSelf ||
+                tempUI != null && tempUI.activeSelf ||
+                jumpUI != null && jumpUI.activeSelf ||
+                connectionPending != null && connectionPending.activeSelf);
+    }
+
+    // Helper method to get the full path of a GameObject in the hierarchy
+    private string GetGameObjectPath(GameObject obj)
+    {
+        string path = obj.name;
+        while (obj.transform.parent != null)
+        {
+            obj = obj.transform.parent.gameObject;
+            path = obj.name + "/" + path;
+        }
+        return path;
+    }
+
+    // Method to directly disable camera input on the player prefab by nulling out the input references
+    // This is the solution that works to prevent camera movement during pause
+    // Based on: https://discussions.unity.com/t/disabling-input-thats-used-in-input-provider-doesnt-disable-camera-movement-rotation/875265
+    private void DisableCameraInput()
+    {
+        // Find all CinemachineFreeLook cameras in the scene
+        var freeLookCameras = FindObjectsByType<Cinemachine.CinemachineFreeLook>(FindObjectsSortMode.None);
+        foreach (var camera in freeLookCameras)
+        {
+            var inputProvider = camera.GetComponent<Cinemachine.CinemachineInputProvider>();
+            if (inputProvider != null)
+            {
+                // Store original reference if needed
+                if (gameObject.GetComponent<CameraInputReferences>() == null)
+                {
+                    var references = gameObject.AddComponent<CameraInputReferences>();
+                    references.StoreReference(camera, inputProvider.XYAxis, inputProvider.ZAxis);
+                }
+                
+                // Null out the input references - this is what fixes the camera movement
+                inputProvider.XYAxis = null;
+                inputProvider.ZAxis = null;
+                Debug.Log("Disabled input reference on camera: " + camera.name);
+            }
+        }
+    }
+    
+    // Method to restore camera input when unpaused by restoring the original input references
+    private void EnableCameraInput()
+    {
+        var references = gameObject.GetComponent<CameraInputReferences>();
+        if (references != null)
+        {
+            references.RestoreReferences();
+        }
+    }
+
+    private void OnBackPressed()
+    {
+        // Check if we're in a settings menu and handle first
+        if ((settingsMenuUI != null && settingsMenuUI.activeSelf) ||
+            (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf))
+        {
+            // Close both settings menus to be safe
+            if (settingsMenuUI != null)
+                settingsMenuUI.SetActive(false);
+                
+            if (newOptionsMenuUI != null)
+                newOptionsMenuUI.SetActive(false);
+            
+            // If settings was opened from the pause menu, return to pause menu
+            if (settingsOpenedFromPauseMenu)
+            {
+                pauseMenuUI.SetActive(true);
+                
+                if (defaultPauseMenuButton != null)
+                    HandleButtonSelection(defaultPauseMenuButton);
+            }
+            else
+            {
+                // Settings was opened from main menu
+                mainMenuPanel.SetActive(true);
+                
+                if (defaultMainMenuButton != null)
+                    HandleButtonSelection(defaultMainMenuButton);
+            }
+            
+            // We've handled the back press, so return
+            return;
+        }
+        
+        // Handle other menu states
+        if (playMenuPanel.activeSelf)
+        {
+            // Reset button states before disabling menus
+            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+            ShowMainMenu();
+        }
+        else if (pauseMenuUI.activeSelf)
+        {
+            // We're in the pause menu with no settings menu open
+            Resume();
+        }
+    }
+
+    private void OnAcceptPressed()
+    {
+        // Handle accept button presses if needed
+        // Check if we're in the options menu
+        if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
+        {
+            // Don't do anything - let the individual UI elements handle their own click events
+            // This prevents the back functionality from triggering when pressing A on buttons
+            return;
+        }
+    }
+
+    // Strongly ensure that cursor is visible and unlocked in main menu and UI mode
+    private void EnsureCursorForUI()
+    {
+        // Always unlock cursor in UI mode
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        // Make sure input manager is in UI mode
+        if (inputManager != null && !inputManager.IsInUIMode())
+        {
+            inputManager.SwitchToUIMode();
+        }
+    }
+
+    public void ShowMainMenu()
+    {
+        // First reset the button states in the main menu
+        if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
+            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
+        
+        // Make the main menu active
+        mainMenuPanel.SetActive(true);
+        startCamera.gameObject.SetActive(true);
+        MenuMusicOn.Post(gameObject);
+
+        // Make sure all buttons are interactable
+        if (playButton != null) playButton.interactable = true;
+        if (optionsButton != null) optionsButton.interactable = true;
+        if (quitButton != null) quitButton.interactable = true;
+        
+        // Restore main menu camera priority
+        if (virtualCamera != null)
+        {
+            // Set high priority to ensure it takes precedence
+            virtualCamera.Priority = 20;
+            
+            // Rotate main menu camera
+            orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
+            if (orbitalTransposer != null)
+                orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
+        }
+
+        // Deactivate all other menu panels
+        playMenuPanel.SetActive(false);
+        pauseMenuUI.SetActive(false);
+        settingsMenuUI.SetActive(false);
+        scoreboardUI.SetActive(false);
+        tempUI.SetActive(false);
+        connectionPending.SetActive(false);
+        if (newOptionsMenuUI != null)
+            newOptionsMenuUI.SetActive(false);
+
+        // Critical: Ensure cursor is visible and unlocked before switching input mode
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        // Switch to UI input mode
+        if (inputManager != null)
+            inputManager.SwitchToUIMode();
+
+        // Double-check cursor state after input mode switch
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        
+        gameIsPaused = false;  // Reset pause state
+        
+        // Clear any selected game objects
+        if (eventSystem != null)
+            eventSystem.SetSelectedGameObject(null);
+
+        // Force controller selection to be enabled
+        controllerSelectionEnabled = true;
+        
+        // Handle button selection based on input
+        HandleButtonSelection(defaultMainMenuButton);
+        
+        // Ensure UI cursor state one more time
+        EnsureCursorForUI();
+    }
+
+    // Method for when the Play button is clicked
+    public void OnPlayClicked()
+    {
+        mainMenuPanel.SetActive(false);
+        playMenuPanel.SetActive(true);
+
+        // Lower the priority of the menu camera
+        if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
+            virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
+
+        // Make sure we're in UI mode for the play menu
+        if (inputManager != null)
+            inputManager.SwitchToUIMode();
+
+        // Handle button selection based on input
+        HandleButtonSelection(defaultPlayMenuButton);
+    }
+
+    // Method for when the Options button is clicked
+    public void OnOptionsClicked()
+    {
+        // When using gamepad, if the Options button is directly clicked, make sure we respect that
+        if (mainMenuPanel.activeSelf && eventSystem != null && inputManager != null)
+        {
+            GameObject selected = eventSystem.currentSelectedGameObject;
+            
+            // Only do this redirect check if not using gamepad OR if we're sure the play button triggered this
+            if (!inputManager.IsUsingGamepad && selected != null && selected != optionsButton.gameObject && 
+                selected == playButton.gameObject)
+            {
+                // We're actually clicking the Play button (with mouse)
+                OnPlayClicked();
+                return;
+            }
+        }
+
+        // Track that settings is being opened from main menu
+        settingsOpenedFromPauseMenu = false;
+
+        ButtonClickAudio();
+        
+        // Use the new tabbed options menu if available, otherwise fall back to old settings menu
+        if (newOptionsMenuUI != null)
+        {
+            // Force deactivate first to ensure a clean state
+            newOptionsMenuUI.SetActive(false);
+            
+            // Reset UI state
+            if (eventSystem != null)
+                eventSystem.SetSelectedGameObject(null);
+            
+            // Enable the options menu GameObject and all its children
+            newOptionsMenuUI.SetActive(true);
+            
+            // Force controller selection to be enabled for the options menu
+            controllerSelectionEnabled = true;
+            
+            // Force enable all direct children in the hierarchy
+            foreach (Transform child in newOptionsMenuUI.transform)
+            {
+                child.gameObject.SetActive(true);
+            }
+            
+            // Force enable all panels
+            TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
+            if (tabController != null)
+            {
+                // Ensure tab controller GameObject is active
+                tabController.gameObject.SetActive(true);
+                
+                // Find all content panels and make sure they exist
+                Transform contentTransform = tabController.transform.Find("Content");
+                if (contentTransform != null)
+                {
+                    contentTransform.gameObject.SetActive(true);
+                    
+                    // Force enable the Video panel using the actual name in the hierarchy
+                    Transform videoPanel = contentTransform.Find("VideoPanel");
+                    if (videoPanel != null)
+                    {
+                        // Force video panel active
+                        videoPanel.gameObject.SetActive(true);
+                        
+                        // Make sure other panels are inactive
+                        foreach (Transform panel in contentTransform)
+                        {
+                            if (panel != videoPanel && panel.name.Contains("Panel"))
+                            {
+                                panel.gameObject.SetActive(false);
+                            }
+                        }
+                    }
+                }
+                
+                // Force select the Video tab
+                tabController.SelectTab(0);
+            }
+            
+            // Hide main menu
+            mainMenuPanel.SetActive(false);
+            
+            // Handle button selection
+            if (eventSystem != null && defaultSettingsMenuButton != null)
+            {
+                HandleButtonSelection(defaultSettingsMenuButton);
+            }
+        }
+        else
+        {
+            // Fall back to old settings menu
+            settingsMenuUI.SetActive(true);
+            
+            // Handle button selection based on input
+            if (eventSystem != null && defaultSettingsMenuButton != null)
+            {
+                HandleButtonSelection(defaultSettingsMenuButton);
+            }
+        }
+    }
+
+    // Method to open Lobby Settings Menu (called when host creates lobby or from pause menu)
+    public void OpenLobbySettingsMenu()
+    {
+        // Only host can open this menu
+        if (!IsServer)
+        {
+            Debug.Log("Only the host can access lobby settings");
+            return;
+        }
+        
+        // Hide pause menu if it's active
+        if (pauseMenuUI != null && pauseMenuUI.activeSelf)
+        {
+            pauseMenuUI.SetActive(false);
+        }
+        
+        // Show Lobby Settings Menu
+        if (lobbySettingsMenuUI != null)
+        {
+            lobbySettingsMenuUI.SetActive(true);
+            
+            // Update lobby code display
+            if (lobbyCodeDisplay != null && ConnectionManager.instance != null)
+            {
+                lobbyCodeDisplay.text = "Lobby Code: " + ConnectionManager.instance.joinCode;
+            }
+            
+            // Update player count
+            UpdateConnectedPlayersText();
+            
+            // Update game mode selection based on current settings
+            if (freeForAllToggle != null && teamBattleToggle != null)
+            {
+                freeForAllToggle.isOn = selectedGameMode == GameMode.FreeForAll;
+                teamBattleToggle.isOn = selectedGameMode == GameMode.TeamBattle;
+            }
+            
+            // Update team settings visibility
+            SetTeamSettingsVisibility(selectedGameMode == GameMode.TeamBattle);
+            
+            // Set team count slider value
+            if (teamCountSlider != null)
+            {
+                teamCountSlider.value = teamCount;
+                UpdateTeamCountText();
+            }
+            
+            // Update Start Game button interactability
+            UpdateStartGameButtonInteractability();
+        }
+    }
+    
+    // Method called when Free For All toggle is changed
+    public void OnFreeForAllToggleChanged(bool isOn)
+    {
+        if (isOn)
+        {
+            _selectedGameMode = GameMode.FreeForAll;
+            SetTeamSettingsVisibility(false);
+            
+            // Make sure team battle toggle is off
+            if (teamBattleToggle != null && teamBattleToggle.isOn)
+            {
+                teamBattleToggle.isOn = false;
+            }
+            
+            // Update game settings
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.SetGameMode(GameMode.FreeForAll);
+            }
+        }
+    }
+    
+    // Method called when Team Battle toggle is changed
+    public void OnTeamBattleToggleChanged(bool isOn)
+    {
+        if (isOn)
+        {
+            _selectedGameMode = GameMode.TeamBattle;
+            SetTeamSettingsVisibility(true);
+            
+            // Make sure free for all toggle is off
+            if (freeForAllToggle != null && freeForAllToggle.isOn)
+            {
+                freeForAllToggle.isOn = false;
+            }
+            
+            // Update game settings
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.SetGameMode(GameMode.TeamBattle);
+                GameManager.instance.SetTeamCount(_teamCount);
+            }
+        }
+    }
+    
+    // Method to control visibility of team settings panel
+    private void SetTeamSettingsVisibility(bool visible)
+    {
+        if (teamSettingsPanel != null)
+        {
+            teamSettingsPanel.SetActive(visible);
+        }
+    }
+    
+    // Method called when team count slider is changed
+    public void OnTeamCountSliderChanged(float value)
+    {
+        _teamCount = Mathf.RoundToInt(value);
+        UpdateTeamCountText();
+        
+        // Update game settings
+        if (GameManager.instance != null && _selectedGameMode == GameMode.TeamBattle)
+        {
+            GameManager.instance.SetTeamCount(_teamCount);
+        }
+    }
+    
+    // Method to update team count text display
+    private void UpdateTeamCountText()
+    {
+        if (teamCountText != null)
+        {
+            teamCountText.text = _teamCount.ToString() + " Teams";
+        }
+    }
+    
+    // Update connected players text
+    private void UpdateConnectedPlayersText()
+    {
+        if (connectedPlayersText != null && NetworkManager.Singleton != null)
+        {
+            int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
+            connectedPlayersText.text = "Connected Players: " + playerCount + 
+                (playerCount < 2 ? "\n(Need at least 2 players to start)" : "");
+        }
+    }
+    
+    // Update Start Game button interactability based on player count
+    private void UpdateStartGameButtonInteractability()
+    {
+        if (startGameFromLobbyButton != null && NetworkManager.Singleton != null)
+        {
+            bool canStart = NetworkManager.Singleton.ConnectedClients.Count >= 2;
+            startGameFromLobbyButton.interactable = canStart;
+        }
+    }
+    
+    // Method to start game from Lobby Settings Menu
+    public void StartGameFromLobbySettings()
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+            return;
+            
+        // Close lobby settings menu
+        if (lobbySettingsMenuUI != null)
+            lobbySettingsMenuUI.SetActive(false);
+            
+        // Hide all UI panels
+        HideAllMenus();
+            
+        // Resume gameplay
+        gameIsPaused = false;
+        Time.timeScale = 1f;
+            
+        // Switch to gameplay mode for input
+        if (inputManager != null)
+        {
+            inputManager.SwitchToGameplayMode();
+            
+            // Force cursor lock
+            StartCoroutine(EnforceCursorLockAfterStartGame());
+        }
+            
+        // Start the game - use TransitionToState instead of StartGame
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.TransitionToState(GameState.Playing);
+            ButtonConfirmAudio();
+        }
+    }
+
+    // Lobby Settings Methods
+    public void ShowLobbySettingsMenu()
+    {
+        if (lobbySettingsMenuUI == null)
+        {
+            Debug.LogWarning("Lobby Settings Menu UI is not assigned!");
+            return;
+        }
+        
+        // Only allow the host to open this menu
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogWarning("Only the host can access lobby settings!");
+            return;
+        }
+        
+        // Play button sound
+        ButtonClickAudio();
+        
+        // Hide pause menu if it's active
+        if (pauseMenuUI != null && pauseMenuUI.activeSelf)
+        {
+            pauseMenuUI.SetActive(false);
+        }
+        
+        // Show lobby settings menu
+        lobbySettingsMenuUI.SetActive(true);
+        
+        // Set selected button if using controller
+        if (controllerSelectionEnabled && EventSystem.current != null)
+        {
+            // Find a default button in the lobby settings menu
+            Button defaultButton = lobbySettingsMenuUI.GetComponentInChildren<Button>();
+            if (defaultButton != null)
+            {
+                EventSystem.current.SetSelectedGameObject(defaultButton.gameObject);
+            }
+        }
+    }
+
+    public void CloseLobbySettingsMenu()
+    {
+        if (lobbySettingsMenuUI == null)
+            return;
+        
+        // Play button sound
+        ButtonClickAudio();
+        
+        // Hide lobby settings menu
+        lobbySettingsMenuUI.SetActive(false);
+        
+        // Show pause menu if we're in-game
+        if (GameManager.instance != null && GameManager.instance.state != GameState.Pending)
+        {
+            pauseMenuUI.SetActive(true);
+            
+            // Set selected button if using controller
+            if (controllerSelectionEnabled && EventSystem.current != null)
+            {
+                if (defaultPauseMenuButton != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
+                }
+            }
+        }
+        // Return to main menu if we were in the main menu flow
+        else if (!mainMenuPanel.activeSelf && !playMenuPanel.activeSelf)
+        {
+            pauseMenuUI.SetActive(true);
+        }
+    }
+    
+    private IEnumerator EnforceCursorLockAfterStartGame()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            // Wait a frame
+            yield return null;
+                
+            // Lock cursor
+            if (!gameIsPaused)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+    }
+    
+    // Game Mode Setting Methods
+    public void SetGameMode(GameMode mode)
+    {
+        _selectedGameMode = mode;
+        
+        // Sync to GameManager if available
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.SetGameMode(mode);
+        }
+        
+        ButtonClickAudio();
+    }
+    
+    public void SetTeamCount(int count)
+    {
+        if (count < 2) count = 2;
+        if (count > 4) count = 4;
+        
+        _teamCount = count;
+        
+        // Sync to GameManager if available
+        if (GameManager.instance != null)
+        {
+            GameManager.instance.SetTeamCount(count);
+        }
+        
+        ButtonClickAudio();
+    }
+
+    // Add the HideAllMenus method
+    private void HideAllMenus()
+    {
+        // Hide all menu panels
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (playMenuPanel != null) playMenuPanel.SetActive(false);
+        if (pauseMenuUI != null) pauseMenuUI.SetActive(false);
+        if (settingsMenuUI != null) settingsMenuUI.SetActive(false);
+        if (newOptionsMenuUI != null) newOptionsMenuUI.SetActive(false);
+        if (scoreboardUI != null) scoreboardUI.SetActive(false);
+        if (tempUI != null) tempUI.SetActive(false);
+        if (connectionPending != null) connectionPending.SetActive(false);
+        if (lobbySettingsMenuUI != null) lobbySettingsMenuUI.SetActive(false);
+    }
+}
+
+// Helper class to store and restore camera input references
+// This solution fixes the camera movement during pause by nulling out the input references
+// and then restoring them when unpaused
+public class CameraInputReferences : MonoBehaviour
+{
+    private class CameraReference
+    {
+        public Cinemachine.CinemachineFreeLook Camera;
+        public UnityEngine.InputSystem.InputActionReference XYAxis;
+        public UnityEngine.InputSystem.InputActionReference ZAxis;
+    }
+    
+    private List<CameraReference> storedReferences = new List<CameraReference>();
+    
+    public void StoreReference(Cinemachine.CinemachineFreeLook camera, 
+        UnityEngine.InputSystem.InputActionReference xyAxis, 
+        UnityEngine.InputSystem.InputActionReference zAxis)
+    {
+        // Only store if we don't already have a reference for this camera
+        if (!storedReferences.Any(r => r.Camera == camera))
+        {
+            storedReferences.Add(new CameraReference 
+            { 
+                Camera = camera,
+                XYAxis = xyAxis,
+                ZAxis = zAxis
+            });
+            Debug.Log("Stored input reference for camera: " + camera.name);
+        }
+    }
+    
+    public void RestoreReferences()
+    {
+        foreach (var reference in storedReferences)
+        {
+            if (reference.Camera != null)
+            {
+                var inputProvider = reference.Camera.GetComponent<Cinemachine.CinemachineInputProvider>();
+                if (inputProvider != null)
+                {
+                    inputProvider.XYAxis = reference.XYAxis;
+                    inputProvider.ZAxis = reference.ZAxis;
+                    Debug.Log("Restored input reference for camera: " + reference.Camera.name);
+                }
+            }
         }
     }
 }

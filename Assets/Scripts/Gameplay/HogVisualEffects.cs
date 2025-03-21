@@ -87,7 +87,7 @@ public class HogVisualEffects : MonoBehaviour
 
         if (driftingSoundOn)
         {
-            HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
+//            HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
             driftingSoundOn = false;
         }
     }

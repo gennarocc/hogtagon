@@ -239,6 +239,15 @@ public class HogController : NetworkBehaviour
 
     private float CalculateRawCameraAngle(Vector2 lookInput)
     {
+        // Check if any menus are active - if so, return the last camera angle without processing input
+        if (MenuManager.instance != null && MenuManager.instance.gameIsPaused)
+        {
+            // Return the last raw camera angle without updating
+            if (_recentSteeringInputs.Count > 0)
+                return _steeringInputsList[_steeringInputsList.Count - 1];
+            return 0f;
+        }
+        
         // If using the input system's look values (for gamepad control)
         if (inputManager.IsUsingGamepad && lookInput.sqrMagnitude > 0.01f)
         {

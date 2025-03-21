@@ -9,6 +9,7 @@ using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
 using UnityEditor;
+using System.Collections;
 
 public class ConnectToGame : MonoBehaviour
 {
@@ -120,5 +121,25 @@ public class ConnectToGame : MonoBehaviour
         CreateRelay();
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
+        
+        // Automatically open Lobby Settings Menu when connection is ready
+        StartCoroutine(OpenLobbySettingsAfterConnection());
+    }
+    
+    private IEnumerator OpenLobbySettingsAfterConnection()
+    {
+        // Wait until connected and server is ready
+        yield return new WaitUntil(() => NetworkManager.Singleton != null && 
+                                        NetworkManager.Singleton.IsListening && 
+                                        NetworkManager.Singleton.IsServer);
+        
+        // Give a small delay to ensure everything is initialized
+        yield return new WaitForSeconds(0.5f);
+        
+        // Open the Lobby Settings Menu
+        if (menuManager != null)
+        {
+            menuManager.OpenLobbySettingsMenu();
+        }
     }
 }
