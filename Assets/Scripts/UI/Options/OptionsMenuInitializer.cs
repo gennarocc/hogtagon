@@ -7,188 +7,265 @@ public class OptionsMenuInitializer : MonoBehaviour
 {
     [SerializeField] private OptionsMenuCreator menuCreator;
     [SerializeField] private OptionsMenuController menuController;
+    [SerializeField] private Settings settingsInstance; // Reference to the existing Settings component
 
     private void Start()
     {
-        // Initialize the menu after delay to ensure all components are ready
-        Invoke("InitializeOptionsMenu", 0.1f);
-    }
-
-    public void InitializeOptionsMenu()
-    {
         if (menuCreator == null)
         {
-            Debug.LogError("Options Menu Creator reference is missing!");
-            return;
+            menuCreator = GetComponent<OptionsMenuCreator>();
         }
-
-        // Create Video settings
+        
+        if (menuController == null)
+        {
+            menuController = GetComponent<OptionsMenuController>();
+        }
+        
+        if (settingsInstance == null)
+        {
+            settingsInstance = FindObjectOfType<Settings>();
+            if (settingsInstance == null)
+            {
+                Debug.LogError("OptionsMenuInitializer: Could not find Settings component!");
+            }
+        }
+        
+        // Initialize all settings
         InitializeVideoSettings();
-        
-        // Create Audio settings
         InitializeAudioSettings();
-        
-        // Create Gameplay settings
         InitializeGameplaySettings();
-        
-        // Create Controls settings
         InitializeControlsSettings();
     }
     
     private void InitializeVideoSettings()
     {
-        // Graphics autodetect
-        GameObject graphicsAutodetectSetting = menuCreator.CreateSettingItem("VIDEO", "Graphics autodetect");
-        Button detectButton = menuCreator.AddButtonToSetting(graphicsAutodetectSetting, "Detect");
-        if (detectButton != null && menuController != null)
-        {
-            detectButton.onClick.AddListener(() => {
-                // Implement auto-detection logic
-                Debug.Log("Auto-detecting graphics settings...");
-            });
-        }
-        
-        // Gamma correction
-        GameObject gammaSetting = menuCreator.CreateSettingItem("VIDEO", "Gamma correction");
-        Slider gammaSlider = menuCreator.AddSliderToSetting(gammaSetting, 0.5f, 2.0f, 1.0f);
-        if (gammaSlider != null && menuController != null)
-        {
-            gammaSlider.onValueChanged.AddListener(value => {
-                // Update gamma setting
-                Debug.Log($"Gamma set to {value}");
-            });
-        }
-        
-        // Field of view
-        GameObject fovSetting = menuCreator.CreateSettingItem("VIDEO", "Field of view");
-        Slider fovSlider = menuCreator.AddSliderToSetting(fovSetting, 60f, 120f, 90f);
-        if (fovSlider != null && menuController != null)
-        {
-            fovSlider.onValueChanged.AddListener(value => {
-                // Update FOV setting
-                Debug.Log($"FOV set to {value}");
-            });
-        }
-        
-        // V-Sync
-        GameObject vsyncSetting = menuCreator.CreateSettingItem("VIDEO", "V Sync");
-        Toggle vsyncToggle = menuCreator.AddToggleToSetting(vsyncSetting, false);
-        if (vsyncToggle != null && menuController != null)
-        {
-            vsyncToggle.onValueChanged.AddListener(value => {
-                // Update V-Sync setting
-                Debug.Log($"V-Sync {(value ? "enabled" : "disabled")}");
-            });
-        }
-        
-        // Window mode
-        GameObject windowModeSetting = menuCreator.CreateSettingItem("VIDEO", "Window mode");
-        List<string> windowModes = new List<string> { "Windowed", "Borderless", "Fullscreen" };
-        TMP_Dropdown windowModeDropdown = menuCreator.AddDropdownToSetting(windowModeSetting, windowModes, 2);
-        if (windowModeDropdown != null && menuController != null)
-        {
-            windowModeDropdown.onValueChanged.AddListener(index => {
-                // Update window mode setting
-                Debug.Log($"Window mode set to {windowModes[index]}");
-            });
-        }
-        
         // Resolution
-        GameObject resolutionSetting = menuCreator.CreateSettingItem("VIDEO", "Resolution");
-        List<string> resolutions = new List<string> { "1280x720", "1920x1080", "2560x1440", "3840x2160" };
-        TMP_Dropdown resolutionDropdown = menuCreator.AddDropdownToSetting(resolutionSetting, resolutions, 1);
-        if (resolutionDropdown != null && menuController != null)
+        GameObject resolutionSetting = menuCreator.CreateSettingItem("Video", "Resolution");
+        
+        // Get available resolutions directly
+        List<string> resolutionOptions = new List<string>();
+        Resolution[] resolutions = Screen.resolutions;
+        
+        foreach (Resolution res in resolutions)
         {
+            resolutionOptions.Add($"{res.width}x{res.height}");
+        }
+        
+        // If no resolutions were found, add defaults
+        if (resolutionOptions.Count == 0)
+        {
+            resolutionOptions.Add("1280x720");
+            resolutionOptions.Add("1920x1080");
+            resolutionOptions.Add("2560x1440");
+        }
+        
+        // Find current resolution index
+        string currentRes = $"{Screen.width}x{Screen.height}";
+        int currentResIndex = 0;
+        
+        for (int i = 0; i < resolutionOptions.Count; i++)
+        {
+            if (resolutionOptions[i] == currentRes)
+            {
+                currentResIndex = i;
+                break;
+            }
+        }
+        
+        TMP_Dropdown resolutionDropdown = menuCreator.AddDropdownToSetting(resolutionSetting, resolutionOptions, currentResIndex);
+        
+        // Connect to existing Settings component
+        if (settingsInstance != null && resolutionDropdown != null)
+        {
+            // Store a reference to the dropdown in Settings if needed
+            if (settingsInstance.GetComponent<Settings>() != null && 
+                settingsInstance.GetType().GetField("resolutionDropdown") != null)
+            {
+                settingsInstance.GetType().GetField("resolutionDropdown").SetValue(settingsInstance, resolutionDropdown);
+            }
+            
+            // Add value changed listener
             resolutionDropdown.onValueChanged.AddListener(index => {
-                // Update resolution setting
-                Debug.Log($"Resolution set to {resolutions[index]}");
-                if (menuController != null)
+                if (settingsInstance != null)
                 {
-                    menuController.OnResolutionSelected(index);
+                    settingsInstance.OnResolutionSelected(index);
                 }
             });
         }
         
-        // More video settings like the ones in the reference image...
+        // Fullscreen
+        GameObject fullscreenSetting = menuCreator.CreateSettingItem("Video", "Fullscreen");
+        Toggle fullscreenToggle = menuCreator.AddToggleToSetting(fullscreenSetting, Screen.fullScreen);
+        
+        // Connect to existing Settings
+        if (settingsInstance != null && fullscreenToggle != null)
+        {
+            fullscreenToggle.onValueChanged.AddListener(value => {
+                if (settingsInstance != null)
+                {
+                    settingsInstance.OnFullscreenToggled(value);
+                }
+            });
+        }
+        
+        // Add Apply button
+        GameObject applyButtonSetting = menuCreator.CreateSettingItem("Video", "Apply Changes");
+        Button applyButton = menuCreator.AddButtonToSetting(applyButtonSetting, "Apply");
+        
+        // Connect to existing Settings
+        if (settingsInstance != null && applyButton != null)
+        {
+            applyButton.onClick.AddListener(() => {
+                if (settingsInstance != null)
+                {
+                    settingsInstance.ApplyVideoSettings();
+                }
+            });
+        }
     }
     
     private void InitializeAudioSettings()
     {
         // Master Volume
-        GameObject masterVolumeSetting = menuCreator.CreateSettingItem("AUDIO", "Master Volume");
-        Slider masterVolumeSlider = menuCreator.AddSliderToSetting(masterVolumeSetting, 0f, 100f, 80f);
-        if (masterVolumeSlider != null && menuController != null)
+        GameObject masterVolumeSetting = menuCreator.CreateSettingItem("Audio", "Master Volume");
+        float currentMasterVolume = 0.8f;
+        
+        // Get current volume from Settings if available
+        if (settingsInstance != null && settingsInstance.MasterVolume != null)
+        {
+            currentMasterVolume = settingsInstance.MasterVolume.GetGlobalValue();
+        }
+        
+        Slider masterVolumeSlider = menuCreator.AddSliderToSetting(masterVolumeSetting, 0f, 1f, currentMasterVolume);
+        if (masterVolumeSlider != null && settingsInstance != null)
         {
             masterVolumeSlider.onValueChanged.AddListener(value => {
-                if (menuController != null)
-                {
-                    menuController.SetMasterVolume(value);
-                }
+                // Call existing Settings method
+                settingsInstance.SetMasterVolume(value);
+                settingsInstance.ButtonClickAudio();
             });
         }
         
         // Music Volume
-        GameObject musicVolumeSetting = menuCreator.CreateSettingItem("AUDIO", "Music Volume");
-        Slider musicVolumeSlider = menuCreator.AddSliderToSetting(musicVolumeSetting, 0f, 100f, 70f);
-        if (musicVolumeSlider != null && menuController != null)
+        GameObject musicVolumeSetting = menuCreator.CreateSettingItem("Audio", "Music Volume");
+        float currentMusicVolume = 0.8f;
+        
+        // Get current volume from Settings if available
+        if (settingsInstance != null && settingsInstance.MusicVolume != null)
+        {
+            currentMusicVolume = settingsInstance.MusicVolume.GetGlobalValue();
+        }
+        
+        Slider musicVolumeSlider = menuCreator.AddSliderToSetting(musicVolumeSetting, 0f, 1f, currentMusicVolume);
+        if (musicVolumeSlider != null && settingsInstance != null)
         {
             musicVolumeSlider.onValueChanged.AddListener(value => {
-                if (menuController != null)
-                {
-                    menuController.SetMusicVolume(value);
-                }
+                // Call existing Settings method
+                settingsInstance.SetMusicVolume(value);
+                settingsInstance.ButtonClickAudio();
             });
         }
         
         // SFX Volume
-        GameObject sfxVolumeSetting = menuCreator.CreateSettingItem("AUDIO", "SFX Volume");
-        Slider sfxVolumeSlider = menuCreator.AddSliderToSetting(sfxVolumeSetting, 0f, 100f, 90f);
-        if (sfxVolumeSlider != null && menuController != null)
+        GameObject sfxVolumeSetting = menuCreator.CreateSettingItem("Audio", "SFX Volume");
+        float currentSfxVolume = 0.8f;
+        
+        // Get current volume from Settings if available
+        if (settingsInstance != null && settingsInstance.SfxVolume != null)
+        {
+            currentSfxVolume = settingsInstance.SfxVolume.GetGlobalValue();
+        }
+        
+        Slider sfxVolumeSlider = menuCreator.AddSliderToSetting(sfxVolumeSetting, 0f, 1f, currentSfxVolume);
+        if (sfxVolumeSlider != null && settingsInstance != null)
         {
             sfxVolumeSlider.onValueChanged.AddListener(value => {
-                if (menuController != null)
-                {
-                    menuController.SetSfxVolume(value);
-                }
+                // Call existing Settings method
+                settingsInstance.SetSfxVolume(value);
+                settingsInstance.ButtonClickAudio();
             });
         }
     }
     
     private void InitializeGameplaySettings()
     {
-        // Add gameplay settings here
-        // Camera sensitivity has been moved to Controls tab
+        // Add username input field
+        GameObject usernameSetting = menuCreator.CreateSettingItem("Gameplay", "Username");
+        
+        // Get saved username or use a default
+        string savedUsername = PlayerPrefs.GetString("Username", "Player");
+        
+        // Add input field for username with a character limit of 10
+        TMP_InputField usernameField = menuCreator.AddInputFieldToSetting(usernameSetting, "Enter username", savedUsername, 10);
+        
+        if (usernameField != null)
+        {
+            // Save the username when it changes
+            usernameField.onValueChanged.AddListener(value => {
+                if (value.Length > 0)
+                {
+                    PlayerPrefs.SetString("Username", value);
+                    PlayerPrefs.Save();
+                    
+                    // Play audio feedback
+                    if (settingsInstance != null)
+                    {
+                        settingsInstance.ButtonClickAudio();
+                    }
+                }
+            });
+        }
+        
+        // Add more gameplay settings here as needed
     }
     
     private void InitializeControlsSettings()
     {
         // Camera Sensitivity
-        GameObject sensitivitySetting = menuCreator.CreateSettingItem("CONTROLS", "Camera Sensitivity");
-        Slider sensitivitySlider = menuCreator.AddSliderToSetting(sensitivitySetting, 0.1f, 2.0f, 1.0f);
-        if (sensitivitySlider != null && menuController != null)
+        GameObject sensitivitySetting = menuCreator.CreateSettingItem("Controls", "Camera Sensitivity");
+        
+        // Get current sensitivity from Settings if available
+        float currentSensitivity = 1.0f;
+        if (settingsInstance != null && settingsInstance.cameraSensitivity != null)
         {
+            currentSensitivity = settingsInstance.cameraSensitivity.value;
+        }
+        
+        Slider sensitivitySlider = menuCreator.AddSliderToSetting(sensitivitySetting, 0.1f, 2.0f, currentSensitivity);
+        if (sensitivitySlider != null && settingsInstance != null)
+        {
+            // Connect to existing Settings component if available
             sensitivitySlider.onValueChanged.AddListener(value => {
-                if (menuController != null)
+                if (settingsInstance.cameraSensitivity != null)
                 {
-                    menuController.SetCameraSensitivity(value);
+                    settingsInstance.cameraSensitivity.value = value;
+                    settingsInstance.SetCameraSensitivty();
+                    settingsInstance.ButtonClickAudio();
                 }
             });
+            
+            // Store a reference to the slider in Settings if needed
+            if (settingsInstance.GetComponent<Settings>() != null && 
+                settingsInstance.GetType().GetField("cameraSensitivity") != null)
+            {
+                settingsInstance.cameraSensitivity = sensitivitySlider;
+            }
         }
 
         // Example key binding settings
-        GameObject moveForwardSetting = menuCreator.CreateSettingItem("CONTROLS", "Move Forward");
+        GameObject moveForwardSetting = menuCreator.CreateSettingItem("Controls", "Move Forward");
         menuCreator.AddKeyBindingToSetting(moveForwardSetting, "W");
         
-        GameObject moveBackwardSetting = menuCreator.CreateSettingItem("CONTROLS", "Move Backward");
+        GameObject moveBackwardSetting = menuCreator.CreateSettingItem("Controls", "Move Backward");
         menuCreator.AddKeyBindingToSetting(moveBackwardSetting, "S");
         
-        GameObject moveLeftSetting = menuCreator.CreateSettingItem("CONTROLS", "Move Left");
+        GameObject moveLeftSetting = menuCreator.CreateSettingItem("Controls", "Move Left");
         menuCreator.AddKeyBindingToSetting(moveLeftSetting, "A");
         
-        GameObject moveRightSetting = menuCreator.CreateSettingItem("CONTROLS", "Move Right");
+        GameObject moveRightSetting = menuCreator.CreateSettingItem("Controls", "Move Right");
         menuCreator.AddKeyBindingToSetting(moveRightSetting, "D");
         
-        GameObject jumpSetting = menuCreator.CreateSettingItem("CONTROLS", "Jump");
+        GameObject jumpSetting = menuCreator.CreateSettingItem("Controls", "Jump");
         menuCreator.AddKeyBindingToSetting(jumpSetting, "Space");
         
         // Add more controls settings here

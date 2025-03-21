@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 public class TabController : MonoBehaviour
 {
@@ -20,8 +21,10 @@ public class TabController : MonoBehaviour
     [SerializeField] private Color activeTabColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
     [SerializeField] private Color inactiveTabColor = new Color(0.0f, 0.8f, 0.0f, 0.7f);
     [SerializeField] private int defaultTabIndex = 0;
+    [SerializeField] private Button backButton;
     
     private int currentTabIndex = -1;
+    private bool processingInput = false;
     
     private void OnEnable()
     {
@@ -38,8 +41,9 @@ public class TabController : MonoBehaviour
             {
                 if (button.name.Contains("Tab"))
                 {
-                    // Try to find corresponding panel
-                    Transform panel = transform.parent.Find("Content/" + button.name.Replace("Tab", "Panel"));
+                    // Try to find corresponding panel - use the exact panel names from hierarchy
+                    string panelName = button.name.Replace("Tab", "Panel");
+                    Transform panel = transform.parent.Find("Content/" + panelName);
                     if (panel != null)
                     {
                         TabData newTab = new TabData();
@@ -100,6 +104,23 @@ public class TabController : MonoBehaviour
                     tabs[currentTabIndex].tabContent.transform.parent.gameObject.SetActive(true);
             }
         }
+        
+        // Set up back button if it exists
+        if (backButton != null)
+        {
+            backButton.onClick.RemoveAllListeners();
+            backButton.onClick.AddListener(BackToMainMenu);
+        }
+        else
+        {
+            // Try to find back button if not assigned
+            backButton = transform.parent.GetComponentInChildren<Button>(true);
+            if (backButton != null && backButton.name.ToLower().Contains("back"))
+            {
+                backButton.onClick.RemoveAllListeners();
+                backButton.onClick.AddListener(BackToMainMenu);
+            }
+        }
     }
 
     void Start()
@@ -118,6 +139,33 @@ public class TabController : MonoBehaviour
             // (otherwise OnEnable will handle it)
             SelectTab(defaultTabIndex);
         }
+    }
+    
+    void Update()
+    {
+        // Handle gamepad navigation between tabs
+        if (Gamepad.current != null && !processingInput)
+        {
+            // Check for left/right navigation between tabs
+            if (Gamepad.current.dpad.left.wasPressedThisFrame)
+            {
+                processingInput = true;
+                PreviousTab();
+                StartCoroutine(ResetInputProcessing(0.2f));
+            }
+            else if (Gamepad.current.dpad.right.wasPressedThisFrame)
+            {
+                processingInput = true;
+                NextTab();
+                StartCoroutine(ResetInputProcessing(0.2f));
+            }
+        }
+    }
+    
+    private System.Collections.IEnumerator ResetInputProcessing(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        processingInput = false;
     }
     
     public void SelectTab(int tabIndex)
@@ -148,6 +196,12 @@ public class TabController : MonoBehaviour
         if (tabs[currentTabIndex].tabText != null)
         {
             tabs[currentTabIndex].tabText.color = activeTabColor;
+        }
+        
+        // Focus on the tab button for better gamepad navigation
+        if (EventSystem.current != null && tabs[currentTabIndex].tabButton != null)
+        {
+            EventSystem.current.SetSelectedGameObject(tabs[currentTabIndex].tabButton.gameObject);
         }
     }
     

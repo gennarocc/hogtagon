@@ -40,6 +40,13 @@ public class OptionsMenuController : MonoBehaviour
     [Header("Gameplay Settings")]
     [SerializeField] private Slider cameraSensitivitySlider;
     
+    [Header("Settings References")]
+    [SerializeField] private Button applyButton;
+
+    [Header("Default Values")]
+    [SerializeField] private float defaultSensitivity = 1.0f;
+    [SerializeField] private float defaultVolume = 0.8f;
+
     private void Start()
     {
         // Set up button listeners
@@ -54,6 +61,12 @@ public class OptionsMenuController : MonoBehaviour
             
         if (rightArrow != null)
             rightArrow.onClick.AddListener(OnRightArrowClicked);
+        
+        // Add apply button listener if it's not already assigned
+        if (applyButton != null && applyButton.onClick.GetPersistentEventCount() == 0)
+        {
+            applyButton.onClick.AddListener(ApplySettings);
+        }
             
         // Initialize values from existing settings
         InitializeFromExistingSettings();
@@ -156,20 +169,20 @@ public class OptionsMenuController : MonoBehaviour
         // Reset audio settings
         if (masterVolumeSlider != null)
         {
-            masterVolumeSlider.value = 100f;
-            SetMasterVolume(100f);
+            masterVolumeSlider.value = 1.0f;
+            SetMasterVolume(1.0f);
         }
         
         if (musicVolumeSlider != null)
         {
-            musicVolumeSlider.value = 100f;
-            SetMusicVolume(100f);
+            musicVolumeSlider.value = 1.0f;
+            SetMusicVolume(1.0f);
         }
         
         if (sfxVolumeSlider != null)
         {
-            sfxVolumeSlider.value = 100f;
-            SetSfxVolume(100f);
+            sfxVolumeSlider.value = 1.0f;
+            SetSfxVolume(1.0f);
         }
         
         // Reset gameplay settings
@@ -224,6 +237,31 @@ public class OptionsMenuController : MonoBehaviour
         }
     }
     
+    // Audio feedback methods
+    public void ButtonClickAudio()
+    {
+        if (existingSettings != null)
+        {
+            existingSettings.ButtonClickAudio();
+        }
+    }
+    
+    public void ButtonConfirmAudio()
+    {
+        if (existingSettings != null)
+        {
+            existingSettings.ButtonConfirmAudio();
+        }
+    }
+    
+    public void ButtonCancelAudio()
+    {
+        if (existingSettings != null)
+        {
+            existingSettings.ButtonCancelAudio();
+        }
+    }
+    
     // Apply settings (bridge to existing Settings)
     public void ApplyVideoSettings()
     {
@@ -237,18 +275,28 @@ public class OptionsMenuController : MonoBehaviour
     {
         if (label != null)
         {
-            int percentage = Mathf.RoundToInt(value);
-            label.text = percentage.ToString();
+            label.text = $"{labelName}: {Mathf.RoundToInt(value * 100)}%";
         }
     }
     
-    // Handle fullscreen toggle
-    public void OnFullscreenToggled(bool isFullscreen)
+    // Add this to support apply button
+    public void ApplySettings()
     {
+        // Apply video settings
+        ApplyVideoSettings();
+        
+        // Volume settings are applied immediately
+        
+        // Apply camera sensitivity
+        if (existingSettings != null && existingSettings.cameraSensitivity != null)
+        {
+            existingSettings.SetCameraSensitivty();
+        }
+        
+        // Play confirmation sound
         if (existingSettings != null)
         {
-            existingSettings.OnFullscreenToggled(isFullscreen);
-            existingSettings.ButtonClickAudio();
+            existingSettings.ButtonConfirmAudio();
         }
     }
     
@@ -259,6 +307,27 @@ public class OptionsMenuController : MonoBehaviour
         {
             existingSettings.OnResolutionSelected(resolutionIndex);
             existingSettings.ButtonClickAudio();
+        }
+    }
+
+    // Called by the resolution dropdown
+    public void SetResolution(int resolutionIndex)
+    {
+        if (resolutionIndex < 0 || resolutionDropdown == null)
+            return;
+            
+        string resString = resolutionDropdown.options[resolutionIndex].text;
+        string[] dimensions = resString.Split('x');
+        
+        if (dimensions.Length == 2)
+        {
+            if (int.TryParse(dimensions[0], out int width) && 
+                int.TryParse(dimensions[1], out int height))
+            {
+                // Store in PlayerPrefs
+                PlayerPrefs.SetInt("ScreenWidth", width);
+                PlayerPrefs.SetInt("ScreenHeight", height);
+            }
         }
     }
 } 

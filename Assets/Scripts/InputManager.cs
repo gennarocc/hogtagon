@@ -100,6 +100,9 @@ public class InputManager : MonoBehaviour
     {
         // Start with UI mode for main menu
         SwitchToUIMode();
+        
+        // Force controller navigation to be enabled by default
+        _controllerNavigationEnabled = true;
     }
 
     private void OnDisable()
@@ -157,6 +160,13 @@ public class InputManager : MonoBehaviour
         if (_controllerNavigationEnabled)
         {
             DetectInputDevice();
+            
+            // If we detect gamepad input in UI mode, make sure to handle it
+            if (_currentInputState == InputState.UI && _usingGamepad)
+            {
+                // Let other systems know we're using a gamepad
+                // This signal can be used by UI elements to adjust their behavior
+            }
         }
         else
         {
@@ -219,5 +229,14 @@ public class InputManager : MonoBehaviour
     public void SetControllerNavigationEnabled(bool enabled)
     {
         _controllerNavigationEnabled = enabled;
+        
+        // If we're re-enabling controller navigation, reset values
+        if (enabled)
+        {
+            // Clear any accumulated input
+            _lookInput = Vector2.zero;
+            _throttleInput = 0f;
+            _brakeInput = 0f;
+        }
     }
 }
