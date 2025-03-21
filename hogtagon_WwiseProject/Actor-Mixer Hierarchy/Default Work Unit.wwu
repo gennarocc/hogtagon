@@ -195,7 +195,7 @@
 											<Language>SFX</Language>
 											<AudioFile>car-explosion-5.wav</AudioFile>
 											<MediaIDList>
-												<MediaID ID="464858496"/>
+												<MediaID ID="184000432"/>
 											</MediaIDList>
 										</AudioFileSource>
 									</ChildrenList>
@@ -270,7 +270,7 @@
 											<Language>SFX</Language>
 											<AudioFile>car-explosion-4.wav</AudioFile>
 											<MediaIDList>
-												<MediaID ID="536878760"/>
+												<MediaID ID="373189264"/>
 											</MediaIDList>
 										</AudioFileSource>
 									</ChildrenList>
