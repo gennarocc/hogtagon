@@ -64,7 +64,7 @@ public class Player : NetworkBehaviour
     {
         Cursor.visible = !Cursor.visible; // toggle visibility
         Cursor.lockState = CursorLockMode.Locked;
-        ConnectionManager.instance.isConnected = true;
+        ConnectionManager.Instance.isConnected = true;
         menuManager.jumpUI.SetActive(true);
 
         if (IsOwner)
@@ -102,11 +102,11 @@ public class Player : NetworkBehaviour
         }
 
         cameraTarget.position = cameraOffset.position;
-        ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
+        ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
         // Set camera to spectator if dead
-        if (playerData.state != PlayerState.Alive && GameManager.instance.state != GameState.Pending)
+        if (playerData.state != PlayerState.Alive && GameManager.Instance.state != GameState.Pending)
         {
-            List<ulong> aliveClients = ConnectionManager.instance.GetAliveClients();
+            List<ulong> aliveClients = ConnectionManager.Instance.GetAliveClients();
 
             // Check if there are ANY alive clients before proceeding
             if (aliveClients.Count > 0)
@@ -116,7 +116,7 @@ public class Player : NetworkBehaviour
                     spectatingPlayerIndex = 0;
 
                 // Get the player to spectate
-                Player spectatePlayer = ConnectionManager.instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
+                Player spectatePlayer = ConnectionManager.Instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
 
                 // Only follow/look if we got a valid player
                 if (spectatePlayer != null)
@@ -159,14 +159,14 @@ public class Player : NetworkBehaviour
     public void Respawn()
     {
         // Get updated playerData from connectionManager
-        ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
+        ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
 
         if (IsServer)
         {
             // Server-side respawn logic
             Debug.Log("Server respawning Player");
             rb.position = playerData.spawnPoint;
-            rb.transform.LookAt(SpawnPointManager.instance.transform);
+            rb.transform.LookAt(SpawnPointManager.Instance.transform);
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
@@ -174,7 +174,7 @@ public class Player : NetworkBehaviour
             if (playerData.state != PlayerState.Alive)
             {
                 playerData.state = PlayerState.Alive;
-                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
             }
         }
         else if (IsOwner)
@@ -204,9 +204,9 @@ public class Player : NetworkBehaviour
 
     private void ApplyPlayerData(PlayerData playerData)
     {
-        if (body != null && ConnectionManager.instance != null)
+        if (body != null && ConnectionManager.Instance != null)
         {
-            body.GetComponent<Renderer>().material = ConnectionManager.instance.hogTextures[playerData.colorIndex];
+            body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[playerData.colorIndex];
         }
 
         // Only display floating username for non-local players

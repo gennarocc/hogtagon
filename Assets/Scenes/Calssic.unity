@@ -2890,6 +2890,14 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 0}
+  LobbyMusicOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
+  LobbyMusicOff:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
   MidroundOn:
     idInternal: 0
     valueGuidInternal: 
@@ -2899,6 +2907,18 @@ MonoBehaviour:
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 0}
   PlayerEliminated:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
+  RoundStart:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
+  Round30Sec:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
+  RoundWin:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 0}
@@ -4389,6 +4409,17 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 0}
+  - type: 6
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 0}
+  - type: 6
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 0}
+  globalSoundSource: {fileID: 0}
 --- !u!1 &666450242
 GameObject:
   m_ObjectHideFlags: 0
@@ -4852,7 +4883,6 @@ RectTransform:
   - {fileID: 709393238}
   - {fileID: 426899501}
   - {fileID: 385080319}
-  - {fileID: 1598571663}
   m_Father: {fileID: 1935665464}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5132,7 +5162,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -20}
+  m_AnchoredPosition: {x: 0, y: -20.000061}
   m_SizeDelta: {x: -146, y: 19.800049}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &748281887
@@ -8688,7 +8718,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1246823220}
   - component: {fileID: 1246823221}
-  - component: {fileID: 1246823222}
   m_Layer: 5
   m_Name: Pause Menu
   m_TagString: Untagged
@@ -15129,7 +15158,6 @@ GameObject:
   - component: {fileID: 2026663750}
   - component: {fileID: 2026663749}
   - component: {fileID: 2026663751}
-  - component: {fileID: 2026663752}
   m_Layer: 5
   m_Name: MainMenuPanel
   m_TagString: Untagged

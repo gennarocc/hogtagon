@@ -10,12 +10,12 @@ public class Scoreboard : MonoBehaviour
 
     private void OnEnable()
     {
-        score.text = ConnectionManager.instance.PrintScore();
+        score.text = ConnectionManager.Instance.PrintScore();
     }
 
     public void UpdatePlayerList()
     {
-        players.text = ConnectionManager.instance.PrintPlayers();
-        score.text = ConnectionManager.instance.PrintScore();
+        players.text = ConnectionManager.Instance.PrintPlayers();
+        score.text = ConnectionManager.Instance.PrintScore();
     }
 }

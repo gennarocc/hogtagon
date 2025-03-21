@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.UI;
 using Hogtagon.Core.Infrastructure;
 using System;
 
@@ -16,14 +15,8 @@ public class GameManager : NetworkBehaviour
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
 
-    [Header("Wwise")]
-    [SerializeField] public AK.Wwise.Event LevelMusicOn;
-    [SerializeField] public AK.Wwise.Event LevelMusicOff;
-    [SerializeField] private AK.Wwise.Event MidroundOn;
-    [SerializeField] private AK.Wwise.Event MidroundOff;
-    [SerializeField] private AK.Wwise.Event PlayerEliminated;
 
-    public static GameManager instance;
+    public static GameManager Instance;
     private ulong roundWinnerClientId;
     private bool gameMusicPlaying;
 
@@ -38,9 +31,9 @@ public class GameManager : NetworkBehaviour
 
     public void Start()
     {
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
         }
         else
@@ -50,7 +43,7 @@ public class GameManager : NetworkBehaviour
 
         // Get KillFeed reference
         killFeed = ServiceLocator.GetService<KillFeed>();
-        
+
         TransitionToState(GameState.Pending);
     }
 
@@ -63,7 +56,7 @@ public class GameManager : NetworkBehaviour
     public void TransitionToState(GameState newState)
     {
         Debug.Log($"GameManager TransitionToState: {state} -> {newState}");
-        
+
         switch (newState)
         {
             case GameState.Pending:
@@ -81,13 +74,13 @@ public class GameManager : NetworkBehaviour
     private void SetGameState(GameState newState)
     {
         Debug.Log($"GameManager SetGameState: {state} -> {newState}");
-        
+
         // Update state
         state = newState;
-        
+
         // Broadcast to clients
         BroadcastGameStateClientRpc(newState);
-        
+
         // Notify subscribers
         OnGameStateChanged?.Invoke(newState);
     }
@@ -96,21 +89,27 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("GameManager OnEndingEnter");
         SetGameState(GameState.Ending);
-        
+
         // Pause kill feed and keep last message
         if (killFeed != null)
         {
             killFeed.PauseAndKeepLastMessage();
         }
 
+        // Play midround music using NetworkSoundManager
+        if (IsServer)
+        {
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidroundMusic);
+        }
+
         // Change camera to player who won.
-        ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
+        ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
 
         menuManager.DisplayWinnerClientRpc(roundWinner.username);
         roundWinner.score++;
 
-        ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
-        ConnectionManager.instance.UpdateLobbyLeaderBasedOnScore();
+        ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
+        ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
 
         StartCoroutine(BetweenRoundTimer());
     }
@@ -118,12 +117,15 @@ public class GameManager : NetworkBehaviour
     private void OnPlayingEnter()
     {
         Debug.Log("GameManager OnPlayingEnter");
-        
+
         // Clear processed deaths for new round
         processedDeaths.Clear();
-        
-        if (!gameMusicPlaying)
-            PlayLevelMusicClientRpc();
+
+        if (!gameMusicPlaying && IsServer)
+        {
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusic);
+            gameMusicPlaying = true;
+        }
 
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
@@ -152,7 +154,7 @@ public class GameManager : NetworkBehaviour
         yield return new WaitForSeconds(3f);
 
         Debug.Log("GameManager RoundCountdown finished - Transitioning to Playing");
-        
+
         // Unlock player movement
         UnlockPlayerMovement();
 
@@ -163,13 +165,17 @@ public class GameManager : NetworkBehaviour
         if (menuManager != null)
             menuManager.Resume();
 
-        BroadcastMidroundOffClientRpc();
+        // Play round start sound and stop midround music
+        if (IsServer)
+        {
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundStart);
+        }
     }
 
     public IEnumerator BetweenRoundTimer()
     {
         Debug.Log("GameManager BetweenRoundTimer started");
-        
+
         float showWinnerDuration = 2.0f;     // How long to show just the winner text
         float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
 
@@ -191,8 +197,17 @@ public class GameManager : NetworkBehaviour
     private void OnPendingEnter()
     {
         Debug.Log("GameManager OnPendingEnter");
-        // We're not pausing the kill feed anymore to allow messages in Pending state
-        StopLevelMusicClientRpc();
+
+        // Stop level music and play lobby music using NetworkSoundManager
+        if (IsServer)
+        {
+            if (gameMusicPlaying)
+            {
+                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusic);
+                gameMusicPlaying = false;
+            }
+        }
+
         SetGameState(GameState.Pending);
     }
 
@@ -200,12 +215,17 @@ public class GameManager : NetworkBehaviour
     {
         if (state != GameState.Playing) return;
 
-        List<ulong> alive = ConnectionManager.instance.GetAliveClients();
+        List<ulong> alive = ConnectionManager.Instance.GetAliveClients();
         if (alive.Count == 1)
         {
             roundWinnerClientId = alive[0];
             TransitionToState(GameState.Ending);
-            MidroundOff.Post(gameObject);
+
+            // Play round win sound using NetworkSoundManager
+            if (IsServer)
+            {
+                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundWin);
+            }
         }
     }
 
@@ -229,7 +249,7 @@ public class GameManager : NetworkBehaviour
             processedDeaths.Add(clientId);
         }
 
-        if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData player))
+        if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData player))
         {
             // Set player state to dead (but always allow pending state deaths)
             if (player.state == PlayerState.Dead && state != GameState.Pending)
@@ -239,16 +259,16 @@ public class GameManager : NetworkBehaviour
             }
 
             Debug.Log($"Processing death for {player.username} (ID: {clientId})");
-            
+
             // Update player state (only in Playing state)
             if (state == GameState.Playing)
             {
                 player.state = PlayerState.Dead;
-                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, player);
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, player);
             }
-            
+
             // Play death sound
-            BroadcastPlayerEliminatedSFXClientRpc();
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.PlayerEliminated);
 
             // Create kill feed message
             if (killFeed == null)
@@ -262,7 +282,7 @@ public class GameManager : NetworkBehaviour
                 if (playerCollisionTracker != null)
                 {
                     var lastCollision = playerCollisionTracker.GetLastCollision(clientId);
-                    
+
                     if (lastCollision != null)
                     {
                         // Player was killed by another player
@@ -295,15 +315,15 @@ public class GameManager : NetworkBehaviour
 
     private void LockPlayerMovement()
     {
-        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
-        foreach (HogController player in players)
+        NetworkHogController[] players = FindObjectsByType<NetworkHogController>(FindObjectsSortMode.None);
+        foreach (NetworkHogController player in players)
             player.canMove = false;
     }
 
     private void UnlockPlayerMovement()
     {
-        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
-        foreach (HogController player in players)
+        NetworkHogController[] players = FindObjectsByType<NetworkHogController>(FindObjectsSortMode.None);
+        foreach (NetworkHogController player in players)
             player.canMove = true;
     }
 
@@ -312,57 +332,6 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
         state = newState;
-        if (state == GameState.Ending)
-            MidroundOn.Post(gameObject);
-    }
-
-    [ClientRpc]
-    private void PlayLevelMusicClientRpc()
-    {
-        LevelMusicOn.Post(gameObject);
-        gameMusicPlaying = true;
-    }
-
-    [ClientRpc]
-    private void StopLevelMusicClientRpc()
-    {
-        LevelMusicOff.Post(gameObject);
-        gameMusicPlaying = false;
-    }
-
-    [ClientRpc]
-    private void BroadcastMidroundOffClientRpc()
-    {
-        MidroundOff.Post(gameObject);
-    }
-
-    [ClientRpc]
-    private void BroadcastPlayerEliminatedSFXClientRpc()
-    {
-        PlayerEliminated.Post(gameObject);
-    }
-
-    // Kill feed message handling - removed in favor of direct calls above
-    public void ShowKillMessage(string killerName, string victimName, bool isSuicide)
-    {
-        // Method preserved for backward compatibility but not used
-        if (!IsServer) return;
-        
-        if (killFeed == null)
-        {
-            killFeed = ServiceLocator.GetService<KillFeed>();
-        }
-
-        if (killFeed != null)
-        {
-            if (isSuicide)
-            {
-                killFeed.AddSuicideMessage(killerName);
-            }
-            else
-            {
-                killFeed.AddKillMessage(killerName, victimName);
-            }
-        }
+        if (state == GameState.Ending) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidroundMusic);
     }
 }

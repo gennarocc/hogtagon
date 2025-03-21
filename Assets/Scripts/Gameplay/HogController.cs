@@ -156,7 +156,6 @@ public class HogController : NetworkBehaviour
             DisableWheelColliderPhysics();
         }
 
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
     }
 
     private void Update()
@@ -198,7 +197,6 @@ public class HogController : NetworkBehaviour
         if (!transform.root.gameObject.GetComponent<Player>().isSpectating)
         {
             // Play Horn Sound
-            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
         }
     }
 
@@ -339,10 +337,9 @@ public class HogController : NetworkBehaviour
     {
         // Store reference to instantiated explosion
         GameObject explosionInstance = Instantiate(Explosion, transform.position + centerOfMass, transform.rotation, transform);
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.CarExplosion); // Play Explosion Sound.
         canMove = false;
 
-        Debug.Log("Exploding car for player - " + ConnectionManager.instance.GetClientUsername(OwnerClientId));
+        Debug.Log("Exploding car for player - " + ConnectionManager.Instance.GetClientUsername(OwnerClientId));
         StartCoroutine(ResetAfterExplosion(explosionInstance));
     }
 
@@ -581,7 +578,7 @@ public class HogController : NetworkBehaviour
             jumpCooldownRemaining = jumpCooldown;
 
             // Play sound effect
-            // HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogJump);
+            // HogSoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogJump);
         }
     }
 
@@ -747,7 +744,7 @@ public class HogController : NetworkBehaviour
         Debug.Log($"[COLLISION] Player {myPlayer.clientId} collided with Player {otherPlayer.clientId}");
 
         // Get the colliding player's name from ConnectionManager
-        if (ConnectionManager.instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
+        if (ConnectionManager.Instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
         {
             // Record the collision in the tracker
             var collisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
@@ -757,8 +754,6 @@ public class HogController : NetworkBehaviour
             }
         }
 
-        // Play impact sound
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -775,7 +770,7 @@ public class HogController : NetworkBehaviour
         Debug.Log($"[TRIGGER] Player {myPlayer.clientId} triggered with Player {otherPlayer.clientId}");
 
         // Get the colliding player's name from ConnectionManager
-        if (ConnectionManager.instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
+        if (ConnectionManager.Instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
         {
             // Record the collision in the tracker
             var collisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();

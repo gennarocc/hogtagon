@@ -20,7 +20,7 @@ public class ConnectionManager : NetworkBehaviour
     [SerializeField] private Scoreboard scoreboard;
     private Dictionary<ulong, PlayerData> clientDataDictionary = new Dictionary<ulong, PlayerData>();
     private Dictionary<ulong, PlayerData> pendingPlayerData = new Dictionary<ulong, PlayerData>();
-    public static ConnectionManager instance;
+    public static ConnectionManager Instance;
 
     private void Start()
     {
@@ -29,9 +29,9 @@ public class ConnectionManager : NetworkBehaviour
         NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
         NetworkManager.Singleton.OnTransportFailure += OnTransportFailure;
 
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
         }
         else
@@ -63,21 +63,21 @@ public class ConnectionManager : NetworkBehaviour
             return;
         }
 
-        var sp = SpawnPointManager.instance.AssignSpawnPoint(clientId);
+        var sp = SpawnPointManager.Instance.AssignSpawnPoint(clientId);
         var player = new PlayerData()
         {
             username = decodedUsername,
             score = 0,
             colorIndex = GetAvailableTextureIndex(),
-            state = GameManager.instance.state == GameState.Playing ? PlayerState.Dead : PlayerState.Alive,
+            state = GameManager.Instance.state == GameState.Playing ? PlayerState.Dead : PlayerState.Alive,
             spawnPoint = sp,
             isLobbyLeader = false
         };
 
         pendingPlayerData.Add(clientId, player);
         response.Approved = true;
-        response.Position = GameManager.instance.state == GameState.Playing ? new Vector3(0, 0, 0) : sp;
-        response.Rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - sp);
+        response.Position = GameManager.Instance.state == GameState.Playing ? new Vector3(0, 0, 0) : sp;
+        response.Rotation = Quaternion.LookRotation(SpawnPointManager.Instance.transform.position - sp);
         response.CreatePlayerObject = true;
     }
 
@@ -101,7 +101,7 @@ public class ConnectionManager : NetworkBehaviour
     {
         // Unassign Spawn Point
         if (IsServer)
-            SpawnPointManager.instance.UnassignSpawnPoint(clientId);
+            SpawnPointManager.Instance.UnassignSpawnPoint(clientId);
 
         // Remove Data from Client Dictionary/List
         if (clientDataDictionary.ContainsKey(clientId))
@@ -121,7 +121,7 @@ public class ConnectionManager : NetworkBehaviour
             // If server and only one player left, reset to lobby state and show message
             if (IsServer && NetworkManager.Singleton.ConnectedClients.Count <= 1)
             {
-                GameManager.instance.TransitionToState(GameState.Pending);
+                GameManager.Instance.TransitionToState(GameState.Pending);
                 ShowHostAloneMessageClientRpc(username);
             }
         }
