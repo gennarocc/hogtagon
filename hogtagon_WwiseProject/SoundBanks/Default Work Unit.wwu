@@ -5,7 +5,6 @@
 			<ChildrenList>
 				<SoundBank Name="Main" ID="{1F271523-D06E-43F1-94DA-5F0AB2541AA1}">
 					<ObjectInclusionList>
-						<ObjectRef Name="LobbyMusicOff" ID="{A76522A5-5C03-4072-90B0-7701B0CBB266}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogImpactMed" ID="{CD9038A7-C738-4214-81AE-E852DBB6E9F7}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogImpactLow" ID="{8470C153-F0C5-427D-90A5-A13B00F889F7}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogImpactHigh" ID="{2E6A007B-64E3-42A8-A11B-9B3B201492EF}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
@@ -22,7 +21,6 @@
 						<ObjectRef Name="Round30Sec" ID="{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogJump" ID="{CD25EB60-CA7B-4CCA-BBDD-C141744312F7}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="uiConfirm" ID="{35F72BE4-E30A-4D8A-98CC-897D16A1EC27}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
-						<ObjectRef Name="LobbyMusicOn" ID="{F7F2F008-6FD8-4DA4-9DCE-9B6AC2FF5E6E}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="EngineOn" ID="{6DC496AD-3332-4DA5-8F13-711E68963147}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="uiClick" ID="{2043224E-8C2D-4E36-B5B2-AAD4DB5AC0DE}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="uiCancel" ID="{DEE1CE85-2F7B-4EFB-8925-B4F06E40F8B4}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
@@ -32,11 +30,13 @@
 				</SoundBank>
 				<SoundBank Name="Music" ID="{F0049809-0D2F-467E-A817-D74CA9543625}">
 					<ObjectInclusionList>
+						<ObjectRef Name="LobbyMusicOff" ID="{A76522A5-5C03-4072-90B0-7701B0CBB266}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="MenuMusicOn" ID="{806F1833-099F-4122-96FC-DD1370B7749B}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="MidroundOn" ID="{D9054DF8-BF62-433E-A094-BBE2D075E616}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="LevelMusicOn" ID="{4154EC31-4EF5-4574-923D-FE49514754DD}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="LevelMusicOff" ID="{0A73D79A-CE04-47E5-8FBF-A3554A5508C2}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="MenuMusicOff" ID="{F40744FD-0B0A-4B81-85F4-4AE146D35295}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="LobbyMusicOn" ID="{F7F2F008-6FD8-4DA4-9DCE-9B6AC2FF5E6E}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="MidroundOff" ID="{3114A31F-9387-4E49-9F91-AFAE8125B52C}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 					</ObjectInclusionList>
 					<ObjectExclusionList/>

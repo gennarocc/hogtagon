@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{F0049809-0D2F-467E-A817-D74CA9543625}",
     "Language": "SFX",
-    "Hash": "{F71FAD2C-E9F2-B718-F954-C45782895065}",
+    "Hash": "{C0FE4750-9276-E556-C6E2-BD12EBBBD6E7}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Music",
     "ShortName": "Music",
     "Path": "Music.bnk",
@@ -62,6 +62,14 @@
       "Location": "Memory",
       "ShortName": "F_3-170bpm_L4_P4.wav",
       "CachePath": "9E/{9E09DE94-1CEB-08B5-DC2C-438C7A37133F}.wem"
+     },
+     {
+      "Id": "810530870",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "v0_lobby.wav",
+      "CachePath": "A6/{A6F9E533-A73A-4B29-0526-363A79E1CC17}.wem"
      },
      {
       "Id": "966578357",
@@ -133,6 +141,28 @@
       ]
      },
      {
+      "Id": "559864827",
+      "Name": "LobbyMusicOff",
+      "ObjectPath": "\\Events\\Default Work Unit\\LobbyMusicOff",
+      "GUID": "{A76522A5-5C03-4072-90B0-7701B0CBB266}",
+      "MaxAttenuation": "0",
+      "DurationType": "OneShot",
+      "DurationMin": "0",
+      "DurationMax": "0"
+     },
+     {
+      "Id": "3144723463",
+      "Name": "LobbyMusicOn",
+      "ObjectPath": "\\Events\\Default Work Unit\\LobbyMusicOn",
+      "GUID": "{F7F2F008-6FD8-4DA4-9DCE-9B6AC2FF5E6E}",
+      "DurationType": "Infinite",
+      "MediaRefs": [
+       {
+        "Id": "810530870"
+       }
+      ]
+     },
+     {
       "Id": "2510477776",
       "Name": "MenuMusicOff",
       "ObjectPath": "\\Events\\Default Work Unit\\MenuMusicOff",
@@ -177,6 +207,6 @@
     ]
    }
   ],
-  "FileHash": "{6FA38E71-5385-E90B-5A84-E7B1A041F64C}"
+  "FileHash": "{A2EEB09A-A9AD-43D7-91D7-09CC89343A12}"
  }
 }
