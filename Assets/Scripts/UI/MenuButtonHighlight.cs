@@ -88,7 +88,7 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
         yield return null;
         
         // Reset all buttons
-        MenuButtonHighlight[] allButtons = FindObjectsOfType<MenuButtonHighlight>();
+        MenuButtonHighlight[] allButtons = FindObjectsByType<MenuButtonHighlight>(FindObjectsSortMode.None);
         foreach (MenuButtonHighlight btn in allButtons)
         {
             btn.ForceUnhighlightButton();
@@ -108,7 +108,7 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
     // Static method to ensure all buttons have exactly the same color
     public static void NormalizeAllButtonColors()
     {
-        MenuButtonHighlight[] allButtons = FindObjectsOfType<MenuButtonHighlight>();
+        MenuButtonHighlight[] allButtons = FindObjectsByType<MenuButtonHighlight>(FindObjectsSortMode.None);
         foreach (MenuButtonHighlight btn in allButtons)
         {
             if (!btn.isHighlighted && btn.buttonText != null)

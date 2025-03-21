@@ -1,0 +1,269 @@
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using UnityEngine.EventSystems;
+using Unity.Netcode;
+using System.Collections;
+
+/// <summary>
+/// Controls the PauseMenuPanel UI, handling button styling and functionality
+/// </summary>
+public class PauseMenuPanel : MonoBehaviour
+{
+    [Header("Button References")]
+    [SerializeField] private Button resumeButton;
+    [SerializeField] private Button settingsButton;
+    [SerializeField] private Button lobbySettingsButton;
+    [SerializeField] private Button disconnectButton;
+    [SerializeField] private Button quitButton;
+    
+    [Header("Button Styling")]
+    [SerializeField] private Color normalColor = new Color(0, 1, 0, 1); // Bright green
+    [SerializeField] private Color hoverColor = new Color(0.7f, 1, 0.7f, 1); // Lighter green
+    [SerializeField] private Color pressedColor = new Color(0, 0.7f, 0, 1); // Darker green
+    [SerializeField] private float hoverScaleAmount = 1.1f;
+    
+    [Header("References")]
+    [SerializeField] private MenuManager menuManager;
+    [SerializeField] private TextMeshProUGUI pausedText;
+    [SerializeField] private TextMeshProUGUI joinCodeText;
+    
+    private Vector3 originalResumeButtonScale;
+    private Vector3 originalSettingsButtonScale;
+    private Vector3 originalLobbySettingsButtonScale;
+    private Vector3 originalDisconnectButtonScale;
+    private Vector3 originalQuitButtonScale;
+
+    public static bool CanOpenPauseMenu()
+    {
+        // Check if the player is in a valid state to open the pause menu
+        if (MenuManager.instance == null)
+        {
+            Debug.LogWarning("Cannot open pause menu: MenuManager.instance is null");
+            return false;
+        }
+        
+        // Temporarily DISABLE the check for other active menus to help diagnose the issue
+        // bool noOtherMenusActive = !MenuManager.instance.IsAnyMenuActive();
+        bool noOtherMenusActive = true; // Force to true to bypass this check
+        
+        // Simplify the check for valid game state
+        // We'll assume we're in a valid state if any instance exists to help diagnose
+        bool validGameState = (GameManager.instance != null);
+        
+        if (!validGameState)
+        {
+            Debug.LogWarning("Cannot open pause menu: GameManager.instance is null");
+        }
+        
+        bool canOpen = noOtherMenusActive && validGameState;
+        Debug.Log("Pause menu can be opened: " + canOpen);
+        
+        return canOpen;
+    }
+
+    private void Awake()
+    {
+        // Store original button scales
+        if (resumeButton != null)
+            originalResumeButtonScale = resumeButton.transform.localScale;
+        
+        if (settingsButton != null)
+            originalSettingsButtonScale = settingsButton.transform.localScale;
+        
+        if (lobbySettingsButton != null)
+            originalLobbySettingsButtonScale = lobbySettingsButton.transform.localScale;
+            
+        if (disconnectButton != null)
+            originalDisconnectButtonScale = disconnectButton.transform.localScale;
+            
+        if (quitButton != null)
+            originalQuitButtonScale = quitButton.transform.localScale;
+            
+        // Find MenuManager if not assigned
+        if (menuManager == null)
+            menuManager = MenuManager.instance;
+    }
+    
+    private void OnEnable()
+    {
+        SetupButtons();
+        UpdateUI();
+    }
+    
+    private void UpdateUI()
+    {
+        // Display join code if available
+        if (joinCodeText != null && ConnectionManager.instance != null && !string.IsNullOrEmpty(ConnectionManager.instance.joinCode))
+        {
+            joinCodeText.text = "CODE: " + ConnectionManager.instance.joinCode;
+        }
+        
+        // Only show the lobby settings button for the host
+        if (lobbySettingsButton != null)
+        {
+            bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
+            lobbySettingsButton.gameObject.SetActive(isHost);
+        }
+    }
+    
+    private void SetupButtons()
+    {
+        // Setup Resume button
+        if (resumeButton != null)
+        {
+            SetupButtonColors(resumeButton);
+            
+            // Add hover event listeners
+            AddHoverHandlers(resumeButton.gameObject, originalResumeButtonScale);
+            
+            // Add resume button functionality
+            resumeButton.onClick.RemoveAllListeners();
+            resumeButton.onClick.AddListener(OnResumeClicked);
+        }
+        
+        // Setup Settings button
+        if (settingsButton != null)
+        {
+            SetupButtonColors(settingsButton);
+            
+            // Add hover event listeners
+            AddHoverHandlers(settingsButton.gameObject, originalSettingsButtonScale);
+            
+            // Add settings button functionality
+            settingsButton.onClick.RemoveAllListeners();
+            settingsButton.onClick.AddListener(OnSettingsClicked);
+        }
+        
+        // Setup Lobby Settings button (host only)
+        if (lobbySettingsButton != null)
+        {
+            SetupButtonColors(lobbySettingsButton);
+            
+            // Add hover event listeners
+            AddHoverHandlers(lobbySettingsButton.gameObject, originalLobbySettingsButtonScale);
+            
+            // Add lobby settings button functionality
+            lobbySettingsButton.onClick.RemoveAllListeners();
+            lobbySettingsButton.onClick.AddListener(OnLobbySettingsClicked);
+            
+            // Only show for host
+            lobbySettingsButton.gameObject.SetActive(NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer);
+        }
+        
+        // Setup Disconnect button
+        if (disconnectButton != null)
+        {
+            SetupButtonColors(disconnectButton);
+            
+            // Add hover event listeners
+            AddHoverHandlers(disconnectButton.gameObject, originalDisconnectButtonScale);
+            
+            // Add disconnect button functionality
+            disconnectButton.onClick.RemoveAllListeners();
+            disconnectButton.onClick.AddListener(OnDisconnectClicked);
+        }
+        
+        // Setup Quit button
+        if (quitButton != null)
+        {
+            SetupButtonColors(quitButton);
+            
+            // Add hover event listeners
+            AddHoverHandlers(quitButton.gameObject, originalQuitButtonScale);
+            
+            // Add quit button functionality
+            quitButton.onClick.RemoveAllListeners();
+            quitButton.onClick.AddListener(OnQuitClicked);
+        }
+    }
+    
+    private void SetupButtonColors(Button button)
+    {
+        ColorBlock colors = button.colors;
+        colors.normalColor = normalColor;
+        colors.highlightedColor = hoverColor;
+        colors.pressedColor = pressedColor;
+        colors.selectedColor = hoverColor;
+        button.colors = colors;
+    }
+    
+    private void AddHoverHandlers(GameObject buttonObj, Vector3 originalScale)
+    {
+        // Add hover handlers using EventTrigger component
+        EventTrigger trigger = buttonObj.GetComponent<EventTrigger>();
+        if (trigger == null)
+            trigger = buttonObj.AddComponent<EventTrigger>();
+            
+        // Clear existing entries
+        trigger.triggers.Clear();
+        
+        // Add pointer enter event (hover)
+        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+        enterEntry.eventID = EventTriggerType.PointerEnter;
+        enterEntry.callback.AddListener((data) => {
+            buttonObj.transform.localScale = originalScale * hoverScaleAmount;
+        });
+        trigger.triggers.Add(enterEntry);
+        
+        // Add pointer exit event (exit hover)
+        EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+        exitEntry.eventID = EventTriggerType.PointerExit;
+        exitEntry.callback.AddListener((data) => {
+            buttonObj.transform.localScale = originalScale;
+        });
+        trigger.triggers.Add(exitEntry);
+    }
+    
+    // Button event handlers
+    public void OnResumeClicked()
+    {
+        if (menuManager != null)
+        {
+            menuManager.ButtonClickAudio();
+            menuManager.Resume();
+        }
+    }
+    
+    public void OnSettingsClicked()
+    {
+        Debug.Log("PauseMenuPanel.OnSettingsClicked called");
+        
+        if (menuManager != null)
+        {
+            menuManager.ButtonClickAudio();
+            menuManager.Settings();
+        }
+        else
+        {
+            Debug.LogError("MenuManager reference is null in PauseMenuPanel");
+        }
+    }
+    
+    public void OnLobbySettingsClicked()
+    {
+        if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            menuManager.ButtonClickAudio();
+            menuManager.OpenLobbySettingsMenu();
+        }
+    }
+    
+    public void OnDisconnectClicked()
+    {
+        if (menuManager != null)
+        {
+            menuManager.ButtonClickAudio();
+            menuManager.Disconnect();
+        }
+    }
+    
+    public void OnQuitClicked()
+    {
+        if (menuManager != null)
+        {
+            menuManager.ButtonClickAudio();
+            menuManager.QuitGame();
+        }
+    }
+} 

@@ -403,6 +403,13 @@ public class NetworkHogController : NetworkBehaviour
 
     private float CalculateCameraAngle(Vector2 lookInput = default)
     {
+        // Check if any menus are active - if so, don't update camera angle
+        if (MenuManager.instance != null && MenuManager.instance.gameIsPaused)
+        {
+            // Return current camera angle without updating it
+            return cameraAngle;
+        }
+        
         // If using gamepad with sufficient input magnitude
         if (inputManager.IsUsingGamepad && lookInput.sqrMagnitude > 0.01f)
         {

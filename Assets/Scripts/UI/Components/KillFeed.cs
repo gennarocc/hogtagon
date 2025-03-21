@@ -72,8 +72,12 @@ public class KillFeed : NetworkBehaviour
         }
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
+        // Call base implementation
+        base.OnDestroy();
+        
+        // Unregister service
         if (instance == this)
         {
             instance = null;
@@ -245,6 +249,21 @@ public class KillFeed : NetworkBehaviour
                     activeMessages.Enqueue(msg);
                 }
             }
+        }
+    }
+
+    // Method to handle player killed events
+    public void HandlePlayerKilled(ulong killerClientId, string killerName, ulong victimClientId, string victimName)
+    {
+        if (killerClientId == victimClientId || killerClientId == 0)
+        {
+            // Suicide or environmental death
+            AddSuicideMessage(victimName);
+        }
+        else
+        {
+            // Normal kill
+            AddKillMessage(killerName, victimName);
         }
     }
 }

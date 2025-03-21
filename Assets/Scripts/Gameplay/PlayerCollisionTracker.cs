@@ -17,8 +17,12 @@ public class PlayerCollisionTracker : NetworkBehaviour
         Debug.Log("PlayerCollisionTracker registered with ServiceLocator");
     }
 
-    private void OnDestroy()
+    // Make sure to clean up when this object is destroyed
+    public override void OnDestroy()
     {
+        // Call base implementation for NetworkBehaviour
+        base.OnDestroy();
+        
         // Unregister when destroyed
         ServiceLocator.UnregisterService<PlayerCollisionTracker>();
     }

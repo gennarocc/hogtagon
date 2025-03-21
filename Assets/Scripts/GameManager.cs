@@ -12,6 +12,11 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
     [SerializeField] private bool showScoreboardBetweenRounds = true;
 
+    [Header("Game Mode Settings")]
+    [SerializeField] private MenuManager.GameMode gameMode = MenuManager.GameMode.FreeForAll;
+    [SerializeField] private int teamCount = 2;
+    [SerializeField] private bool gameModeLocked = false; // Will be locked after game starts
+
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
 
@@ -116,6 +121,9 @@ public class GameManager : NetworkBehaviour
 
     private void OnPlayingEnter()
     {
+        // Lock game mode settings when game starts
+        LockGameModeSettings();
+        
         Debug.Log("GameManager OnPlayingEnter");
 
         // Clear processed deaths for new round
@@ -329,5 +337,64 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
         state = newState;
         if (state == GameState.Ending) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOff);
+    }
+
+    // Method to set game mode (called from MenuManager)
+    public void SetGameMode(MenuManager.GameMode mode)
+    {
+        // Only allow changing game mode before game starts
+        if (!gameModeLocked)
+        {
+            gameMode = mode;
+            Debug.Log("Game mode set to: " + gameMode);
+            
+            // TODO: Notify clients of game mode change
+            if (IsServer)
+            {
+                UpdateGameModeClientRpc(mode);
+            }
+        }
+    }
+
+    // Method to set team count for team battle mode
+    public void SetTeamCount(int count)
+    {
+        // Only allow changing team count if in team battle mode and before game starts
+        if (!gameModeLocked && gameMode == MenuManager.GameMode.TeamBattle)
+        {
+            teamCount = Mathf.Clamp(count, 2, 4); // Limit between 2-4 teams
+            Debug.Log("Team count set to: " + teamCount);
+            
+            // TODO: Notify clients of team count change
+            if (IsServer)
+            {
+                UpdateTeamCountClientRpc(teamCount);
+            }
+        }
+    }
+
+    // Client RPC to sync game mode with clients
+    [ClientRpc]
+    private void UpdateGameModeClientRpc(MenuManager.GameMode mode)
+    {
+        // Update local game mode
+        gameMode = mode;
+        Debug.Log("Client received game mode update: " + gameMode);
+    }
+
+    // Client RPC to sync team count with clients
+    [ClientRpc]
+    private void UpdateTeamCountClientRpc(int count)
+    {
+        // Update local team count
+        teamCount = count;
+        Debug.Log("Client received team count update: " + teamCount);
+    }
+
+    // Lock game mode settings when game starts
+    private void LockGameModeSettings()
+    {
+        gameModeLocked = true;
+        Debug.Log("Game mode settings locked");
     }
 }

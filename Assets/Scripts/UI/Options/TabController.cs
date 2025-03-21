@@ -41,20 +41,46 @@ public class TabController : MonoBehaviour
             {
                 if (button.name.Contains("Tab"))
                 {
-                    // Try to find corresponding panel - use the exact panel names from hierarchy
-                    string panelName = button.name.Replace("Tab", "Panel");
-                    Transform panel = transform.parent.Find("Content/" + panelName);
-                    if (panel != null)
-                    {
-                        TabData newTab = new TabData();
-                        newTab.tabName = button.name.Replace("Tab", "");
-                        newTab.tabButton = button;
-                        newTab.tabContent = panel.gameObject;
-                        newTab.tabText = button.GetComponentInChildren<TextMeshProUGUI>();
-                        tabs.Add(newTab);
+                    try {
+                        // Try to find corresponding panel - use the exact panel names from hierarchy
+                        string panelName = button.name.Replace("Tab", "Panel");
+                        Transform panel = transform.parent.Find("Content/" + panelName);
+                        if (panel != null)
+                        {
+                            TabData newTab = new TabData();
+                            newTab.tabName = button.name.Replace("Tab", "");
+                            newTab.tabButton = button;
+                            newTab.tabContent = panel.gameObject;
+                            newTab.tabText = button.GetComponentInChildren<TextMeshProUGUI>();
+                            tabs.Add(newTab);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("TabController: Could not find panel for " + button.name);
+                        }
+                    }
+                    catch (System.Exception e) {
+                        Debug.LogError("Error setting up tab: " + e.Message);
                     }
                 }
             }
+        }
+        
+        // Remove any invalid tabs
+        for (int i = tabs.Count - 1; i >= 0; i--)
+        {
+            if (tabs[i].tabButton == null || tabs[i].tabContent == null)
+            {
+                Debug.LogWarning("TabController: Removing invalid tab at index " + i);
+                tabs.RemoveAt(i);
+            }
+        }
+        
+        // If no valid tabs, early exit
+        if (tabs.Count == 0)
+        {
+            Debug.LogWarning("TabController: No valid tabs found, aborting setup");
+            return;
         }
         
         // Ensure all tab buttons have click listeners
@@ -89,8 +115,17 @@ public class TabController : MonoBehaviour
             }
         }
         
+        // Validate default tab index
+        if (defaultTabIndex < 0 || defaultTabIndex >= tabs.Count)
+        {
+            defaultTabIndex = 0;
+        }
+        
         // Always select the default tab when enabled
-        SelectTab(defaultTabIndex);
+        if (tabs.Count > 0)
+        {
+            SelectTab(defaultTabIndex);
+        }
         
         // Double check that tab content is active
         if (currentTabIndex >= 0 && currentTabIndex < tabs.Count)
@@ -114,11 +149,22 @@ public class TabController : MonoBehaviour
         else
         {
             // Try to find back button if not assigned
-            backButton = transform.parent.GetComponentInChildren<Button>(true);
-            if (backButton != null && backButton.name.ToLower().Contains("back"))
+            Button[] allButtons = GetComponentsInChildren<Button>(true);
+            foreach (Button btn in allButtons)
             {
-                backButton.onClick.RemoveAllListeners();
-                backButton.onClick.AddListener(BackToMainMenu);
+                if (btn != null && btn.name.ToLower().Contains("back"))
+                {
+                    backButton = btn;
+                    backButton.onClick.RemoveAllListeners();
+                    backButton.onClick.AddListener(BackToMainMenu);
+                    Debug.Log("TabController: Found back button: " + backButton.name);
+                    break;
+                }
+            }
+            
+            if (backButton == null)
+            {
+                Debug.LogWarning("TabController: No back button found");
             }
         }
     }
@@ -170,38 +216,79 @@ public class TabController : MonoBehaviour
     
     public void SelectTab(int tabIndex)
     {
-        if (tabIndex < 0 || tabIndex >= tabs.Count || tabIndex == currentTabIndex)
+        // Validate input
+        if (tabIndex < 0 || tabIndex >= tabs.Count)
+        {
+            Debug.LogWarning("TabController: Invalid tab index: " + tabIndex);
             return;
+        }
+        
+        // Skip if it's the same tab
+        if (tabIndex == currentTabIndex)
+            return;
+            
+        // Validate tab data
+        if (tabs[tabIndex].tabContent == null)
+        {
+            Debug.LogError("Tab container not found for index " + tabIndex + "! Please assign it in the Inspector.");
+            return;
+        }
             
         // Deactivate current tab if one is active
         if (currentTabIndex >= 0 && currentTabIndex < tabs.Count)
         {
-            // Hide the content
-            tabs[currentTabIndex].tabContent.SetActive(false);
+            TabData currentTab = tabs[currentTabIndex];
             
-            // Reset button color
-            if (tabs[currentTabIndex].tabText != null)
+            // Skip if missing references
+            if (currentTab == null)
             {
-                tabs[currentTabIndex].tabText.color = inactiveTabColor;
+                Debug.LogError("Current tab data is null!");
+            }
+            else
+            {
+                // Hide the content if it exists
+                if (currentTab.tabContent != null)
+                {
+                    currentTab.tabContent.SetActive(false);
+                }
+                else
+                {
+                    Debug.LogWarning("Current tab content is null!");
+                }
+                
+                // Reset button color if text exists
+                if (currentTab.tabText != null)
+                {
+                    currentTab.tabText.color = inactiveTabColor;
+                }
             }
         }
         
         // Activate the new tab
         currentTabIndex = tabIndex;
+        TabData newTab = tabs[currentTabIndex];
         
         // Show the content
-        tabs[currentTabIndex].tabContent.SetActive(true);
+        if (newTab.tabContent != null)
+        {
+            newTab.tabContent.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("New tab content is null!");
+            return;
+        }
         
         // Set button color
-        if (tabs[currentTabIndex].tabText != null)
+        if (newTab.tabText != null)
         {
-            tabs[currentTabIndex].tabText.color = activeTabColor;
+            newTab.tabText.color = activeTabColor;
         }
         
         // Focus on the tab button for better gamepad navigation
-        if (EventSystem.current != null && tabs[currentTabIndex].tabButton != null)
+        if (EventSystem.current != null && newTab.tabButton != null)
         {
-            EventSystem.current.SetSelectedGameObject(tabs[currentTabIndex].tabButton.gameObject);
+            EventSystem.current.SetSelectedGameObject(newTab.tabButton.gameObject);
         }
     }
     
@@ -219,50 +306,74 @@ public class TabController : MonoBehaviour
 
     public void BackToMainMenu()
     {
+        // Log diagnostic information
+        Debug.Log("TabController.BackToMainMenu called");
+        
         // Find the MenuManager
         MenuManager menuManager = FindObjectOfType<MenuManager>();
         if (menuManager != null)
         {
-            // Trigger the back button functionality
+            // Trigger the back button functionality 
             menuManager.ButtonClickAudio();
             
-            // Deactivate this menu
-            GameObject optionsMenu = gameObject.transform.parent.gameObject;
+            Debug.Log("Found MenuManager, gameIsPaused = " + menuManager.gameIsPaused);
+            
+            // Directly handle closing this menu first
+            GameObject optionsMenu = transform.parent.gameObject;
             optionsMenu.SetActive(false);
             
-            // Reset all tab contents
-            foreach (var tab in tabs)
+            // Then handle pause menu activation directly
+            if (menuManager.gameIsPaused)
             {
-                if (tab.tabContent != null)
+                Debug.Log("Game is paused, activating pause menu directly");
+                Transform pauseMenuUI = menuManager.transform.Find("PauseMenuUI");
+                if (pauseMenuUI != null)
                 {
-                    tab.tabContent.SetActive(false);
+                    pauseMenuUI.gameObject.SetActive(true);
+                    
+                    // Enable all children
+                    foreach (Transform child in pauseMenuUI)
+                    {
+                        child.gameObject.SetActive(true);
+                    }
+                    
+                    // Find Resume button for focus
+                    Button resumeButton = null;
+                    Button[] buttons = pauseMenuUI.GetComponentsInChildren<Button>(true);
+                    foreach (Button btn in buttons)
+                    {
+                        if (btn.name.Contains("Resume"))
+                        {
+                            resumeButton = btn;
+                            break;
+                        }
+                    }
+                    
+                    if (resumeButton != null && EventSystem.current != null)
+                    {
+                        EventSystem.current.SetSelectedGameObject(null);
+                        EventSystem.current.SetSelectedGameObject(resumeButton.gameObject);
+                    }
                 }
-                
-                if (tab.tabText != null)
+                else
                 {
-                    tab.tabText.color = inactiveTabColor;
+                    Debug.LogError("Could not find PauseMenuUI!");
                 }
             }
-            
-            // Show the main menu
-            if (menuManager.gameObject != null)
+            else
             {
+                Debug.Log("Game is not paused, activating main menu");
+                // Find and activate main menu
                 Transform mainMenuPanel = menuManager.transform.Find("MainMenuPanel");
                 if (mainMenuPanel != null)
                 {
                     mainMenuPanel.gameObject.SetActive(true);
-                    
-                    // Reset button states in main menu
-                    ButtonStateResetter resetter = mainMenuPanel.GetComponent<ButtonStateResetter>();
-                    if (resetter != null)
-                    {
-                        resetter.ResetAllButtonStates();
-                    }
-                    
-                    // Manually clear the event system selection
-                    EventSystem.current.SetSelectedGameObject(null);
                 }
             }
+        }
+        else
+        {
+            Debug.LogError("MenuManager not found!");
         }
     }
 } 
