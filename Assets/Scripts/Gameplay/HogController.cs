@@ -159,16 +159,6 @@ public class HogController : NetworkBehaviour
         HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
     }
 
-    private void OnDestroy()
-    {
-        // Unsubscribe from events when destroyed
-        if (inputManager != null && IsOwner)
-        {
-            inputManager.JumpPressed -= OnJumpPressed;
-            inputManager.HornPressed -= OnHornPressed;
-        }
-    }
-
     private void Update()
     {
         if (!IsOwner) return;
@@ -217,7 +207,7 @@ public class HogController : NetworkBehaviour
         // Check if player can jump and is not spectating
         bool canPerformJump = canMove && canJump && !jumpOnCooldown &&
                              !transform.root.gameObject.GetComponent<Player>().isSpectating;
-                             
+
         if (canPerformJump)
         {
             // Request jump on the server
@@ -594,7 +584,7 @@ public class HogController : NetworkBehaviour
             // HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogJump);
         }
     }
-    
+
     private IEnumerator JumpCooldownServer()
     {
         yield return new WaitForSeconds(jumpCooldown);
@@ -631,7 +621,7 @@ public class HogController : NetworkBehaviour
         float frontSteeringAngle = (wheelColliders[0].steerAngle + wheelColliders[1].steerAngle) / 2f;
         float rearSteeringAngle = (wheelColliders[2].steerAngle + wheelColliders[3].steerAngle) / 2f;
 
-        bool isReversing = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE && 
+        bool isReversing = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE &&
                           (IsOwner && inputManager != null && inputManager.BrakeInput > 0);
 
         return new SteeringData
@@ -807,6 +797,5 @@ public class HogController : NetworkBehaviour
             Destroy(explosionInstance);
         }
     }
-
     #endregion
 }

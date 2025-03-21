@@ -68,7 +68,7 @@ public class HogSoundManager : NetworkBehaviour
             return;
 
         // Play sound locally first (for immediate feedback)
-        PlayLocalSound(soundObject.GetComponentInChildren<HogController>().gameObject, effectType);
+        PlayLocalSound(soundObject.GetComponentInChildren<NetworkHogController>().gameObject, effectType);
 
         // Request server to broadcast to other clients
         PlaySoundServerRpc((byte)effectType, soundObject.GetComponent<NetworkObject>().NetworkObjectId);
@@ -116,7 +116,7 @@ public class HogSoundManager : NetworkBehaviour
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject networkObject))
         {
             // Play the sound on the target object
-            PlayLocalSound(networkObject.gameObject.GetComponentInChildren<HogController>().gameObject, (SoundEffectType)effectType);
+            PlayLocalSound(networkObject.gameObject.GetComponentInChildren<NetworkHogController>().gameObject, (SoundEffectType)effectType);
         }
     }
 }

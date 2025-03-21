@@ -45,6 +45,7 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private Button defaultMainMenuButton;
     [SerializeField] private Button defaultSettingsMenuButton;
     [SerializeField] private Button defaultPlayMenuButton;
+
     [Header("UI Navigation")]
     [SerializeField] private EventSystem eventSystem;
     private bool controllerSelectionEnabled = false;

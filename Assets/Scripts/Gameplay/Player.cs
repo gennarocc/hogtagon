@@ -15,9 +15,7 @@ public class Player : NetworkBehaviour
     [SerializeField] public TextMeshProUGUI floatingUsername;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private GameObject body; // Used to set color texture
-    [SerializeField] private GameObject playerIndicator; // Used to set color texture
-
-
+    [SerializeField] private GameObject playerIndicator;
 
 
     [Header("Camera")]
@@ -123,13 +121,13 @@ public class Player : NetworkBehaviour
                 // Only follow/look if we got a valid player
                 if (spectatePlayer != null)
                 {
-            mainCamera.Follow = spectatePlayer.cameraTarget;
-            mainCamera.LookAt = spectatePlayer.cameraTarget;
+                    mainCamera.Follow = spectatePlayer.cameraTarget;
+                    mainCamera.LookAt = spectatePlayer.cameraTarget;
                 }
 
                 // Handle changing spectate target
-            if (Input.GetKeyDown(KeyCode.Mouse0))
-            {
+                if (Input.GetKeyDown(KeyCode.Mouse0))
+                {
                     spectatingPlayerIndex = (spectatingPlayerIndex + 1) % aliveClients.Count;
                 }
             }
@@ -142,30 +140,60 @@ public class Player : NetworkBehaviour
         }
         else
         {
-            // Not dead or in pending state - use own camera
             mainCamera.Follow = cameraTarget;
             mainCamera.LookAt = cameraTarget;
         }
 
         playerIndicator.SetActive(playerData.isLobbyLeader);
     }
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
 
+        if (floatingUsername != null && floatingUsername.gameObject != null)
+        {
+            Destroy(floatingUsername.gameObject);
+        }
+        menuManager.jumpUI.SetActive(false);
+    }
     public void Respawn()
     {
-        // Get updated playerData from connectionManager.
+        // Get updated playerData from connectionManager
         ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData);
-        if (!IsServer) return;
-        Debug.Log("Respawning Player");
-        rb.position = playerData.spawnPoint;
-        rb.rotation = Quaternion.LookRotation(SpawnPointManager.instance.transform.position - playerData.spawnPoint);
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
 
-        // Set player state to alive and update clients
-        if (playerData.state != PlayerState.Alive)
+        if (IsServer)
         {
-            playerData.state = PlayerState.Alive;
-            ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            // Server-side respawn logic
+            Debug.Log("Server respawning Player");
+            rb.position = playerData.spawnPoint;
+            rb.transform.LookAt(SpawnPointManager.instance.transform);
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            // Set player state to alive and update clients
+            if (playerData.state != PlayerState.Alive)
+            {
+                playerData.state = PlayerState.Alive;
+                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            }
+        }
+        else if (IsOwner)
+        {
+            // Client-side respawn request
+            Debug.Log("Client requesting respawn");
+
+            // Find the HogController component in children
+            NetworkHogController hogController = GetComponentInChildren<NetworkHogController>();
+
+            if (hogController != null)
+            {
+                // Request respawn via HogController
+                hogController.RequestRespawnServerRpc();
+            }
+            else
+            {
+                Debug.LogError("Could not find HogController component for respawn");
+            }
         }
     }
 
@@ -212,16 +240,5 @@ public class Player : NetworkBehaviour
         }
     }
 
-    public override void OnDestroy()
-    {
-        // Call the base implementation first (important!)
-        base.OnDestroy();
 
-        // Then do your custom cleanup
-        if (floatingUsername != null && floatingUsername.gameObject != null)
-        {
-            Destroy(floatingUsername.gameObject);
-        }
-        menuManager.jumpUI.SetActive(false);
-    }
 }
