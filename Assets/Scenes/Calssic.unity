@@ -2882,26 +2882,6 @@ MonoBehaviour:
   betweenRoundLength: 7
   showScoreboardBetweenRounds: 1
   menuManager: {fileID: 1935665467}
-  LevelMusicOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  LevelMusicOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  MidroundOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  MidroundOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  PlayerEliminated:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
 --- !u!4 &423498034
 Transform:
   m_ObjectHideFlags: 0
@@ -4294,7 +4274,7 @@ GameObject:
   - component: {fileID: 662722773}
   - component: {fileID: 662722774}
   m_Layer: 0
-  m_Name: HogSoundManager
+  m_Name: SoundManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4388,7 +4368,63 @@ MonoBehaviour:
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
+  - type: 7
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: ad9bafa82afe869438b5285241574cfc, type: 2}
+  - type: 8
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 26fba088fe0a84240abad565212f06cb, type: 2}
+  - type: 10
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 6cc06062be823774ba47ca8e8a0181c8, type: 2}
+  - type: 100
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: ea399993d59357e489498370a898da31, type: 2}
+  - type: 101
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: ee213fd65eb14da4da86210a56ced317, type: 2}
+  - type: 102
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 9be14986db2c34d4d949c70b29aa860c, type: 2}
+  - type: 103
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 8fd140a54e592a845bb6d3ce080bbaec, type: 2}
+  - type: 104
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: a173b6a3f14e52c4e9efb01fa15260aa, type: 2}
+  - type: 105
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: adc6a64ca1314e149be31fd0d5745b14, type: 2}
+  - type: 106
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 62e1de02e52d08445834ca671a134a44, type: 2}
+  - type: 107
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 52a10dee51af69a4686fefc7af7536d3, type: 2}
+  globalSoundSource: {fileID: 0}
 --- !u!1 &666450242
 GameObject:
   m_ObjectHideFlags: 0
@@ -4852,7 +4888,6 @@ RectTransform:
   - {fileID: 709393238}
   - {fileID: 426899501}
   - {fileID: 385080319}
-  - {fileID: 1598571663}
   m_Father: {fileID: 1935665464}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5132,7 +5167,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -20}
+  m_AnchoredPosition: {x: 0, y: -20.000061}
   m_SizeDelta: {x: -146, y: 19.800049}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &748281887
@@ -8688,7 +8723,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1246823220}
   - component: {fileID: 1246823221}
-  - component: {fileID: 1246823222}
   m_Layer: 5
   m_Name: Pause Menu
   m_TagString: Untagged
@@ -15129,7 +15163,6 @@ GameObject:
   - component: {fileID: 2026663750}
   - component: {fileID: 2026663749}
   - component: {fileID: 2026663751}
-  - component: {fileID: 2026663752}
   m_Layer: 5
   m_Name: MainMenuPanel
   m_TagString: Untagged

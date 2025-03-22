@@ -6,11 +6,11 @@ public class SpawnPointManager : MonoBehaviour
     private List<Vector3> AvialableSpawnPoints = new List<Vector3>();
     private Dictionary<ulong, Vector3> AssignedSpawnPoints = new Dictionary<ulong, Vector3>();
 
-    public static SpawnPointManager instance;
+    public static SpawnPointManager Instance;
 
     void Awake()
     {
-        if (instance == null) instance = this;
+        if (Instance == null) Instance = this;
 
         foreach (Transform child in transform)
         {

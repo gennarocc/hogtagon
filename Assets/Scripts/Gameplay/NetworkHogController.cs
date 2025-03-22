@@ -104,23 +104,15 @@ public class NetworkHogController : NetworkBehaviour
 
         // Get input manager reference
         inputManager = InputManager.Instance;
-        if (inputManager == null)
-        {
-            Debug.LogError("InputManager not found in the scene");
-        }
 
+        vfxController.Initialize(transform, centerOfMass, OwnerClientId);
         // Initialize the vehicle
         if (IsOwner)
         {
             // Owner initializes immediately
             InitializeOwnerVehicle();
-
-            // Subscribe to input events (NEW)
-            if (inputManager != null)
-            {
-                inputManager.JumpPressed += OnJumpPressed;
-                inputManager.HornPressed += OnHornPressed;
-            }
+            inputManager.JumpPressed += OnJumpPressed;
+            inputManager.HornPressed += OnHornPressed;
         }
         else if (IsServer && !IsOwner)
         {
@@ -132,20 +124,25 @@ public class NetworkHogController : NetworkBehaviour
             // Remote client needs server to tell it what to do
             RequestInitialStateServerRpc();
         }
+
     }
 
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
 
-        // Unsubscribe from input events (NEW)
+        // Unsubscribe from input events
         if (inputManager != null && IsOwner)
         {
             inputManager.JumpPressed -= OnJumpPressed;
             inputManager.HornPressed -= OnHornPressed;
         }
 
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOff);
+        // Only the server or owner should play the engine off sound
+        if (IsOwner || IsServer)
+        {
+            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.EngineOff);
+        }
     }
 
     private void Start()
@@ -153,7 +150,11 @@ public class NetworkHogController : NetworkBehaviour
         rb.centerOfMass = centerOfMass;
         InitializeWheelFriction();
 
-        HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.EngineOn);
+        // Only the server or owner should play the engine on sound
+        if (IsOwner || IsServer)
+        {
+            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.EngineOn);
+        }
 
         // Initialize visual smoothing targets
         visualPositionTarget = transform.position;
@@ -227,23 +228,37 @@ public class NetworkHogController : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        // Handle collisions
-        if (collision.gameObject.CompareTag("Player"))
+        if (!collision.gameObject.CompareTag("Player")) return;
+
+        // Process collision only on server or owner 
+        if (IsServer || IsOwner)
         {
-            // Play sound effect
-            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogImpact);
-
-            if (IsOwner)
+            var speed = rb.linearVelocity.magnitude;
+            // Play sound effect based on impact magnitude
+            if (speed >= 1 && speed < 5)
             {
-                // Client sends immediate update on collision
-                SendStateToServer();
+                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactLow);
             }
-
-            if (IsServer)
+            else if (speed >= 5 && speed < 13)
             {
-                // Server broadcasts the collision immediately
-                BroadcastServerStateClientRpc(vehicleState.Value);
+                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactMed);
             }
+            else if (speed >= 13)
+            {
+                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactHigh);
+            }
+        }
+
+        if (IsOwner)
+        {
+            // Client sends immediate update on collision
+            SendStateToServer();
+        }
+
+        if (IsServer)
+        {
+            // Server broadcasts the collision immediately
+            BroadcastServerStateClientRpc(vehicleState.Value);
         }
     }
 
@@ -274,11 +289,11 @@ public class NetworkHogController : NetworkBehaviour
         if (playerComponent != null)
         {
             // Get player data to use spawn point
-            if (ConnectionManager.instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
+            if (ConnectionManager.Instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
             {
                 Vector3 initialPosition = playerData.spawnPoint;
                 Quaternion initialRotation = Quaternion.LookRotation(
-                    SpawnPointManager.instance.transform.position - playerData.spawnPoint);
+                    SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
 
                 // Set transform and physics state
                 transform.position = initialPosition;
@@ -349,17 +364,18 @@ public class NetworkHogController : NetworkBehaviour
 
         // Update local velocity for drift detection
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-        isDrifting.Value = localVelocityX > 0.25f;
+        isDrifting.Value = localVelocityX > 0.4f;
     }
 
     private void OnHornPressed()
     {
+        if (!IsOwner) return;
+
         if (!transform.root.gameObject.GetComponent<Player>().isSpectating)
         {
-            HogSoundManager.instance.PlayNetworkedSound(transform.root.gameObject, HogSoundManager.SoundEffectType.HogHorn);
+            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogHorn);
         }
     }
-
     private void OnJumpPressed()
     {
         if (!IsOwner) return;
@@ -506,6 +522,9 @@ public class NetworkHogController : NetworkBehaviour
 
         // Play local jump effects
         vfxController.PlayJumpEffects();
+
+        // Play jump sound - owner will trigger it through the network
+        SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogJump);
     }
 
     // Notify other clients to show jump effects
@@ -530,16 +549,16 @@ public class NetworkHogController : NetworkBehaviour
         if (playerComponent != null)
         {
             // Get the latest player data
-            if (ConnectionManager.instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
+            if (ConnectionManager.Instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
             {
                 // Set respawn position and rotation
                 Vector3 respawnPosition = playerData.spawnPoint;
                 Quaternion respawnRotation = Quaternion.LookRotation(
-                    SpawnPointManager.instance.transform.position - playerData.spawnPoint);
+                    SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
 
                 // Update player state
                 playerData.state = PlayerState.Alive;
-                ConnectionManager.instance.UpdatePlayerDataClientRpc(playerComponent.clientId, playerData);
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(playerComponent.clientId, playerData);
 
                 // Execute respawn for everyone
                 ExecuteRespawnClientRpc(respawnPosition, respawnRotation);
@@ -848,8 +867,11 @@ public class NetworkHogController : NetworkBehaviour
     [ClientRpc]
     public void ExplodeCarClientRpc()
     {
-        canMove = false;
-        vfxController.CreateExplosion(canMove);
+        // canMove = false;
+        vfxController.CreateExplosion();
+
+        // Handle explosion sound once per client
+        SoundManager.Instance.PlayLocalSound(gameObject, SoundManager.SoundEffectType.CarExplosion);
 
         StartCoroutine(ResetAfterExplosion());
     }
@@ -857,7 +879,7 @@ public class NetworkHogController : NetworkBehaviour
     private IEnumerator ResetAfterExplosion()
     {
         yield return new WaitForSeconds(3f);
-        canMove = true;
+        // canMove = true;
     }
 
     #endregion

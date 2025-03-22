@@ -27,10 +27,10 @@ public class KillPlane : MonoBehaviour
                 if (!clientExists) return;
 
                 // Always call PlayerDied, which will handle the state appropriately
-                GameManager.instance.PlayerDied(networkObject.OwnerClientId);
+                GameManager.Instance.PlayerDied(networkObject.OwnerClientId);
 
                 // If in pending state, immediately respawn
-                if (GameManager.instance.state == GameState.Pending)
+                if (GameManager.Instance.state == GameState.Pending)
                 {
                     player.Respawn();
                 }
