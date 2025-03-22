@@ -104,23 +104,15 @@ public class NetworkHogController : NetworkBehaviour
 
         // Get input manager reference
         inputManager = InputManager.Instance;
-        if (inputManager == null)
-        {
-            Debug.LogError("InputManager not found in the scene");
-        }
 
+        vfxController.Initialize(transform, centerOfMass, OwnerClientId);
         // Initialize the vehicle
         if (IsOwner)
         {
             // Owner initializes immediately
             InitializeOwnerVehicle();
-
-            // Subscribe to input events (NEW)
-            if (inputManager != null)
-            {
-                inputManager.JumpPressed += OnJumpPressed;
-                inputManager.HornPressed += OnHornPressed;
-            }
+            inputManager.JumpPressed += OnJumpPressed;
+            inputManager.HornPressed += OnHornPressed;
         }
         else if (IsServer && !IsOwner)
         {
@@ -372,7 +364,7 @@ public class NetworkHogController : NetworkBehaviour
 
         // Update local velocity for drift detection
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-        isDrifting.Value = localVelocityX > 0.25f;
+        isDrifting.Value = localVelocityX > 0.4f;
     }
 
     private void OnHornPressed()
