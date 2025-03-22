@@ -25,13 +25,16 @@ public class SoundManager : NetworkBehaviour
         HogJump = 10,
 
         // Game state sounds
-        LevelMusic = 100,
-        LobbyMusic = 101,
-        MidroundMusic = 102,
-        PlayerEliminated = 103,
-        RoundStart = 104,
-        Round30Sec = 105,
-        RoundWin = 106,
+        LevelMusicOn = 100,
+        LevelMusicOff = 100,
+        LobbyMusicOn = 101,
+        LobbyMusicOff = 101,
+        MidRoundOn = 102,
+        MidRoundOff = 103,
+        PlayerEliminated = 104,
+        RoundStart = 105,
+        Round30Sec = 106,
+        RoundWin = 107,
     }
 
     [Serializable]
@@ -78,11 +81,7 @@ public class SoundManager : NetworkBehaviour
 
     #region Public API
 
-    /// <summary>
-    /// Play a networked sound on a specific object (client-side API)
-    /// </summary>
-    /// <param name="soundObject">The GameObject that emits the sound</param>
-    /// <param name="effectType">Type of sound effect to play</param>
+    // Play a networked sound on a specific object (client-side API)
     public void PlayNetworkedSound(GameObject soundObject, SoundEffectType effectType)
     {
         if (soundObject == null)
@@ -107,22 +106,7 @@ public class SoundManager : NetworkBehaviour
         PlaySoundServerRpc((byte)effectType, networkObject.NetworkObjectId);
     }
 
-    /// <summary>
-    /// Play a global sound (not tied to a specific object) - client-side API
-    /// </summary>
-    /// <param name="effectType">Type of sound effect to play</param>
-    public void PlayGlobalSound(SoundEffectType effectType)
-    {
-        // Play sound locally first (for immediate feedback)
-        PlayLocalSound(globalSoundSource, effectType);
-
-        // Request server to broadcast to other clients
-        PlayGlobalSoundServerRpc((byte)effectType);
-    }
-
-    /// <summary>
-    /// Broadcast a global sound to all clients (server-only API)
-    /// </summary>
+    // Broadcast a global sound to all clients (server-only API)
     public void BroadcastGlobalSound(SoundEffectType effectType)
     {
         // Only the server can broadcast to all clients
@@ -143,9 +127,7 @@ public class SoundManager : NetworkBehaviour
 
     #region Local Sound Playback
 
-    /// <summary>
-    /// Play a sound locally on a specific GameObject
-    /// </summary>
+    // Play a sound locally on a specific GameObject
     public void PlayLocalSound(GameObject soundObject, SoundEffectType effectType)
     {
         if (soundEffectMap.TryGetValue(effectType, out AK.Wwise.Event audioEvent))
@@ -180,11 +162,6 @@ public class SoundManager : NetworkBehaviour
         ulong senderClientId = serverRpcParams.Receive.SenderClientId;
 
         // Validate the request (server-authoritative)
-        if (!IsValidSoundRequest(senderClientId, networkObjectId, (SoundEffectType)effectType))
-        {
-            Debug.LogWarning($"Invalid sound request from client {senderClientId} for sound {(SoundEffectType)effectType}");
-            return;
-        }
 
         // Create client RPC params that exclude the sender
         ClientRpcParams clientRpcParams = new ClientRpcParams
@@ -221,14 +198,6 @@ public class SoundManager : NetworkBehaviour
     {
         // Get the client ID that sent the RPC
         ulong senderClientId = serverRpcParams.Receive.SenderClientId;
-
-        // Validate the request (server-authoritative)
-        if (!IsValidGlobalSoundRequest(senderClientId, (SoundEffectType)effectType))
-        {
-            Debug.LogWarning($"Invalid global sound request from client {senderClientId} for sound {(SoundEffectType)effectType}");
-            return;
-        }
-
         // Create client RPC params that exclude the sender
         ClientRpcParams clientRpcParams = new ClientRpcParams
         {
@@ -256,69 +225,6 @@ public class SoundManager : NetworkBehaviour
     {
         // Play the global sound on all clients
         PlayLocalSound(globalSoundSource, (SoundEffectType)effectType);
-    }
-
-    #endregion
-
-    #region Validation Methods
-
-    private bool IsValidSoundRequest(ulong clientId, ulong networkObjectId, SoundEffectType effectType)
-    {
-        // Get the network object
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject networkObject))
-        {
-            return false;
-        }
-
-        // Check if this client owns the object
-        bool isOwner = networkObject.OwnerClientId == clientId;
-
-        // For most vehicle sounds, we only allow the owner to play them
-        switch (effectType)
-        {
-            case SoundEffectType.HogHorn:
-            case SoundEffectType.TireScreechOn:
-            case SoundEffectType.TireScreechOff:
-            case SoundEffectType.HogJump:
-            case SoundEffectType.EngineOn:
-            case SoundEffectType.EngineOff:
-                return isOwner;
-
-            // Impact sounds might need additional validation for collision physics
-            case SoundEffectType.HogImpactLow:
-            case SoundEffectType.HogImpactMed:
-            case SoundEffectType.HogImpactHigh:
-            case SoundEffectType.CarExplosion:
-                // For impact sounds, we might need to check if a collision actually happened
-                // For simplicity, we'll just validate ownership for now
-                return isOwner;
-
-            // For any other sounds
-            default:
-                return isOwner;
-        }
-    }
-
-    private bool IsValidGlobalSoundRequest(ulong clientId, SoundEffectType effectType)
-    {
-        // By default, only allow game state sounds from the server
-        switch (effectType)
-        {
-            // These should only be triggered by the server/host
-            case SoundEffectType.LevelMusic:
-            case SoundEffectType.LobbyMusic:
-            case SoundEffectType.MidroundMusic:
-            case SoundEffectType.PlayerEliminated:
-            case SoundEffectType.RoundStart:
-            case SoundEffectType.Round30Sec:
-            case SoundEffectType.RoundWin:
-                return clientId == 0;
-
-            // For any other global sounds
-            default:
-                // May need additional permissions check here
-                return true;
-        }
     }
 
     #endregion

@@ -8,7 +8,6 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
-using UnityEditor;
 
 public class ConnectToGame : MonoBehaviour
 {
@@ -21,6 +20,7 @@ public class ConnectToGame : MonoBehaviour
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event MenuMusicOff;
+    [SerializeField] private AK.Wwise.Event LobbyMusicOn;
 
     private async void Start()
     {
@@ -108,6 +108,7 @@ public class ConnectToGame : MonoBehaviour
         JoinRelay(joinCodeInput.text);
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
+        LobbyMusicOn.Post(gameObject);
     }
 
     public void StartHost()
@@ -120,5 +121,6 @@ public class ConnectToGame : MonoBehaviour
         CreateRelay();
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
+        LobbyMusicOn.Post(gameObject);
     }
 }

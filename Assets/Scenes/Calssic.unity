@@ -2882,46 +2882,6 @@ MonoBehaviour:
   betweenRoundLength: 7
   showScoreboardBetweenRounds: 1
   menuManager: {fileID: 1935665467}
-  LevelMusicOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  LevelMusicOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  LobbyMusicOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  LobbyMusicOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  MidroundOn:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  MidroundOff:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  PlayerEliminated:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  RoundStart:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  Round30Sec:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  RoundWin:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
 --- !u!4 &423498034
 Transform:
   m_ObjectHideFlags: 0
@@ -4314,7 +4274,7 @@ GameObject:
   - component: {fileID: 662722773}
   - component: {fileID: 662722774}
   m_Layer: 0
-  m_Name: HogSoundManager
+  m_Name: SoundManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4408,17 +4368,62 @@ MonoBehaviour:
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
-  - type: 6
+      WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
+  - type: 7
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
-  - type: 6
+      WwiseObjectReference: {fileID: 11400000, guid: ad9bafa82afe869438b5285241574cfc, type: 2}
+  - type: 8
     audioEvent:
       idInternal: 0
       valueGuidInternal: 
-      WwiseObjectReference: {fileID: 0}
+      WwiseObjectReference: {fileID: 11400000, guid: 26fba088fe0a84240abad565212f06cb, type: 2}
+  - type: 10
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 6cc06062be823774ba47ca8e8a0181c8, type: 2}
+  - type: 100
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: ea399993d59357e489498370a898da31, type: 2}
+  - type: 101
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: ee213fd65eb14da4da86210a56ced317, type: 2}
+  - type: 102
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 9be14986db2c34d4d949c70b29aa860c, type: 2}
+  - type: 103
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 8fd140a54e592a845bb6d3ce080bbaec, type: 2}
+  - type: 104
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: a173b6a3f14e52c4e9efb01fa15260aa, type: 2}
+  - type: 105
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: adc6a64ca1314e149be31fd0d5745b14, type: 2}
+  - type: 106
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 62e1de02e52d08445834ca671a134a44, type: 2}
+  - type: 107
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 52a10dee51af69a4686fefc7af7536d3, type: 2}
   globalSoundSource: {fileID: 0}
 --- !u!1 &666450242
 GameObject:

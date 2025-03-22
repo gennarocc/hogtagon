@@ -875,8 +875,8 @@ public class NetworkHogController : NetworkBehaviour
     [ClientRpc]
     public void ExplodeCarClientRpc()
     {
-        canMove = false;
-        vfxController.CreateExplosion(canMove);
+        // canMove = false;
+        vfxController.CreateExplosion();
 
         // Handle explosion sound once per client
         SoundManager.Instance.PlayLocalSound(gameObject, SoundManager.SoundEffectType.CarExplosion);
@@ -887,7 +887,7 @@ public class NetworkHogController : NetworkBehaviour
     private IEnumerator ResetAfterExplosion()
     {
         yield return new WaitForSeconds(3f);
-        canMove = true;
+        // canMove = true;
     }
 
     #endregion

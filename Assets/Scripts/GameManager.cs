@@ -99,7 +99,7 @@ public class GameManager : NetworkBehaviour
         // Play midround music using NetworkSoundManager
         if (IsServer)
         {
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidroundMusic);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOn);
         }
 
         // Change camera to player who won.
@@ -123,7 +123,7 @@ public class GameManager : NetworkBehaviour
 
         if (!gameMusicPlaying && IsServer)
         {
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusic);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOn);
             gameMusicPlaying = true;
         }
 
@@ -201,11 +201,7 @@ public class GameManager : NetworkBehaviour
         // Stop level music and play lobby music using NetworkSoundManager
         if (IsServer)
         {
-            if (gameMusicPlaying)
-            {
-                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusic);
-                gameMusicPlaying = false;
-            }
+                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
         }
 
         SetGameState(GameState.Pending);
@@ -332,6 +328,6 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
         state = newState;
-        if (state == GameState.Ending) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidroundMusic);
+        if (state == GameState.Ending) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOff);
     }
 }
