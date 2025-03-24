@@ -18,8 +18,9 @@ public class LobbySettingsPanel : MonoBehaviour
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI lobbyCodeText;
     [SerializeField] private TextMeshProUGUI playerCountText;
-    [SerializeField] private Toggle freeForAllToggle;
-    [SerializeField] private Toggle teamBattleToggle;
+    [SerializeField] private TextMeshProUGUI gameModeText;
+    [SerializeField] private Button gameModeLeftButton;
+    [SerializeField] private Button gameModeRightButton;
     [SerializeField] private GameObject teamSettingsPanel;
     [SerializeField] private Slider teamCountSlider;
     [SerializeField] private TextMeshProUGUI teamCountText;
@@ -37,6 +38,8 @@ public class LobbySettingsPanel : MonoBehaviour
     private Vector3 originalCloseButtonScale;
     private Vector3 originalCopyButtonScale;
 
+    private bool isInitialized = false;
+
     private void Awake()
     {
         // Store original button scales
@@ -52,22 +55,88 @@ public class LobbySettingsPanel : MonoBehaviour
         // Find MenuManager if not assigned
         if (menuManager == null)
             menuManager = FindAnyObjectByType<MenuManager>();
+            
+        Debug.Log("[LobbySettingsPanel] Awake called");
     }
     
     private void OnEnable()
     {
-        // Setup UI
-        SetupButtons();
-        UpdateUI();
+        Debug.Log("[LobbySettingsPanel] OnEnable called with stacktrace:");
+        Debug.Log(System.Environment.StackTrace);
         
-        // Schedule periodic UI updates
-        StartCoroutine(PeriodicUIUpdate());
+        // CRITICAL FIX: Never ever disable this panel during OnEnable
+        // Instead just configure the buttons based on roles
+        
+        if (menuManager == null)
+        {
+            Debug.LogWarning("[LobbySettingsPanel] MenuManager reference is null - trying to find it");
+            menuManager = FindAnyObjectByType<MenuManager>();
+        }
+        
+        // Basic initialization to avoid duplicating code
+        if (!isInitialized)
+        {
+            Debug.Log("[LobbySettingsPanel] First initialization");
+            isInitialized = true;
+            
+            // Setup UI and buttons
+            SetupButtons();
+            UpdateUI();
+            
+            // Schedule periodic updates
+            CancelInvoke("StartPeriodicUpdates");
+            Invoke("StartPeriodicUpdates", 0.1f);
+        }
+        else
+        {
+            Debug.Log("[LobbySettingsPanel] Panel was already initialized, just refreshing UI");
+            // Just refresh the UI for subsequent activations
+            UpdateUI();
+        }
+        
+        // Always verify state 
+        Invoke("VerifyStillEnabled", 0.2f);
     }
     
     private void OnDisable()
     {
-        // Stop all coroutines when disabled
+        Debug.Log("[LobbySettingsPanel] OnDisable called");
+        
+        // Simple cleanup - just cancel coroutines and invokes
         StopAllCoroutines();
+        CancelInvoke();
+        
+        // Important: Don't reset isInitialized here!
+        // This avoids the initialization cycle if the panel gets rapidly enabled/disabled
+    }
+    
+    // Method to verify we're still enabled after initialization
+    private void VerifyStillEnabled()
+    {
+        if (this == null || gameObject == null)
+            return;
+            
+        if (!enabled)
+        {
+            Debug.LogWarning("[LobbySettingsPanel] Panel was disabled after initialization! Re-enabling.");
+            enabled = true;
+        }
+        
+        if (!gameObject.activeInHierarchy)
+        {
+            Debug.LogWarning("[LobbySettingsPanel] GameObject was deactivated after initialization! Re-activating.");
+            gameObject.SetActive(true);
+        }
+    }
+    
+    // New method to start the periodic updates after a short delay
+    public void StartPeriodicUpdates()
+    {
+        Debug.Log("[LobbySettingsPanel] StartPeriodicUpdates called");
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(PeriodicUIUpdate());
+        }
     }
     
     private IEnumerator PeriodicUIUpdate()
@@ -84,68 +153,91 @@ public class LobbySettingsPanel : MonoBehaviour
     
     private void SetupButtons()
     {
-        // Only allow host to use this panel
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
-        {
-            Debug.LogWarning("LobbySettingsPanel is only usable by the host");
-            gameObject.SetActive(false);
-            return;
-        }
+        Debug.Log("[LobbySettingsPanel] SetupButtons called");
         
-        // Setup Start Game button
+        // CRITICAL: NEVER disable this GameObject!
+        
+        // Check if we're the host (server)
+        bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+        bool hasNetwork = NetworkManager.Singleton != null;
+        
+        Debug.Log($"[LobbySettingsPanel] Network status - HasNetwork: {hasNetwork}, IsHost: {isHost}");
+        
+        // Configure all buttons based on role, but NEVER disable this panel
+        
+        // SETUP START GAME BUTTON
         if (startGameButton != null)
         {
+            // Start game only available to host with at least 2 players
+            bool canStartGame = isHost && hasNetwork && NetworkManager.Singleton.ConnectedClients.Count >= 2;
+            startGameButton.interactable = canStartGame;
+            
+            // Always setup the button, just disable interaction if needed
             SetupButtonColors(startGameButton);
             AddHoverHandlers(startGameButton.gameObject, originalStartButtonScale);
             startGameButton.onClick.RemoveAllListeners();
             startGameButton.onClick.AddListener(OnStartGameClicked);
-            UpdateStartButtonInteractability();
         }
         
-        // Setup Close button
+        // SETUP CLOSE BUTTON - Always interactive
         if (closeButton != null)
         {
+            closeButton.interactable = true;
             SetupButtonColors(closeButton);
             AddHoverHandlers(closeButton.gameObject, originalCloseButtonScale);
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(OnCloseClicked);
         }
         
-        // Setup Copy Code button
+        // SETUP COPY CODE BUTTON - Available to everyone in a valid lobby
         if (copyCodeButton != null)
         {
+            copyCodeButton.interactable = hasNetwork && ConnectionManager.instance != null && 
+                                      !string.IsNullOrEmpty(ConnectionManager.instance.joinCode);
+            
             SetupButtonColors(copyCodeButton);
             AddHoverHandlers(copyCodeButton.gameObject, originalCopyButtonScale);
             copyCodeButton.onClick.RemoveAllListeners();
             copyCodeButton.onClick.AddListener(OnCopyCodeClicked);
         }
         
-        // Setup Game Mode toggles
-        if (freeForAllToggle != null)
+        // SETUP GAME MODE BUTTONS - Only available to host
+        if (gameModeLeftButton != null)
         {
-            freeForAllToggle.onValueChanged.RemoveAllListeners();
-            freeForAllToggle.onValueChanged.AddListener(OnFreeForAllToggleChanged);
+            gameModeLeftButton.interactable = isHost;
+            SetupButtonColors(gameModeLeftButton);
+            gameModeLeftButton.onClick.RemoveAllListeners();
+            gameModeLeftButton.onClick.AddListener(OnGameModeLeftClicked);
         }
         
-        if (teamBattleToggle != null)
+        if (gameModeRightButton != null)
         {
-            teamBattleToggle.onValueChanged.RemoveAllListeners();
-            teamBattleToggle.onValueChanged.AddListener(OnTeamBattleToggleChanged);
+            gameModeRightButton.interactable = isHost;
+            SetupButtonColors(gameModeRightButton);
+            gameModeRightButton.onClick.RemoveAllListeners();
+            gameModeRightButton.onClick.AddListener(OnGameModeRightClicked);
         }
         
-        // Setup Team Count slider
+        // SETUP TEAM COUNT SLIDER - Only available to host in team battle mode
         if (teamCountSlider != null)
         {
+            bool isTeamMode = menuManager != null && menuManager.selectedGameMode == MenuManager.GameMode.TeamBattle;
+            teamCountSlider.interactable = isHost && isTeamMode;
+            
             teamCountSlider.onValueChanged.RemoveAllListeners();
             teamCountSlider.onValueChanged.AddListener(OnTeamCountChanged);
             teamCountSlider.minValue = 2;
             teamCountSlider.maxValue = 4;
             teamCountSlider.wholeNumbers = true;
         }
+        
+        Debug.Log("[LobbySettingsPanel] Button setup completed successfully");
     }
     
-    private void UpdateUI()
+    public void UpdateUI()
     {
+        Debug.Log("[LobbySettingsPanel] UpdateUI called");
+        
         // Update lobby code
         if (lobbyCodeText != null && ConnectionManager.instance != null)
         {
@@ -155,21 +247,19 @@ public class LobbySettingsPanel : MonoBehaviour
         // Update player count
         UpdatePlayerCount();
         
-        // Set team settings visibility based on current game mode
+        // Update game mode display based on current game mode
         if (GameManager.instance != null && menuManager != null)
         {
-            // Set toggle states based on current game mode
-            if (freeForAllToggle != null && teamBattleToggle != null)
+            // Update game mode text
+            if (gameModeText != null)
             {
-                bool isTeamBattle = menuManager.selectedGameMode == MenuManager.GameMode.TeamBattle;
-                teamBattleToggle.isOn = isTeamBattle;
-                freeForAllToggle.isOn = !isTeamBattle;
-                
-                // Show/hide team settings
-                if (teamSettingsPanel != null)
-                {
-                    teamSettingsPanel.SetActive(isTeamBattle);
-                }
+                gameModeText.text = menuManager.selectedGameMode.ToString();
+            }
+            
+            // Show/hide team settings based on game mode
+            if (teamSettingsPanel != null)
+            {
+                teamSettingsPanel.SetActive(menuManager.selectedGameMode == MenuManager.GameMode.TeamBattle);
             }
             
             // Set team count slider
@@ -284,38 +374,22 @@ public class LobbySettingsPanel : MonoBehaviour
         }
     }
     
-    // Toggle Event Handlers
-    public void OnFreeForAllToggleChanged(bool isOn)
+    // Replace the toggle handlers with button click handlers
+    public void OnGameModeLeftClicked()
     {
-        if (isOn && menuManager != null)
+        if (menuManager != null)
         {
-            // Update UI
-            if (teamSettingsPanel != null)
-                teamSettingsPanel.SetActive(false);
-                
-            // Make sure team battle toggle is off
-            if (teamBattleToggle != null && teamBattleToggle.isOn)
-                teamBattleToggle.isOn = false;
-                
-            // Update game settings
-            menuManager.SetGameMode(MenuManager.GameMode.FreeForAll);
+            menuManager.OnGameModeLeftClicked();
+            UpdateUI();
         }
     }
     
-    public void OnTeamBattleToggleChanged(bool isOn)
+    public void OnGameModeRightClicked()
     {
-        if (isOn && menuManager != null)
+        if (menuManager != null)
         {
-            // Update UI
-            if (teamSettingsPanel != null)
-                teamSettingsPanel.SetActive(true);
-                
-            // Make sure free for all toggle is off
-            if (freeForAllToggle != null && freeForAllToggle.isOn)
-                freeForAllToggle.isOn = false;
-                
-            // Update game settings
-            menuManager.SetGameMode(MenuManager.GameMode.TeamBattle);
+            menuManager.OnGameModeRightClicked();
+            UpdateUI();
         }
     }
     

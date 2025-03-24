@@ -143,12 +143,15 @@ public class PauseMenuPanel : MonoBehaviour
             // Add hover event listeners
             AddHoverHandlers(lobbySettingsButton.gameObject, originalLobbySettingsButtonScale);
             
-            // Add lobby settings button functionality
+            // IMPORTANT: Remove old listeners and directly connect to our implementation
             lobbySettingsButton.onClick.RemoveAllListeners();
             lobbySettingsButton.onClick.AddListener(OnLobbySettingsClicked);
+            Debug.Log("DIRECTLY connected lobby settings button in PauseMenuPanel");
             
             // Only show for host
-            lobbySettingsButton.gameObject.SetActive(NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer);
+            bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
+            lobbySettingsButton.gameObject.SetActive(isHost);
+            Debug.Log($"Lobby Settings Button active: {isHost}, interactable: {lobbySettingsButton.interactable}");
         }
         
         // Setup Disconnect button
@@ -242,11 +245,43 @@ public class PauseMenuPanel : MonoBehaviour
     
     public void OnLobbySettingsClicked()
     {
-        if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        Debug.Log("[PauseMenuPanel] Lobby Settings clicked");
+        
+        // Use menu manager's button click audio
+        if (menuManager != null)
         {
             menuManager.ButtonClickAudio();
-            menuManager.OpenLobbySettingsMenu();
         }
+        
+        // Skip opening settings menu if neither MenuManager nor NetworkManager are available
+        if (MenuManager.instance == null)
+        {
+            Debug.LogError("[PauseMenuPanel] MenuManager instance is null!");
+            return;
+        }
+        
+        if (NetworkManager.Singleton == null)
+        {
+            Debug.LogWarning("[PauseMenuPanel] NetworkManager.Singleton is null! Cannot open lobby settings.");
+            return;
+        }
+        
+        // Try multiple approaches in order:
+        
+        // 1. First, try the normal method
+        MenuManager.instance.OpenLobbySettingsMenu();
+        
+        // 2. Check if it worked
+        if (MenuManager.instance.lobbySettingsMenuUI != null && 
+            !MenuManager.instance.lobbySettingsMenuUI.activeInHierarchy)
+        {
+            Debug.LogWarning("[PauseMenuPanel] Standard approach failed, trying direct emergency method");
+            
+            // 3. Last resort - use the emergency direct method
+            MenuManager.instance.EmergencyActivateLobbySettingsMenu();
+        }
+        
+        Debug.Log("[PauseMenuPanel] Lobby settings menu activation complete");
     }
     
     public void OnDisconnectClicked()

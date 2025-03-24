@@ -122,24 +122,17 @@ public class ConnectToGame : MonoBehaviour
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
         
-        // Automatically open Lobby Settings Menu when connection is ready
-        StartCoroutine(OpenLobbySettingsAfterConnection());
+        // Use Invoke instead of a coroutine to open lobby settings after a delay
+        Invoke("OpenLobbySettingsAfterDelay", 1.5f);
     }
     
-    private IEnumerator OpenLobbySettingsAfterConnection()
+    // Simple method to open the lobby settings after a delay
+    private void OpenLobbySettingsAfterDelay()
     {
-        // Wait until connected and server is ready
-        yield return new WaitUntil(() => NetworkManager.Singleton != null && 
-                                        NetworkManager.Singleton.IsListening && 
-                                        NetworkManager.Singleton.IsServer);
-        
-        // Give a small delay to ensure everything is initialized
-        yield return new WaitForSeconds(0.5f);
-        
-        // Open the Lobby Settings Menu
-        if (menuManager != null)
+        if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            menuManager.OpenLobbySettingsMenu();
+            // Make sure any required game objects are activated first
+            menuManager.EnsureLobbySettingsMenuActive();
         }
     }
 }
