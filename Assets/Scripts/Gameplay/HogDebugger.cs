@@ -189,7 +189,7 @@ public class HogDebugger : NetworkBehaviour
         
         // Add player info
         sb.AppendLine("<b><size=22>Player Info</size></b>");
-        sb.AppendLine($"Username: {(playerComponent != null ? playerComponent.floatingUsername.text : "Unknown")}");
+        sb.AppendLine($"Username: {(playerComponent != null ? playerComponent.nameplate.text : "Unknown")}");
         sb.AppendLine($"Client ID: {(playerComponent != null ? playerComponent.clientId : 0)}");
         
         // Color owner/server status

@@ -10807,6 +10807,10 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: f87528b60581a3044ae9486b356f4970, type: 2}
+  LobbyMusicOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: ee213fd65eb14da4da86210a56ced317, type: 2}
 --- !u!114 &1508066504
 MonoBehaviour:
   m_ObjectHideFlags: 0

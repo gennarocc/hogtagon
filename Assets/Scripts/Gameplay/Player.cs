@@ -12,7 +12,7 @@ public class Player : NetworkBehaviour
     [SerializeField] public int colorIndex;
 
     [Header("References")]
-    [SerializeField] public TextMeshProUGUI floatingUsername;
+    [SerializeField] public TextMeshProUGUI nameplate;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private GameObject body; // Used to set color texture
     [SerializeField] private GameObject playerIndicator;
@@ -93,12 +93,14 @@ public class Player : NetworkBehaviour
 
     private void Update()
     {
-        // Only update floating username position for non-local players
+        // Update Nameplate position
         if (!IsOwner && localPlayerCameraTransform != null)
         {
-            // Position the username above the player
-            floatingUsername.transform.position = rb.position + new Vector3(0, 3f, 0);
-            floatingUsername.transform.rotation = Quaternion.LookRotation(floatingUsername.transform.position - localPlayerCameraTransform.transform.position);
+            var smoothingSpeed = 5f;
+            Vector3 targetPosition = rb.position + new Vector3(0, 3f, 0);
+            nameplate.transform.position = Vector3.Lerp(nameplate.transform.position, targetPosition, smoothingSpeed * Time.deltaTime);
+            Quaternion targetRotation = Quaternion.LookRotation(nameplate.transform.position - localPlayerCameraTransform.transform.position);
+            nameplate.transform.rotation = Quaternion.Slerp(nameplate.transform.rotation, targetRotation, smoothingSpeed * Time.deltaTime);
         }
 
         cameraTarget.position = cameraOffset.position;
@@ -150,9 +152,9 @@ public class Player : NetworkBehaviour
     {
         base.OnDestroy();
 
-        if (floatingUsername != null && floatingUsername.gameObject != null)
+        if (nameplate != null && nameplate.gameObject != null)
         {
-            Destroy(floatingUsername.gameObject);
+            Destroy(nameplate.gameObject);
         }
         menuManager.jumpUI.SetActive(false);
     }
@@ -218,16 +220,16 @@ public class Player : NetworkBehaviour
                 worldspaceCanvas = GameObject.Find("WorldspaceCanvas").GetComponent<Canvas>();
             }
 
-            floatingUsername.text = playerData.username;
-            floatingUsername.transform.SetParent(worldspaceCanvas.transform);
-            floatingUsername.gameObject.SetActive(true);
+            nameplate.text = playerData.username;
+            nameplate.transform.SetParent(worldspaceCanvas.transform);
+            nameplate.gameObject.SetActive(true);
         }
         else
         {
             // Hide username for local player
-            if (floatingUsername != null)
+            if (nameplate != null)
             {
-                floatingUsername.gameObject.SetActive(false);
+                nameplate.gameObject.SetActive(false);
             }
         }
     }
