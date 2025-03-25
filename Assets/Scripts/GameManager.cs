@@ -15,6 +15,7 @@ public class GameManager : NetworkBehaviour
     [Header("Game Mode Settings")]
     [SerializeField] private MenuManager.GameMode gameMode = MenuManager.GameMode.FreeForAll;
     [SerializeField] private int teamCount = 2;
+    [SerializeField] private int roundsToWin = 5;  // Default to 5 rounds
     [SerializeField] private bool gameModeLocked = false; // Will be locked after game starts
 
     [Header("References")]
@@ -73,6 +74,9 @@ public class GameManager : NetworkBehaviour
             case GameState.Ending:
                 OnEndingEnter();
                 break;
+            case GameState.Winner:
+                OnWinnerEnter();
+                break;
         }
     }
 
@@ -88,6 +92,40 @@ public class GameManager : NetworkBehaviour
 
         // Notify subscribers
         OnGameStateChanged?.Invoke(newState);
+    }
+
+    private void OnWinnerEnter()
+    {
+        Debug.Log("GameManager OnWinnerEnter");
+        SetGameState(GameState.Winner);
+        
+        // Pause kill feed and keep last message
+        if (killFeed != null)
+        {
+            killFeed.PauseAndKeepLastMessage();
+        }
+
+        // Get the winning player's data
+        if (ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
+        {
+            // Display winner celebration message
+            menuManager.DisplayGameWinnerClientRpc(winner.username);
+            
+            // Show scoreboard after a delay
+            StartCoroutine(ShowFinalScoreboard());
+        }
+    }
+
+    private IEnumerator ShowFinalScoreboard()
+    {
+        yield return new WaitForSeconds(5f); // Show winner message for 5 seconds
+        menuManager.ShowScoreboardClientRpc();
+        
+        yield return new WaitForSeconds(10f); // Show scoreboard for 10 seconds
+        
+        // Return to pending state (lobby)
+        TransitionToState(GameState.Pending);
+        menuManager.HideScoreboardClientRpc();
     }
 
     private void OnEndingEnter()
@@ -108,14 +146,23 @@ public class GameManager : NetworkBehaviour
         }
 
         // Change camera to player who won.
-        ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
+        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner))
+        {
+            menuManager.DisplayWinnerClientRpc(roundWinner.username);
+            roundWinner.score++;
 
-        menuManager.DisplayWinnerClientRpc(roundWinner.username);
-        roundWinner.score++;
+            // Check if this player has won enough rounds
+            if (roundWinner.score >= roundsToWin)
+            {
+                ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
+                ConnectionManager.instance.UpdateLobbyLeaderBasedOnScore();
+                TransitionToState(GameState.Winner);
+                return;
+            }
 
         ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
         ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
-
+        }
         StartCoroutine(BetweenRoundTimer());
     }
 
@@ -213,6 +260,62 @@ public class GameManager : NetworkBehaviour
         }
 
         SetGameState(GameState.Pending);
+        
+        // If we're the server and the game is just starting (no players have joined yet)
+        if (IsServer && NetworkManager.Singleton != null && NetworkManager.Singleton.ConnectedClientsList.Count > 0)
+        {
+            // Show the lobby settings menu for the host
+            EnsureLobbySettingsVisibleForHost();
+        }
+    }
+
+    // Method to ensure the lobby settings are visible for the host
+    private void EnsureLobbySettingsVisibleForHost()
+    {
+        // Only do this on the server
+        if (!IsServer) return;
+        
+        Debug.Log("[GameManager] Ensuring lobby settings are visible for host");
+        
+        // Check if we're in the pending state
+        if (state != GameState.Pending)
+        {
+            Debug.Log("[GameManager] Not in pending state, skipping lobby settings visibility check");
+            return;
+        }
+        
+        // Check if the menuManager exists and if the lobby settings are visible
+        if (menuManager != null && menuManager.lobbySettingsMenuUI != null)
+        {
+            // If the lobby settings menu is not active, try to open it
+            if (!menuManager.lobbySettingsMenuUI.activeInHierarchy)
+            {
+                Debug.Log("[GameManager] Lobby settings not visible, opening them");
+                
+                // Make sure cursor is visible and unlocked for menu interaction
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                
+                // First try the standard method
+                menuManager.OpenLobbySettingsMenu();
+                
+                // If that doesn't work, try the emergency method
+                if (!menuManager.lobbySettingsMenuUI.activeInHierarchy)
+                {
+                    Debug.LogWarning("[GameManager] Standard method failed, using emergency activation");
+                    menuManager.EmergencyActivateLobbySettingsMenu();
+                }
+            }
+        }
+    }
+
+    // Public method that other systems can call to ensure lobby settings are shown
+    public void ShowLobbySettings()
+    {
+        if (IsServer && state == GameState.Pending)
+        {
+            EnsureLobbySettingsVisibleForHost();
+        }
     }
 
     public void CheckGameStatus()
@@ -395,6 +498,28 @@ public class GameManager : NetworkBehaviour
     private void LockGameModeSettings()
     {
         gameModeLocked = true;
-        Debug.Log("Game mode settings locked");
+        Debug.Log("[GameManager] Game mode settings locked");
+    }
+
+    // Method to set rounds to win from MenuManager
+    public void SetRoundCount(int count)
+    {
+        if (!gameModeLocked)
+        {
+            roundsToWin = count;
+            Debug.Log($"[GameManager] Rounds to win set to: {roundsToWin}");
+        }
+    }
+
+    // Method to get current rounds to win setting
+    public int GetRoundCount()
+    {
+        return roundsToWin;
+    }
+
+    private void UnlockGameModeSettings()
+    {
+        gameModeLocked = false;
+        Debug.Log("[GameManager] Game mode settings unlocked");
     }
 }

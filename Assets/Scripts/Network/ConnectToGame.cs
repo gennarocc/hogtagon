@@ -19,10 +19,15 @@ public class ConnectToGame : MonoBehaviour
     [SerializeField] private Button hostLobby;
     [SerializeField] private Button joinLobby;
     [SerializeField] private GameObject connectionPending;
+    [SerializeField] private Button retryButton;
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.Event MenuMusicOff;
     [SerializeField] private AK.Wwise.Event LobbyMusicOn;
+
+    // To track which operation we're performing for retry functionality
+    public string lastJoinCode { get; private set; } = "";
+    private bool isRetrying = false;
 
     private async void Start()
     {
@@ -65,6 +70,7 @@ public class ConnectToGame : MonoBehaviour
     {
         try
         {
+            Debug.Log("Creating Relay allocation...");
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(8);
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
             var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
@@ -74,10 +80,46 @@ public class ConnectToGame : MonoBehaviour
         }
         catch (RelayServiceException e)
         {
-            Debug.Log("Error creating lobby");
+            Debug.LogError($"Relay service error: {e.Message}");
+            
+            // Check for specific error types
+            bool isNetworkError = e.Message.Contains("network") || e.Message.Contains("connection") || e.Message.Contains("timeout");
+            bool isAuthError = e.Message.Contains("auth") || e.Message.Contains("token") || e.Message.Contains("unauthorized");
+            bool isRateLimitError = e.Message.Contains("rate") || e.Message.Contains("limit") || e.Message.Contains("too many");
+            
+            string userMessage = "Failed to create lobby. ";
+            
+            if (isNetworkError)
+            {
+                userMessage += "Please check your internet connection and try again.";
+            }
+            else if (isAuthError)
+            {
+                userMessage += "Authentication issue. Please restart the game.";
+            }
+            else if (isRateLimitError)
+            {
+                userMessage += "You're creating lobbies too quickly. Please wait a moment.";
+            }
+            else
+            {
+                userMessage += e.Message;
+            }
+            
             connectionPending.SetActive(false);
-            menuManager.DisplayConnectionError(e.Message);
-            menuManager.MainMenu();
+            menuManager.DisplayConnectionError(userMessage);
+            
+            // Don't automatically go back to main menu, let the user decide
+            // menuManager.MainMenu();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Unexpected error creating lobby: {e.Message}");
+            connectionPending.SetActive(false);
+            menuManager.DisplayConnectionError("Unexpected error creating lobby. Please try again.");
+            
+            // Don't automatically go back to main menu, let the user decide
+            // menuManager.MainMenu();
         }
     }
 
@@ -92,12 +134,41 @@ public class ConnectToGame : MonoBehaviour
         }
         catch (RelayServiceException e)
         {
-            Debug.Log(e);
+            Debug.LogError($"Relay join error: {e.Message}");
+            
+            // Check for specific error types
+            bool isInvalidCode = e.Message.Contains("not found") || e.Message.Contains("invalid") || e.Message.Contains("allocation");
+            bool isNetworkError = e.Message.Contains("network") || e.Message.Contains("connection") || e.Message.Contains("timeout");
+            bool isFullLobby = e.Message.Contains("full") || e.Message.Contains("capacity") || e.Message.Contains("maximum");
+            
+            string userMessage = "Failed to join lobby. ";
+            
+            if (isInvalidCode)
+            {
+                userMessage += "Invalid or expired join code. Please check the code and try again.";
+            }
+            else if (isNetworkError)
+            {
+                userMessage += "Please check your internet connection and try again.";
+            }
+            else if (isFullLobby)
+            {
+                userMessage += "The lobby is full. Please try a different lobby.";
+            }
+            else
+            {
+                userMessage += "No lobby found with that code.";
+            }
+            
             connectionPending.SetActive(false);
-            menuManager.DisplayConnectionError("No lobby found");
-            menuManager.MainMenu();
+            menuManager.DisplayConnectionError(userMessage);
         }
-
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Unexpected error joining lobby: {e.Message}");
+            connectionPending.SetActive(false);
+            menuManager.DisplayConnectionError("Unexpected error joining lobby. Please try again.");
+        }
     }
 
     public void StartClient()
@@ -107,7 +178,11 @@ public class ConnectToGame : MonoBehaviour
         
         // Configure connection with username as payload;
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
-        JoinRelay(joinCodeInput.text);
+        
+        // Store the join code for potential retry
+        lastJoinCode = joinCodeInput.text;
+        
+        JoinRelay(lastJoinCode);
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
         LobbyMusicOn.Post(gameObject);
@@ -120,6 +195,10 @@ public class ConnectToGame : MonoBehaviour
         
         // Configure connection with username as payload
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
+        
+        // Clear last join code since we're hosting
+        lastJoinCode = "";
+        
         CreateRelay();
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
@@ -134,8 +213,84 @@ public class ConnectToGame : MonoBehaviour
     {
         if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            // Make sure any required game objects are activated first
-            menuManager.EnsureLobbySettingsMenuActive();
+            Debug.Log("[ConnectToGame] Opening lobby settings after host creation");
+            
+            // Check if player has already spawned
+            bool playerSpawned = NetworkManager.Singleton.LocalClient != null && 
+                                NetworkManager.Singleton.LocalClient.PlayerObject != null;
+            
+            if (playerSpawned)
+            {
+                Debug.Log("[ConnectToGame] Player already spawned, skipping lobby settings open from ConnectToGame");
+                return; // Skip since the Player script will handle this
+            }
+            
+            Debug.Log("[ConnectToGame] Player not yet spawned, opening lobby settings as fallback");
+            
+            // Make sure cursor is visible and unlocked for menu interaction
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            
+            // First try the standard method
+            menuManager.OpenLobbySettingsMenu();
+            
+            // If that doesn't work, try the emergency method
+            if (menuManager.lobbySettingsMenuUI != null && !menuManager.lobbySettingsMenuUI.activeInHierarchy)
+            {
+                Debug.LogWarning("[ConnectToGame] Standard method failed, using emergency activation");
+                menuManager.EmergencyActivateLobbySettingsMenu();
+            }
+            
+            Debug.Log("[ConnectToGame] Lobby settings should now be visible");
         }
+    }
+
+    // Method to retry host creation
+    public void RetryHostCreation()
+    {
+        if (isRetrying) return;
+        
+        isRetrying = true;
+        Debug.Log("Retrying host creation...");
+        
+        // Get username from PlayerPrefs
+        string username = PlayerPrefs.GetString("Username", "Player");
+        
+        // Configure connection with username as payload
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
+        
+        // Clear last join code since we're hosting
+        lastJoinCode = "";
+        
+        CreateRelay();
+        
+        // Reset retry flag after a delay
+        Invoke("ResetRetryFlag", 2f);
+    }
+
+    // Method to retry joining with a specific code
+    public void RetryJoinWithCode(string code)
+    {
+        if (isRetrying) return;
+        
+        isRetrying = true;
+        Debug.Log($"Retrying join with code: {code}");
+        
+        // Get username from PlayerPrefs
+        string username = PlayerPrefs.GetString("Username", "Player");
+        
+        // Configure connection with username as payload
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
+        
+        JoinRelay(code);
+        
+        // Reset retry flag after a delay
+        Invoke("ResetRetryFlag", 2f);
+    }
+
+    // Helper to reset the retry flag
+    private void ResetRetryFlag()
+    {
+        isRetrying = false;
     }
 }
