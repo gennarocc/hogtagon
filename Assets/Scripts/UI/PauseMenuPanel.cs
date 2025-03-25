@@ -245,43 +245,24 @@ public class PauseMenuPanel : MonoBehaviour
     
     public void OnLobbySettingsClicked()
     {
-        Debug.Log("[PauseMenuPanel] Lobby Settings clicked");
+        Debug.Log("[PauseMenuPanel] Lobby Settings button clicked");
         
-        // Use menu manager's button click audio
+        // Play button sound
+        if (menuManager != null)
+            menuManager.ButtonClickAudio();
+        
+        // CRITICAL: Hide the pause menu FIRST
+        gameObject.SetActive(false);
+        
+        // Open the lobby settings menu
         if (menuManager != null)
         {
-            menuManager.ButtonClickAudio();
+            menuManager.OpenLobbySettingsMenu();
         }
-        
-        // Skip opening settings menu if neither MenuManager nor NetworkManager are available
-        if (MenuManager.instance == null)
+        else
         {
-            Debug.LogError("[PauseMenuPanel] MenuManager instance is null!");
-            return;
+            Debug.LogError("[PauseMenuPanel] MenuManager reference is missing");
         }
-        
-        if (NetworkManager.Singleton == null)
-        {
-            Debug.LogWarning("[PauseMenuPanel] NetworkManager.Singleton is null! Cannot open lobby settings.");
-            return;
-        }
-        
-        // Try multiple approaches in order:
-        
-        // 1. First, try the normal method
-        MenuManager.instance.OpenLobbySettingsMenu();
-        
-        // 2. Check if it worked
-        if (MenuManager.instance.lobbySettingsMenuUI != null && 
-            !MenuManager.instance.lobbySettingsMenuUI.activeInHierarchy)
-        {
-            Debug.LogWarning("[PauseMenuPanel] Standard approach failed, trying direct emergency method");
-            
-            // 3. Last resort - use the emergency direct method
-            MenuManager.instance.EmergencyActivateLobbySettingsMenu();
-        }
-        
-        Debug.Log("[PauseMenuPanel] Lobby settings menu activation complete");
     }
     
     public void OnDisconnectClicked()

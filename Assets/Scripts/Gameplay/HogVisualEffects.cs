@@ -94,23 +94,52 @@ public class HogVisualEffects : MonoBehaviour
 
     public void CreateExplosion(bool canMove)
     {
-        // Store reference to instantiated explosion
-        currentExplosionInstance = Instantiate(explosionPrefab, hogTransform.position + centerOfMass, hogTransform.rotation, hogTransform);
-
-        // Play explosion sound
-        HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.CarExplosion);
-
-        // Stop drift sounds if active
-        if (driftingSoundOn)
+        try
         {
-            HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
-            driftingSoundOn = false;
+            // Check if required references exist
+            if (explosionPrefab == null || hogTransform == null)
+            {
+                Debug.LogWarning("[HogVisualEffects] Cannot create explosion - missing required references");
+                return;
+            }
+
+            // Cleanup any existing explosion first
+            if (currentExplosionInstance != null)
+            {
+                Destroy(currentExplosionInstance);
+                currentExplosionInstance = null;
+            }
+
+            // Create new explosion
+            Vector3 explosionPosition = hogTransform.position + centerOfMass;
+            currentExplosionInstance = Instantiate(explosionPrefab, explosionPosition, hogTransform.rotation, hogTransform);
+
+            // Play explosion sound if sound manager exists
+            if (HogSoundManager.instance != null && hogTransform.root != null)
+            {
+                HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.CarExplosion);
+
+                // Stop drift sounds if active
+                if (driftingSoundOn)
+                {
+                    HogSoundManager.instance.PlayNetworkedSound(hogTransform.root.gameObject, HogSoundManager.SoundEffectType.TireScreechOff);
+                    driftingSoundOn = false;
+                }
+            }
+
+            // Log explosion
+            if (ConnectionManager.instance != null)
+            {
+                Debug.Log($"[HogVisualEffects] Exploding car for player - {ConnectionManager.instance.GetClientUsername(ownerClientId)}");
+            }
+
+            // Cleanup explosion after delay
+            StartCoroutine(CleanupExplosion());
         }
-
-        Debug.Log("Exploding car for player - " + ConnectionManager.instance.GetClientUsername(ownerClientId));
-
-        // Cleanup explosion after delay
-        StartCoroutine(CleanupExplosion());
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[HogVisualEffects] Error creating explosion: {e.Message}");
+        }
     }
 
     private IEnumerator CleanupExplosion()

@@ -89,16 +89,20 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private Button lobbyCodeCopyButton;
     [SerializeField] private Button startGameFromLobbyButton;
     [SerializeField] private TextMeshProUGUI connectedPlayersText;
-    [SerializeField] private TextMeshProUGUI gameModeText;
+    [SerializeField] private TextMeshProUGUI gameModeValueText;
     [SerializeField] private Button gameModeLeftButton;
     [SerializeField] private Button gameModeRightButton;
     [SerializeField] private GameObject teamSettingsPanel;
     [SerializeField] private Slider teamCountSlider;
     [SerializeField] private TextMeshProUGUI teamCountText;
+    [SerializeField] private Slider roundCountSlider;  // Add reference to round count slider
+    [SerializeField] private TextMeshProUGUI roundCountText;  // Add reference to round count text
 
     // Game mode settings
     private GameMode _selectedGameMode = GameMode.FreeForAll;
     private int _teamCount = 2;
+    private int _roundCount = 5;  // Default to 5 rounds
+    private readonly int[] _validRoundCounts = new int[] { 1, 3, 5, 7, 9 };  // Valid round count values
 
     // Game Mode enum
     public enum GameMode { FreeForAll, TeamBattle }
@@ -106,6 +110,7 @@ public class MenuManager : NetworkBehaviour
     // Public properties for game mode settings
     public GameMode selectedGameMode => _selectedGameMode;
     public int teamCount => _teamCount;
+    public int roundCount => _roundCount;  // Add public property for round count
 
     [Header("Pause Menu References")]
     [SerializeField] private Button pauseResumeButton;
@@ -115,6 +120,9 @@ public class MenuManager : NetworkBehaviour
 
     // Diagnostic code to help identify what's disabling the lobby settings menu
     private bool _prevLobbyMenuActiveState = false;
+
+    [Header("Connection Error UI")]
+    [SerializeField] private GameObject connectionRefusedUI;
 
     private void Awake()
     {
@@ -205,6 +213,9 @@ public class MenuManager : NetworkBehaviour
         
         // Set up lobby settings button in pause menu
         ConnectLobbySettingsButton();
+        
+        // Connect close button in lobby settings
+        ConnectLobbySettingsCloseButton();
 
         // Clear selection by default
         ClearSelection();
@@ -238,6 +249,33 @@ public class MenuManager : NetworkBehaviour
         StartCoroutine(MonitorLobbySettingsMenuActivation());
     }
 
+    // Helper method to connect the close button in the lobby settings menu
+    private void ConnectLobbySettingsCloseButton()
+    {
+        if (lobbySettingsMenuUI == null)
+            return;
+        
+        // Find any button in the lobby settings that has "Back", "Close", or "Cancel" in its name
+        Button closeButton = null;
+        
+        foreach (Button button in lobbySettingsMenuUI.GetComponentsInChildren<Button>(true))
+        {
+            if (button.name.Contains("Back") || button.name.Contains("Close") || button.name.Contains("Cancel") || 
+                button.name.Contains("Exit"))
+            {
+                closeButton = button;
+                break;
+            }
+        }
+        
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(CloseLobbySettingsMenu);
+            Debug.Log("[MenuManager] Connected Close button in Lobby Settings Menu: " + closeButton.name);
+        }
+    }
+
     // Coroutine to monitor and prevent the lobby settings menu from being mysteriously disabled
     private IEnumerator MonitorLobbySettingsMenuActivation()
     {
@@ -249,6 +287,13 @@ public class MenuManager : NetworkBehaviour
             // Only check when the menu should be active
             if (_prevLobbyMenuActiveState && lobbySettingsMenuUI != null)
             {
+                // IMPORTANT: Always enforce cursor visibility while lobby settings menu is active
+                if (lobbySettingsMenuUI.activeInHierarchy)
+                {
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                }
+                
                 // If the menu is supposed to be active but isn't, reactivate it
                 if (!lobbySettingsMenuUI.activeInHierarchy)
                 {
@@ -264,6 +309,10 @@ public class MenuManager : NetworkBehaviour
                     
                     // Reactivate menu
                     lobbySettingsMenuUI.SetActive(true);
+                    
+                    // Ensure cursor is visible AFTER reactivation
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
                     
                     // Check if the LobbySettingsPanel script is disabled
                     LobbySettingsPanel panel = lobbySettingsMenuUI.GetComponentInChildren<LobbySettingsPanel>(true);
@@ -310,8 +359,9 @@ public class MenuManager : NetworkBehaviour
 
     private void Update()
     {
-        // Persistent cursor lock enforcement when game is running (not paused)
-        if (!gameIsPaused && !mainMenuPanel.activeSelf && ConnectionManager.instance.isConnected)
+        // Persistent cursor lock enforcement when game is running (not paused) and lobby settings not active
+        if (!gameIsPaused && !mainMenuPanel.activeSelf && ConnectionManager.instance.isConnected && 
+            !(lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf))
         {
             // If cursor should be locked but isn't, force it
             if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible)
@@ -319,6 +369,17 @@ public class MenuManager : NetworkBehaviour
                 Debug.Log("[MenuManager] Update detected unlocked cursor - forcing lock");
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
+            }
+        }
+        
+        // If lobby settings menu is active, ensure cursor is visible
+        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf)
+        {
+            // Force cursor to be visible for menu interaction
+            if (Cursor.lockState != CursorLockMode.None || !Cursor.visible)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
         }
         
@@ -400,6 +461,17 @@ public class MenuManager : NetworkBehaviour
     // Event handlers for input system callbacks
     private void OnMenuToggled()
     {
+        // First check if the lobby settings menu is open - if so, just close it
+        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf)
+        {
+            Debug.Log("[MenuManager] Closing lobby settings menu via escape/start button");
+            CloseLobbySettingsMenu();
+            // Important: Set flag that we're handling this toggle and prevent the pause menu 
+            // from appearing immediately on the same press
+            lastMenuToggleTime = Time.unscaledTime;
+            return;
+        }
+
         // Don't toggle if we're in main menu
         if (mainMenuPanel.activeSelf)
         {
@@ -409,6 +481,7 @@ public class MenuManager : NetworkBehaviour
         // Apply cooldown to prevent rapid toggling
         if (Time.unscaledTime - lastMenuToggleTime < menuToggleCooldown)
         {
+            Debug.Log("[MenuManager] Menu toggle cooldown in effect");
             return;
         }
         
@@ -444,6 +517,10 @@ public class MenuManager : NetworkBehaviour
             
             // Ensure we're paused
             gameIsPaused = true;
+            
+            // Ensure cursor is visible in pause menu
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             return;
         }
 
@@ -471,20 +548,29 @@ public class MenuManager : NetworkBehaviour
 
     public void Resume()
     {
-        // Hide all menus
+        Debug.Log("[MenuManager] Resume called");
+        
+        // Hide all menus that should be hidden when resuming gameplay
         if (pauseMenuUI != null)
         {
             pauseMenuUI.SetActive(false);
         }
         
-        // Lock cursor when resuming
+        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf)
+        {
+            lobbySettingsMenuUI.SetActive(false);
+            _prevLobbyMenuActiveState = false;
+        }
+        
+        // Reset pause state
+        gameIsPaused = false;
+        
+        // Lock cursor when resuming - do this BEFORE switching input modes
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
         
         // Enable camera input
         EnableCameraInput();
-        
-        gameIsPaused = false;
         
         // Play sound effect if available
         if (PauseOff != null)
@@ -499,12 +585,48 @@ public class MenuManager : NetworkBehaviour
             if (inputManager.IsInGameplayMode())
                 inputManager.ForceEnableCurrentActionMap();
         }
+        
+        // Double-check cursor lock in case input mode change affected it
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        
+        // Start a coroutine to ensure cursor stays locked for a few frames
+        StartCoroutine(EnforceCursorLockAfterResume());
     }
-    
+
+    // Add a more robust cursor enforcing coroutine
     private IEnumerator EnforceCursorLockAfterResume()
     {
-        // This method has been simplified and is kept for compatibility
-        yield break;
+        // Wait a frame to let everything else finish first
+        yield return null;
+        
+        // Enforce lock over multiple frames to ensure it sticks
+        for (int i = 0; i < 10; i++)
+        {
+            if (!gameIsPaused && !mainMenuPanel.activeSelf && 
+                !(lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf))
+            {
+                Cursor.visible = false;
+                Cursor.lockState = CursorLockMode.Locked;
+            }
+            yield return null;
+        }
+    }
+
+    private IEnumerator EnforceCursorLockAfterStartGame()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            // Wait a frame
+            yield return null;
+            
+            // Lock cursor
+            if (!gameIsPaused)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
     }
 
     void Pause()
@@ -515,18 +637,45 @@ public class MenuManager : NetworkBehaviour
             return;
         }
         
+        Debug.Log("[MenuManager] Pause called");
+        
         // Update cursor state - make sure it's visible and unlocked
+        // Do this FIRST before any UI changes
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // Hide any other menus that might conflict
+        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf)
+        {
+            lobbySettingsMenuUI.SetActive(false);
+            _prevLobbyMenuActiveState = false;
+            Debug.Log("[MenuManager] Hiding lobby settings menu during pause");
+        }
 
         // Show pause menu
         pauseMenuUI.SetActive(true);
         
-        // Connect the lobby settings button
+        // Connect the lobby settings button and update its interactability
         ConnectLobbySettingsButton();
+        
+        // If we have a direct reference to the button, update its interactability
+        if (pauseLobbySettingsButton != null && GameManager.instance != null)
+        {
+            pauseLobbySettingsButton.interactable = GameManager.instance.state != GameState.Playing;
+        }
         
         // Disable camera input - this is key to stopping camera rotation
         DisableCameraInput();
+        
+        // Set pause state AFTER disabling camera
+        gameIsPaused = true;
+        
+        // Double-check pause menu is actually active
+        if (!pauseMenuUI.activeSelf)
+        {
+            Debug.LogWarning("[MenuManager] Pause menu failed to activate - forcing activation");
+            pauseMenuUI.SetActive(true);
+        }
         
         // Check if the pause menu is actually active
         if (pauseMenuUI.activeSelf)
@@ -573,8 +722,6 @@ public class MenuManager : NetworkBehaviour
                 }
             }
         }
-        
-        gameIsPaused = true;
         
         // Play sound effect if available
         if (PauseOn != null)
@@ -735,6 +882,26 @@ public class MenuManager : NetworkBehaviour
         StartCoroutine(BetweenRoundTime());
     }
 
+    [ClientRpc]
+    public void DisplayGameWinnerClientRpc(string player)
+    {
+        tempUI.SetActive(true);
+        winnerText.text = $"🏆 {player} WON THE GAME! 🏆\nFirst to {GameManager.instance.GetRoundCount()} rounds!";
+        
+        // Make sure cursor is visible for UI interaction
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        
+        // Switch to UI input mode
+        if (inputManager != null)
+        {
+            inputManager.SwitchToUIMode();
+        }
+        
+        // Play celebration sound if available
+        ButtonConfirmAudio();
+    }
+
     public IEnumerator BetweenRoundTime()
     {
         yield return new WaitForSeconds(5f);
@@ -766,6 +933,13 @@ public class MenuManager : NetworkBehaviour
 
     public void Disconnect()
     {
+        // First, ensure all menus are closed, including lobby settings
+        if (lobbySettingsMenuUI != null)
+        {
+            lobbySettingsMenuUI.SetActive(false);
+            _prevLobbyMenuActiveState = false;  // Reset the state tracking
+        }
+
         if (IsServer)
         {
             NetworkManager.Singleton.Shutdown();
@@ -774,10 +948,19 @@ public class MenuManager : NetworkBehaviour
         {
             DisconnectRequestServerRpc(NetworkManager.Singleton.LocalClientId);
         }
+
+        // Reset all menu states and show main menu
         MainMenu();
+        
+        // Ensure cursor is visible for main menu
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+        
+        // Reset connection state
         ConnectionManager.instance.isConnected = false;
+        
+        // Play button sound
+        ButtonClickAudio();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -819,8 +1002,90 @@ public class MenuManager : NetworkBehaviour
 
     public void DisplayConnectionError(string error)
     {
+        // Update the error text
         connectionRefusedReasonText.text = error;
+        
+        // Make sure the error panel is visible
+        if (connectionRefusedUI != null)
+        {
+            connectionRefusedUI.SetActive(true);
+        }
+        
+        // Ensure the cursor is visible for button interaction
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        
+        // Hide connection pending UI if it's active
+        if (connectionPending != null && connectionPending.activeSelf)
+        {
+            connectionPending.SetActive(false);
+        }
+        
+        // Play error sound
         uiCancel.Post(gameObject);
+        
+        Debug.LogWarning($"Connection Error: {error}");
+    }
+
+    // Method called by the "Back to Menu" button on the error UI
+    public void OnConnectionErrorBackButton()
+    {
+        // Hide the error UI
+        if (connectionRefusedUI != null)
+        {
+            connectionRefusedUI.SetActive(false);
+        }
+        
+        // Return to main menu
+        MainMenu();
+        
+        // Play button sound
+        ButtonClickAudio();
+    }
+
+    // Method called by the "Retry" button on the error UI
+    public void OnConnectionErrorRetryButton()
+    {
+        // Hide the error UI
+        if (connectionRefusedUI != null)
+        {
+            connectionRefusedUI.SetActive(false);
+        }
+        
+        // Show connection pending UI
+        if (connectionPending != null)
+        {
+            connectionPending.SetActive(true);
+        }
+        
+        // Get a reference to ConnectToGame
+        ConnectToGame connectToGame = FindFirstObjectByType<ConnectToGame>();
+        
+        if (connectToGame != null)
+        {
+            // Check if we were trying to host or join
+            if (string.IsNullOrEmpty(connectToGame.lastJoinCode))
+            {
+                // We were trying to host
+                Debug.Log("Retrying host creation");
+                connectToGame.RetryHostCreation();
+            }
+            else
+            {
+                // We were trying to join
+                Debug.Log($"Retrying join with code: {connectToGame.lastJoinCode}");
+                connectToGame.RetryJoinWithCode(connectToGame.lastJoinCode);
+            }
+        }
+        else
+        {
+            Debug.LogError("Could not find ConnectToGame component for retry");
+            // Fall back to main menu
+            MainMenu();
+        }
+        
+        // Play button sound
+        ButtonClickAudio();
     }
 
     public void ButtonClickAudio()
@@ -1041,6 +1306,14 @@ public class MenuManager : NetworkBehaviour
 
     private void OnBackPressed()
     {
+        // Check if lobby settings menu is active and handle first
+        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf)
+        {
+            Debug.Log("[MenuManager] OnBackPressed closing lobby settings menu");
+            CloseLobbySettingsMenu();
+            return;
+        }
+
         // Check if we're in a settings menu and handle first
         if ((settingsMenuUI != null && settingsMenuUI.activeSelf) ||
             (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf))
@@ -1302,22 +1575,33 @@ public class MenuManager : NetworkBehaviour
     // Method to open Lobby Settings Menu (called when host creates lobby or from pause menu)
     public void OpenLobbySettingsMenu()
     {
-        Debug.Log("[MenuManager] OpenLobbySettingsMenu called - TRACKING ISSUE");
+        Debug.Log("[MenuManager] OpenLobbySettingsMenu called");
         
+        // Check if we're in Playing state - if so, don't allow opening the menu
+        if (GameManager.instance != null && GameManager.instance.state == GameState.Playing)
+        {
+            Debug.Log("[MenuManager] Cannot open lobby settings during gameplay!");
+            ButtonCancelAudio(); // Play cancel sound to indicate action is not allowed
+            return;
+        }
+
         if (lobbySettingsMenuUI == null)
         {
             Debug.LogError("[MenuManager] lobbySettingsMenuUI reference is null!");
             return;
         }
         
-        // Check if we're in a lobby
-        bool inLobby = NetworkManager.Singleton != null && ConnectionManager.instance != null 
-                     && !string.IsNullOrEmpty(ConnectionManager.instance.joinCode);
+        // CRITICAL: Make 100% sure the pause menu is completely hidden
+        if (pauseMenuUI != null && pauseMenuUI.activeSelf)
+        {
+            Debug.Log("[MenuManager] Hiding pause menu before showing lobby settings");
+            pauseMenuUI.SetActive(false);
+        }
         
-        // Log initial state
-        Debug.Log($"[MenuManager] Initial state - GameObject name: {lobbySettingsMenuUI.name}, activeSelf: {lobbySettingsMenuUI.activeSelf}, activeInHierarchy: {lobbySettingsMenuUI.activeInHierarchy}, inLobby: {inLobby}");
+        // Hide all other menus except the lobby settings menu
+        HideAllExceptLobby();
         
-        // CRITICAL: Ensure the parent is active first
+        // Ensure parent objects are active first
         Transform rootParent = lobbySettingsMenuUI.transform.parent;
         if (rootParent != null && !rootParent.gameObject.activeInHierarchy)
         {
@@ -1325,132 +1609,244 @@ public class MenuManager : NetworkBehaviour
             rootParent.gameObject.SetActive(true);
         }
         
-        // Force-close all other menus EXCEPT the lobby settings menu
-        HideAllExceptLobby();
+        // Disable camera input BEFORE showing the menu
+        DisableCameraInput();
         
-        // Log state after hiding
-        Debug.Log($"[MenuManager] After HideAllExceptLobby - activeSelf: {lobbySettingsMenuUI.activeSelf}, activeInHierarchy: {lobbySettingsMenuUI.activeInHierarchy}");
-        
-        // Special handling for lobby context
-        if (inLobby)
-        {
-            Debug.Log("[MenuManager] In lobby context - using special activation sequence");
-            
-            // Ensure this panel isn't subsequently deactivated by other scripts
-            _prevLobbyMenuActiveState = true;
-            
-            // Direct activation through parent chain
-            Transform current = lobbySettingsMenuUI.transform;
-            while (current.parent != null)
-            {
-                current = current.parent;
-                current.gameObject.SetActive(true);
-            }
-        }
-        
-        // Check and fix UI components first before attempting activation
-        CheckUILayoutComponents(lobbySettingsMenuUI);
-        
-        // A new ultra simple approach - just try direct activation
+        // Make the lobby settings menu active
         lobbySettingsMenuUI.SetActive(true);
-        Debug.Log($"[MenuManager] After first SetActive(true) - activeSelf: {lobbySettingsMenuUI.activeSelf}, activeInHierarchy: {lobbySettingsMenuUI.activeInHierarchy}");
-        
-        // If that didn't work, try more aggressive methods
-        if (!lobbySettingsMenuUI.activeInHierarchy)
-        {
-            // Log parent information
-            Transform parentTransform = lobbySettingsMenuUI.transform.parent;
-            Debug.Log($"[MenuManager] Parent info - Name: {(parentTransform != null ? parentTransform.name : "null")}, Active: {(parentTransform != null ? parentTransform.gameObject.activeInHierarchy : false)}");
-            
-            // Activate parent if it exists
-            if (parentTransform != null && !parentTransform.gameObject.activeInHierarchy)
-            {
-                Debug.Log("[MenuManager] Parent is inactive, activating parent first");
-                parentTransform.gameObject.SetActive(true);
-                
-                // Check parent UI components as well
-                CheckUILayoutComponents(parentTransform.gameObject);
-            }
-            
-            // Try setting active again
-            lobbySettingsMenuUI.SetActive(true);
-            Debug.Log($"[MenuManager] After second SetActive(true) - activeSelf: {lobbySettingsMenuUI.activeSelf}, activeInHierarchy: {lobbySettingsMenuUI.activeInHierarchy}");
-            
-            // If still not active, use the detach/reattach method
-            if (!lobbySettingsMenuUI.activeInHierarchy)
-            {
-                Debug.Log("[MenuManager] Using detach/reattach method");
-                Transform originalParent = lobbySettingsMenuUI.transform.parent;
-                int siblingIndex = lobbySettingsMenuUI.transform.GetSiblingIndex();
-                
-                // Detach
-                lobbySettingsMenuUI.transform.SetParent(null);
-                
-                // Activate
-                lobbySettingsMenuUI.SetActive(true);
-                
-                // Reattach
-                lobbySettingsMenuUI.transform.SetParent(originalParent);
-                lobbySettingsMenuUI.transform.SetSiblingIndex(siblingIndex);
-                
-                Debug.Log($"[MenuManager] After detach/reattach - activeSelf: {lobbySettingsMenuUI.activeSelf}, activeInHierarchy: {lobbySettingsMenuUI.activeInHierarchy}");
-            }
-        }
-        
-        // Configure the lobby settings from current game state
-        ConfigureLobbySettingsMenu();
-        
-        // Final state
-        Debug.Log($"[MenuManager] FINAL STATE - activeSelf: {lobbySettingsMenuUI.activeSelf}, activeInHierarchy: {lobbySettingsMenuUI.activeInHierarchy}");
         
         // Track that this menu should be active now
         _prevLobbyMenuActiveState = true;
+        
+        // IMPORTANT: Ensure cursor is visible and unlocked for menu interaction
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        // Switch to UI input mode
+        if (inputManager != null)
+        {
+            inputManager.SwitchToUIMode();
+            if (inputManager.IsInUIMode())
+                inputManager.ForceEnableCurrentActionMap();
+        }
+        
+        // Configure the lobby settings
+        ConfigureLobbySettingsMenu();
+        
+        Debug.Log($"[MenuManager] Lobby settings menu activated: {lobbySettingsMenuUI.activeInHierarchy}");
     }
 
-    // Add the HideAllMenus method
+    private void ConnectLobbySettingsButton()
+    {
+        // If we have a direct reference to the button, use it
+        if (pauseLobbySettingsButton != null)
+        {
+            pauseLobbySettingsButton.onClick.RemoveAllListeners();
+            pauseLobbySettingsButton.onClick.AddListener(OpenLobbySettingsMenu);
+            
+            // Update button visibility based on game state
+            UpdateLobbySettingsButtonState();
+            
+            Debug.Log("Connected Lobby Settings button via direct reference: " + pauseLobbySettingsButton.name);
+            return;
+        }
+            
+        // Fallback to search if direct reference is missing
+        if (pauseMenuUI == null)
+            return;
+            
+        // Find the lobby settings button in the pause menu
+        Button lobbySettingsButton = null;
+        
+        // First try to find by direct name
+        Transform lobbySettingsTransform = pauseMenuUI.transform.Find("LobbySettingsButton");
+        if (lobbySettingsTransform != null)
+        {
+            lobbySettingsButton = lobbySettingsTransform.GetComponent<Button>();
+        }
+        
+        // If not found by direct name, search all buttons
+        if (lobbySettingsButton == null)
+        {
+            foreach (Button button in pauseMenuUI.GetComponentsInChildren<Button>(true))
+            {
+                if (button.name.Contains("LobbySettings"))
+                {
+                    lobbySettingsButton = button;
+                    break;
+                }
+            }
+        }
+        
+        // If found, connect it
+        if (lobbySettingsButton != null)
+        {
+            lobbySettingsButton.onClick.RemoveAllListeners();
+            lobbySettingsButton.onClick.AddListener(OpenLobbySettingsMenu);
+            
+            // Update button visibility based on game state
+            if (GameManager.instance != null)
+            {
+                bool shouldBeVisible = GameManager.instance.state != GameState.Playing;
+                lobbySettingsButton.gameObject.SetActive(shouldBeVisible);
+                Debug.Log($"[MenuManager] Updated found lobby settings button visibility: {shouldBeVisible}");
+            }
+            
+            Debug.Log("Found and connected LobbySettings button in pause menu: " + lobbySettingsButton.name);
+        }
+        else
+        {
+            Debug.LogWarning("Could not find LobbySettings button in pause menu");
+        }
+    }
+
+    // Add a method to update lobby settings button state when game state changes
+    public void UpdateLobbySettingsButtonState()
+    {
+        if (pauseLobbySettingsButton != null && GameManager.instance != null)
+        {
+            bool shouldBeVisible = GameManager.instance.state != GameState.Playing;
+            pauseLobbySettingsButton.gameObject.SetActive(shouldBeVisible);
+            Debug.Log($"[MenuManager] Updated lobby settings button visibility: {shouldBeVisible}");
+        }
+    }
+
+    // Method to configure the lobby settings after it's been activated
+    private void ConfigureLobbySettingsMenu()
+    {
+        Debug.Log("[MenuManager] ConfigureLobbySettingsMenu called");
+        
+        if (lobbySettingsMenuUI == null)
+        {
+            Debug.LogError("[MenuManager] lobbySettingsMenuUI is null in ConfigureLobbySettingsMenu");
+            return;
+        }
+        
+        // Ensure parent objects are active first
+        Transform parent = lobbySettingsMenuUI.transform.parent;
+        while (parent != null)
+        {
+            if (!parent.gameObject.activeInHierarchy)
+            {
+                Debug.LogWarning($"[MenuManager] Parent {parent.name} is inactive! Activating.");
+                parent.gameObject.SetActive(true);
+            }
+            parent = parent.parent;
+        }
+        
+        // Get the LobbySettingsPanel component
+        LobbySettingsPanel lobbySettingsPanel = lobbySettingsMenuUI.GetComponentInChildren<LobbySettingsPanel>(true);
+        if (lobbySettingsPanel == null)
+        {
+            Debug.LogError("[MenuManager] Could not find LobbySettingsPanel component in lobbySettingsMenuUI");
+            return;
+        }
+        
+        // Now that we know the panel is active and we have a reference, we can update the UI
+        Debug.Log("[MenuManager] Found LobbySettingsPanel, updating UI");
+        
+        // Manually enable the LobbySettingsPanel script in case it was disabled
+        lobbySettingsPanel.enabled = true;
+        
+        // Force reset initialization state to ensure it processes the OnEnable correctly
+        ForceResetLobbyPanelInitialization(lobbySettingsPanel);
+        
+        // Update UI with current settings
+        lobbySettingsPanel.UpdateUI();
+        
+        // Let the panel know it should refresh its state
+        lobbySettingsPanel.StartPeriodicUpdates();
+
+        // Configure round count slider
+        if (roundCountSlider != null)
+        {
+            // Set up slider properties
+            roundCountSlider.minValue = 0;
+            roundCountSlider.maxValue = _validRoundCounts.Length - 1;
+            roundCountSlider.wholeNumbers = true;
+
+            // Remove any existing listeners to prevent duplicates
+            roundCountSlider.onValueChanged.RemoveAllListeners();
+            // Add the listener for value changes
+            roundCountSlider.onValueChanged.AddListener(OnRoundCountSliderChanged);
+
+            // Find the index of the current round count in valid values
+            int currentIndex = System.Array.IndexOf(_validRoundCounts, _roundCount);
+            if (currentIndex == -1) currentIndex = 2; // Default to middle (5 rounds) if not found
+            roundCountSlider.value = currentIndex;
+
+            // Force an initial text update
+            UpdateRoundCountText();
+            
+            Debug.Log($"[MenuManager] Round count slider configured with value {roundCountSlider.value}, text component {(roundCountText != null ? "found" : "missing")}");
+        }
+        else
+        {
+            Debug.LogWarning("[MenuManager] Round count slider reference is missing!");
+        }
+    }
+
+    // Helper method to reset the initialization state in LobbySettingsPanel via reflection
+    private void ForceResetLobbyPanelInitialization(LobbySettingsPanel panel)
+    {
+        if (panel == null)
+            return;
+            
+        try
+        {
+            // Use reflection to reset the isInitialized field
+            System.Reflection.FieldInfo field = typeof(LobbySettingsPanel).GetField("isInitialized", 
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                
+            if (field != null)
+            {
+                field.SetValue(panel, false);
+                Debug.Log("[MenuManager] Successfully reset LobbySettingsPanel initialization state");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[MenuManager] Error resetting LobbySettingsPanel initialization: {e.Message}");
+        }
+    }
+
+    // Method to hide all menus except the specified one
+    private void HideAllMenusExcept(GameObject menuToKeep)
+    {
+        if (mainMenuPanel != null && mainMenuPanel != menuToKeep) mainMenuPanel.SetActive(false);
+        if (playMenuPanel != null && playMenuPanel != menuToKeep) playMenuPanel.SetActive(false);
+        if (pauseMenuUI != null && pauseMenuUI != menuToKeep) pauseMenuUI.SetActive(false);
+        if (settingsMenuUI != null && settingsMenuUI != menuToKeep) settingsMenuUI.SetActive(false);
+        if (newOptionsMenuUI != null && newOptionsMenuUI != menuToKeep) newOptionsMenuUI.SetActive(false);
+        if (scoreboardUI != null && scoreboardUI != menuToKeep) scoreboardUI.SetActive(false);
+        if (tempUI != null && tempUI != menuToKeep) tempUI.SetActive(false);
+        if (connectionPending != null && connectionPending != menuToKeep) connectionPending.SetActive(false);
+        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI != menuToKeep) lobbySettingsMenuUI.SetActive(false);
+    }
+
+    // Method to hide all menus
     private void HideAllMenus()
     {
-        // Hide all menu panels
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
-        if (playMenuPanel != null) playMenuPanel.SetActive(false);
-        if (pauseMenuUI != null) pauseMenuUI.SetActive(false);
-        if (settingsMenuUI != null) settingsMenuUI.SetActive(false);
-        if (newOptionsMenuUI != null) newOptionsMenuUI.SetActive(false);
-        if (scoreboardUI != null) scoreboardUI.SetActive(false);
-        if (tempUI != null) tempUI.SetActive(false);
-        if (connectionPending != null) connectionPending.SetActive(false);
-        
-        // IMPORTANT: Do NOT deactivate the lobbySettingsMenuUI here
-        // This was causing the enable/disable cycle
-        // We will activate it manually afterwards
+        HideAllMenusExcept(null);
     }
-    
-    // Create a specialized method to hide all except the lobby settings menu
+
+    // Specialized method to hide all except lobby settings
     private void HideAllExceptLobby()
     {
-        // Hide all menu panels except for the lobby settings
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
-        if (playMenuPanel != null) playMenuPanel.SetActive(false);
-        if (pauseMenuUI != null) pauseMenuUI.SetActive(false);
-        if (settingsMenuUI != null) settingsMenuUI.SetActive(false);
-        if (newOptionsMenuUI != null) newOptionsMenuUI.SetActive(false);
-        if (scoreboardUI != null) scoreboardUI.SetActive(false);
-        if (tempUI != null) tempUI.SetActive(false);
-        if (connectionPending != null) connectionPending.SetActive(false);
-        
-        // CRITICAL: Make sure we don't accidentally disable the lobby settings menu 
-        // if it's already active
-        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf)
-        {
-            Debug.Log("[MenuManager] Lobby settings menu was already active, ensuring it stays active");
-            // Don't do anything to it
-        }
+        HideAllMenusExcept(lobbySettingsMenuUI);
     }
 
     // Lobby Settings Methods
     public void ShowLobbySettingsMenu()
     {
         Debug.Log("ShowLobbySettingsMenu called - showing lobby settings menu!");
+        
+        // CRITICAL: First hide the pause menu if it's active
+        if (pauseMenuUI != null && pauseMenuUI.activeSelf)
+        {
+            Debug.Log("[MenuManager] Hiding pause menu before showing lobby settings");
+            pauseMenuUI.SetActive(false);
+        }
         
         // Defer the actual setup to the next frame to ensure proper activation
         if (lobbySettingsMenuUI != null)
@@ -1492,114 +1888,16 @@ public class MenuManager : NetworkBehaviour
         }
     }
     
-    // Method to configure the lobby settings after it's been activated
-    private void ConfigureLobbySettingsMenu()
-    {
-        Debug.Log("[MenuManager] ConfigureLobbySettingsMenu called");
-        
-        if (lobbySettingsMenuUI == null)
-        {
-            Debug.LogError("[MenuManager] lobbySettingsMenuUI is null in ConfigureLobbySettingsMenu");
-            return;
-        }
-        
-        // Ensure parent objects are active first
-        Transform parent = lobbySettingsMenuUI.transform.parent;
-        while (parent != null)
-        {
-            if (!parent.gameObject.activeInHierarchy)
-            {
-                Debug.LogWarning($"[MenuManager] Parent {parent.name} is inactive! Activating.");
-                parent.gameObject.SetActive(true);
-            }
-            parent = parent.parent;
-        }
-        
-        // Verify the menu is active before trying to get components
-        if (!lobbySettingsMenuUI.activeInHierarchy)
-        {
-            Debug.LogWarning("[MenuManager] Lobby settings menu not active in hierarchy during configuration, activating now");
-            lobbySettingsMenuUI.SetActive(true);
-            
-            // Give it a frame to activate
-            Invoke("DelayedConfigureLobbySettings", 0.05f);
-            return;
-        }
-        
-        // Get the LobbySettingsPanel component
-        LobbySettingsPanel lobbySettingsPanel = lobbySettingsMenuUI.GetComponentInChildren<LobbySettingsPanel>(true);
-        if (lobbySettingsPanel == null)
-        {
-            Debug.LogError("[MenuManager] Could not find LobbySettingsPanel component in lobbySettingsMenuUI");
-            return;
-        }
-        
-        // Now that we know the panel is active and we have a reference, we can update the UI
-        Debug.Log("[MenuManager] Found LobbySettingsPanel, updating UI");
-        
-        // Manually enable the LobbySettingsPanel script in case it was disabled
-        lobbySettingsPanel.enabled = true;
-        
-        // Force reset initialization state to ensure it processes the OnEnable correctly
-        ForceResetLobbyPanelInitialization(lobbySettingsPanel);
-        
-        // Update UI with current settings
-        lobbySettingsPanel.UpdateUI();
-        
-        // Let the panel know it should refresh its state
-        lobbySettingsPanel.StartPeriodicUpdates();
-    }
-    
-    // Delayed configuration method to handle activation
-    private void DelayedConfigureLobbySettings()
-    {
-        if (lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeInHierarchy)
-        {
-            // Actually configure the panel now that it's had time to activate
-            LobbySettingsPanel lobbySettingsPanel = lobbySettingsMenuUI.GetComponentInChildren<LobbySettingsPanel>(true);
-            if (lobbySettingsPanel != null)
-            {
-                lobbySettingsPanel.enabled = true;
-                ForceResetLobbyPanelInitialization(lobbySettingsPanel);
-                lobbySettingsPanel.UpdateUI();
-                lobbySettingsPanel.StartPeriodicUpdates();
-            }
-        }
-    }
-    
-    // Helper method to reset the initialization state in LobbySettingsPanel via reflection
-    private void ForceResetLobbyPanelInitialization(LobbySettingsPanel panel)
-    {
-        if (panel == null)
-            return;
-            
-        try
-        {
-            // Use reflection to reset the isInitialized field
-            System.Reflection.FieldInfo field = typeof(LobbySettingsPanel).GetField("isInitialized", 
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                
-            if (field != null)
-            {
-                field.SetValue(panel, false);
-                Debug.Log("[MenuManager] Successfully reset LobbySettingsPanel initialization state");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[MenuManager] Error resetting LobbySettingsPanel initialization: {e.Message}");
-        }
-    }
-    
     // Method to update game mode display text
     private void UpdateGameModeDisplay()
     {
-        if (gameModeText != null)
+        // Update the value text if it exists
+        if (gameModeValueText != null)
         {
-            gameModeText.text = _selectedGameMode.ToString();
+            gameModeValueText.text = _selectedGameMode.ToString();
         }
-        
-        // Update team settings visibility
+
+        // Update team settings visibility based on game mode
         SetTeamSettingsVisibility(_selectedGameMode == GameMode.TeamBattle);
     }
     
@@ -1607,41 +1905,48 @@ public class MenuManager : NetworkBehaviour
     public void OnGameModeLeftClicked()
     {
         ButtonClickAudio();
+
+        // Get the previous mode in the enum (with wrap-around)
+        int currentIndex = (int)_selectedGameMode;
+        int totalModes = System.Enum.GetValues(typeof(GameMode)).Length;
+        int newIndex = (currentIndex - 1 + totalModes) % totalModes;  // Wrap around to the end
+        GameMode newMode = (GameMode)newIndex;
+
+        _selectedGameMode = newMode;
         
-        if (_selectedGameMode == GameMode.TeamBattle)
+        // Update the game manager if it exists
+        if (GameManager.instance != null)
         {
-            _selectedGameMode = GameMode.FreeForAll;
-            
-            // Update game settings
-            if (GameManager.instance != null)
-            {
-                GameManager.instance.SetGameMode(GameMode.FreeForAll);
-            }
-            
-            // Update UI
-            UpdateGameModeDisplay();
+            GameManager.instance.SetGameMode(newMode);
         }
+
+        UpdateGameModeDisplay();
     }
     
     // Method called when right arrow for game mode is clicked
     public void OnGameModeRightClicked()
     {
         ButtonClickAudio();
+
+        // Get the next mode in the enum (with wrap-around)
+        int currentIndex = (int)_selectedGameMode;
+        int totalModes = System.Enum.GetValues(typeof(GameMode)).Length;
+        int newIndex = (currentIndex + 1) % totalModes;  // Wrap around to the start
+        GameMode newMode = (GameMode)newIndex;
+
+        _selectedGameMode = newMode;
         
-        if (_selectedGameMode == GameMode.FreeForAll)
+        // Update the game manager if it exists
+        if (GameManager.instance != null)
         {
-            _selectedGameMode = GameMode.TeamBattle;
-            
-            // Update game settings
-            if (GameManager.instance != null)
+            GameManager.instance.SetGameMode(newMode);
+            if (newMode == GameMode.TeamBattle)
             {
-                GameManager.instance.SetGameMode(GameMode.TeamBattle);
                 GameManager.instance.SetTeamCount(_teamCount);
             }
-            
-            // Update UI
-            UpdateGameModeDisplay();
         }
+
+        UpdateGameModeDisplay();
     }
     
     // Method to control visibility of team settings panel
@@ -1709,19 +2014,24 @@ public class MenuManager : NetworkBehaviour
         // Hide all UI panels
         HideAllMenusIncludingLobby();
             
-        // Resume gameplay
+        // Reset pause state
         gameIsPaused = false;
-        Time.timeScale = 1f;
-            
+        
+        // Ensure cursor is locked for gameplay
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        
+        // Enable camera input for gameplay
+        EnableCameraInput();
+        
         // Switch to gameplay mode for input
         if (inputManager != null)
         {
             inputManager.SwitchToGameplayMode();
-            
-            // Force cursor lock
-            StartCoroutine(EnforceCursorLockAfterStartGame());
+            if (inputManager.IsInGameplayMode())
+                inputManager.ForceEnableCurrentActionMap();
         }
-            
+        
         // Start the game - use TransitionToState instead of StartGame
         if (GameManager.instance != null)
         {
@@ -1784,7 +2094,7 @@ public class MenuManager : NetworkBehaviour
     public void CloseLobbySettingsMenu()
     {
         Debug.Log("[MenuManager] CloseLobbySettingsMenu called");
-    
+
         if (lobbySettingsMenuUI == null)
             return;
         
@@ -1803,43 +2113,91 @@ public class MenuManager : NetworkBehaviour
             panel.CancelInvoke();
         }
         
+        // Store information about the current state before we change anything
+        bool inGameMode = GameManager.instance != null && GameManager.instance.state == GameState.Playing;
+        bool wasPauseMenuOpen = pauseMenuUI != null && pauseMenuUI.activeInHierarchy;
+        
+        // Calculate whether this was opened from the pause menu
+        bool openedFromPauseMenu = !inGameMode || (ConnectionManager.instance != null && 
+                                  ConnectionManager.instance.isConnected && gameIsPaused && 
+                                  !wasPauseMenuOpen);
+        
+        // Check if this was triggered by the escape key/back button
+        bool closedFromInputSystem = (Time.frameCount == Time.renderedFrameCount);
+        
         // Hide lobby settings menu
         lobbySettingsMenuUI.SetActive(false);
         
-        // Show pause menu if we're in-game
-        if (GameManager.instance != null && GameManager.instance.state != GameState.Pending)
+        // Important: To prevent pause menu from showing immediately after this menu closes
+        lastMenuToggleTime = Time.unscaledTime;
+        
+        // SIMPLIFIED LOGIC:
+        // If we're closing with Escape key, go back to gameplay
+        // If we explicitly closed with a button AND it was opened from pause menu, go back to pause
+        if (closedFromInputSystem || !openedFromPauseMenu)
         {
+            // Go back to gameplay mode
+            Debug.Log("[MenuManager] Closing lobby settings and returning to gameplay");
+            
+            // Enable camera input for gameplay
+            EnableCameraInput();
+            
+            // Lock cursor when returning to gameplay
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            
+            gameIsPaused = false;
+            
+            // Switch back to gameplay input mode
+            if (inputManager != null)
+            {
+                inputManager.SwitchToGameplayMode();
+                if (inputManager.IsInGameplayMode())
+                    inputManager.ForceEnableCurrentActionMap();
+            }
+            
+            // Start a coroutine to ensure cursor stays locked for a few frames
+            StartCoroutine(EnforceCursorLockAfterMenu());
+            
+            Debug.Log("[MenuManager] Returned to gameplay mode after closing lobby settings");
+        }
+        else
+        {
+            // Go back to pause menu
+            Debug.Log("[MenuManager] Closing lobby settings and returning to pause menu");
+            
+            // Keep camera input disabled for pause menu
+            DisableCameraInput();
+            
+            // Make sure pause menu is active and cursor is visible
             pauseMenuUI.SetActive(true);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             
             // Set selected button if using controller
-            if (controllerSelectionEnabled && EventSystem.current != null)
+            if (controllerSelectionEnabled && EventSystem.current != null && defaultPauseMenuButton != null)
             {
-                if (defaultPauseMenuButton != null)
-                {
-                    EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
-                }
+                EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
             }
-        }
-        // Return to main menu if we were in the main menu flow
-        else if (!mainMenuPanel.activeSelf && !playMenuPanel.activeSelf)
-        {
-            pauseMenuUI.SetActive(true);
         }
     }
-    
-    private IEnumerator EnforceCursorLockAfterStartGame()
+
+    // Add a helper coroutine to enforce cursor lock
+    private IEnumerator EnforceCursorLockAfterMenu()
     {
+        // Wait a frame to let everything else finish first
+        yield return null;
+        
+        // Enforce lock over multiple frames to ensure it sticks
         for (int i = 0; i < 10; i++)
         {
-            // Wait a frame
-            yield return null;
-                
-            // Lock cursor
-            if (!gameIsPaused)
+            if (!gameIsPaused && !mainMenuPanel.activeSelf && 
+                !(lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf))
             {
-                Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
+                Cursor.lockState = CursorLockMode.Locked;
             }
+            yield return null;
         }
     }
     
@@ -1871,57 +2229,6 @@ public class MenuManager : NetworkBehaviour
         }
         
         ButtonClickAudio();
-    }
-
-    private void ConnectLobbySettingsButton()
-    {
-        // If we have a direct reference to the button, use it
-        if (pauseLobbySettingsButton != null)
-        {
-            pauseLobbySettingsButton.onClick.RemoveAllListeners();
-            pauseLobbySettingsButton.onClick.AddListener(ShowLobbySettingsMenu);
-            Debug.Log("Connected Lobby Settings button via direct reference: " + pauseLobbySettingsButton.name);
-            return;
-        }
-            
-        // Fallback to search if direct reference is missing
-        if (pauseMenuUI == null)
-            return;
-            
-        // Find the lobby settings button in the pause menu
-        Button lobbySettingsButton = null;
-        
-        // First try to find by direct name
-        Transform lobbySettingsTransform = pauseMenuUI.transform.Find("LobbySettingsButton");
-        if (lobbySettingsTransform != null)
-        {
-            lobbySettingsButton = lobbySettingsTransform.GetComponent<Button>();
-        }
-        
-        // If not found by direct name, search all buttons
-        if (lobbySettingsButton == null)
-        {
-            foreach (Button button in pauseMenuUI.GetComponentsInChildren<Button>(true))
-            {
-                if (button.name.Contains("LobbySettings"))
-                {
-                    lobbySettingsButton = button;
-                    break;
-                }
-            }
-        }
-        
-        // If found, connect it
-        if (lobbySettingsButton != null)
-        {
-            lobbySettingsButton.onClick.RemoveAllListeners();
-            lobbySettingsButton.onClick.AddListener(ShowLobbySettingsMenu);
-            Debug.Log("Found and connected LobbySettings button in pause menu: " + lobbySettingsButton.name);
-        }
-        else
-        {
-            Debug.LogWarning("Could not find LobbySettings button in pause menu");
-        }
     }
 
     // Direct method that can be assigned in the Unity Inspector to a button's OnClick
@@ -2076,84 +2383,6 @@ public class MenuManager : NetworkBehaviour
         }
     }
 
-    // Helper method to check if UI layout components are potentially causing issues
-    private void CheckUILayoutComponents(GameObject uiObject)
-    {
-        Debug.Log($"[MenuManager] Checking UI layout components on {uiObject.name}");
-        
-        // Check for common UI components that might need to be refreshed
-        LayoutGroup[] layoutGroups = uiObject.GetComponentsInChildren<LayoutGroup>(true);
-        if (layoutGroups.Length > 0)
-        {
-            Debug.Log($"[MenuManager] Found {layoutGroups.Length} LayoutGroup components");
-            foreach (LayoutGroup lg in layoutGroups)
-            {
-                Debug.Log($"  - {lg.GetType().Name} on {lg.gameObject.name}, enabled: {lg.enabled}, active: {lg.gameObject.activeInHierarchy}");
-                // Force refresh
-                lg.enabled = false;
-                lg.enabled = true;
-            }
-        }
-        
-        // Check for ContentSizeFitter
-        ContentSizeFitter[] sizeFitters = uiObject.GetComponentsInChildren<ContentSizeFitter>(true);
-        if (sizeFitters.Length > 0)
-        {
-            Debug.Log($"[MenuManager] Found {sizeFitters.Length} ContentSizeFitter components");
-            foreach (ContentSizeFitter csf in sizeFitters)
-            {
-                Debug.Log($"  - ContentSizeFitter on {csf.gameObject.name}, enabled: {csf.enabled}, active: {csf.gameObject.activeInHierarchy}");
-                // Force refresh
-                csf.enabled = false;
-                csf.enabled = true;
-            }
-        }
-        
-        // Check for CanvasGroup - might be affecting visibility
-        CanvasGroup[] canvasGroups = uiObject.GetComponentsInChildren<CanvasGroup>(true);
-        if (canvasGroups.Length > 0)
-        {
-            Debug.Log($"[MenuManager] Found {canvasGroups.Length} CanvasGroup components");
-            foreach (CanvasGroup cg in canvasGroups)
-            {
-                Debug.Log($"  - CanvasGroup on {cg.gameObject.name}, alpha: {cg.alpha}, interactable: {cg.interactable}, blocksRaycasts: {cg.blocksRaycasts}");
-                // Make sure alpha is not causing invisibility
-                if (cg.alpha < 0.01f)
-                {
-                    Debug.LogWarning($"  - CanvasGroup alpha is very low: {cg.alpha}, setting to 1");
-                    cg.alpha = 1f;
-                }
-                
-                // Make sure interaction is enabled
-                if (!cg.interactable || !cg.blocksRaycasts)
-                {
-                    Debug.LogWarning($"  - CanvasGroup has interactable or blocksRaycasts disabled, enabling both");
-                    cg.interactable = true;
-                    cg.blocksRaycasts = true;
-                }
-            }
-        }
-        
-        // Check for Canvas
-        Canvas[] canvases = uiObject.GetComponentsInChildren<Canvas>(true);
-        if (canvases.Length > 0)
-        {
-            Debug.Log($"[MenuManager] Found {canvases.Length} Canvas components");
-            foreach (Canvas canvas in canvases)
-            {
-                Debug.Log($"  - Canvas on {canvas.gameObject.name}, enabled: {canvas.enabled}, sortingOrder: {canvas.sortingOrder}");
-                // Force refresh and ensure enabled
-                canvas.enabled = true;
-                
-                // If this is a nested canvas, check if the sorting order might be causing issues
-                if (canvas.transform.parent != null && canvas.transform.parent.GetComponentInParent<Canvas>() != null)
-                {
-                    Debug.Log("    - This is a nested canvas");
-                }
-            }
-        }
-    }
-
     // EMERGENCY DIRECT APPROACH - Only use as a last resort
     public void EmergencyActivateLobbySettingsMenu()
     {
@@ -2210,6 +2439,72 @@ public class MenuManager : NetworkBehaviour
         
         // Log the final state
         Debug.Log($"Emergency activation complete - activeSelf: {lobbySettingsMenuUI.activeSelf}, activeInHierarchy: {lobbySettingsMenuUI.activeInHierarchy}");
+    }
+
+    // Method to manage cursor state based on menu state
+    private void UpdateCursorState(bool shouldBeVisible)
+    {
+        if (shouldBeVisible)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
+    // Coroutine to enforce cursor lock over multiple frames
+    private IEnumerator EnforceCursorLock()
+    {
+        // Wait a frame to let everything else finish first
+        yield return null;
+        
+        // Enforce lock over multiple frames to ensure it sticks
+        for (int i = 0; i < 10; i++)
+        {
+            if (!gameIsPaused && !mainMenuPanel.activeSelf && 
+                !(lobbySettingsMenuUI != null && lobbySettingsMenuUI.activeSelf))
+            {
+                UpdateCursorState(false);
+            }
+            yield return null;
+        }
+    }
+
+    // Method called when round count slider is changed
+    public void OnRoundCountSliderChanged(float value)
+    {
+        int index = Mathf.RoundToInt(value);
+        _roundCount = _validRoundCounts[index];
+        UpdateRoundCountText();
+        
+        // Update game settings if needed
+        if (GameManager.instance != null && GameManager.instance.GetType().GetMethod("SetRoundCount") != null)
+        {
+            // Log that we're updating the round count
+            Debug.Log($"[MenuManager] Setting round count to {_roundCount}");
+            GameManager.instance.SendMessage("SetRoundCount", _roundCount, SendMessageOptions.DontRequireReceiver);
+        }
+
+        ButtonClickAudio();
+    }
+    
+    // Method to update round count text display
+    private void UpdateRoundCountText()
+    {
+        if (roundCountText != null)
+        {
+            string newText = _roundCount == 1 ? "1 Round" : $"{_roundCount} Rounds";
+            roundCountText.text = newText;
+            Debug.Log($"[MenuManager] Updated round count text to: {newText}");
+        }
+        else
+        {
+            Debug.LogWarning("[MenuManager] Round count text component reference is missing!");
+        }
     }
 }
 
