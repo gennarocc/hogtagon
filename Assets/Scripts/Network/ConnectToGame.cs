@@ -211,36 +211,10 @@ public class ConnectToGame : MonoBehaviour
     // Simple method to open the lobby settings after a delay
     private void OpenLobbySettingsAfterDelay()
     {
-        if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        if (menuManager != null)
         {
-            Debug.Log("[ConnectToGame] Opening lobby settings after host creation");
-            
-            // Check if player has already spawned
-            bool playerSpawned = NetworkManager.Singleton.LocalClient != null && 
-                                NetworkManager.Singleton.LocalClient.PlayerObject != null;
-            
-            if (playerSpawned)
-            {
-                Debug.Log("[ConnectToGame] Player already spawned, skipping lobby settings open from ConnectToGame");
-                return; // Skip since the Player script will handle this
-            }
-            
-            Debug.Log("[ConnectToGame] Player not yet spawned, opening lobby settings as fallback");
-            
-            // Make sure cursor is visible and unlocked for menu interaction
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            
-            // First try the standard method
+            Debug.Log("[ConnectToGame] Opening lobby settings menu");
             menuManager.OpenLobbySettingsMenu();
-            
-            // If that doesn't work, try the emergency method
-            if (menuManager.lobbySettingsMenuUI != null && !menuManager.lobbySettingsMenuUI.activeInHierarchy)
-            {
-                Debug.LogWarning("[ConnectToGame] Standard method failed, using emergency activation");
-                menuManager.EmergencyActivateLobbySettingsMenu();
-            }
-            
             Debug.Log("[ConnectToGame] Lobby settings should now be visible");
         }
     }

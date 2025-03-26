@@ -119,23 +119,7 @@ public class Player : NetworkBehaviour
         
         if (menuManager != null)
         {
-            // Try to open the lobby settings menu
             menuManager.OpenLobbySettingsMenu();
-            
-            // Check if it opened successfully
-            if (menuManager.lobbySettingsMenuUI != null && !menuManager.lobbySettingsMenuUI.activeInHierarchy)
-            {
-                Debug.LogWarning("[Player] First attempt failed, using emergency activation");
-                menuManager.EmergencyActivateLobbySettingsMenu();
-            }
-            
-            // Add a loop to ensure cursor stays visible for a few frames
-            for (int i = 0; i < 10; i++)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                yield return null;
-            }
         }
     }
 
