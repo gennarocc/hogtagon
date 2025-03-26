@@ -2237,7 +2237,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 2
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -3714,9 +3714,9 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   gameTime: 0
   betweenRoundLength: 7
-  showScoreboardBetweenRounds: 1
   gameMode: 0
   teamCount: 2
+  roundsToWin: 5
   gameModeLocked: 0
   menuManager: {fileID: 1935665467}
   LevelMusicOn:
@@ -4439,6 +4439,17 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 456806249}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &467734110 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+  m_PrefabInstance: {fileID: 1689690793}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &476008449
 GameObject:
   m_ObjectHideFlags: 0
@@ -5873,7 +5884,8 @@ MonoBehaviour:
   cameraSensitivitySlider: {fileID: 583718287}
   applyButton: {fileID: 0}
   defaultSensitivity: 1
-  defaultVolume: 0.8
+  volumeSlider: {fileID: 0}
+  volumeText: {fileID: 0}
 --- !u!114 &666450247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15964,6 +15976,50 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_Value
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_MaxValue
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_MinValue
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_WholeNumbers
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1935665467}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnRoundCountSliderChanged
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: MenuManager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_FloatArgument
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1640472647602831741, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 2173932426305123335, guid: faff25ec3a0cc5e47994a11ff80ff4cc, type: 3}
       propertyPath: m_Name
       value: GoalSlider
@@ -17962,6 +18018,8 @@ MonoBehaviour:
   teamSettingsPanel: {fileID: 1300571383}
   teamCountSlider: {fileID: 113549103}
   teamCountText: {fileID: 1411428371}
+  roundCountSlider: {fileID: 467734110}
+  roundCountText: {fileID: 1713129258}
   normalColor: {r: 0, g: 1, b: 0, a: 1}
   hoverColor: {r: 0.7, g: 1, b: 0.7, a: 1}
   pressedColor: {r: 0, g: 0.7, b: 0, a: 1}
@@ -18397,12 +18455,14 @@ MonoBehaviour:
   lobbyCodeCopyButton: {fileID: 17122292}
   startGameFromLobbyButton: {fileID: 353272262}
   connectedPlayersText: {fileID: 863236137}
-  gameModeText: {fileID: 877117133}
+  gameModeValueText: {fileID: 1659681786}
   gameModeLeftButton: {fileID: 1308959921}
   gameModeRightButton: {fileID: 1143106348}
   teamSettingsPanel: {fileID: 1300571383}
   teamCountSlider: {fileID: 113549103}
   teamCountText: {fileID: 1411428371}
+  roundCountSlider: {fileID: 467734110}
+  roundCountText: {fileID: 1713129258}
   pauseResumeButton: {fileID: 1218411586}
   pauseOptionsButton: {fileID: 1013339715}
   pauseLobbySettingsButton: {fileID: 741565417}
@@ -20102,6 +20162,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 673770971}
     m_Modifications:
+    - target: {fileID: 3111319573890342790, guid: 9c07a145ba7bb8540bd37e6e7a47d288, type: 3}
+      propertyPath: showHighlightArrow
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3353735015739826934, guid: 9c07a145ba7bb8540bd37e6e7a47d288, type: 3}
       propertyPath: m_Name
       value: RightArrow
@@ -20760,6 +20824,10 @@ PrefabInstance:
     - target: {fileID: 8406166378873337479, guid: e8dda8268254aa8458023971881e5c52, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 2537673416
+      objectReference: {fileID: 0}
+    - target: {fileID: 8406166378873337479, guid: e8dda8268254aa8458023971881e5c52, type: 3}
+      propertyPath: SpawnWithObservers
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

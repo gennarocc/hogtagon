@@ -24,6 +24,8 @@ public class LobbySettingsPanel : MonoBehaviour
     [SerializeField] private GameObject teamSettingsPanel;
     [SerializeField] private Slider teamCountSlider;
     [SerializeField] private TextMeshProUGUI teamCountText;
+    [SerializeField] private Slider roundCountSlider;
+    [SerializeField] private TextMeshProUGUI roundCountText;
     
     [Header("Button Styling")]
     [SerializeField] private Color normalColor = new Color(0, 1, 0, 1); // Bright green
@@ -230,6 +232,36 @@ public class LobbySettingsPanel : MonoBehaviour
             teamCountSlider.maxValue = 4;
             teamCountSlider.wholeNumbers = true;
         }
+
+        // SETUP ROUND COUNT SLIDER - Available to host
+        if (roundCountSlider != null)
+        {
+            roundCountSlider.interactable = isHost;
+            
+            // Get the valid round counts from MenuManager
+            int[] validRoundCounts = new int[] { 1, 3, 5, 7, 9 };
+            roundCountSlider.minValue = 0;
+            roundCountSlider.maxValue = validRoundCounts.Length - 1;
+            roundCountSlider.wholeNumbers = true;
+            
+            // Find the index of the current round count
+            int currentRoundCount = menuManager != null ? menuManager.roundCount : 5;
+            int currentIndex = System.Array.IndexOf(validRoundCounts, currentRoundCount);
+            if (currentIndex == -1) currentIndex = 2; // Default to middle (5 rounds) if not found
+            
+            // Set initial value
+            roundCountSlider.value = currentIndex;
+            
+            // Add listener for value changes
+            roundCountSlider.onValueChanged.RemoveAllListeners();
+            roundCountSlider.onValueChanged.AddListener(OnRoundCountChanged);
+            
+            // Update text display
+            if (roundCountText != null)
+            {
+                roundCountText.text = $"{validRoundCounts[currentIndex]} ROUNDS";
+            }
+        }
         
         Debug.Log("[LobbySettingsPanel] Button setup completed successfully");
     }
@@ -334,7 +366,7 @@ public class LobbySettingsPanel : MonoBehaviour
             NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2)
         {
             menuManager.ButtonClickAudio();
-            menuManager.StartGameFromLobbySettings();
+            StartGameFromLobby();
         }
     }
     
@@ -379,7 +411,7 @@ public class LobbySettingsPanel : MonoBehaviour
     {
         if (menuManager != null)
         {
-            menuManager.OnGameModeLeftClicked();
+            menuManager.OnGameModeDirectionClicked(true);
             UpdateUI();
         }
     }
@@ -388,7 +420,7 @@ public class LobbySettingsPanel : MonoBehaviour
     {
         if (menuManager != null)
         {
-            menuManager.OnGameModeRightClicked();
+            menuManager.OnGameModeDirectionClicked(false);
             UpdateUI();
         }
     }
@@ -406,5 +438,37 @@ public class LobbySettingsPanel : MonoBehaviour
             // Update game settings
             menuManager.SetTeamCount(teams);
         }
+    }
+
+    private void OnRoundCountChanged(float value)
+    {
+        if (menuManager == null) return;
+        
+        int[] validRoundCounts = new int[] { 1, 3, 5, 7, 9 };
+        int index = Mathf.RoundToInt(value);
+        int newRoundCount = validRoundCounts[index];
+        
+        // Update the text display
+        if (roundCountText != null)
+        {
+            roundCountText.text = $"{newRoundCount} ROUNDS";
+        }
+        
+        // Update the game settings if we're the host
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && GameManager.instance != null)
+        {
+            GameManager.instance.SetRoundCount(newRoundCount);
+        }
+        
+        // Play button sound
+        if (menuManager != null)
+        {
+            menuManager.ButtonClickAudio();
+        }
+    }
+
+    private void StartGameFromLobby()
+    {
+        menuManager.StartGame();
     }
 } 

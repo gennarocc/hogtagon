@@ -48,7 +48,7 @@ public class ConnectionManager : NetworkBehaviour
 
         // Set player username
         string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
-        if (decodedUsername.Length == 0)
+        if (decodedUsername.Length == 0 || decodedUsername == "Player")
             decodedUsername = "Player" + (GetPlayerCount() + 1);
 
         if (!CheckUsernameAvailability(decodedUsername))
@@ -128,7 +128,7 @@ public class ConnectionManager : NetworkBehaviour
 
         if (!IsServer && NetworkManager.Singleton.DisconnectReason != string.Empty)
         {
-            menuManager.MainMenu();
+            menuManager.ShowMainMenu();
             menuManager.DisplayConnectionError(NetworkManager.Singleton.DisconnectReason);
         }
 
@@ -155,7 +155,7 @@ public class ConnectionManager : NetworkBehaviour
     {
         menuManager.connectionPending.SetActive(false);
         menuManager.DisplayConnectionError("Connection Timeout");
-        menuManager.MainMenu();
+        menuManager.ShowMainMenu();
     }
 
     public bool CheckUsernameAvailability(string username)
@@ -396,6 +396,26 @@ public class ConnectionManager : NetworkBehaviour
                     UpdatePlayerDataClientRpc(clientId, playerData);
                 }
             }
+        }
+    }
+
+    private void HandleConnectionFailed()
+    {
+        // Show error message
+        if (menuManager != null)
+        {
+            menuManager.DisplayConnectionError("Failed to connect to the game.");
+            menuManager.ShowMainMenu();
+        }
+    }
+
+    private void HandleDisconnected()
+    {
+        // Show error message
+        if (menuManager != null)
+        {
+            menuManager.DisplayConnectionError("Disconnected from the game.");
+            menuManager.ShowMainMenu();
         }
     }
 }

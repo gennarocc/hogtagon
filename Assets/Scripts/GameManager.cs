@@ -11,7 +11,6 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public float gameTime;
     [SerializeField] public float betweenRoundLength = 5f;
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
-    [SerializeField] private bool showScoreboardBetweenRounds = true;
 
     [Header("Game Mode Settings")]
     [SerializeField] private MenuManager.GameMode gameMode = MenuManager.GameMode.FreeForAll;
@@ -125,14 +124,62 @@ public class GameManager : NetworkBehaviour
 
     private IEnumerator ShowFinalScoreboard()
     {
-        yield return new WaitForSeconds(5f); // Show winner message for 5 seconds
+        yield return new WaitForSeconds(3f); // Show winner message for 3 seconds
         menuManager.ShowScoreboardClientRpc();
         
-        yield return new WaitForSeconds(10f); // Show scoreboard for 10 seconds
+        yield return new WaitForSeconds(3f); // Show scoreboard for 3 seconds
+
+        if (IsServer)
+        {
+            // Server-side reset
+            ResetGameState();
+            // Return to pending state (lobby)
+            TransitionToState(GameState.Pending);
+        }
+        else
+        {
+            // Clients request the server to handle the transition
+            RequestTransitionToPendingServerRpc();
+        }
         
-        // Return to pending state (lobby)
-        TransitionToState(GameState.Pending);
         menuManager.HideScoreboardClientRpc();
+    }
+
+    // Server-side method to reset game state
+    private void ResetGameState()
+    {
+        if (!IsServer) return;
+
+        // Reset all player states to Alive
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+                playerData.state = PlayerState.Alive;
+                playerData.score = 0; // Reset scores
+                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            }
+        }
+
+        // Unlock game mode settings for new game
+        UnlockGameModeSettings();
+        
+        // Respawn all players at their spawn points
+        RespawnAllPlayers();
+        
+        // Clear any remaining processed deaths
+        processedDeaths.Clear();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestTransitionToPendingServerRpc()
+    {
+        if (!IsServer) return;
+        
+        // Reset game state
+        ResetGameState();
+        // Transition to pending state
+        TransitionToState(GameState.Pending);
     }
 
     private void OnEndingEnter()
@@ -246,12 +293,16 @@ public class GameManager : NetworkBehaviour
     private void OnPendingEnter()
     {
         Debug.Log("GameManager OnPendingEnter");
-        // We're not pausing the kill feed anymore to allow messages in Pending state
         StopLevelMusicClientRpc();
         SetGameState(GameState.Pending);
         
-        // If we're the server and the game is just starting (no players have joined yet)
-        if (IsServer && NetworkManager.Singleton != null && NetworkManager.Singleton.ConnectedClientsList.Count > 0)
+        // Only show lobby settings if we're the server AND connected to the network
+        // AND not in the process of disconnecting
+        if (IsServer && 
+            NetworkManager.Singleton != null && 
+            NetworkManager.Singleton.IsListening && 
+            NetworkManager.Singleton.ConnectedClientsList.Count > 0 &&
+            ConnectionManager.instance.isConnected)
         {
             // Show the lobby settings menu for the host
             EnsureLobbySettingsVisibleForHost();
@@ -261,40 +312,10 @@ public class GameManager : NetworkBehaviour
     // Method to ensure the lobby settings are visible for the host
     private void EnsureLobbySettingsVisibleForHost()
     {
-        // Only do this on the server
-        if (!IsServer) return;
-        
-        Debug.Log("[GameManager] Ensuring lobby settings are visible for host");
-        
-        // Check if we're in the pending state
-        if (state != GameState.Pending)
+        if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            Debug.Log("[GameManager] Not in pending state, skipping lobby settings visibility check");
-            return;
-        }
-        
-        // Check if the menuManager exists and if the lobby settings are visible
-        if (menuManager != null && menuManager.lobbySettingsMenuUI != null)
-        {
-            // If the lobby settings menu is not active, try to open it
-            if (!menuManager.lobbySettingsMenuUI.activeInHierarchy)
-            {
-                Debug.Log("[GameManager] Lobby settings not visible, opening them");
-                
-                // Make sure cursor is visible and unlocked for menu interaction
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-                
-                // First try the standard method
-                menuManager.OpenLobbySettingsMenu();
-                
-                // If that doesn't work, try the emergency method
-                if (!menuManager.lobbySettingsMenuUI.activeInHierarchy)
-                {
-                    Debug.LogWarning("[GameManager] Standard method failed, using emergency activation");
-                    menuManager.EmergencyActivateLobbySettingsMenu();
-                }
-            }
+            Debug.Log("[GameManager] Ensuring lobby settings are visible for host");
+            menuManager.OpenLobbySettingsMenu();
         }
     }
 
@@ -539,11 +560,17 @@ public class GameManager : NetworkBehaviour
     // Method to set rounds to win from MenuManager
     public void SetRoundCount(int count)
     {
-        if (!gameModeLocked)
+        if (!IsServer) return;
+        
+        // Only allow changes before the game starts
+        if (state != GameState.Pending)
         {
-            roundsToWin = count;
-            Debug.Log($"[GameManager] Rounds to win set to: {roundsToWin}");
+            Debug.LogWarning("Cannot change round count after game has started");
+            return;
         }
+        
+        roundsToWin = count;
+        Debug.Log($"Round count set to {count}");
     }
 
     // Method to get current rounds to win setting
