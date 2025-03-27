@@ -40,6 +40,9 @@ public class KillFeed : NetworkBehaviour
     // Instance management
     private static KillFeed instance;
     
+    // Public accessor for the instance
+    public static KillFeed Instance => instance;
+    
     // Message tracking
     private Queue<GameObject> activeMessages = new();
     private ulong currentMessageId;
@@ -54,6 +57,27 @@ public class KillFeed : NetworkBehaviour
         }
         instance = this;
         ServiceLocator.RegisterService<KillFeed>(this);
+        
+        // Validate required components
+        if (killFeedItemPrefab == null)
+        {
+            Debug.LogError("[KillFeed] killFeedItemPrefab is not assigned!");
+        }
+        
+        if (killFeedContainer == null)
+        {
+            Debug.LogError("[KillFeed] killFeedContainer is not assigned!");
+        }
+    }
+
+    // Ensure this object persists through scene changes
+    private void Start()
+    {
+        // Don't destroy on load to maintain the KillFeed across scenes
+        if (gameObject.scene.buildIndex != -1) // Only if not in a "DontDestroyOnLoad" scene
+        {
+            DontDestroyOnLoad(gameObject);
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -132,14 +156,24 @@ public class KillFeed : NetworkBehaviour
             return;
         }
 
-        // Generate a random kill message
+        // Generate a random kill message (only server selects the message)
         string killMessage = killMessages[Random.Range(0, killMessages.Length)];
         
-        // Format the message
-        string formattedMessage = FormatKillMessage(killerName, killMessage, victimName);
+        // Find client IDs for the players on the server side
+        ulong? killerClientId = FindClientIdByName(killerName);
+        ulong? victimClientId = FindClientIdByName(victimName);
         
-        // Send to all clients
-        DisplayMessageClientRpc(formattedMessage, currentMessageId++);
+        // Server sends the client IDs and the selected message to all clients
+        DisplayKillMessageClientRpc(
+            killerName, 
+            killMessage, 
+            victimName, 
+            killerClientId.HasValue ? killerClientId.Value : 0, 
+            victimClientId.HasValue ? victimClientId.Value : 0,
+            killerClientId.HasValue,
+            victimClientId.HasValue,
+            currentMessageId++
+        );
     }
 
     public void AddSuicideMessage(string playerName)
@@ -151,32 +185,128 @@ public class KillFeed : NetworkBehaviour
             return;
         }
 
-        // Generate a random suicide message
+        // Generate a random suicide message (only server selects the message)
         string suicideMessage = suicideMessages[Random.Range(0, suicideMessages.Length)];
         
-        // Format the message
-        string formattedMessage = FormatSuicideMessage(playerName, suicideMessage);
+        // Find client ID for the player on the server side
+        ulong? playerClientId = FindClientIdByName(playerName);
         
-        // Send to all clients
-        DisplayMessageClientRpc(formattedMessage, currentMessageId++);
-    }
-
-    private string FormatKillMessage(string killerName, string killMessage, string victimName)
-    {
-        // Use white text for all parts of the message
-        return $"{killerName} {killMessage} {victimName}";
-    }
-
-    private string FormatSuicideMessage(string playerName, string suicideMessage)
-    {
-        // Use white text for all parts of the message
-        return $"{playerName} {suicideMessage}";
+        // Server sends the client ID and the selected message to all clients
+        DisplaySuicideMessageClientRpc(
+            playerName, 
+            suicideMessage, 
+            playerClientId.HasValue ? playerClientId.Value : 0,
+            playerClientId.HasValue,
+            currentMessageId++
+        );
     }
 
     [ClientRpc]
-    private void DisplayMessageClientRpc(string messageText, ulong messageId)
+    private void DisplayKillMessageClientRpc(
+        string killerName, 
+        string killMessage, 
+        string victimName, 
+        ulong killerClientId, 
+        ulong victimClientId,
+        bool hasKillerClientId,
+        bool hasVictimClientId,
+        ulong messageId)
     {
-        CreateMessage(messageText);
+        // Format message on client side using the exact same message from the server
+        string formattedMessage = FormatKillMessageWithIds(
+            killerName, 
+            killMessage, 
+            victimName, 
+            hasKillerClientId ? killerClientId : null,
+            hasVictimClientId ? victimClientId : null
+        );
+        
+        CreateMessage(formattedMessage);
+    }
+
+    [ClientRpc]
+    private void DisplaySuicideMessageClientRpc(
+        string playerName, 
+        string suicideMessage, 
+        ulong playerClientId,
+        bool hasPlayerClientId,
+        ulong messageId)
+    {
+        // Format message on client side using the exact same message from the server
+        string formattedMessage = FormatSuicideMessageWithId(
+            playerName, 
+            suicideMessage, 
+            hasPlayerClientId ? playerClientId : null
+        );
+        
+        CreateMessage(formattedMessage);
+    }
+
+    private string FormatKillMessageWithIds(
+        string killerName, 
+        string killMessage, 
+        string victimName, 
+        ulong? killerClientId, 
+        ulong? victimClientId)
+    {
+        // Get colored names based on client IDs
+        string coloredKillerName;
+        string coloredVictimName;
+        
+        if (killerClientId.HasValue)
+        {
+            coloredKillerName = ConnectionManager.Instance.GetPlayerColoredName(killerClientId.Value);
+        }
+        else
+        {
+            coloredKillerName = killerName;
+        }
+            
+        if (victimClientId.HasValue)
+        {
+            coloredVictimName = ConnectionManager.Instance.GetPlayerColoredName(victimClientId.Value);
+        }
+        else
+        {
+            coloredVictimName = victimName;
+        }
+        
+        // Use colored names with kill message
+        return $"{coloredKillerName} {killMessage} {coloredVictimName}";
+    }
+
+    private string FormatSuicideMessageWithId(
+        string playerName, 
+        string suicideMessage, 
+        ulong? playerClientId)
+    {
+        // Get colored name based on client ID
+        string coloredPlayerName;
+        
+        if (playerClientId.HasValue)
+        {
+            coloredPlayerName = ConnectionManager.Instance.GetPlayerColoredName(playerClientId.Value);
+        }
+        else
+        {
+            coloredPlayerName = playerName;
+        }
+            
+        // Use colored name with suicide message
+        return $"{coloredPlayerName} {suicideMessage}";
+    }
+    
+    // Helper method to find client ID by player name
+    private ulong? FindClientIdByName(string playerName)
+    {
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (ConnectionManager.Instance.GetClientUsername(clientId) == playerName)
+            {
+                return clientId;
+            }
+        }
+        return null;
     }
 
     private void CreateMessage(string messageText)
@@ -195,16 +325,29 @@ public class KillFeed : NetworkBehaviour
             Destroy(messageObj);
             return;
         }
-
+        
+        // Force settings that ensure rich text works
+        textComponent.richText = true;
+        textComponent.parseCtrlCharacters = true;
+        
+        // Now configure with the message
         ConfigureMessageObject(messageObj, textComponent, messageText);
+        
+        // Make sure the text component is enabled
+        textComponent.enabled = true;
+        
         ManageMessageQueue(messageObj);
     }
 
     private void ConfigureMessageObject(GameObject messageObj, TextMeshProUGUI textComponent, string messageText)
     {
+        // Set text with rich text support enabled
         textComponent.text = messageText;
         textComponent.fontSize = 24;
         textComponent.alignment = TextAlignmentOptions.Center;
+        
+        // Ensure rich text is enabled to support color tags
+        textComponent.richText = true;
 
         if (textComponent.transform.parent.TryGetComponent<Image>(out var backgroundImage))
         {

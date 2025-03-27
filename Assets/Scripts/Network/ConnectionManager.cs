@@ -249,9 +249,19 @@ public class ConnectionManager : NetworkBehaviour
         foreach (var player in sortedPlayers)
         {
             if (player.Value.state != PlayerState.Alive)
-                str += $"<color=#FF0000>{player.Value.username}</color>\n";
+            {
+                // For dead players, get their color but wrap in strikethrough and red tint
+                Color textColor = GetTextColorFromCarColor(player.Value.colorIndex);
+                string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+                str += $"<color=#{colorHex}><color=#FF0000><s>{player.Value.username}</s></color></color>\n";
+            }
             else
-                str += player.Value.username + "\n";
+            {
+                // For living players, show name in their car color
+                Color textColor = GetTextColorFromCarColor(player.Value.colorIndex);
+                string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+                str += $"<color=#{colorHex}>{player.Value.username}</color>\n";
+            }
         }
 
         return str;
@@ -411,6 +421,117 @@ public class ConnectionManager : NetworkBehaviour
             menuManager.DisplayConnectionError("Disconnected from the game.");
             menuManager.ShowMainMenu();
         }
+    }
+
+    // Get player's username with color tag based on their car color
+    public string GetPlayerColoredName(ulong clientId)
+    {
+        if (TryGetPlayerData(clientId, out PlayerData playerData))
+        {
+            // Convert the player's car color to a suitable text color
+            Color textColor = GetTextColorFromCarColor(playerData.colorIndex);
+            string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+            
+            return $"<color=#{colorHex}>{playerData.username}</color>";
+        }
+        
+        return "Unknown";
+    }
+
+    // Get text color based on car color index
+    private Color GetTextColorFromCarColor(int colorIndex)
+    {
+        // Ensure we have valid textures array
+        if (hogTextures == null || hogTextures.Length == 0 || colorIndex < 0 || colorIndex >= hogTextures.Length)
+        {
+            return Color.white; // Default fallback
+        }
+
+        // Try to extract color from the material name first
+        Material carMaterial = hogTextures[colorIndex];
+        if (carMaterial != null)
+        {
+            string materialName = carMaterial.name;
+            
+            // Check for color names in the material name
+            if (materialName.Contains("Red") || materialName.Contains("red"))
+            {
+                return new Color(1.0f, 0.0f, 0.0f); // Bright red
+            }
+            else if (materialName.Contains("Blue") || materialName.Contains("blue"))
+            {
+                return new Color(0.0f, 0.4f, 1.0f); // Bright blue
+            }
+            else if (materialName.Contains("Green") || materialName.Contains("green"))
+            {
+                return new Color(0.0f, 0.8f, 0.0f); // Bright green
+            }
+            else if (materialName.Contains("Yellow") || materialName.Contains("yellow"))
+            {
+                return new Color(1.0f, 0.9f, 0.0f); // Bright yellow
+            }
+            else if (materialName.Contains("Orange") || materialName.Contains("orange"))
+            {
+                return new Color(1.0f, 0.5f, 0.0f); // Bright orange
+            }
+            else if (materialName.Contains("Purple") || materialName.Contains("purple"))
+            {
+                return new Color(0.6f, 0.0f, 1.0f); // Bright purple
+            }
+            else if (materialName.Contains("Pink") || materialName.Contains("pink"))
+            {
+                return new Color(1.0f, 0.4f, 0.7f); // Bright pink
+            }
+            else if (materialName.Contains("Cyan") || materialName.Contains("cyan") || 
+                     materialName.Contains("Teal") || materialName.Contains("teal"))
+            {
+                return new Color(0.0f, 0.9f, 1.0f); // Bright cyan
+            }
+            else if (materialName.Contains("Black") || materialName.Contains("black"))
+            {
+                return new Color(0.4f, 0.4f, 0.4f); // Medium gray (not pure black for readability)
+            }
+            else if (materialName.Contains("White") || materialName.Contains("white"))
+            {
+                return new Color(0.9f, 0.9f, 0.9f); // Off-white
+            }
+            else if (materialName.Contains("Gray") || materialName.Contains("gray") || 
+                     materialName.Contains("Grey") || materialName.Contains("grey"))
+            {
+                return new Color(0.6f, 0.6f, 0.6f); // Medium gray
+            }
+            
+            // Special cases with brand names or other color-associated terms
+            else if (materialName.Contains("Gold") || materialName.Contains("gold"))
+            {
+                return new Color(1.0f, 0.84f, 0.0f); // Gold
+            }
+            else if (materialName.Contains("Silver") || materialName.Contains("silver"))
+            {
+                return new Color(0.75f, 0.75f, 0.75f); // Silver
+            }
+            else if (materialName.Contains("Bronze") || materialName.Contains("bronze"))
+            {
+                return new Color(0.8f, 0.5f, 0.2f); // Bronze
+            }
+        }
+        
+        // Fallback to the index-based system if no color is found in the name
+        // Use predefined distinct, vibrant colors based on index
+        Color[] fallbackColors = new Color[] {
+            new Color(1.0f, 0.0f, 0.0f), // Red
+            new Color(0.0f, 0.5f, 1.0f), // Blue
+            new Color(0.0f, 0.8f, 0.0f), // Green
+            new Color(1.0f, 0.8f, 0.0f), // Yellow
+            new Color(0.0f, 0.9f, 0.9f), // Cyan
+            new Color(1.0f, 0.0f, 1.0f), // Magenta
+            new Color(1.0f, 0.5f, 0.0f), // Orange
+            new Color(0.5f, 0.0f, 1.0f)  // Purple
+        };
+        
+        // Ensure the index is valid for the fallback colors
+        int safeIndex = colorIndex % fallbackColors.Length;
+        return fallbackColors[safeIndex];
     }
 }
 
