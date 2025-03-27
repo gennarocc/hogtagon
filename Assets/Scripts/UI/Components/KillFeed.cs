@@ -55,11 +55,8 @@ public class KillFeed : NetworkBehaviour
             Destroy(gameObject);
             return;
         }
-        
         instance = this;
-        Debug.Log("[KillFeed] Registering KillFeed with ServiceLocator");
         ServiceLocator.RegisterService<KillFeed>(this);
-        Debug.Log("[KillFeed] Registration complete with instance: " + GetInstanceID());
         
         // Validate required components
         if (killFeedItemPrefab == null)
@@ -71,10 +68,6 @@ public class KillFeed : NetworkBehaviour
         {
             Debug.LogError("[KillFeed] killFeedContainer is not assigned!");
         }
-        else
-        {
-            Debug.Log($"[KillFeed] killFeedContainer found: {killFeedContainer.name}");
-        }
     }
 
     // Ensure this object persists through scene changes
@@ -84,14 +77,12 @@ public class KillFeed : NetworkBehaviour
         if (gameObject.scene.buildIndex != -1) // Only if not in a "DontDestroyOnLoad" scene
         {
             DontDestroyOnLoad(gameObject);
-            Debug.Log("[KillFeed] Set to DontDestroyOnLoad");
         }
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-        Debug.Log($"[KillFeed] OnNetworkSpawn - IsServer: {IsServer}, IsClient: {IsClient}, IsOwner: {IsOwner}");
         ClearAllMessages();
     }
 
@@ -165,17 +156,24 @@ public class KillFeed : NetworkBehaviour
             return;
         }
 
-        Debug.Log($"[KillFeed] AddKillMessage called: {killerName} killed {victimName}");
-
-        // Generate a random kill message
+        // Generate a random kill message (only server selects the message)
         string killMessage = killMessages[Random.Range(0, killMessages.Length)];
         
-        // Format the message
-        string formattedMessage = FormatKillMessage(killerName, killMessage, victimName);
+        // Find client IDs for the players on the server side
+        ulong? killerClientId = FindClientIdByName(killerName);
+        ulong? victimClientId = FindClientIdByName(victimName);
         
-        // Send to all clients
-        Debug.Log($"[KillFeed] Sending kill message ClientRpc: {formattedMessage}");
-        DisplayMessageClientRpc(formattedMessage, currentMessageId++);
+        // Server sends the client IDs and the selected message to all clients
+        DisplayKillMessageClientRpc(
+            killerName, 
+            killMessage, 
+            victimName, 
+            killerClientId.HasValue ? killerClientId.Value : 0, 
+            victimClientId.HasValue ? victimClientId.Value : 0,
+            killerClientId.HasValue,
+            victimClientId.HasValue,
+            currentMessageId++
+        );
     }
 
     public void AddSuicideMessage(string playerName)
@@ -187,49 +185,114 @@ public class KillFeed : NetworkBehaviour
             return;
         }
 
-        Debug.Log($"[KillFeed] AddSuicideMessage called: {playerName}");
-
-        // Generate a random suicide message
+        // Generate a random suicide message (only server selects the message)
         string suicideMessage = suicideMessages[Random.Range(0, suicideMessages.Length)];
         
-        // Format the message
-        string formattedMessage = FormatSuicideMessage(playerName, suicideMessage);
+        // Find client ID for the player on the server side
+        ulong? playerClientId = FindClientIdByName(playerName);
         
-        // Send to all clients
-        Debug.Log($"[KillFeed] Sending suicide message ClientRpc: {formattedMessage}");
-        DisplayMessageClientRpc(formattedMessage, currentMessageId++);
+        // Server sends the client ID and the selected message to all clients
+        DisplaySuicideMessageClientRpc(
+            playerName, 
+            suicideMessage, 
+            playerClientId.HasValue ? playerClientId.Value : 0,
+            playerClientId.HasValue,
+            currentMessageId++
+        );
     }
 
-    private string FormatKillMessage(string killerName, string killMessage, string victimName)
+    [ClientRpc]
+    private void DisplayKillMessageClientRpc(
+        string killerName, 
+        string killMessage, 
+        string victimName, 
+        ulong killerClientId, 
+        ulong victimClientId,
+        bool hasKillerClientId,
+        bool hasVictimClientId,
+        ulong messageId)
     {
-        // Find client IDs for the players
-        ulong? killerClientId = FindClientIdByName(killerName);
-        ulong? victimClientId = FindClientIdByName(victimName);
+        // Format message on client side using the exact same message from the server
+        string formattedMessage = FormatKillMessageWithIds(
+            killerName, 
+            killMessage, 
+            victimName, 
+            hasKillerClientId ? killerClientId : null,
+            hasVictimClientId ? victimClientId : null
+        );
         
-        // Get colored names (if client IDs found)
-        string coloredKillerName = killerClientId.HasValue 
-            ? ConnectionManager.Instance.GetPlayerColoredName(killerClientId.Value)
-            : killerName;
+        CreateMessage(formattedMessage);
+    }
+
+    [ClientRpc]
+    private void DisplaySuicideMessageClientRpc(
+        string playerName, 
+        string suicideMessage, 
+        ulong playerClientId,
+        bool hasPlayerClientId,
+        ulong messageId)
+    {
+        // Format message on client side using the exact same message from the server
+        string formattedMessage = FormatSuicideMessageWithId(
+            playerName, 
+            suicideMessage, 
+            hasPlayerClientId ? playerClientId : null
+        );
+        
+        CreateMessage(formattedMessage);
+    }
+
+    private string FormatKillMessageWithIds(
+        string killerName, 
+        string killMessage, 
+        string victimName, 
+        ulong? killerClientId, 
+        ulong? victimClientId)
+    {
+        // Get colored names based on client IDs
+        string coloredKillerName;
+        string coloredVictimName;
+        
+        if (killerClientId.HasValue)
+        {
+            coloredKillerName = ConnectionManager.Instance.GetPlayerColoredName(killerClientId.Value);
+        }
+        else
+        {
+            coloredKillerName = killerName;
+        }
             
-        string coloredVictimName = victimClientId.HasValue
-            ? ConnectionManager.Instance.GetPlayerColoredName(victimClientId.Value)
-            : victimName;
+        if (victimClientId.HasValue)
+        {
+            coloredVictimName = ConnectionManager.Instance.GetPlayerColoredName(victimClientId.Value);
+        }
+        else
+        {
+            coloredVictimName = victimName;
+        }
         
-        // Use colored names with white kill message
+        // Use colored names with kill message
         return $"{coloredKillerName} {killMessage} {coloredVictimName}";
     }
 
-    private string FormatSuicideMessage(string playerName, string suicideMessage)
+    private string FormatSuicideMessageWithId(
+        string playerName, 
+        string suicideMessage, 
+        ulong? playerClientId)
     {
-        // Find client ID for the player
-        ulong? playerClientId = FindClientIdByName(playerName);
+        // Get colored name based on client ID
+        string coloredPlayerName;
         
-        // Get colored name (if client ID found)
-        string coloredPlayerName = playerClientId.HasValue
-            ? ConnectionManager.Instance.GetPlayerColoredName(playerClientId.Value)
-            : playerName;
+        if (playerClientId.HasValue)
+        {
+            coloredPlayerName = ConnectionManager.Instance.GetPlayerColoredName(playerClientId.Value);
+        }
+        else
+        {
+            coloredPlayerName = playerName;
+        }
             
-        // Use colored name with white suicide message
+        // Use colored name with suicide message
         return $"{coloredPlayerName} {suicideMessage}";
     }
     
@@ -246,13 +309,6 @@ public class KillFeed : NetworkBehaviour
         return null;
     }
 
-    [ClientRpc]
-    private void DisplayMessageClientRpc(string messageText, ulong messageId)
-    {
-        Debug.Log($"[KillFeed] DisplayMessageClientRpc received on client: {messageText}");
-        CreateMessage(messageText);
-    }
-
     private void CreateMessage(string messageText)
     {
         if (!killFeedItemPrefab || !killFeedContainer)
@@ -260,8 +316,6 @@ public class KillFeed : NetworkBehaviour
             Debug.LogWarning("KillFeed: Cannot add message - missing references");
             return;
         }
-
-        Debug.Log($"[KillFeed] Creating message UI: {messageText}");
 
         var messageObj = Instantiate(killFeedItemPrefab, killFeedContainer);
         var textComponent = messageObj.GetComponentInChildren<TextMeshProUGUI>();
@@ -271,16 +325,29 @@ public class KillFeed : NetworkBehaviour
             Destroy(messageObj);
             return;
         }
-
+        
+        // Force settings that ensure rich text works
+        textComponent.richText = true;
+        textComponent.parseCtrlCharacters = true;
+        
+        // Now configure with the message
         ConfigureMessageObject(messageObj, textComponent, messageText);
+        
+        // Make sure the text component is enabled
+        textComponent.enabled = true;
+        
         ManageMessageQueue(messageObj);
     }
 
     private void ConfigureMessageObject(GameObject messageObj, TextMeshProUGUI textComponent, string messageText)
     {
+        // Set text with rich text support enabled
         textComponent.text = messageText;
         textComponent.fontSize = 24;
         textComponent.alignment = TextAlignmentOptions.Center;
+        
+        // Ensure rich text is enabled to support color tags
+        textComponent.richText = true;
 
         if (textComponent.transform.parent.TryGetComponent<Image>(out var backgroundImage))
         {

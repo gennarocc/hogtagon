@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections.Generic;
 
 public class KillBall : NetworkBehaviour
 {
@@ -8,6 +9,10 @@ public class KillBall : NetworkBehaviour
     [SerializeField] public Vector3 initialSize;
     [SerializeField] public Vector3 targetSize;
     [SerializeField] private float duration = 60;
+    
+    // Dictionary to track last kill time for each player to prevent duplicate kills
+    private Dictionary<ulong, float> lastKillTime = new Dictionary<ulong, float>();
+    private const float KillCooldown = 0.5f; // Minimum seconds between killing the same player
     
     private void Update()
     {
@@ -26,18 +31,49 @@ public class KillBall : NetworkBehaviour
         // Only the server should process trigger collisions for consistency
         if (!IsServer) return;
 
-        // Check if this is a player
-        if (!col.gameObject.CompareTag("Player")) return;
+        // First check if we should process this collision
+        if (!ShouldProcessCollision(col)) return;
+
+        // Get the Player component from the colliding object's root
+        Player playerComponent = col.transform.root.GetComponent<Player>();
+        if (playerComponent == null) return;
 
         // Get the NetworkObject from the colliding player
-        NetworkObject playerNetObj = col.transform.root.GetComponent<NetworkObject>();
+        NetworkObject playerNetObj = playerComponent.GetComponent<NetworkObject>();
         if (playerNetObj == null) return;
 
         ulong clientId = playerNetObj.OwnerClientId;
+        
+        // Check for duplicate kills (cooldown)
+        if (lastKillTime.TryGetValue(clientId, out float lastTime))
+        {
+            if (Time.time - lastTime < KillCooldown)
+            {
+                Debug.Log($"Ignoring duplicate kill for player {clientId} (cooldown active)");
+                return;
+            }
+        }
+        
+        // Update last kill time
+        lastKillTime[clientId] = Time.time;
+        
         Debug.Log($"Server detected player {clientId} hit the kill ball");
 
         // Process the collision on the server
         ProcessPlayerCollision(clientId);
+    }
+    
+    // Helper method to check if we should process this collision
+    private bool ShouldProcessCollision(Collider col)
+    {
+        // Check if this is a player
+        if (!col.gameObject.CompareTag("Player")) return false;
+        
+        // Get the root GameObject
+        Transform root = col.transform.root;
+        
+        // Check if we have the specific component we're looking for
+        return root.GetComponent<Player>() != null;
     }
 
     private void ProcessPlayerCollision(ulong clientId)

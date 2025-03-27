@@ -431,8 +431,10 @@ public class ConnectionManager : NetworkBehaviour
             // Convert the player's car color to a suitable text color
             Color textColor = GetTextColorFromCarColor(playerData.colorIndex);
             string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+            
             return $"<color=#{colorHex}>{playerData.username}</color>";
         }
+        
         return "Unknown";
     }
 
@@ -445,39 +447,91 @@ public class ConnectionManager : NetworkBehaviour
             return Color.white; // Default fallback
         }
 
-        // Try to extract main color from the car material
+        // Try to extract color from the material name first
         Material carMaterial = hogTextures[colorIndex];
-        if (carMaterial != null && carMaterial.HasProperty("_Color"))
+        if (carMaterial != null)
         {
-            Color carColor = carMaterial.GetColor("_Color");
+            string materialName = carMaterial.name;
             
-            // Ensure text color is readable by adjusting brightness if needed
-            float brightness = carColor.r * 0.299f + carColor.g * 0.587f + carColor.b * 0.114f;
-            if (brightness < 0.5f)
+            // Check for color names in the material name
+            if (materialName.Contains("Red") || materialName.Contains("red"))
             {
-                // Brighten dark colors for text readability
-                return new Color(
-                    Mathf.Min(1f, carColor.r * 1.5f),
-                    Mathf.Min(1f, carColor.g * 1.5f),
-                    Mathf.Min(1f, carColor.b * 1.5f)
-                );
+                return new Color(1.0f, 0.0f, 0.0f); // Bright red
             }
-            return carColor;
+            else if (materialName.Contains("Blue") || materialName.Contains("blue"))
+            {
+                return new Color(0.0f, 0.4f, 1.0f); // Bright blue
+            }
+            else if (materialName.Contains("Green") || materialName.Contains("green"))
+            {
+                return new Color(0.0f, 0.8f, 0.0f); // Bright green
+            }
+            else if (materialName.Contains("Yellow") || materialName.Contains("yellow"))
+            {
+                return new Color(1.0f, 0.9f, 0.0f); // Bright yellow
+            }
+            else if (materialName.Contains("Orange") || materialName.Contains("orange"))
+            {
+                return new Color(1.0f, 0.5f, 0.0f); // Bright orange
+            }
+            else if (materialName.Contains("Purple") || materialName.Contains("purple"))
+            {
+                return new Color(0.6f, 0.0f, 1.0f); // Bright purple
+            }
+            else if (materialName.Contains("Pink") || materialName.Contains("pink"))
+            {
+                return new Color(1.0f, 0.4f, 0.7f); // Bright pink
+            }
+            else if (materialName.Contains("Cyan") || materialName.Contains("cyan") || 
+                     materialName.Contains("Teal") || materialName.Contains("teal"))
+            {
+                return new Color(0.0f, 0.9f, 1.0f); // Bright cyan
+            }
+            else if (materialName.Contains("Black") || materialName.Contains("black"))
+            {
+                return new Color(0.4f, 0.4f, 0.4f); // Medium gray (not pure black for readability)
+            }
+            else if (materialName.Contains("White") || materialName.Contains("white"))
+            {
+                return new Color(0.9f, 0.9f, 0.9f); // Off-white
+            }
+            else if (materialName.Contains("Gray") || materialName.Contains("gray") || 
+                     materialName.Contains("Grey") || materialName.Contains("grey"))
+            {
+                return new Color(0.6f, 0.6f, 0.6f); // Medium gray
+            }
+            
+            // Special cases with brand names or other color-associated terms
+            else if (materialName.Contains("Gold") || materialName.Contains("gold"))
+            {
+                return new Color(1.0f, 0.84f, 0.0f); // Gold
+            }
+            else if (materialName.Contains("Silver") || materialName.Contains("silver"))
+            {
+                return new Color(0.75f, 0.75f, 0.75f); // Silver
+            }
+            else if (materialName.Contains("Bronze") || materialName.Contains("bronze"))
+            {
+                return new Color(0.8f, 0.5f, 0.2f); // Bronze
+            }
         }
         
-        // If we can't get the color from the material, use fallback colors based on index
+        // Fallback to the index-based system if no color is found in the name
+        // Use predefined distinct, vibrant colors based on index
         Color[] fallbackColors = new Color[] {
-            Color.red,
-            Color.blue,
-            Color.green,
-            Color.yellow,
-            Color.cyan,
-            Color.magenta,
-            new Color(1f, 0.5f, 0f), // Orange
-            new Color(0.5f, 0f, 1f)  // Purple
+            new Color(1.0f, 0.0f, 0.0f), // Red
+            new Color(0.0f, 0.5f, 1.0f), // Blue
+            new Color(0.0f, 0.8f, 0.0f), // Green
+            new Color(1.0f, 0.8f, 0.0f), // Yellow
+            new Color(0.0f, 0.9f, 0.9f), // Cyan
+            new Color(1.0f, 0.0f, 1.0f), // Magenta
+            new Color(1.0f, 0.5f, 0.0f), // Orange
+            new Color(0.5f, 0.0f, 1.0f)  // Purple
         };
         
-        return fallbackColors[colorIndex % fallbackColors.Length];
+        // Ensure the index is valid for the fallback colors
+        int safeIndex = colorIndex % fallbackColors.Length;
+        return fallbackColors[safeIndex];
     }
 }
 
