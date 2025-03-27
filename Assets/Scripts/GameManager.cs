@@ -19,7 +19,7 @@ public class GameManager : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
-
+    [SerializeField] private KillFeed killFeedReference; // Assign this in the inspector
 
     public static GameManager Instance;
     private ulong roundWinnerClientId;
@@ -46,8 +46,21 @@ public class GameManager : NetworkBehaviour
             Destroy(gameObject);
         }
 
-        // Get KillFeed reference
-        killFeed = ServiceLocator.GetService<KillFeed>();
+        // Try to get KillFeed reference from inspector first
+        if (killFeedReference != null)
+        {
+            killFeed = killFeedReference;
+            Debug.Log("[GameManager] Using KillFeed reference from inspector");
+        }
+        else
+        {
+            // Try to get KillFeed from ServiceLocator
+            killFeed = ServiceLocator.GetService<KillFeed>();
+            if (killFeed == null)
+            {
+                Debug.LogWarning("[GameManager] KillFeed not found in Start(). Will try again when needed.");
+            }
+        }
 
         TransitionToState(GameState.Pending);
     }
@@ -344,10 +357,13 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    // Method to handle player killed events
     public void PlayerDied(ulong clientId)
     {
         // Only the server should process deaths
         if (!IsServer) return;
+
+        Debug.Log($"[GameManager] PlayerDied called for client: {clientId}");
 
         // In Pending state, we allow multiple deaths for the same player
         // In Playing state, we only process one death per player
@@ -388,13 +404,54 @@ public class GameManager : NetworkBehaviour
             // Create kill feed message
             if (killFeed == null)
             {
-                killFeed = ServiceLocator.GetService<KillFeed>();
+                Debug.Log("[GameManager] Attempting to find KillFeed instance");
+                
+                // Try direct reference first
+                if (killFeedReference != null)
+                {
+                    killFeed = killFeedReference;
+                    Debug.Log("[GameManager] Using assigned killFeedReference");
+                }
+                // Then try the static instance
+                else if (KillFeed.Instance != null)
+                {
+                    killFeed = KillFeed.Instance;
+                    Debug.Log("[GameManager] Using KillFeed.Instance");
+                }
+                // Finally try ServiceLocator
+                else
+                {
+                    Debug.Log("[GameManager] Trying ServiceLocator as last resort");
+                    killFeed = ServiceLocator.GetService<KillFeed>();
+                }
+                
+                if (killFeed == null)
+                {
+                    Debug.LogError("[GameManager] Failed to get KillFeed through any method!");
+                    
+                    // Create a KillFeed if it doesn't exist
+                    GameObject killFeedPrefab = Resources.Load<GameObject>("Prefabs/UI/KillFeed");
+                    if (killFeedPrefab != null)
+                    {
+                        GameObject killFeedObj = Instantiate(killFeedPrefab);
+                        killFeed = killFeedObj.GetComponent<KillFeed>();
+                        Debug.Log("[GameManager] Created a new KillFeed instance");
+                    }
+                }
             }
 
             if (killFeed != null)
             {
+                Debug.Log("[GameManager] Retrieving PlayerCollisionTracker from ServiceLocator");
                 var playerCollisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
-                if (playerCollisionTracker != null)
+                
+                if (playerCollisionTracker == null)
+                {
+                    Debug.LogError("[GameManager] Failed to get PlayerCollisionTracker from ServiceLocator!");
+                    Debug.Log("[GameManager] Defaulting to suicide message because collision tracker is null");
+                    killFeed.AddSuicideMessage(player.username);
+                }
+                else
                 {
                     var lastCollision = playerCollisionTracker.GetLastCollision(clientId);
 
@@ -411,6 +468,10 @@ public class GameManager : NetworkBehaviour
                         killFeed.AddSuicideMessage(player.username);
                     }
                 }
+            }
+            else
+            {
+                Debug.LogError("[GameManager] KillFeed is null, could not add kill message!");
             }
         }
 

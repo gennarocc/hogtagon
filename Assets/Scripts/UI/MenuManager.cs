@@ -624,7 +624,24 @@ public class MenuManager : NetworkBehaviour
     public void DisplayWinnerClientRpc(string player)
     {
         tempUI.SetActive(true);
-        winnerText.text = player + " won the round";
+        
+        // Find client ID for the player name
+        ulong? winnerClientId = null;
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (ConnectionManager.Instance.GetClientUsername(clientId) == player)
+            {
+                winnerClientId = clientId;
+                break;
+            }
+        }
+        
+        // Get colored text if client ID was found
+        string coloredPlayerName = winnerClientId.HasValue
+            ? ConnectionManager.Instance.GetPlayerColoredName(winnerClientId.Value)
+            : player;
+            
+        winnerText.text = coloredPlayerName + " won the round";
         StartCoroutine(BetweenRoundTime());
     }
 
@@ -632,7 +649,24 @@ public class MenuManager : NetworkBehaviour
     public void DisplayGameWinnerClientRpc(string player)
     {
         tempUI.SetActive(true);
-        winnerText.text = $"{player} IS THE BIG WINNER!";
+        
+        // Find client ID for the player name
+        ulong? winnerClientId = null;
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (ConnectionManager.Instance.GetClientUsername(clientId) == player)
+            {
+                winnerClientId = clientId;
+                break;
+            }
+        }
+        
+        // Get colored text if client ID was found
+        string coloredPlayerName = winnerClientId.HasValue
+            ? ConnectionManager.Instance.GetPlayerColoredName(winnerClientId.Value)
+            : player;
+            
+        winnerText.text = $"{coloredPlayerName} IS THE BIG WINNER!";
 
         // Make sure cursor is visible for UI interaction
         Cursor.visible = true;

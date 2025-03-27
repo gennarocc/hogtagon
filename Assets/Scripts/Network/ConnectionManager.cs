@@ -249,9 +249,19 @@ public class ConnectionManager : NetworkBehaviour
         foreach (var player in sortedPlayers)
         {
             if (player.Value.state != PlayerState.Alive)
-                str += $"<color=#FF0000>{player.Value.username}</color>\n";
+            {
+                // For dead players, get their color but wrap in strikethrough and red tint
+                Color textColor = GetTextColorFromCarColor(player.Value.colorIndex);
+                string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+                str += $"<color=#{colorHex}><color=#FF0000><s>{player.Value.username}</s></color></color>\n";
+            }
             else
-                str += player.Value.username + "\n";
+            {
+                // For living players, show name in their car color
+                Color textColor = GetTextColorFromCarColor(player.Value.colorIndex);
+                string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+                str += $"<color=#{colorHex}>{player.Value.username}</color>\n";
+            }
         }
 
         return str;
@@ -411,6 +421,63 @@ public class ConnectionManager : NetworkBehaviour
             menuManager.DisplayConnectionError("Disconnected from the game.");
             menuManager.ShowMainMenu();
         }
+    }
+
+    // Get player's username with color tag based on their car color
+    public string GetPlayerColoredName(ulong clientId)
+    {
+        if (TryGetPlayerData(clientId, out PlayerData playerData))
+        {
+            // Convert the player's car color to a suitable text color
+            Color textColor = GetTextColorFromCarColor(playerData.colorIndex);
+            string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+            return $"<color=#{colorHex}>{playerData.username}</color>";
+        }
+        return "Unknown";
+    }
+
+    // Get text color based on car color index
+    private Color GetTextColorFromCarColor(int colorIndex)
+    {
+        // Ensure we have valid textures array
+        if (hogTextures == null || hogTextures.Length == 0 || colorIndex < 0 || colorIndex >= hogTextures.Length)
+        {
+            return Color.white; // Default fallback
+        }
+
+        // Try to extract main color from the car material
+        Material carMaterial = hogTextures[colorIndex];
+        if (carMaterial != null && carMaterial.HasProperty("_Color"))
+        {
+            Color carColor = carMaterial.GetColor("_Color");
+            
+            // Ensure text color is readable by adjusting brightness if needed
+            float brightness = carColor.r * 0.299f + carColor.g * 0.587f + carColor.b * 0.114f;
+            if (brightness < 0.5f)
+            {
+                // Brighten dark colors for text readability
+                return new Color(
+                    Mathf.Min(1f, carColor.r * 1.5f),
+                    Mathf.Min(1f, carColor.g * 1.5f),
+                    Mathf.Min(1f, carColor.b * 1.5f)
+                );
+            }
+            return carColor;
+        }
+        
+        // If we can't get the color from the material, use fallback colors based on index
+        Color[] fallbackColors = new Color[] {
+            Color.red,
+            Color.blue,
+            Color.green,
+            Color.yellow,
+            Color.cyan,
+            Color.magenta,
+            new Color(1f, 0.5f, 0f), // Orange
+            new Color(0.5f, 0f, 1f)  // Purple
+        };
+        
+        return fallbackColors[colorIndex % fallbackColors.Length];
     }
 }
 
