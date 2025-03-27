@@ -12,12 +12,14 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
     [SerializeField] private Color highlightedColor = new Color(0.0f, 1.0f, 0.0f, 1.0f);
     [SerializeField] private float outlineWidth = 2f;
     [SerializeField] private float animationSpeed = 5f;
+    [SerializeField] private bool showHighlightArrow = true;  // New field to toggle highlight arrow
     
     // Create a separate GameObjects for the outline borders
     private GameObject topBorder;
     private GameObject rightBorder;
     private GameObject bottomBorder;
     private GameObject leftBorder;
+    private GameObject highlightArrow;  // New reference for the highlight arrow
     
     private Button button;
     private TextMeshProUGUI buttonText;
@@ -47,8 +49,18 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
         // Create four border GameObjects for the outline
         CreateBorders();
         
-        // Set borders to invisible by default
+        // Create highlight arrow if enabled
+        if (showHighlightArrow)
+        {
+            CreateHighlightArrow();
+        }
+        
+        // Set borders and arrow to invisible by default
         SetBordersVisible(false);
+        if (highlightArrow != null)
+        {
+            highlightArrow.SetActive(false);
+        }
         
         // Set initial text color
         if (buttonText != null)
@@ -88,7 +100,7 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
         yield return null;
         
         // Reset all buttons
-        MenuButtonHighlight[] allButtons = FindObjectsOfType<MenuButtonHighlight>();
+        MenuButtonHighlight[] allButtons = FindObjectsByType<MenuButtonHighlight>(FindObjectsSortMode.None);
         foreach (MenuButtonHighlight btn in allButtons)
         {
             btn.ForceUnhighlightButton();
@@ -108,7 +120,7 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
     // Static method to ensure all buttons have exactly the same color
     public static void NormalizeAllButtonColors()
     {
-        MenuButtonHighlight[] allButtons = FindObjectsOfType<MenuButtonHighlight>();
+        MenuButtonHighlight[] allButtons = FindObjectsByType<MenuButtonHighlight>(FindObjectsSortMode.None);
         foreach (MenuButtonHighlight btn in allButtons)
         {
             if (!btn.isHighlighted && btn.buttonText != null)
@@ -188,6 +200,28 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
         leftImage.color = new Color(0, 0, 0, 0); // Start transparent
     }
     
+    private void CreateHighlightArrow()
+    {
+        // Create arrow GameObject
+        highlightArrow = new GameObject("HighlightArrow");
+        highlightArrow.transform.SetParent(transform, false);
+        
+        // Set up RectTransform
+        RectTransform arrowRT = highlightArrow.AddComponent<RectTransform>();
+        arrowRT.anchorMin = new Vector2(0, 0.5f);
+        arrowRT.anchorMax = new Vector2(0, 0.5f);
+        arrowRT.pivot = new Vector2(1f, 0.5f);
+        arrowRT.sizeDelta = new Vector2(20, 20); // Size of the arrow
+        arrowRT.anchoredPosition = new Vector2(-10, 0); // Position to the left of the text
+        
+        // Add TextMeshProUGUI component for the arrow
+        TextMeshProUGUI arrowText = highlightArrow.AddComponent<TextMeshProUGUI>();
+        arrowText.text = ">";  // Use ">" as the arrow
+        arrowText.fontSize = 24;
+        arrowText.color = normalColor;
+        arrowText.alignment = TextAlignmentOptions.Center;
+    }
+    
     private void SetBordersVisible(bool visible)
     {
         Color color = visible ? highlightedColor : new Color(0, 0, 0, 0);
@@ -196,6 +230,16 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
         if (rightBorder != null) rightBorder.GetComponent<Image>().color = color;
         if (bottomBorder != null) bottomBorder.GetComponent<Image>().color = color;
         if (leftBorder != null) leftBorder.GetComponent<Image>().color = color;
+        
+        // Update arrow visibility if it exists
+        if (highlightArrow != null && showHighlightArrow)
+        {
+            highlightArrow.SetActive(visible);
+            if (visible)
+            {
+                highlightArrow.GetComponent<TextMeshProUGUI>().color = highlightedColor;
+            }
+        }
     }
     
     public void OnPointerEnter(PointerEventData eventData)
@@ -241,12 +285,6 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
             buttonText.fontStyle = FontStyles.Bold;
         }
         
-        // Add arrow to the left of the button text
-        if (buttonText != null && !buttonText.text.StartsWith(">"))
-        {
-            buttonText.text = "> " + buttonText.text;
-        }
-        
         // Show outline on hover/selection
         SetBordersVisible(true);
         
@@ -273,12 +311,6 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
             // Use the shared color value to ensure absolute consistency
             buttonText.color = sharedNormalColor;
             buttonText.fontStyle = FontStyles.Normal;
-            
-            // Remove arrow
-            if (buttonText.text.StartsWith("> "))
-            {
-                buttonText.text = buttonText.text.Substring(2);
-            }
         }
         
         // Hide outline when not highlighted

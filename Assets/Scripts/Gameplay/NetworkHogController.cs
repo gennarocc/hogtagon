@@ -403,6 +403,13 @@ public class NetworkHogController : NetworkBehaviour
 
     private float CalculateCameraAngle(Vector2 lookInput = default)
     {
+        // Check if any menus are active - if so, don't update camera angle
+        if (MenuManager.Instance != null && MenuManager.Instance.gameIsPaused)
+        {
+            // Return current camera angle without updating it
+            return cameraAngle;
+        }
+        
         // If using gamepad with sufficient input magnitude
         if (inputManager.IsUsingGamepad && lookInput.sqrMagnitude > 0.01f)
         {
@@ -569,23 +576,26 @@ public class NetworkHogController : NetworkBehaviour
     [ClientRpc]
     public void ExecuteRespawnClientRpc(Vector3 respawnPosition, Quaternion respawnRotation)
     {
+        Debug.Log($"Executing respawn on client at position {respawnPosition}");
+        
         // Reset physics state
         rb.isKinematic = true;
         rb.position = respawnPosition;
         rb.rotation = respawnRotation;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-
+        
         // Update transform position
         transform.position = respawnPosition;
         transform.rotation = respawnRotation;
-
+        
         // Reset driving state
         currentTorque = 0f;
-
-        // Enable movement
+        
+        // CRITICAL: Re-enable movement after respawn
         canMove = true;
-
+        isDrifting.Value = false;
+        
         // Update visual targets for non-owners
         if (!IsOwner)
         {
@@ -593,7 +603,7 @@ public class NetworkHogController : NetworkBehaviour
             visualRotationTarget = respawnRotation;
             visualVelocityTarget = Vector3.zero;
         }
-
+        
         // Update state snapshot for owner
         if (IsOwner)
         {
@@ -612,7 +622,7 @@ public class NetworkHogController : NetworkBehaviour
             // Set state and send to server
             vehicleState.Value = snapshot;
         }
-
+        
         // Re-enable physics after a short delay
         StartCoroutine(EnablePhysicsAfterRespawn());
     }

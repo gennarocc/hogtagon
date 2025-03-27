@@ -80,6 +80,15 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""PauseMenu"",
+                    ""type"": ""Button"",
+                    ""id"": ""2abc4665-7030-4c7d-8e38-36fed6e7f02d"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -258,6 +267,28 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""action"": ""ShowScoreboard"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""13e613f5-1340-4810-a840-eb3cf8226c02"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PauseMenu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a86ce786-1bbf-4dda-8d17-6eaa73c89855"",
+                    ""path"": ""<Gamepad>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PauseMenu"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -371,6 +402,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         m_Gameplay_Honk = m_Gameplay.FindAction("Honk", throwIfNotFound: true);
         m_Gameplay_Look = m_Gameplay.FindAction("Look", throwIfNotFound: true);
         m_Gameplay_ShowScoreboard = m_Gameplay.FindAction("ShowScoreboard", throwIfNotFound: true);
+        m_Gameplay_PauseMenu = m_Gameplay.FindAction("PauseMenu", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_OpenMenu = m_UI.FindAction("OpenMenu", throwIfNotFound: true);
@@ -450,6 +482,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_Honk;
     private readonly InputAction m_Gameplay_Look;
     private readonly InputAction m_Gameplay_ShowScoreboard;
+    private readonly InputAction m_Gameplay_PauseMenu;
     public struct GameplayActions
     {
         private @DefaultControls m_Wrapper;
@@ -460,6 +493,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         public InputAction @Honk => m_Wrapper.m_Gameplay_Honk;
         public InputAction @Look => m_Wrapper.m_Gameplay_Look;
         public InputAction @ShowScoreboard => m_Wrapper.m_Gameplay_ShowScoreboard;
+        public InputAction @PauseMenu => m_Wrapper.m_Gameplay_PauseMenu;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -487,6 +521,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @ShowScoreboard.started += instance.OnShowScoreboard;
             @ShowScoreboard.performed += instance.OnShowScoreboard;
             @ShowScoreboard.canceled += instance.OnShowScoreboard;
+            @PauseMenu.started += instance.OnPauseMenu;
+            @PauseMenu.performed += instance.OnPauseMenu;
+            @PauseMenu.canceled += instance.OnPauseMenu;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -509,6 +546,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @ShowScoreboard.started -= instance.OnShowScoreboard;
             @ShowScoreboard.performed -= instance.OnShowScoreboard;
             @ShowScoreboard.canceled -= instance.OnShowScoreboard;
+            @PauseMenu.started -= instance.OnPauseMenu;
+            @PauseMenu.performed -= instance.OnPauseMenu;
+            @PauseMenu.canceled -= instance.OnPauseMenu;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -604,6 +644,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         void OnHonk(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
         void OnShowScoreboard(InputAction.CallbackContext context);
+        void OnPauseMenu(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

@@ -10,7 +10,12 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public float gameTime;
     [SerializeField] public float betweenRoundLength = 5f;
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
-    [SerializeField] private bool showScoreboardBetweenRounds = true;
+
+    [Header("Game Mode Settings")]
+    [SerializeField] private MenuManager.GameMode gameMode = MenuManager.GameMode.FreeForAll;
+    [SerializeField] private int teamCount = 2;
+    [SerializeField] private int roundsToWin = 5;  // Default to 5 rounds
+    [SerializeField] private bool gameModeLocked = false; // Will be locked after game starts
 
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
@@ -68,6 +73,9 @@ public class GameManager : NetworkBehaviour
             case GameState.Ending:
                 OnEndingEnter();
                 break;
+            case GameState.Winner:
+                OnWinnerEnter();
+                break;
         }
     }
 
@@ -85,10 +93,10 @@ public class GameManager : NetworkBehaviour
         OnGameStateChanged?.Invoke(newState);
     }
 
-    private void OnEndingEnter()
+    private void OnWinnerEnter()
     {
-        Debug.Log("GameManager OnEndingEnter");
-        SetGameState(GameState.Ending);
+        Debug.Log("GameManager OnWinnerEnter");
+        SetGameState(GameState.Winner);
 
         // Pause kill feed and keep last message
         if (killFeed != null)
@@ -96,26 +104,106 @@ public class GameManager : NetworkBehaviour
             killFeed.PauseAndKeepLastMessage();
         }
 
-        // Play midround music using NetworkSoundManager
+        // Get the winning player's data
+        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
+        {
+            // Display winner celebration message
+            menuManager.DisplayGameWinnerClientRpc(winner.username);
+
+            // Show scoreboard after a delay
+            StartCoroutine(ShowFinalScoreboard());
+        }
+    }
+
+    private IEnumerator ShowFinalScoreboard()
+    {
+        yield return new WaitForSeconds(3f); // Show winner message for 3 seconds
+        menuManager.ShowScoreboardClientRpc();
+
+        yield return new WaitForSeconds(3f); // Show scoreboard for 3 seconds
+
         if (IsServer)
         {
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOn);
+            // Server-side reset
+            ResetGameState();
+            // Return to pending state (lobby)
+            TransitionToState(GameState.Pending);
+        }
+        else
+        {
+            // Clients request the server to handle the transition
+            RequestTransitionToPendingServerRpc();
         }
 
-        // Change camera to player who won.
-        ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner);
-
-        menuManager.DisplayWinnerClientRpc(roundWinner.username);
-        roundWinner.score++;
-
-        ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
-        ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
-
-        StartCoroutine(BetweenRoundTimer());
+        menuManager.HideScoreboardClientRpc();
     }
+
+    // Server-side method to reset game state
+    private void ResetGameState()
+    {
+        if (!IsServer) return;
+
+        // Reset all player states to Alive
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+                playerData.state = PlayerState.Alive;
+                playerData.score = 0; // Reset scores
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            }
+        }
+
+        // Unlock game mode settings for new game
+        UnlockGameModeSettings();
+
+        // Respawn all players at their spawn points
+        RespawnAllPlayers();
+
+        // Clear any remaining processed deaths
+        processedDeaths.Clear();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestTransitionToPendingServerRpc()
+    {
+        if (!IsServer) return;
+
+        // Reset game state
+        ResetGameState();
+        // Transition to pending state
+        TransitionToState(GameState.Pending);
+    }
+
+    private void OnEndingEnter()
+    {
+        Debug.Log("GameManager OnWinnerEnter");
+        SetGameState(GameState.Winner);
+
+        // Pause kill feed and keep last message
+        if (killFeed != null)
+        {
+            killFeed.PauseAndKeepLastMessage();
+        }
+
+        // Get the winning player's data
+        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
+        {
+            // Display winner celebration message
+            menuManager.DisplayGameWinnerClientRpc(winner.username);
+
+            // Show scoreboard after a delay
+            StartCoroutine(ShowFinalScoreboard());
+        }
+    }
+
+    
 
     private void OnPlayingEnter()
     {
+        // Lock game mode settings when game starts
+        LockGameModeSettings();
+
         Debug.Log("GameManager OnPlayingEnter");
 
         // Clear processed deaths for new round
@@ -201,10 +289,41 @@ public class GameManager : NetworkBehaviour
         // Stop level music and play lobby music using NetworkSoundManager
         if (IsServer)
         {
-                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
         }
 
         SetGameState(GameState.Pending);
+
+        // Only show lobby settings if we're the server AND connected to the network
+        // AND not in the process of disconnecting
+        if (IsServer &&
+            NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsListening &&
+            NetworkManager.Singleton.ConnectedClientsList.Count > 0 &&
+            ConnectionManager.Instance.isConnected)
+        {
+            // Show the lobby settings menu for the host
+            EnsureLobbySettingsVisibleForHost();
+        }
+    }
+
+    // Method to ensure the lobby settings are visible for the host
+    private void EnsureLobbySettingsVisibleForHost()
+    {
+        if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            Debug.Log("[GameManager] Ensuring lobby settings are visible for host");
+            menuManager.OpenLobbySettingsMenu();
+        }
+    }
+
+    // Public method that other systems can call to ensure lobby settings are shown
+    public void ShowLobbySettings()
+    {
+        if (IsServer && state == GameState.Pending)
+        {
+            EnsureLobbySettingsVisibleForHost();
+        }
     }
 
     public void CheckGameStatus()
@@ -329,5 +448,92 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
         state = newState;
         if (state == GameState.Ending) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOff);
+    }
+
+    // Method to set game mode (called from MenuManager)
+    public void SetGameMode(MenuManager.GameMode mode)
+    {
+        // Only allow changing game mode before game starts
+        if (!gameModeLocked)
+        {
+            gameMode = mode;
+            Debug.Log("Game mode set to: " + gameMode);
+
+            // TODO: Notify clients of game mode change
+            if (IsServer)
+            {
+                UpdateGameModeClientRpc(mode);
+            }
+        }
+    }
+
+    // Method to set team count for team battle mode
+    public void SetTeamCount(int count)
+    {
+        // Only allow changing team count if in team battle mode and before game starts
+        if (!gameModeLocked && gameMode == MenuManager.GameMode.TeamBattle)
+        {
+            teamCount = Mathf.Clamp(count, 2, 4); // Limit between 2-4 teams
+            Debug.Log("Team count set to: " + teamCount);
+
+            // TODO: Notify clients of team count change
+            if (IsServer)
+            {
+                UpdateTeamCountClientRpc(teamCount);
+            }
+        }
+    }
+
+    // Client RPC to sync game mode with clients
+    [ClientRpc]
+    private void UpdateGameModeClientRpc(MenuManager.GameMode mode)
+    {
+        // Update local game mode
+        gameMode = mode;
+        Debug.Log("Client received game mode update: " + gameMode);
+    }
+
+    // Client RPC to sync team count with clients
+    [ClientRpc]
+    private void UpdateTeamCountClientRpc(int count)
+    {
+        // Update local team count
+        teamCount = count;
+        Debug.Log("Client received team count update: " + teamCount);
+    }
+
+    // Lock game mode settings when game starts
+    private void LockGameModeSettings()
+    {
+        gameModeLocked = true;
+        Debug.Log("[GameManager] Game mode settings locked");
+    }
+
+    // Method to set rounds to win from MenuManager
+    public void SetRoundCount(int count)
+    {
+        if (!IsServer) return;
+
+        // Only allow changes before the game starts
+        if (state != GameState.Pending)
+        {
+            Debug.LogWarning("Cannot change round count after game has started");
+            return;
+        }
+
+        roundsToWin = count;
+        Debug.Log($"Round count set to {count}");
+    }
+
+    // Method to get current rounds to win setting
+    public int GetRoundCount()
+    {
+        return roundsToWin;
+    }
+
+    private void UnlockGameModeSettings()
+    {
+        gameModeLocked = false;
+        Debug.Log("[GameManager] Game mode settings unlocked");
     }
 }

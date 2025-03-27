@@ -3,6 +3,7 @@ using UnityEngine;
 using Cinemachine;
 using TMPro;
 using System.Collections.Generic;
+using System.Collections;
 
 public class Player : NetworkBehaviour
 {
@@ -79,6 +80,15 @@ public class Player : NetworkBehaviour
                 mainCamera.Follow = cameraTarget;
                 mainCamera.LookAt = cameraTarget;
             }
+            
+            // If this is the host/server, open the lobby settings menu
+            if (IsServer && GameManager.Instance != null && GameManager.Instance.state == GameState.Pending)
+            {
+                Debug.Log("[Player] Host player spawned, opening lobby settings menu");
+                
+                // Wait a frame to ensure everything is initialized
+                StartCoroutine(OpenLobbySettingsAfterPlayerSpawn());
+            }
         }
         else
         {
@@ -89,6 +99,28 @@ public class Player : NetworkBehaviour
 
         Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
         localPlayerCameraTransform = localPlayer.mainCamera.transform;
+    }
+
+    // Coroutine to open lobby settings with proper timing after player spawn
+    private System.Collections.IEnumerator OpenLobbySettingsAfterPlayerSpawn()
+    {
+        // Immediate cursor state change to ensure visibility from start
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        // Wait a frame for everything to initialize
+        yield return null;
+        
+        // Second cursor unlock for redundancy
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        Debug.Log("[Player] Opening lobby settings from player spawn");
+        
+        if (menuManager != null)
+        {
+            menuManager.OpenLobbySettingsMenu();
+        }
     }
 
     private void Update()

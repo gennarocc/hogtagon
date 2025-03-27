@@ -4,6 +4,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
+using System.Collections;
 
 [DefaultExecutionOrder(-100)] // Ensure this script runs before others
 public class InputManager : MonoBehaviour
@@ -13,6 +14,11 @@ public class InputManager : MonoBehaviour
 
     // Reference to the Input Actions asset
     private DefaultControls controls;
+
+    // Action Maps for direct control
+    private InputActionMap playerActions;
+    private InputActionMap pauseActions;
+    private InputActionMap uiActions;
 
     // Input values
     private float _throttleInput;
@@ -37,6 +43,10 @@ public class InputManager : MonoBehaviour
     private bool _usingGamepad = false;
     private bool _controllerNavigationEnabled = true;
 
+    // Add a cooldown timer to prevent multiple toggles too quickly
+    private float menuToggleCooldown = 0.5f;
+    private float lastMenuToggleTime = 0f;
+
     // Public accessors
     public float ThrottleInput => _throttleInput;
     public float BrakeInput => _brakeInput;
@@ -60,6 +70,10 @@ public class InputManager : MonoBehaviour
     private void InitializeControls()
     {
         controls = new DefaultControls();
+
+        // Store action maps for direct control
+        playerActions = controls.Gameplay;
+        uiActions = controls.UI;
 
         // Gameplay controls
         controls.Gameplay.Throttle.performed += ctx => _throttleInput = ctx.ReadValue<float>();
@@ -86,6 +100,9 @@ public class InputManager : MonoBehaviour
         // ShowScoreboard
         controls.Gameplay.ShowScoreboard.performed += ctx => ScoreboardToggled?.Invoke(true);
         controls.Gameplay.ShowScoreboard.canceled += ctx => ScoreboardToggled?.Invoke(false);
+        
+        // Pause Menu (added)
+        controls.Gameplay.PauseMenu.performed += ctx => MenuToggled?.Invoke();
 
         // UI controls
         controls.UI.OpenMenu.performed += ctx => MenuToggled?.Invoke();
@@ -115,13 +132,45 @@ public class InputManager : MonoBehaviour
     {
         if (_currentInputState == InputState.Gameplay)
             return;
-
-        // First disable everything, then enable gameplay
-        controls.UI.Disable();
-        controls.Gameplay.Disable();
-        controls.Gameplay.Enable();
+        
+        // Disable UI action map and enable gameplay action map
+        uiActions.Disable();
+        playerActions.Enable();
 
         _currentInputState = InputState.Gameplay;
+        
+        // Apply cursor locking
+        ForceCursorLock();
+    }
+    
+    // Force the cursor to be locked and hidden
+    private void ForceCursorLock()
+    {
+        // Ensure cursor is locked for gameplay
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+    
+    // Coroutine to enforce cursor lock over several frames
+    private IEnumerator EnforceCursorLock()
+    {
+        // Apply locks at various intervals to overcome any overrides
+        for (int i = 0; i < 5; i++)
+        {
+            yield return new WaitForSeconds(0.1f * i);
+            
+            // Only apply if still in gameplay mode
+            if (_currentInputState == InputState.Gameplay)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+            else
+            {
+                // If we switched back to UI mode, exit the coroutine
+                yield break;
+            }
+        }
     }
 
     // Switch to UI controls
@@ -130,10 +179,9 @@ public class InputManager : MonoBehaviour
         if (_currentInputState == InputState.UI)
             return;
 
-        // First disable everything, then enable UI
-        controls.UI.Disable();
-        controls.Gameplay.Disable();
-        controls.UI.Enable();
+        // Disable gameplay action map and enable UI action map
+        playerActions.Disable();
+        uiActions.Enable();
 
         _currentInputState = InputState.UI;
 
@@ -148,11 +196,22 @@ public class InputManager : MonoBehaviour
     private void Update()
     {
         // Monitor Escape key during gameplay to pause
-        if (_currentInputState == InputState.Gameplay && Keyboard.current != null)
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            // Check if enough time has passed since last toggle
+            if (Time.unscaledTime - lastMenuToggleTime > menuToggleCooldown)
             {
+                Debug.Log("Escape key pressed in Update method");
+                
+                // Always invoke MenuToggled when escape is pressed, regardless of current mode
                 MenuToggled?.Invoke();
+                
+                // Record the time of this toggle
+                lastMenuToggleTime = Time.unscaledTime;
+            }
+            else
+            {
+                Debug.Log("Ignoring escape key press - cooldown active");
             }
         }
 
@@ -172,6 +231,13 @@ public class InputManager : MonoBehaviour
         {
             // When navigation is disabled (for text input), ensure we don't process 
             // small stick drift as navigation input
+            _lookInput = Vector2.zero;
+        }
+        
+        // If we're in UI mode (menus are open), force look input to zero
+        // This will prevent the camera from being controlled while menus are open
+        if (_currentInputState == InputState.UI)
+        {
             _lookInput = Vector2.zero;
         }
     }
@@ -194,10 +260,16 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    // Helper method to check current input mode
+    // Check if we're currently in gameplay input mode
     public bool IsInGameplayMode()
     {
         return _currentInputState == InputState.Gameplay;
+    }
+    
+    // Check if we're currently in UI input mode
+    public bool IsInUIMode()
+    {
+        return _currentInputState == InputState.UI;
     }
 
     // Helper method to check if input actions are enabled
@@ -238,5 +310,12 @@ public class InputManager : MonoBehaviour
             _throttleInput = 0f;
             _brakeInput = 0f;
         }
+    }
+
+    // Helper method to check if the pause menu or settings menu is active
+    public bool AreMenusActive()
+    {
+        if (MenuManager.Instance == null) return false;
+        return MenuManager.Instance.gameIsPaused;
     }
 }
