@@ -105,7 +105,7 @@ public class GameManager : NetworkBehaviour
         }
 
         // Get the winning player's data
-        if (ConnectionManager.instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
+        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
         {
             // Display winner celebration message
             menuManager.DisplayGameWinnerClientRpc(winner.username);
@@ -146,11 +146,11 @@ public class GameManager : NetworkBehaviour
         // Reset all player states to Alive
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
-            if (ConnectionManager.instance.TryGetPlayerData(clientId, out PlayerData playerData))
+            if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
             {
                 playerData.state = PlayerState.Alive;
                 playerData.score = 0; // Reset scores
-                ConnectionManager.instance.UpdatePlayerDataClientRpc(clientId, playerData);
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
             }
         }
 
@@ -201,8 +201,8 @@ public class GameManager : NetworkBehaviour
             // Check if this player has won enough rounds
             if (roundWinner.score >= roundsToWin)
             {
-                ConnectionManager.instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
-                ConnectionManager.instance.UpdateLobbyLeaderBasedOnScore();
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
+                ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
                 TransitionToState(GameState.Winner);
                 return;
             }
@@ -314,7 +314,7 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton != null && 
             NetworkManager.Singleton.IsListening && 
             NetworkManager.Singleton.ConnectedClientsList.Count > 0 &&
-            ConnectionManager.instance.isConnected)
+            ConnectionManager.Instance.isConnected)
         {
             // Show the lobby settings menu for the host
             EnsureLobbySettingsVisibleForHost();

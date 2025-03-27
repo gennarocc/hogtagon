@@ -404,7 +404,7 @@ public class NetworkHogController : NetworkBehaviour
     private float CalculateCameraAngle(Vector2 lookInput = default)
     {
         // Check if any menus are active - if so, don't update camera angle
-        if (MenuManager.instance != null && MenuManager.instance.gameIsPaused)
+        if (MenuManager.Instance != null && MenuManager.Instance.gameIsPaused)
         {
             // Return current camera angle without updating it
             return cameraAngle;

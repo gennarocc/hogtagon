@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 public class MenuManager : NetworkBehaviour
 {
-    public static MenuManager instance;
+    public static MenuManager Instance;
     public bool gameIsPaused = false;
 
     [Header("Menu Panels")]
@@ -127,9 +127,9 @@ public class MenuManager : NetworkBehaviour
     private void Awake()
     {
         // Set singleton instance
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
         }
         else
         {
@@ -384,9 +384,9 @@ public class MenuManager : NetworkBehaviour
         pauseMenuUI.SetActive(true);
 
         // Update lobby settings button state
-        if (pauseLobbySettingsButton != null && GameManager.instance != null)
+        if (pauseLobbySettingsButton != null && GameManager.Instance != null)
         {
-            pauseLobbySettingsButton.interactable = GameManager.instance.state != GameState.Playing;
+            pauseLobbySettingsButton.interactable = GameManager.Instance.state != GameState.Playing;
         }
 
         // Disable camera input - this is key to stopping camera rotation
@@ -488,9 +488,9 @@ public class MenuManager : NetworkBehaviour
         }
 
         // Start the game - use TransitionToState instead of StartGame
-        if (GameManager.instance != null)
+        if (GameManager.Instance != null)
         {
-            GameManager.instance.TransitionToState(GameState.Playing);
+            GameManager.Instance.TransitionToState(GameState.Playing);
             ButtonConfirmAudio();
         }
     }
@@ -700,7 +700,7 @@ public class MenuManager : NetworkBehaviour
 
         // Reset connection state
         ConnectionManager.Instance.isConnected = false;
-        
+
         // Play button sound
         ButtonClickAudio();
     }
@@ -970,7 +970,7 @@ public class MenuManager : NetworkBehaviour
             return;
         }
 
-        bool isInSettings = (settingsMenuUI != null && settingsMenuUI.activeSelf) || 
+        bool isInSettings = (settingsMenuUI != null && settingsMenuUI.activeSelf) ||
                           (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf);
 
         if (isInSettings)
@@ -1074,7 +1074,7 @@ public class MenuManager : NetworkBehaviour
     public void OnOptionsClicked()
     {
         Debug.Log("[MenuManager] OnOptionsClicked called");
-        
+
         // Reset all menu state flags
         settingsOpenedFromPauseMenu = false;
         gameIsPaused = false;
@@ -1116,7 +1116,7 @@ public class MenuManager : NetworkBehaviour
         {
             contentTransform.gameObject.SetActive(true);
             Transform videoPanel = contentTransform.Find("VideoPanel");
-            
+
             if (videoPanel != null)
             {
                 videoPanel.gameObject.SetActive(true);
@@ -1138,7 +1138,7 @@ public class MenuManager : NetworkBehaviour
     public void OpenLobbySettingsMenu()
     {
         // Don't open if we're not connected or if we're in the process of disconnecting
-        if (!ConnectionManager.instance.isConnected ||
+        if (!ConnectionManager.Instance.isConnected ||
             NetworkManager.Singleton == null ||
             !NetworkManager.Singleton.IsListening)
         {
@@ -1184,9 +1184,9 @@ public class MenuManager : NetworkBehaviour
     // Method to update lobby settings button state when game state changes
     public void UpdateLobbySettingsButtonState()
     {
-        if (pauseLobbySettingsButton != null && GameManager.instance != null)
+        if (pauseLobbySettingsButton != null && GameManager.Instance != null)
         {
-            bool shouldBeVisible = GameManager.instance.state != GameState.Playing;
+            bool shouldBeVisible = GameManager.Instance.state != GameState.Playing;
             pauseLobbySettingsButton.gameObject.SetActive(shouldBeVisible);
             Debug.Log($"[MenuManager] Updated lobby settings button visibility: {shouldBeVisible}");
         }
@@ -1261,47 +1261,28 @@ public class MenuManager : NetworkBehaviour
         // Get the current mode index and total number of modes
         int currentIndex = (int)_selectedGameMode;
         int totalModes = System.Enum.GetValues(typeof(GameMode)).Length;
-        
+
         // Calculate new index based on direction (left = -1, right = 1)
         int direction = isLeft ? -1 : 1;
         int newIndex = (currentIndex + direction + totalModes) % totalModes;
         GameMode newMode = (GameMode)newIndex;
 
+        // Update local game mode
         _selectedGameMode = newMode;
-        
-        // Update the game manager if it exists
+
+        // Update game settings if GameManager exists
         if (GameManager.Instance != null)
         {
-            _selectedGameMode = GameMode.FreeForAll;
-            
-            // Update game settings
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.SetGameMode(GameMode.FreeForAll);
-            }
-            
-            // Update UI
-            UpdateGameModeDisplay();
-            GameManager.instance.SetGameMode(newMode);
-        }
-
-        // Update the game manager if it exists
-        if (GameManager.instance != null)
-        {
-            _selectedGameMode = GameMode.TeamBattle;
-            
-            // Update game settings
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.SetGameMode(GameMode.TeamBattle);
-                GameManager.Instance.SetTeamCount(_teamCount);
             GameManager.Instance.SetGameMode(newMode);
+            
+            // If switching to Team Battle, also set team count
             if (newMode == GameMode.TeamBattle)
             {
                 GameManager.Instance.SetTeamCount(_teamCount);
             }
         }
 
+        // Update UI display
         UpdateGameModeDisplay();
     }
 
@@ -1395,11 +1376,11 @@ public class MenuManager : NetworkBehaviour
     private bool ShouldReturnToPauseMenu()
     {
         // If we're not in game mode, don't return to pause
-        if (GameManager.instance == null || GameManager.instance.state != GameState.Playing)
+        if (GameManager.Instance == null || GameManager.Instance.state != GameState.Playing)
             return false;
 
         // If we're not connected, don't return to pause
-        if (!ConnectionManager.instance.isConnected)
+        if (!ConnectionManager.Instance.isConnected)
             return false;
 
         // If we're not paused, don't return to pause

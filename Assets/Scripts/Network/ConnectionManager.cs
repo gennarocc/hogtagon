@@ -48,14 +48,8 @@ public class ConnectionManager : NetworkBehaviour
 
         // Set player username
         string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
-        if (decodedUsername.Length == 0 || decodedUsername == "Player")
-            decodedUsername = "Player" + (GetPlayerCount() + 1);
-
-        if (!CheckUsernameAvailability(decodedUsername))
-        {
-            response.Reason = "Invalid Driver Name";
-            return;
-        }
+        if (decodedUsername.Length == 0 || CheckUsernameAvailability(decodedUsername))
+            decodedUsername = decodedUsername + "(" + (GetPlayerCount() + 1) + ")";
 
         if (GetPlayerCount() >= 8)
         {

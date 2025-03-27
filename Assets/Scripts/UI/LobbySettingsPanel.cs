@@ -194,8 +194,8 @@ public class LobbySettingsPanel : MonoBehaviour
         // SETUP COPY CODE BUTTON - Available to everyone in a valid lobby
         if (copyCodeButton != null)
         {
-            copyCodeButton.interactable = hasNetwork && ConnectionManager.instance != null && 
-                                      !string.IsNullOrEmpty(ConnectionManager.instance.joinCode);
+            copyCodeButton.interactable = hasNetwork && ConnectionManager.Instance != null && 
+                                      !string.IsNullOrEmpty(ConnectionManager.Instance.joinCode);
             
             SetupButtonColors(copyCodeButton);
             AddHoverHandlers(copyCodeButton.gameObject, originalCopyButtonScale);
@@ -271,16 +271,16 @@ public class LobbySettingsPanel : MonoBehaviour
         Debug.Log("[LobbySettingsPanel] UpdateUI called");
         
         // Update lobby code
-        if (lobbyCodeText != null && ConnectionManager.instance != null)
+        if (lobbyCodeText != null && ConnectionManager.Instance != null)
         {
-            lobbyCodeText.text = "Lobby Code: " + ConnectionManager.instance.joinCode;
+            lobbyCodeText.text = "Lobby Code: " + ConnectionManager.Instance.joinCode;
         }
         
         // Update player count
         UpdatePlayerCount();
         
         // Update game mode display based on current game mode
-        if (GameManager.instance != null && menuManager != null)
+        if (GameManager.Instance != null && menuManager != null)
         {
             // Update game mode text
             if (gameModeText != null)
@@ -381,14 +381,14 @@ public class LobbySettingsPanel : MonoBehaviour
     
     public void OnCopyCodeClicked()
     {
-        if (menuManager != null && ConnectionManager.instance != null && 
-            !string.IsNullOrEmpty(ConnectionManager.instance.joinCode))
+        if (menuManager != null && ConnectionManager.Instance != null && 
+            !string.IsNullOrEmpty(ConnectionManager.Instance.joinCode))
         {
             menuManager.ButtonClickAudio();
-            GUIUtility.systemCopyBuffer = ConnectionManager.instance.joinCode;
+            GUIUtility.systemCopyBuffer = ConnectionManager.Instance.joinCode;
             
             // Show feedback (could add a temporary text popup)
-            Debug.Log("Lobby code copied to clipboard: " + ConnectionManager.instance.joinCode);
+            Debug.Log("Lobby code copied to clipboard: " + ConnectionManager.Instance.joinCode);
             
             // Flash the text to show it was copied
             StartCoroutine(FlashLobbyCodeText());
@@ -455,9 +455,9 @@ public class LobbySettingsPanel : MonoBehaviour
         }
         
         // Update the game settings if we're the host
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && GameManager.instance != null)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && GameManager.Instance != null)
         {
-            GameManager.instance.SetRoundCount(newRoundCount);
+            GameManager.Instance.SetRoundCount(newRoundCount);
         }
         
         // Play button sound

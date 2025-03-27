@@ -82,7 +82,7 @@ public class Player : NetworkBehaviour
             }
             
             // If this is the host/server, open the lobby settings menu
-            if (IsServer && GameManager.instance != null && GameManager.instance.state == GameState.Pending)
+            if (IsServer && GameManager.Instance != null && GameManager.Instance.state == GameState.Pending)
             {
                 Debug.Log("[Player] Host player spawned, opening lobby settings menu");
                 

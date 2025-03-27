@@ -37,23 +37,23 @@ public class PauseMenuPanel : MonoBehaviour
     public static bool CanOpenPauseMenu()
     {
         // Check if the player is in a valid state to open the pause menu
-        if (MenuManager.instance == null)
+        if (MenuManager.Instance == null)
         {
-            Debug.LogWarning("Cannot open pause menu: MenuManager.instance is null");
+            Debug.LogWarning("Cannot open pause menu: MenuManager.Instance is null");
             return false;
         }
         
         // Temporarily DISABLE the check for other active menus to help diagnose the issue
-        // bool noOtherMenusActive = !MenuManager.instance.IsAnyMenuActive();
+        // bool noOtherMenusActive = !MenuManager.Instance.IsAnyMenuActive();
         bool noOtherMenusActive = true; // Force to true to bypass this check
         
         // Simplify the check for valid game state
         // We'll assume we're in a valid state if any instance exists to help diagnose
-        bool validGameState = (GameManager.instance != null);
+        bool validGameState = (GameManager.Instance != null);
         
         if (!validGameState)
         {
-            Debug.LogWarning("Cannot open pause menu: GameManager.instance is null");
+            Debug.LogWarning("Cannot open pause menu: GameManager.Instance is null");
         }
         
         bool canOpen = noOtherMenusActive && validGameState;
@@ -82,7 +82,7 @@ public class PauseMenuPanel : MonoBehaviour
             
         // Find MenuManager if not assigned
         if (menuManager == null)
-            menuManager = MenuManager.instance;
+            menuManager = MenuManager.Instance;
     }
     
     private void OnEnable()
@@ -94,9 +94,9 @@ public class PauseMenuPanel : MonoBehaviour
     private void UpdateUI()
     {
         // Display join code if available
-        if (joinCodeText != null && ConnectionManager.instance != null && !string.IsNullOrEmpty(ConnectionManager.instance.joinCode))
+        if (joinCodeText != null && ConnectionManager.Instance != null && !string.IsNullOrEmpty(ConnectionManager.Instance.joinCode))
         {
-            joinCodeText.text = "CODE: " + ConnectionManager.instance.joinCode;
+            joinCodeText.text = "CODE: " + ConnectionManager.Instance.joinCode;
         }
         
         // Only show the lobby settings button for the host

@@ -11859,7 +11859,7 @@ MonoBehaviour:
   clientId: 0
   isSpectating: 0
   colorIndex: 0
-  nameplate: {fileID: 0}
+  nameplate: {fileID: 8114381944568008645}
   rb: {fileID: 2725043071608973344}
   body: {fileID: 789030245080448831}
   playerIndicator: {fileID: 4440991836043168002}

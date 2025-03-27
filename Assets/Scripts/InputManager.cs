@@ -315,7 +315,7 @@ public class InputManager : MonoBehaviour
     // Helper method to check if the pause menu or settings menu is active
     public bool AreMenusActive()
     {
-        if (MenuManager.instance == null) return false;
-        return MenuManager.instance.gameIsPaused;
+        if (MenuManager.Instance == null) return false;
+        return MenuManager.Instance.gameIsPaused;
     }
 }
