@@ -1074,7 +1074,6 @@ public class MenuManager : NetworkBehaviour
     public void OnOptionsClicked()
     {
         Debug.Log("[MenuManager] OnOptionsClicked called");
-
         // Reset all menu state flags
         settingsOpenedFromPauseMenu = false;
         gameIsPaused = false;
@@ -1116,7 +1115,6 @@ public class MenuManager : NetworkBehaviour
         {
             contentTransform.gameObject.SetActive(true);
             Transform videoPanel = contentTransform.Find("VideoPanel");
-
             if (videoPanel != null)
             {
                 videoPanel.gameObject.SetActive(true);
@@ -1261,7 +1259,6 @@ public class MenuManager : NetworkBehaviour
         // Get the current mode index and total number of modes
         int currentIndex = (int)_selectedGameMode;
         int totalModes = System.Enum.GetValues(typeof(GameMode)).Length;
-
         // Calculate new index based on direction (left = -1, right = 1)
         int direction = isLeft ? -1 : 1;
         int newIndex = (currentIndex + direction + totalModes) % totalModes;

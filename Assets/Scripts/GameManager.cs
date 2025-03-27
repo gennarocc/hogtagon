@@ -97,7 +97,7 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("GameManager OnWinnerEnter");
         SetGameState(GameState.Winner);
-        
+
         // Pause kill feed and keep last message
         if (killFeed != null)
         {
@@ -109,7 +109,7 @@ public class GameManager : NetworkBehaviour
         {
             // Display winner celebration message
             menuManager.DisplayGameWinnerClientRpc(winner.username);
-            
+
             // Show scoreboard after a delay
             StartCoroutine(ShowFinalScoreboard());
         }
@@ -119,7 +119,7 @@ public class GameManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(3f); // Show winner message for 3 seconds
         menuManager.ShowScoreboardClientRpc();
-        
+
         yield return new WaitForSeconds(3f); // Show scoreboard for 3 seconds
 
         if (IsServer)
@@ -134,7 +134,7 @@ public class GameManager : NetworkBehaviour
             // Clients request the server to handle the transition
             RequestTransitionToPendingServerRpc();
         }
-        
+
         menuManager.HideScoreboardClientRpc();
     }
 
@@ -156,10 +156,10 @@ public class GameManager : NetworkBehaviour
 
         // Unlock game mode settings for new game
         UnlockGameModeSettings();
-        
+
         // Respawn all players at their spawn points
         RespawnAllPlayers();
-        
+
         // Clear any remaining processed deaths
         processedDeaths.Clear();
     }
@@ -168,7 +168,7 @@ public class GameManager : NetworkBehaviour
     private void RequestTransitionToPendingServerRpc()
     {
         if (!IsServer) return;
-        
+
         // Reset game state
         ResetGameState();
         // Transition to pending state
@@ -177,8 +177,8 @@ public class GameManager : NetworkBehaviour
 
     private void OnEndingEnter()
     {
-        Debug.Log("GameManager OnEndingEnter");
-        SetGameState(GameState.Ending);
+        Debug.Log("GameManager OnWinnerEnter");
+        SetGameState(GameState.Winner);
 
         // Pause kill feed and keep last message
         if (killFeed != null)
@@ -186,38 +186,24 @@ public class GameManager : NetworkBehaviour
             killFeed.PauseAndKeepLastMessage();
         }
 
-        // Play midround music using NetworkSoundManager
-        if (IsServer)
+        // Get the winning player's data
+        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
         {
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOn);
+            // Display winner celebration message
+            menuManager.DisplayGameWinnerClientRpc(winner.username);
+
+            // Show scoreboard after a delay
+            StartCoroutine(ShowFinalScoreboard());
         }
-
-        // Change camera to player who won.
-        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData roundWinner))
-        {
-            menuManager.DisplayWinnerClientRpc(roundWinner.username);
-            roundWinner.score++;
-
-            // Check if this player has won enough rounds
-            if (roundWinner.score >= roundsToWin)
-            {
-                ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
-                ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
-                TransitionToState(GameState.Winner);
-                return;
-            }
-
-        ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, roundWinner);
-        ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
-        }
-        StartCoroutine(BetweenRoundTimer());
     }
+
+    
 
     private void OnPlayingEnter()
     {
         // Lock game mode settings when game starts
         LockGameModeSettings();
-        
+
         Debug.Log("GameManager OnPlayingEnter");
 
         // Clear processed deaths for new round
@@ -303,16 +289,16 @@ public class GameManager : NetworkBehaviour
         // Stop level music and play lobby music using NetworkSoundManager
         if (IsServer)
         {
-                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
         }
 
-          SetGameState(GameState.Pending);
-        
+        SetGameState(GameState.Pending);
+
         // Only show lobby settings if we're the server AND connected to the network
         // AND not in the process of disconnecting
-        if (IsServer && 
-            NetworkManager.Singleton != null && 
-            NetworkManager.Singleton.IsListening && 
+        if (IsServer &&
+            NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsListening &&
             NetworkManager.Singleton.ConnectedClientsList.Count > 0 &&
             ConnectionManager.Instance.isConnected)
         {
@@ -472,7 +458,7 @@ public class GameManager : NetworkBehaviour
         {
             gameMode = mode;
             Debug.Log("Game mode set to: " + gameMode);
-            
+
             // TODO: Notify clients of game mode change
             if (IsServer)
             {
@@ -489,7 +475,7 @@ public class GameManager : NetworkBehaviour
         {
             teamCount = Mathf.Clamp(count, 2, 4); // Limit between 2-4 teams
             Debug.Log("Team count set to: " + teamCount);
-            
+
             // TODO: Notify clients of team count change
             if (IsServer)
             {
@@ -527,14 +513,14 @@ public class GameManager : NetworkBehaviour
     public void SetRoundCount(int count)
     {
         if (!IsServer) return;
-        
+
         // Only allow changes before the game starts
         if (state != GameState.Pending)
         {
             Debug.LogWarning("Cannot change round count after game has started");
             return;
         }
-        
+
         roundsToWin = count;
         Debug.Log($"Round count set to {count}");
     }

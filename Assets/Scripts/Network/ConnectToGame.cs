@@ -29,6 +29,9 @@ public class ConnectToGame : MonoBehaviour
     public string lastJoinCode { get; private set; } = "";
     private bool isRetrying = false;
 
+    // To track which operation we're performing for retry functionality
+
+
     private async void Start()
     {
         startCamera.cullingMask = 31;
@@ -219,52 +222,4 @@ public class ConnectToGame : MonoBehaviour
         }
     }
 
-    // Method to retry host creation
-    public void RetryHostCreation()
-    {
-        if (isRetrying) return;
-        
-        isRetrying = true;
-        Debug.Log("Retrying host creation...");
-        
-        // Get username from PlayerPrefs
-        string username = PlayerPrefs.GetString("Username", "Player");
-        
-        // Configure connection with username as payload
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
-        
-        // Clear last join code since we're hosting
-        lastJoinCode = "";
-        
-        CreateRelay();
-        
-        // Reset retry flag after a delay
-        Invoke("ResetRetryFlag", 2f);
-    }
-
-    // Method to retry joining with a specific code
-    public void RetryJoinWithCode(string code)
-    {
-        if (isRetrying) return;
-        
-        isRetrying = true;
-        Debug.Log($"Retrying join with code: {code}");
-        
-        // Get username from PlayerPrefs
-        string username = PlayerPrefs.GetString("Username", "Player");
-        
-        // Configure connection with username as payload
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
-        
-        JoinRelay(code);
-        
-        // Reset retry flag after a delay
-        Invoke("ResetRetryFlag", 2f);
-    }
-
-    // Helper to reset the retry flag
-    private void ResetRetryFlag()
-    {
-        isRetrying = false;
-    }
 }
