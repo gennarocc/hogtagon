@@ -65,7 +65,8 @@ public class ConnectionManager : NetworkBehaviour
             colorIndex = GetAvailableTextureIndex(),
             state = GameManager.Instance.state == GameState.Playing ? PlayerState.Dead : PlayerState.Alive,
             spawnPoint = sp,
-            isLobbyLeader = false
+            isLobbyLeader = false,
+            team = 0 // Use integer values: 0=None, 1=Red, 2=Blue, etc.
         };
 
         pendingPlayerData.Add(clientId, player);
@@ -428,14 +429,38 @@ public class ConnectionManager : NetworkBehaviour
     {
         if (TryGetPlayerData(clientId, out PlayerData playerData))
         {
-            // Convert the player's car color to a suitable text color
-            Color textColor = GetTextColorFromCarColor(playerData.colorIndex);
-            string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
-            
-            return $"<color=#{colorHex}>{playerData.username}</color>";
+            // Check if we're in team battle mode (when team is assigned)
+            if (playerData.team > 0 && GameManager.Instance != null && 
+                GameManager.Instance.GetGameMode() == MenuManager.GameMode.TeamBattle)
+            {
+                // Use team color instead of car color
+                Color teamColor = GetTeamColor(playerData.team);
+                string colorHex = ColorUtility.ToHtmlStringRGB(teamColor);
+                return $"<color=#{colorHex}>{playerData.username}</color>";
+            }
+            else
+            {
+                // Default: Use car color for free-for-all
+                Color textColor = GetTextColorFromCarColor(playerData.colorIndex);
+                string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
+                return $"<color=#{colorHex}>{playerData.username}</color>";
+            }
         }
         
         return "Unknown";
+    }
+
+    // Get team color based on team number
+    private Color GetTeamColor(int teamNumber)
+    {
+        switch (teamNumber)
+        {
+            case 1: return new Color(1.0f, 0.2f, 0.2f); // Red
+            case 2: return new Color(0.2f, 0.4f, 1.0f); // Blue
+            case 3: return new Color(0.2f, 0.8f, 0.2f); // Green
+            case 4: return new Color(1.0f, 0.8f, 0.2f); // Yellow
+            default: return Color.white;
+        }
     }
 
     // Get text color based on car color index
@@ -543,6 +568,7 @@ public struct PlayerData : INetworkSerializable
     public PlayerState state;
     public Vector3 spawnPoint;
     public bool isLobbyLeader;
+    public int team;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
@@ -553,6 +579,7 @@ public struct PlayerData : INetworkSerializable
         serializer.SerializeValue(ref state);
         serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref isLobbyLeader);
+        serializer.SerializeValue(ref team);
     }
 }
 
@@ -565,6 +592,7 @@ public struct ClientData : INetworkSerializable
     public Vector3 spawnPoint;
     public PlayerState state;
     public bool isLobbyLeader;
+    public int team;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
@@ -575,6 +603,7 @@ public struct ClientData : INetworkSerializable
         serializer.SerializeValue(ref state);
         serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref isLobbyLeader);
+        serializer.SerializeValue(ref team);
     }
 }
 

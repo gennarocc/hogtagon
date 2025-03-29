@@ -684,9 +684,42 @@ public class MenuManager : NetworkBehaviour
 
     public IEnumerator BetweenRoundTime()
     {
-        yield return new WaitForSeconds(5f);
+        Debug.Log("[MenuManager] BetweenRoundTime started");
+        
+        float showWinnerDuration = 2.0f;     // How long to show just the winner text
+        float showScoreboardDuration = 5.0f;  // How long to show the scoreboard
+
+        // First just show the winner text
+        tempUI.SetActive(true);
+        HideScoreboardClientRpc();
+        yield return new WaitForSeconds(showWinnerDuration);
+
+        // Now show the scoreboard
+        Debug.Log("[MenuManager] Showing scoreboard");
+        ShowScoreboardClientRpc();
+        yield return new WaitForSeconds(showScoreboardDuration);
+
+        // Hide everything in preparation for the next round
+        Debug.Log("[MenuManager] BetweenRoundTime finished - hiding UI");
+        HideScoreboardClientRpc();
         winnerText.text = "";
         tempUI.SetActive(false);
+        
+        // Tell GameManager to start the next round - only if we're the server
+        Debug.Log("[MenuManager] Transitioning to next round");
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer && GameManager.Instance != null)
+        {
+            // Ensure we're transitioning from the Ending state
+            if (GameManager.Instance.state == GameState.Ending)
+            {
+                Debug.Log("[MenuManager] Server calling TransitionToState(Playing)");
+                GameManager.Instance.TransitionToState(GameState.Playing);
+            }
+            else
+            {
+                Debug.LogWarning($"[MenuManager] GameManager not in Ending state, current state: {GameManager.Instance.state}");
+            }
+        }
     }
 
     [ClientRpc]

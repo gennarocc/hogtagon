@@ -17,9 +17,14 @@ public class Scoreboard : MonoBehaviour
     [Header("Style Settings")]
     [SerializeField] private Color headerColor = new Color(0f, 1f, 0f); 
     [SerializeField] private Color rowBackgroundColor = new Color(0.1f, 0.1f, 0.1f, 0.9f); 
-    [SerializeField] private Color alternateRowColor = new Color(0.15f, 0.15f, 0.15f, 0.9f); 
+    [SerializeField] private Color alternateRowColor = new Color(0.15f, 0.15f, 0.15f, 0.9f);
     [SerializeField] private float rowSpacing = 2f;
     
+    [Header("Team Colors")]
+    [SerializeField] private Color teamRedColor = new Color(1.0f, 0.2f, 0.2f); // Red team
+    [SerializeField] private Color teamBlueColor = new Color(0.2f, 0.4f, 1.0f); // Blue team
+    [SerializeField] private Color teamGreenColor = new Color(0.2f, 0.8f, 0.2f); // Green team
+    [SerializeField] private Color teamYellowColor = new Color(1.0f, 0.8f, 0.2f); // Yellow team
     
     [Header("Font Settings")]
     [SerializeField] private float headerFontSize = 36f;
@@ -29,10 +34,12 @@ public class Scoreboard : MonoBehaviour
 
     private List<GameObject> playerEntries = new List<GameObject>();
     private ConnectionManager connectionManager;
+    private GameManager gameManager;
 
     private void Awake()
     {
         connectionManager = ConnectionManager.Instance;
+        gameManager = GameManager.Instance;
         
         if (headerText != null)
         {
@@ -46,23 +53,104 @@ public class Scoreboard : MonoBehaviour
             headerText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
             headerText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0f, 0.5f, 0f, 1f));
         }
+        
+        // Subscribe to game state changes to update the scoreboard
+        if (gameManager != null)
+        {
+            gameManager.OnGameStateChanged += HandleGameStateChanged;
+        }
+    }
+    
+    private void OnDestroy()
+    {
+        // Unsubscribe to prevent memory leaks
+        if (gameManager != null)
+        {
+            gameManager.OnGameStateChanged -= HandleGameStateChanged;
+        }
+    }
+    
+    private void HandleGameStateChanged(GameState newState)
+    {
+        // Update the scoreboard when game state changes
+        if (gameObject.activeInHierarchy)
+        {
+            Debug.Log($"Scoreboard updating due to game state change to {newState}");
+            UpdatePlayerList();
+        }
     }
 
     private void OnEnable()
     {
+        Debug.Log("Scoreboard OnEnable - forcing refresh");
+        
+        // Make sure we have up-to-date references
+        if (connectionManager == null)
+            connectionManager = ConnectionManager.Instance;
+            
+        if (gameManager == null)
+            gameManager = GameManager.Instance;
+        
+        // Force a refresh of the player list
         UpdatePlayerList();
     }
 
     public void UpdatePlayerList()
     {
+        // Make sure we have necessary references
         if (connectionManager == null)
         {
             connectionManager = ConnectionManager.Instance;
-            if (connectionManager == null) return;
+            if (connectionManager == null) 
+            {
+                Debug.LogError("[Scoreboard] ConnectionManager reference missing");
+                return;
+            }
         }
 
+        if (gameManager == null)
+        {
+            gameManager = GameManager.Instance;
+            if (gameManager == null) 
+            {
+                Debug.LogError("[Scoreboard] GameManager reference missing");
+                return;
+            }
+        }
+
+        // Check if we're in team battle mode
+        MenuManager.GameMode currentMode = gameManager.GetGameMode();
+        bool isTeamBattle = currentMode == MenuManager.GameMode.TeamBattle;
+        
+        Debug.Log($"[Scoreboard] Updating player list - Game Mode: {currentMode} (isTeamBattle: {isTeamBattle})");
+
+        // Clear existing entries
         ClearPlayerEntries();
         
+        if (isTeamBattle)
+        {
+            // Team Battle Mode - Group by teams
+            Debug.Log("[Scoreboard] Using TEAM BATTLE scoreboard layout");
+            UpdateTeamBattleScoreboard();
+        }
+        else
+        {
+            // Free-for-all Mode - Sort by individual score
+            Debug.Log("[Scoreboard] Using FREE-FOR-ALL scoreboard layout");
+            UpdateFreeForAllScoreboard();
+        }
+        
+        // Update header if available
+        if (headerText != null)
+        {
+            string gameMode = isTeamBattle ? "TEAM BATTLE" : "FREE-FOR-ALL";
+            headerText.text = $"SCOREBOARD - {connectionManager.GetPlayerCount()} PLAYERS - {gameMode}";
+            Debug.Log($"[Scoreboard] Updated header to: {headerText.text}");
+        }
+    }
+
+    private void UpdateFreeForAllScoreboard()
+    {
         // Get player data and sort by score
         var playerData = GetAllPlayerData().OrderByDescending(p => p.score).ToList();
             
@@ -71,11 +159,92 @@ public class Scoreboard : MonoBehaviour
         {
             CreatePlayerEntry(i + 1, playerData[i], i % 2 == 1);
         }
+    }
+
+    private void UpdateTeamBattleScoreboard()
+    {
+        // Get all player data
+        var allPlayerData = GetAllPlayerData();
         
-        // Update header if available
-        if (headerText != null)
+        Debug.Log($"UpdateTeamBattleScoreboard: Retrieved {allPlayerData.Count} players");
+        foreach (var player in allPlayerData)
         {
-            headerText.text = $"SCOREBOARD - {connectionManager.GetPlayerCount()} PLAYERS";
+            Debug.Log($"Player: {player.playerName}, Team: {player.teamNumber}, Score: {player.score}");
+        }
+        
+        // Group players by team
+        var teamGroups = allPlayerData.GroupBy(p => p.teamNumber).OrderByDescending(g => g.Sum(p => p.score)).ToList();
+        
+        Debug.Log($"Found {teamGroups.Count} team groups");
+        foreach (var group in teamGroups)
+        {
+            Debug.Log($"Team {group.Key}: {group.Count()} players, Total Score: {group.Sum(p => p.score)}");
+        }
+        
+        int currentRank = 1;
+        int entryIndex = 0;
+        
+        // For each team, create entries with the same rank
+        foreach (var teamGroup in teamGroups)
+        {
+            int teamNumber = teamGroup.Key;
+            
+            // Skip team 0 (unassigned/none)
+            if (teamNumber == 0) continue;
+            
+            // Get team color based on team number
+            Color teamColor = GetTeamColor(teamNumber);
+            
+            // Get team members sorted by individual score
+            var teamMembers = teamGroup.OrderByDescending(p => p.score).ToList();
+            
+            // Create entries for each team member with same rank
+            foreach (var playerData in teamMembers)
+            {
+                bool isAlternateRow = entryIndex % 2 == 1;
+                CreateTeamPlayerEntry(currentRank, playerData, isAlternateRow, teamNumber, teamColor);
+                entryIndex++;
+            }
+            
+            // Increment rank for next team
+            currentRank++;
+        }
+        
+        // Add unassigned players at the bottom if any (team 0)
+        var unassignedPlayers = allPlayerData.Where(p => p.teamNumber == 0).OrderByDescending(p => p.score).ToList();
+        if (unassignedPlayers.Count > 0)
+        {
+            Debug.Log($"Found {unassignedPlayers.Count} unassigned players");
+            foreach (var playerData in unassignedPlayers)
+            {
+                bool isAlternateRow = entryIndex % 2 == 1;
+                CreatePlayerEntry(0, playerData, isAlternateRow); // Rank 0 for unassigned
+                entryIndex++;
+            }
+        }
+    }
+
+    private Color GetTeamColor(int teamNumber)
+    {
+        switch (teamNumber)
+        {
+            case 1: return teamRedColor;
+            case 2: return teamBlueColor;
+            case 3: return teamGreenColor;
+            case 4: return teamYellowColor;
+            default: return Color.white;
+        }
+    }
+
+    private string GetTeamName(int teamNumber)
+    {
+        switch (teamNumber)
+        {
+            case 1: return "RED";
+            case 2: return "BLUE";
+            case 3: return "GREEN";
+            case 4: return "YELLOW";
+            default: return "NONE";
         }
     }
 
@@ -96,6 +265,7 @@ public class Scoreboard : MonoBehaviour
                     playerData.score = networkPlayerData.score;
                     playerData.isActive = networkPlayerData.state != PlayerState.Dead;
                     playerData.colorIndex = networkPlayerData.colorIndex;
+                    playerData.teamNumber = networkPlayerData.team;
                 }
                 
                 result.Add(playerData);
@@ -114,9 +284,129 @@ public class Scoreboard : MonoBehaviour
         playerEntries.Clear();
     }
 
+    private void CreateTeamPlayerEntry(int rank, PlayerData playerData, bool isAlternateRow, int teamNumber, Color teamColor)
+    {
+        Debug.Log($"Creating team entry: Team {teamNumber}, Player {playerData.playerName}, Color: {teamColor}");
+        
+        GameObject entryObject = Instantiate(playerEntryPrefab, playerListContainer);
+        playerEntries.Add(entryObject);
+
+        // Set position with spacing
+        RectTransform rectTransform = entryObject.GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            rectTransform.anchoredPosition = new Vector2(0, -rowSpacing * (playerEntries.Count - 1));
+        }
+
+        // Set background color based on team with alternating intensity
+        Image background = entryObject.GetComponent<Image>();
+        if (background != null)
+        {
+            // Create a darker/lighter version of the team color for alternating rows
+            Color rowColor = teamColor * (isAlternateRow ? 0.7f : 0.9f);
+            rowColor.a = 0.7f; // Semi-transparent
+            background.color = rowColor;
+        }
+
+        // Set rank text with team styling
+        TextMeshProUGUI rankText = entryObject.transform.Find("RankText")?.GetComponent<TextMeshProUGUI>();
+        if (rankText != null)
+        {
+            if (technoFont != null)
+                rankText.font = technoFont;
+            rankText.fontSize = rankFontSize;
+            rankText.text = rank.ToString();
+            rankText.color = teamColor;
+            
+            // Create a new material instance to avoid shared material modifications
+            rankText.fontMaterial = new Material(rankText.fontMaterial);
+            rankText.fontMaterial.EnableKeyword("OUTLINE_ON");
+            rankText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
+            rankText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
+        }
+
+        // Set player name with team prefix
+        TextMeshProUGUI nameText = entryObject.transform.Find("NameText")?.GetComponent<TextMeshProUGUI>();
+        if (nameText != null)
+        {
+            if (technoFont != null)
+                nameText.font = technoFont;
+            nameText.fontSize = nameFontSize;
+            
+            // Add team name prefix to player name
+            string teamPrefix = $"[{GetTeamName(teamNumber)}] ";
+            
+            // Convert playerId string back to ulong for the ConnectionManager method
+            if (ulong.TryParse(playerData.playerId, out ulong clientId))
+            {
+                string playerName = connectionManager.GetPlayerColoredName(clientId);
+                nameText.text = teamPrefix + playerName;
+            }
+            else
+            {
+                nameText.text = teamPrefix + playerData.playerName;
+            }
+            
+            // Color the text based on team color
+            nameText.color = teamColor;
+            
+            // Create a new material instance to avoid shared material modifications
+            nameText.fontMaterial = new Material(nameText.fontMaterial);
+            nameText.fontMaterial.EnableKeyword("OUTLINE_ON");
+            nameText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
+            nameText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
+        }
+
+        // Set score text 
+        TextMeshProUGUI scoreText = entryObject.transform.Find("ScoreText")?.GetComponent<TextMeshProUGUI>();
+        if (scoreText != null)
+        {
+            if (technoFont != null)
+                scoreText.font = technoFont;
+            scoreText.fontSize = scoreFontSize;
+            scoreText.text = playerData.score.ToString();
+            scoreText.color = teamColor;
+            
+            // Create a new material instance to avoid shared material modifications
+            scoreText.fontMaterial = new Material(scoreText.fontMaterial);
+            scoreText.fontMaterial.EnableKeyword("OUTLINE_ON");
+            scoreText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
+            scoreText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
+        }
+
+        // Set status icon 
+        GameObject statusIcon = entryObject.transform.Find("StatusIcon")?.gameObject;
+        if (statusIcon != null)
+        {
+            bool isDeadOrDisconnected = !playerData.isActive;
+            statusIcon.SetActive(isDeadOrDisconnected);
+            
+            if (isDeadOrDisconnected)
+            {
+                TextMeshProUGUI statusText = statusIcon.GetComponentInChildren<TextMeshProUGUI>();
+                if (statusText != null)
+                {
+                    if (technoFont != null)
+                        statusText.font = technoFont;
+                    statusText.fontSize = nameFontSize * 0.8f; // Slightly smaller
+                    statusText.text = "ELIMINATED";
+                    statusText.color = new Color(1f, 0f, 0f); // Bright red for eliminated
+                    
+                    // Create a new material instance to avoid shared material modifications
+                    statusText.fontMaterial = new Material(statusText.fontMaterial);
+                    statusText.fontMaterial.EnableKeyword("OUTLINE_ON");
+                    statusText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
+                    statusText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0.3f, 0f, 0f));
+                }
+            }
+        }
+    }
+
     private void CreatePlayerEntry(int rank, PlayerData playerData, bool isAlternateRow)
     {
         if (playerEntryPrefab == null || playerListContainer == null) return;
+
+        Debug.Log($"Creating player entry: Rank {rank}, Player {playerData.playerName}");
 
         GameObject entryObject = Instantiate(playerEntryPrefab, playerListContainer);
         playerEntries.Add(entryObject);
@@ -125,7 +415,7 @@ public class Scoreboard : MonoBehaviour
         RectTransform rectTransform = entryObject.GetComponent<RectTransform>();
         if (rectTransform != null)
         {
-            rectTransform.anchoredPosition = new Vector2(0, -rowSpacing * (rank - 1));
+            rectTransform.anchoredPosition = new Vector2(0, -rowSpacing * (playerEntries.Count - 1));
         }
 
         // Set background color with alternating rows
@@ -142,7 +432,7 @@ public class Scoreboard : MonoBehaviour
             if (technoFont != null)
                 rankText.font = technoFont;
             rankText.fontSize = rankFontSize;
-            rankText.text = rank.ToString();
+            rankText.text = rank > 0 ? rank.ToString() : "-";
             
             // Color coding for top ranks
             if (rank == 1)
@@ -151,8 +441,11 @@ public class Scoreboard : MonoBehaviour
                 rankText.color = new Color(0f, 0.8f, 0f); // Slightly dimmer green
             else if (rank == 3)
                 rankText.color = new Color(0f, 0.6f, 0f); // Even dimmer green
+            else if (rank == 0)
+                rankText.color = new Color(0.5f, 0.5f, 0.5f); // Gray for unassigned
             
-            // Set up outline using material properties
+            // Create a new material instance to avoid shared material modifications
+            rankText.fontMaterial = new Material(rankText.fontMaterial);
             rankText.fontMaterial.EnableKeyword("OUTLINE_ON");
             rankText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
             rankText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0f, 0.3f, 0f));
@@ -177,7 +470,8 @@ public class Scoreboard : MonoBehaviour
                 nameText.text = playerData.playerName;
             }
             
-            // Set up outline using material properties
+            // Create a new material instance to avoid shared material modifications
+            nameText.fontMaterial = new Material(nameText.fontMaterial);
             nameText.fontMaterial.EnableKeyword("OUTLINE_ON");
             nameText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
             nameText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
@@ -193,7 +487,8 @@ public class Scoreboard : MonoBehaviour
             scoreText.text = playerData.score.ToString();
             scoreText.color = new Color(0f, 1f, 0f); // Bright green
             
-            // Set up outline using material properties
+            // Create a new material instance to avoid shared material modifications
+            scoreText.fontMaterial = new Material(scoreText.fontMaterial);
             scoreText.fontMaterial.EnableKeyword("OUTLINE_ON");
             scoreText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
             scoreText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0f, 0.3f, 0f));
@@ -217,7 +512,8 @@ public class Scoreboard : MonoBehaviour
                     statusText.text = "ELIMINATED";
                     statusText.color = new Color(1f, 0f, 0f); // Bright red for eliminated
                     
-                    // Set up outline using material properties
+                    // Create a new material instance to avoid shared material modifications
+                    statusText.fontMaterial = new Material(statusText.fontMaterial);
                     statusText.fontMaterial.EnableKeyword("OUTLINE_ON");
                     statusText.fontMaterial.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.2f);
                     statusText.fontMaterial.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0.3f, 0f, 0f));
@@ -234,5 +530,6 @@ public class Scoreboard : MonoBehaviour
         public int score;
         public bool isActive;
         public int colorIndex;
+        public int teamNumber;
     }
 }

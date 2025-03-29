@@ -52,7 +52,9 @@ public class NetworkHogController : NetworkBehaviour
     private float[] originalExtremumSlips = new float[4];
     private float _stateUpdateTimer = 0f;
     private float _clientUpdateTimer = 0f;
-    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false, 
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
     private NetworkVariable<StateSnapshot> vehicleState = new NetworkVariable<StateSnapshot>(
         new StateSnapshot(),
         NetworkVariableReadPermission.Everyone,

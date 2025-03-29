@@ -274,5 +274,34 @@ public class Player : NetworkBehaviour
         }
     }
 
+    // Method to set the player's color based on their team
+    public void SetTeamColor(Color teamColor)
+    {
+        if (!IsServer) return;
+        
+        // Server calls the RPC to set the team color on all clients
+        SetTeamColorClientRpc(new Color32(
+            (byte)(teamColor.r * 255), 
+            (byte)(teamColor.g * 255), 
+            (byte)(teamColor.b * 255), 
+            (byte)(teamColor.a * 255)));
+    }
+    
+    [ClientRpc]
+    private void SetTeamColorClientRpc(Color32 teamColor)
+    {
+        if (body == null) return;
+        
+        // Convert Color32 back to Color
+        Color color = teamColor;
 
+        // Create a new material with the team color
+        Material teamMaterial = new Material(body.GetComponent<Renderer>().material);
+        teamMaterial.color = color;
+        
+        // Apply the team material
+        body.GetComponent<Renderer>().material = teamMaterial;
+        
+        Debug.Log($"Client: Player {clientId} (username: {networkPlayerData.Value.username}) set to team color {color}");
+    }
 }

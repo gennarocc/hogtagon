@@ -187,6 +187,11 @@ public class HogController : NetworkBehaviour
         UpdateDriftEffects();
     }
 
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+    }
+
     #endregion
 
     #region Input Handling
