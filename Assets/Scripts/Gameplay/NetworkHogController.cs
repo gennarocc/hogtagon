@@ -3,6 +3,7 @@ using Unity.Netcode;
 using Cinemachine;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody))]
 public class NetworkHogController : NetworkBehaviour
@@ -29,10 +30,14 @@ public class NetworkHogController : NetworkBehaviour
     [SerializeField] private float visualSmoothingSpeed = 10f;
     [SerializeField] private bool debugMode = false;
 
+    [Header("Collision System")]
+    [SerializeField] private float collisionDebounceTime = 0.2f;      // Time window to ignore duplicate collisions
+    [SerializeField] private float collisionForceMultiplier = 0.5f;   // Adjusts collision strength
+
     [Header("References")]
-    [SerializeField] private Rigidbody rb;
+    [SerializeField] public Rigidbody rb;
     [SerializeField] private CinemachineFreeLook freeLookCamera;
-    [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
+    [SerializeField] public WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
     [SerializeField] private HogVisualEffects vfxController;
 
@@ -40,7 +45,6 @@ public class NetworkHogController : NetworkBehaviour
     [SerializeField] private AK.Wwise.RTPC rpm;
 
     private InputManager inputManager;
-
     private bool hasReceivedInitialSync = false;
     private float currentTorque;
     private float localVelocityX;
@@ -52,15 +56,12 @@ public class NetworkHogController : NetworkBehaviour
     private float[] originalExtremumSlips = new float[4];
     private float _stateUpdateTimer = 0f;
     private float _clientUpdateTimer = 0f;
-    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
-    private NetworkVariable<StateSnapshot> vehicleState = new NetworkVariable<StateSnapshot>(
-        new StateSnapshot(),
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Owner);
-    private Vector3 visualPositionTarget;
-    private Quaternion visualRotationTarget;
-    private Vector3 visualVelocityTarget;
+    private bool isDrifting = false;
+    private StateSnapshot currentState = new StateSnapshot();
+    private StateSnapshot visualTargetState = new StateSnapshot();
     private bool needsSmoothing = false;
+    private Dictionary<string, float> recentCollisions = new Dictionary<string, float>();
+    private uint updateIdCounter = 0;
     public bool JumpOnCooldown => jumpOnCooldown;
     public float JumpCooldownRemaining => jumpCooldownRemaining;
     public float JumpCooldownTotal => jumpCooldown;
@@ -99,13 +100,11 @@ public class NetworkHogController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        // Register for state change callback
-        vehicleState.OnValueChanged += OnVehicleStateChanged;
-
         // Get input manager reference
         inputManager = InputManager.Instance;
 
         vfxController.Initialize(transform, centerOfMass, OwnerClientId);
+
         // Initialize the vehicle
         if (IsOwner)
         {
@@ -124,7 +123,6 @@ public class NetworkHogController : NetworkBehaviour
             // Remote client needs server to tell it what to do
             RequestInitialStateServerRpc();
         }
-
     }
 
     public override void OnNetworkDespawn()
@@ -157,9 +155,9 @@ public class NetworkHogController : NetworkBehaviour
         }
 
         // Initialize visual smoothing targets
-        visualPositionTarget = transform.position;
-        visualRotationTarget = transform.rotation;
-        visualVelocityTarget = Vector3.zero;
+        visualTargetState.position = transform.position;
+        visualTargetState.rotation = transform.rotation;
+        visualTargetState.velocity = Vector3.zero;
 
         if (debugMode && IsOwner)
         {
@@ -195,7 +193,8 @@ public class NetworkHogController : NetworkBehaviour
             if (_stateUpdateTimer >= stateUpdateInterval)
             {
                 _stateUpdateTimer = 0f;
-                BroadcastServerStateClientRpc(vehicleState.Value);
+                BroadcastStateUpdateClientRpc(currentState,
+                    new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = GetAllClientIdsExcept(OwnerClientId) } });
             }
         }
         else
@@ -229,38 +228,13 @@ public class NetworkHogController : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        // Only process collisions on the server
+        if (!IsServer) return;
+
+        // Only care about collisions with other vehicles
         if (!collision.gameObject.CompareTag("Player")) return;
 
-        // Process collision only on server or owner 
-        if (IsServer || IsOwner)
-        {
-            var speed = rb.linearVelocity.magnitude;
-            // Play sound effect based on impact magnitude
-            if (speed >= 1 && speed < 5)
-            {
-                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactLow);
-            }
-            else if (speed >= 5 && speed < 13)
-            {
-                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactMed);
-            }
-            else if (speed >= 13)
-            {
-                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactHigh);
-            }
-        }
-
-        if (IsOwner)
-        {
-            // Client sends immediate update on collision
-            SendStateToServer();
-        }
-
-        if (IsServer)
-        {
-            // Server broadcasts the collision immediately
-            BroadcastServerStateClientRpc(vehicleState.Value);
-        }
+        HandleServerCollision(collision);
     }
 
     #endregion
@@ -312,6 +286,15 @@ public class NetworkHogController : NetworkBehaviour
         // Configure physics
         rb.isKinematic = false;
         EnableWheelColliders();
+
+        // Initialize state
+        currentState.position = rb.position;
+        currentState.rotation = rb.rotation;
+        currentState.velocity = rb.linearVelocity;
+        currentState.angularVelocity = rb.angularVelocity;
+        currentState.steeringAngle = wheelColliders[0].steerAngle;
+        currentState.motorTorque = wheelColliders[0].motorTorque;
+        currentState.updateId = updateIdCounter++;
 
         // Mark as initialized
         hasReceivedInitialSync = true;
@@ -365,7 +348,16 @@ public class NetworkHogController : NetworkBehaviour
 
         // Update local velocity for drift detection
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-        isDrifting.Value = localVelocityX > 0.4f;
+        isDrifting = localVelocityX > 0.4f;
+
+        // Update the current state
+        currentState.position = rb.position;
+        currentState.rotation = rb.rotation;
+        currentState.velocity = rb.linearVelocity;
+        currentState.angularVelocity = rb.angularVelocity;
+        currentState.steeringAngle = wheelColliders[0].steerAngle;
+        currentState.motorTorque = wheelColliders[0].motorTorque;
+        currentState.updateId = updateIdCounter++;
     }
 
     private void OnHornPressed()
@@ -377,6 +369,7 @@ public class NetworkHogController : NetworkBehaviour
             SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogHorn);
         }
     }
+
     private void OnJumpPressed()
     {
         if (!IsOwner) return;
@@ -452,7 +445,7 @@ public class NetworkHogController : NetworkBehaviour
         wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringAngle, steeringSpeed);
 
         // Rear wheels counter-steering
-        float rearSteeringAngle = steeringAngle * -0.35f;
+        float rearSteeringAngle = steeringAngle * -1f;
         wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, rearSteeringAngle, steeringSpeed);
         wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, rearSteeringAngle, steeringSpeed);
     }
@@ -481,8 +474,8 @@ public class NetworkHogController : NetworkBehaviour
         if (!IsOwner && IsServer)
         {
             // Apply steering and motor torque
-            ApplySteeringToWheels(vehicleState.Value.steeringAngle);
-            ApplyMotorTorqueToWheels(vehicleState.Value.motorTorque);
+            ApplySteeringToWheels(currentState.steeringAngle);
+            ApplyMotorTorqueToWheels(currentState.motorTorque);
         }
     }
 
@@ -545,6 +538,189 @@ public class NetworkHogController : NetworkBehaviour
     }
     #endregion
 
+    #region Collision System
+
+    // Server-side collision handling
+    private void HandleServerCollision(Collision collision)
+    {
+        if (!IsServer) return;
+
+        // Get the NetworkHogController from both vehicles
+        NetworkHogController vehicleA = this;
+        NetworkHogController vehicleB = collision.gameObject.transform.root.GetComponent<NetworkHogController>();
+
+        if (vehicleB == null)
+        {
+            Debug.LogWarning("[Server] Could not find NetworkHogController on collision target");
+            return;
+        }
+
+        // Skip if either vehicle is not initialized yet
+        if (!vehicleA.hasReceivedInitialSync || !vehicleB.hasReceivedInitialSync)
+        {
+            return;
+        }
+
+        // Check if we've already processed this collision recently
+        string collisionKey = $"{vehicleA.OwnerClientId}_{vehicleB.OwnerClientId}";
+        string reverseKey = $"{vehicleB.OwnerClientId}_{vehicleA.OwnerClientId}";
+        float currentTime = Time.time;
+
+        if (recentCollisions.TryGetValue(collisionKey, out float lastCollisionTime))
+        {
+            if (currentTime - lastCollisionTime < collisionDebounceTime)
+            {
+                return; // Skip this collision, too soon after previous one
+            }
+        }
+        else if (recentCollisions.TryGetValue(reverseKey, out lastCollisionTime))
+        {
+            if (currentTime - lastCollisionTime < collisionDebounceTime)
+            {
+                return; // Skip this collision, too soon after previous one
+            }
+        }
+
+        // Record this collision
+        recentCollisions[collisionKey] = currentTime;
+
+        // Get collision data
+        ContactPoint contact = collision.GetContact(0);
+        Vector3 contactPoint = contact.point;
+        Vector3 contactNormal = contact.normal;
+        Vector3 relativeVelocity = collision.relativeVelocity;
+        float impulseForce = collision.impulse.magnitude;
+
+        if (impulseForce < 1.0f)
+        {
+            impulseForce = relativeVelocity.magnitude * vehicleA.rb.mass * 0.5f;
+        }
+
+        // Apply forces to both vehicles
+        ApplyServerCollisionForces(
+            vehicleA,
+            vehicleB,
+            relativeVelocity,
+            contactPoint,
+            contactNormal,
+            impulseForce
+        );
+    }
+
+    private void ApplyServerCollisionForces(
+        NetworkHogController vehicleA,
+        NetworkHogController vehicleB,
+        Vector3 relativeVelocity,
+        Vector3 contactPoint,
+        Vector3 contactNormal,
+        float impulseForce)
+    {
+        if (!IsServer) return;
+
+        // Apply force multiplier
+        impulseForce *= collisionForceMultiplier;
+
+        // Calculate forces for both vehicles
+        Vector3 forceOnB = -contactNormal * impulseForce; // Force on vehicle B
+        Vector3 forceOnA = contactNormal * impulseForce;  // Force on vehicle A (opposite direction)
+
+        // Apply forces directly to rigidbodies
+        vehicleA.rb.AddForceAtPosition(forceOnA, contactPoint, ForceMode.Impulse);
+        vehicleB.rb.AddForceAtPosition(forceOnB, contactPoint, ForceMode.Impulse);
+
+        if (debugMode)
+        {
+            Debug.Log($"[Server] Applied collision forces: {impulseForce} between {vehicleA.OwnerClientId} and {vehicleB.OwnerClientId}");
+        }
+
+        // Wait a frame for physics to apply before updating states
+        StartCoroutine(UpdateStatesAfterCollision(vehicleA, vehicleB));
+
+        // Play collision sounds
+        float impactSpeed = relativeVelocity.magnitude;
+
+        // Play sound on both vehicles
+        vehicleA.PlayImpactSoundClientRpc(impactSpeed,
+            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { vehicleA.OwnerClientId } } });
+
+        vehicleB.PlayImpactSoundClientRpc(impactSpeed,
+            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { vehicleB.OwnerClientId } } });
+    }
+
+    private IEnumerator UpdateStatesAfterCollision(NetworkHogController vehicleA, NetworkHogController vehicleB)
+    {
+        // Wait for fixed update to ensure physics has been applied
+        yield return new WaitForFixedUpdate();
+
+        // Create snapshots of current physics state after collision
+        StateSnapshot snapshotA = new StateSnapshot
+        {
+            position = vehicleA.rb.position,
+            rotation = vehicleA.rb.rotation,
+            velocity = vehicleA.rb.linearVelocity,
+            angularVelocity = vehicleA.rb.angularVelocity,
+            steeringAngle = vehicleA.wheelColliders[0].steerAngle,
+            motorTorque = vehicleA.wheelColliders[0].motorTorque,
+            updateId = vehicleA.updateIdCounter++
+        };
+
+        StateSnapshot snapshotB = new StateSnapshot
+        {
+            position = vehicleB.rb.position,
+            rotation = vehicleB.rb.rotation,
+            velocity = vehicleB.rb.linearVelocity,
+            angularVelocity = vehicleB.rb.angularVelocity,
+            steeringAngle = vehicleB.wheelColliders[0].steerAngle,
+            motorTorque = vehicleB.wheelColliders[0].motorTorque,
+            updateId = vehicleB.updateIdCounter++
+        };
+
+        // Update local server states
+        vehicleA.currentState = snapshotA;
+        vehicleB.currentState = snapshotB;
+
+        // First update the owners with new physics state
+        vehicleA.UpdateOwnerAfterCollisionClientRpc(snapshotA,
+            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { vehicleA.OwnerClientId } } });
+
+        vehicleB.UpdateOwnerAfterCollisionClientRpc(snapshotB,
+            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { vehicleB.OwnerClientId } } });
+
+        // Then broadcast to everyone else for visual updates
+        vehicleA.BroadcastStateUpdateClientRpc(snapshotA,
+            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = GetAllClientIdsExcept(vehicleA.OwnerClientId) } });
+
+        vehicleB.BroadcastStateUpdateClientRpc(snapshotB,
+            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = GetAllClientIdsExcept(vehicleB.OwnerClientId) } });
+    }
+
+    [ClientRpc]
+    private void PlayImpactSoundClientRpc(float speed, ClientRpcParams clientRpcParams)
+    {
+        PlayImpactSound(speed);
+    }
+
+    private void PlayImpactSound(float speed)
+    {
+        if (speed >= 1 && speed < 5)
+        {
+            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject,
+                                                  SoundManager.SoundEffectType.HogImpactLow);
+        }
+        else if (speed >= 5 && speed < 13)
+        {
+            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject,
+                                                  SoundManager.SoundEffectType.HogImpactMed);
+        }
+        else if (speed >= 13)
+        {
+            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject,
+                                                  SoundManager.SoundEffectType.HogImpactHigh);
+        }
+    }
+
+    #endregion
+
     #region Respawn Methods
 
     // Client calls this when they want to respawn
@@ -600,9 +776,9 @@ public class NetworkHogController : NetworkBehaviour
         // Update visual targets for non-owners
         if (!IsOwner)
         {
-            visualPositionTarget = respawnPosition;
-            visualRotationTarget = respawnRotation;
-            visualVelocityTarget = Vector3.zero;
+            visualTargetState.position = respawnPosition;
+            visualTargetState.rotation = respawnRotation;
+            visualTargetState.velocity = Vector3.zero;
         }
         
         // Update state snapshot for owner
@@ -617,11 +793,17 @@ public class NetworkHogController : NetworkBehaviour
                 angularVelocity = Vector3.zero,
                 steeringAngle = 0f,
                 motorTorque = 0f,
-                updateId = (uint)Time.frameCount
+                updateId = updateIdCounter++
             };
 
             // Set state and send to server
-            vehicleState.Value = snapshot;
+            currentState = snapshot;
+
+            // Send to server only if networked
+            if (NetworkManager.Singleton.IsListening)
+            {
+                SendStateToServerServerRpc(snapshot);
+            }
         }
         
         // Re-enable physics after a short delay
@@ -649,7 +831,7 @@ public class NetworkHogController : NetworkBehaviour
 
     #region Network State Management
 
-    private void SendStateToServer()
+    public void SendStateToServer()
     {
         if (!IsOwner) return;
 
@@ -662,40 +844,53 @@ public class NetworkHogController : NetworkBehaviour
             angularVelocity = rb.angularVelocity,
             steeringAngle = wheelColliders[0].steerAngle,
             motorTorque = wheelColliders[0].motorTorque,
-            updateId = (uint)Time.frameCount // Simple unique ID
+            updateId = updateIdCounter++
         };
 
-        // Send to server and update network variable
-        vehicleState.Value = snapshot;
+        // Store locally
+        currentState = snapshot;
 
-        // Also directly inform server for validation
-        SendStateForValidationServerRpc(snapshot);
+        // Send to server
+        SendStateToServerServerRpc(snapshot);
     }
 
-    private void OnVehicleStateChanged(StateSnapshot previousValue, StateSnapshot newValue)
-    {
-        // Only non-owners need to react to state changes
-        if (IsOwner) return;
-
-        if (IsServer)
-        {
-            // Server validates owner's state
-            ValidateOwnerState(newValue);
-        }
-        else
-        {
-            // Remote client applies state for visual representation
-            ApplyRemoteState(newValue);
-        }
-    }
-
-    private void ValidateOwnerState(StateSnapshot ownerState)
+    // Server receives regular updates from clients
+    [ServerRpc(RequireOwnership = true)]
+    private void SendStateToServerServerRpc(StateSnapshot snapshot)
     {
         if (!IsServer) return;
 
+        // Validate state
+        if (ValidateClientState(snapshot))
+        {
+            // Store the state on the server
+            currentState = snapshot;
+
+            // Server can now broadcast to all other clients
+            BroadcastStateUpdateClientRpc(snapshot,
+                new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = GetAllClientIdsExcept(OwnerClientId)
+                    }
+                }
+            );
+        }
+        else if (debugMode)
+        {
+            Debug.LogWarning($"[Server] Rejected invalid state from client {OwnerClientId}");
+        }
+    }
+
+    // Server validates client state (similar to your existing validation)
+    private bool ValidateClientState(StateSnapshot clientState)
+    {
+        if (!IsServer) return false;
+
         // Simple validation - check if position is within valid range
         Vector3 currentPos = rb.position;
-        float distance = Vector3.Distance(currentPos, ownerState.position);
+        float distance = Vector3.Distance(currentPos, clientState.position);
 
         if (distance > serverValidationThreshold)
         {
@@ -704,79 +899,85 @@ public class NetworkHogController : NetworkBehaviour
                 Debug.LogWarning($"[Server] Detected invalid position from owner. Distance: {distance}m");
             }
 
-            // Option 1: Correct the client (stricter approach)
-            // CorrectClientPositionClientRpc(currentPos);
+            // Option 1: Reject and use server state
+            return false;
 
-            // Option 2: Trust the client but log the issue (more lenient)
-            // Just accept the position but log it
-            rb.position = ownerState.position;
-            rb.rotation = ownerState.rotation;
-            rb.linearVelocity = ownerState.velocity;
-            rb.angularVelocity = ownerState.angularVelocity;
-
-            // Broadcast to other clients
-            BroadcastServerStateClientRpc(ownerState);
+            // Option 2: Accept but log the issue (more lenient)
+            // return true;
         }
-        else
-        {
-            // State is valid, apply it on the server
-            rb.position = ownerState.position;
-            rb.rotation = ownerState.rotation;
-            rb.linearVelocity = ownerState.velocity;
-            rb.angularVelocity = ownerState.angularVelocity;
 
-            // Broadcast to other clients (less frequently)
-            _stateUpdateTimer += Time.deltaTime;
-            if (_stateUpdateTimer >= stateUpdateInterval)
-            {
-                _stateUpdateTimer = 0f;
-                BroadcastServerStateClientRpc(ownerState);
-            }
-        }
+        return true;
     }
 
-    private void ApplyRemoteState(StateSnapshot state)
+    // Server broadcasts state updates to clients
+    [ClientRpc]
+    private void BroadcastStateUpdateClientRpc(StateSnapshot snapshot, ClientRpcParams clientRpcParams = default)
     {
-        // For remote client representation of other players' vehicles
-        visualPositionTarget = state.position;
-        visualRotationTarget = state.rotation;
-        visualVelocityTarget = state.velocity;
+        // Don't process our own updates
+        if (IsOwner && IsClient) return;
+
+        // Set visual target for interpolation
+        visualTargetState = snapshot;
         needsSmoothing = true;
     }
 
+    // Update owner's physics after collision
+    [ClientRpc]
+    private void UpdateOwnerAfterCollisionClientRpc(StateSnapshot snapshot, ClientRpcParams clientRpcParams = default)
+    {
+        if (!IsOwner) return;
+
+        // Update client-side physics to match server state after collision
+        rb.position = snapshot.position;
+        rb.rotation = snapshot.rotation;
+        rb.linearVelocity = snapshot.velocity;
+        rb.angularVelocity = snapshot.angularVelocity;
+
+        // Update local state
+        currentState = snapshot;
+
+        // Apply steering and motor
+        ApplySteeringToWheels(snapshot.steeringAngle);
+        ApplyMotorTorqueToWheels(snapshot.motorTorque);
+    }
+
+    // Helper method to get all client IDs except one
+    private ulong[] GetAllClientIdsExcept(ulong excludedClientId)
+    {
+        List<ulong> clientIds = new List<ulong>();
+        foreach (KeyValuePair<ulong, NetworkClient> client in NetworkManager.Singleton.ConnectedClients)
+        {
+            if (client.Key != excludedClientId)
+            {
+                clientIds.Add(client.Key);
+            }
+        }
+        return clientIds.ToArray();
+    }
+
+    // Apply visual smoothing for remote clients
     private void SmoothRemoteVehicleVisuals()
     {
-        if (IsOwner || IsServer || !needsSmoothing) return;
+        if (IsOwner || !needsSmoothing) return;
 
         // Smoothly update visuals for remote client
-        transform.position = Vector3.Lerp(transform.position, visualPositionTarget,
+        transform.position = Vector3.Lerp(transform.position, visualTargetState.position,
                                         Time.deltaTime * visualSmoothingSpeed);
-        transform.rotation = Quaternion.Slerp(transform.rotation, visualRotationTarget,
+        transform.rotation = Quaternion.Slerp(transform.rotation, visualTargetState.rotation,
                                            Time.deltaTime * visualSmoothingSpeed);
 
         // Apply visual wheel effects
-        ApplySteeringToWheels(vehicleState.Value.steeringAngle);
+        ApplySteeringToWheels(visualTargetState.steeringAngle);
 
         // Continue smoothing while the difference is significant
         needsSmoothing =
-            Vector3.Distance(transform.position, visualPositionTarget) > 0.01f ||
-            Quaternion.Angle(transform.rotation, visualRotationTarget) > 0.1f;
+            Vector3.Distance(transform.position, visualTargetState.position) > 0.01f ||
+            Quaternion.Angle(transform.rotation, visualTargetState.rotation) > 0.1f;
     }
 
     #endregion
 
     #region Network RPCs
-
-    [ServerRpc(RequireOwnership = true)]
-    private void SendStateForValidationServerRpc(StateSnapshot state)
-    {
-        // This RPC is just to notify the server to validate the state
-        // The actual state is already sent via NetworkVariable
-        if (debugMode)
-        {
-            Debug.Log($"[Server] Received state for validation: {state.position}");
-        }
-    }
 
     [ServerRpc(RequireOwnership = false)]
     private void RequestInitialStateServerRpc()
@@ -788,7 +989,7 @@ public class NetworkHogController : NetworkBehaviour
         }
 
         // Send the current state to the requesting client
-        SendInitialStateClientRpc(vehicleState.Value);
+        SendInitialStateClientRpc(currentState);
     }
 
     [ClientRpc]
@@ -804,9 +1005,8 @@ public class NetworkHogController : NetworkBehaviour
         rb.angularVelocity = state.angularVelocity;
 
         // Set visual targets
-        visualPositionTarget = state.position;
-        visualRotationTarget = state.rotation;
-        visualVelocityTarget = state.velocity;
+        visualTargetState = state;
+        currentState = state;
 
         // Enable physics
         rb.isKinematic = false;
@@ -819,34 +1019,6 @@ public class NetworkHogController : NetworkBehaviour
         {
             Debug.Log($"[Client] Received initial state: {state.position}");
         }
-    }
-
-    [ClientRpc]
-    private void BroadcastServerStateClientRpc(StateSnapshot state)
-    {
-        // Skip server and owner (they already have the state)
-        if (IsServer || IsOwner) return;
-
-        // Apply state for remote vehicles
-        ApplyRemoteState(state);
-    }
-
-    [ClientRpc]
-    private void CorrectClientPositionClientRpc(Vector3 correctedPosition)
-    {
-        // Only the owner responds to correction
-        if (!IsOwner) return;
-
-        if (debugMode)
-        {
-            Debug.LogWarning($"[Client] Position corrected by server. New position: {correctedPosition}");
-        }
-
-        // Apply correction
-        rb.position = correctedPosition;
-
-        // Send updated state
-        SendStateToServer();
     }
 
     #endregion
@@ -872,13 +1044,12 @@ public class NetworkHogController : NetworkBehaviour
         bool rearLeftGrounded = wheelColliders[2].isGrounded;
         bool rearRightGrounded = wheelColliders[3].isGrounded;
 
-        vfxController.UpdateDriftEffects(isDrifting.Value, rearLeftGrounded, rearRightGrounded, canMove);
+        vfxController.UpdateDriftEffects(isDrifting, rearLeftGrounded, rearRightGrounded, canMove);
     }
 
     [ClientRpc]
     public void ExplodeCarClientRpc()
     {
-        // canMove = false;
         vfxController.CreateExplosion();
 
         // Handle explosion sound once per client
@@ -890,19 +1061,11 @@ public class NetworkHogController : NetworkBehaviour
     private IEnumerator ResetAfterExplosion()
     {
         yield return new WaitForSeconds(3f);
-        // canMove = true;
     }
 
     #endregion
 
     #region Utility Methods
-
-    private IEnumerator CollisionDebounce()
-    {
-        collisionForceOnCooldown = true;
-        yield return new WaitForSeconds(.5f);
-        collisionForceOnCooldown = false;
-    }
 
     private void EnableWheelColliders()
     {
