@@ -16,7 +16,9 @@
 						<ObjectRef Name="TireScreechOn" ID="{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogHorn" ID="{843DE572-F748-474E-8539-31E2EA518E00}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="PauseOn" ID="{E8BED00B-F6C7-4750-AEA7-A9D46DF0E0A6}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="HogJumpCooling" ID="{B4DC7338-AAF4-47E7-A71E-A66F5B5198BB}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="RoundStart" ID="{238C69E0-53F9-48F9-BFE3-4B71C69ECA52}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="HogCooldownComplete" ID="{39E68715-53EB-4A53-BD06-79D34D813E12}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="PauseOff" ID="{141FE736-21DB-4AEA-AE49-07A0FC668D73}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="Round30Sec" ID="{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogJump" ID="{CD25EB60-CA7B-4CCA-BBDD-C141744312F7}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>

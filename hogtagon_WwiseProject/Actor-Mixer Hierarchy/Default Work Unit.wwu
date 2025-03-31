@@ -1315,78 +1315,6 @@
 								</RandomSequenceContainer>
 							</ChildrenList>
 						</Folder>
-						<RandomSequenceContainer Name="hog-jump" ID="{99DC7322-01AA-43F0-860C-B19D4397090C}" ShortID="566593054">
-							<PropertyList>
-								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
-								<Property Name="Pitch" Type="int32">
-									<ModifierList>
-										<ModifierInfo>
-											<Modifier Name="" ID="{FE54E061-9B4F-409E-8D5B-8301C9668C1B}">
-												<PropertyList>
-													<Property Name="Enabled" Type="bool" Value="True"/>
-													<Property Name="Max" Type="Real64" Value="5"/>
-													<Property Name="Min" Type="Real64" Value="-5"/>
-												</PropertyList>
-											</Modifier>
-										</ModifierInfo>
-									</ModifierList>
-								</Property>
-							</PropertyList>
-							<ReferenceList>
-								<Reference Name="Conversion">
-									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-								</Reference>
-								<Reference Name="OutputBus">
-									<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-								</Reference>
-							</ReferenceList>
-							<ChildrenList>
-								<Sound Name="hog-jump1" ID="{C6FC92B4-FB5D-4BA7-B769-659158E706B0}" ShortID="1038878333">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="hog-jump1" ID="{91714AA6-12AB-446B-B980-1FA274A094FA}">
-											<Language>SFX</Language>
-											<AudioFile>hog-jump1.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="766515755"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="hog-jump1" ID="{91714AA6-12AB-446B-B980-1FA274A094FA}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-								<Sound Name="hog-jump2" ID="{EBEAA1D5-2D20-43E9-9F92-A5A866C74F4A}" ShortID="474008341">
-									<ReferenceList>
-										<Reference Name="Conversion">
-											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
-										</Reference>
-										<Reference Name="OutputBus">
-											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
-										</Reference>
-									</ReferenceList>
-									<ChildrenList>
-										<AudioFileSource Name="hog-jump2" ID="{250FC1E1-9AFB-44F7-98F0-7816991E1F1F}">
-											<Language>SFX</Language>
-											<AudioFile>hog-jump2.wav</AudioFile>
-											<MediaIDList>
-												<MediaID ID="127951973"/>
-											</MediaIDList>
-										</AudioFileSource>
-									</ChildrenList>
-									<ActiveSourceList>
-										<ActiveSource Name="hog-jump2" ID="{250FC1E1-9AFB-44F7-98F0-7816991E1F1F}" Platform="Linked"/>
-									</ActiveSourceList>
-								</Sound>
-							</ChildrenList>
-						</RandomSequenceContainer>
 						<Folder Name="hog-impact" ID="{46A47DF4-07EE-4E5F-A895-E67481759A89}" ShortID="29593974">
 							<ChildrenList>
 								<RandomSequenceContainer Name="high-impact" ID="{415B1C36-7590-45B5-AE3B-2F5EBE138170}" ShortID="11654586">
@@ -1705,6 +1633,194 @@
 										</StatePropertyList>
 									</StateInfo>
 								</RandomSequenceContainer>
+							</ChildrenList>
+						</Folder>
+						<Folder Name="hog-jump" ID="{2FA064B6-15CC-4291-8C1E-8EC831C0B5E0}" ShortID="310557771">
+							<ChildrenList>
+								<RandomSequenceContainer Name="hog-jump" ID="{99DC7322-01AA-43F0-860C-B19D4397090C}" ShortID="566593054">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+										<Property Name="Pitch" Type="int32">
+											<ModifierList>
+												<ModifierInfo>
+													<Modifier Name="" ID="{FE54E061-9B4F-409E-8D5B-8301C9668C1B}">
+														<PropertyList>
+															<Property Name="Enabled" Type="bool" Value="True"/>
+															<Property Name="Max" Type="Real64" Value="5"/>
+															<Property Name="Min" Type="Real64" Value="-5"/>
+														</PropertyList>
+													</Modifier>
+												</ModifierInfo>
+											</ModifierList>
+										</Property>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<Sound Name="hog-jump1" ID="{C6FC92B4-FB5D-4BA7-B769-659158E706B0}" ShortID="1038878333">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="hog-jump1" ID="{91714AA6-12AB-446B-B980-1FA274A094FA}">
+													<Language>SFX</Language>
+													<AudioFile>hog-jump1.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="766515755"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="hog-jump1" ID="{91714AA6-12AB-446B-B980-1FA274A094FA}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="hog-jump2" ID="{EBEAA1D5-2D20-43E9-9F92-A5A866C74F4A}" ShortID="474008341">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="hog-jump2" ID="{250FC1E1-9AFB-44F7-98F0-7816991E1F1F}">
+													<Language>SFX</Language>
+													<AudioFile>hog-jump2.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="127951973"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="hog-jump2" ID="{250FC1E1-9AFB-44F7-98F0-7816991E1F1F}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+									</ChildrenList>
+								</RandomSequenceContainer>
+								<RandomSequenceContainer Name="hog-jump-cooling" ID="{9CFEDDB8-346D-433E-A0DF-65B4C794EA90}" ShortID="818697904">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<Sound Name="hog-jump-cooling1" ID="{26542EB9-6DE5-45B1-8062-2735BC445FC8}" ShortID="223296363">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="hog-jump-cooling1" ID="{3617ECE8-AE85-4A78-B5CA-60412501C3B5}">
+													<Language>SFX</Language>
+													<AudioFile>hog-jump-cooling1.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="225365045"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="hog-jump-cooling1" ID="{3617ECE8-AE85-4A78-B5CA-60412501C3B5}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="hog-jump-cooling2" ID="{5D2B7035-FEC8-4580-AC06-1460133B8E2B}" ShortID="327663896">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="hog-jump-cooling2" ID="{051D216B-8BE5-4E36-B0BD-95CBEFA6C174}">
+													<Language>SFX</Language>
+													<AudioFile>hog-jump-cooling2.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="418233301"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="hog-jump-cooling2" ID="{051D216B-8BE5-4E36-B0BD-95CBEFA6C174}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+										<Sound Name="hog-jump-cooling3" ID="{9116069E-D0BB-48DD-BAFB-957DF6A477F8}" ShortID="712075124">
+											<ReferenceList>
+												<Reference Name="Conversion">
+													<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+												</Reference>
+												<Reference Name="OutputBus">
+													<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+												</Reference>
+											</ReferenceList>
+											<ChildrenList>
+												<AudioFileSource Name="hog-jump-cooling3" ID="{00D5DDB0-1A03-4CC5-9F2C-C70D45EFAA62}">
+													<Language>SFX</Language>
+													<AudioFile>hog-jump-cooling3.wav</AudioFile>
+													<MediaIDList>
+														<MediaID ID="908125136"/>
+													</MediaIDList>
+												</AudioFileSource>
+											</ChildrenList>
+											<ActiveSourceList>
+												<ActiveSource Name="hog-jump-cooling3" ID="{00D5DDB0-1A03-4CC5-9F2C-C70D45EFAA62}" Platform="Linked"/>
+											</ActiveSourceList>
+										</Sound>
+									</ChildrenList>
+								</RandomSequenceContainer>
+								<Sound Name="hog-cooldown-complete" ID="{94DC5DBC-006C-4927-B17E-CDE537A23785}" ShortID="527204702">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="World" ID="{E31DAC6F-74E9-4C4F-9959-F861D6EBC5F7}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="hog-cooldown-complete" ID="{388C739D-CB41-4B72-B674-B19CC2270C82}">
+											<PropertyList>
+												<Property Name="FadeInDuration" Type="Real64" Value="0.169948522253111"/>
+												<Property Name="FadeOutDuration" Type="Real64" Value="0.284074537196805"/>
+												<Property Name="OverrideWavLoop" Type="bool" Value="True"/>
+												<Property Name="TrimBegin" Type="Real64" Value="0.19041677493323"/>
+											</PropertyList>
+											<Language>SFX</Language>
+											<AudioFile>hog-cooldown-complete.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="406044240"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="hog-cooldown-complete" ID="{388C739D-CB41-4B72-B674-B19CC2270C82}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
 							</ChildrenList>
 						</Folder>
 					</ChildrenList>
