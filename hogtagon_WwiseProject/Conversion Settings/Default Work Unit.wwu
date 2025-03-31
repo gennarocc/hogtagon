@@ -43,13 +43,13 @@
 					</PropertyList>
 					<ConversionPluginInfoList>
 						<ConversionPluginInfo Platform="Linux">
-							<ConversionPlugin Name="" ID="{ED4BB126-954E-464B-8A20-0DF033FDCCB3}" PluginName="PCM" CompanyID="0" PluginID="1"/>
+							<ConversionPlugin Name="" ID="{80EF0E64-59DB-4EE1-87A1-E72F2BD5361D}" PluginName="Vorbis" CompanyID="0" PluginID="4"/>
 						</ConversionPluginInfo>
 						<ConversionPluginInfo Platform="Windows">
-							<ConversionPlugin Name="" ID="{82FAED34-B4D3-4BDF-AD9F-6227B7ECAF1F}" PluginName="PCM" CompanyID="0" PluginID="1"/>
+							<ConversionPlugin Name="" ID="{E59B6344-E172-4094-9D3D-2E2C7DBBEF14}" PluginName="Vorbis" CompanyID="0" PluginID="4"/>
 						</ConversionPluginInfo>
 						<ConversionPluginInfo Platform="Mac">
-							<ConversionPlugin Name="" ID="{E739D9BA-CB66-49A0-9B0F-5257BEB18EEA}" PluginName="PCM" CompanyID="0" PluginID="1"/>
+							<ConversionPlugin Name="" ID="{0413B8F6-DC7E-4BB2-A61E-F51FAAF1D544}" PluginName="Vorbis" CompanyID="0" PluginID="4"/>
 						</ConversionPluginInfo>
 					</ConversionPluginInfoList>
 				</Conversion>

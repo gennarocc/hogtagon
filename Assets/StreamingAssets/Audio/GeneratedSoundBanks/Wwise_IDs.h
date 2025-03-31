@@ -16,11 +16,13 @@ namespace AK
         static const AkUniqueID CAREXPLOSION = 144991338U;
         static const AkUniqueID ENGINEOFF = 2388455330U;
         static const AkUniqueID ENGINEON = 2439330724U;
+        static const AkUniqueID HOGCOOLDOWNCOMPLETE = 1209236599U;
         static const AkUniqueID HOGHORN = 3567623486U;
         static const AkUniqueID HOGIMPACTHIGH = 1467666939U;
         static const AkUniqueID HOGIMPACTLOW = 3718586431U;
         static const AkUniqueID HOGIMPACTMED = 3013779447U;
         static const AkUniqueID HOGJUMP = 442344189U;
+        static const AkUniqueID HOGJUMPCOOLING = 1037279410U;
         static const AkUniqueID LEVELMUSICOFF = 531512037U;
         static const AkUniqueID LEVELMUSICON = 1021065561U;
         static const AkUniqueID LOBBYMUSICOFF = 559864827U;

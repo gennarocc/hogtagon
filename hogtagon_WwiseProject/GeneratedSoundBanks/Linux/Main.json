@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{CAF11099-7C83-D8BF-824B-46CFCE4E932E}",
+    "Hash": "{143DDB06-40D6-89E6-57B4-06334FE02FB4}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -21,7 +21,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "idle-rpm-loop.wav",
-      "CachePath": "10/{1073E8F7-C22A-4F8B-C5DE-1F83FF2B11F4}.wem"
+      "CachePath": "81/{81DB9411-77D7-F005-8658-C7FB5545B055}.wem"
      },
      {
       "Id": "90311213",
@@ -29,7 +29,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "ui-cancel.wav",
-      "CachePath": "FA/{FA79BAE6-9C46-C389-95C8-EDA7E0977145}.wem"
+      "CachePath": "B2/{B2FFEA2F-DD3F-77DC-D7C6-F53F8E27D38D}.wem"
      },
      {
       "Id": "127951973",
@@ -37,7 +37,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "hog-jump2.wav",
-      "CachePath": "89/{8955E2F4-D11E-418E-E54B-6392B9BD0A8F}.wem"
+      "CachePath": "57/{575224C1-ED11-4819-42D3-54DB467445AE}.wem"
      },
      {
       "Id": "157986807",
@@ -45,7 +45,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "ui-confirmation.wav",
-      "CachePath": "B6/{B6D2F97E-FE56-A469-F01A-2474DD17519C}.wem"
+      "CachePath": "9E/{9ECCF61F-3CF7-C838-DB90-7783627D2F0E}.wem"
      },
      {
       "Id": "178975780",
@@ -53,7 +53,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "6k-rpm-loop.wav",
-      "CachePath": "47/{4780DB24-F5D9-3D8F-C651-E1BB65757714}.wem"
+      "CachePath": "FD/{FD5B5E6C-F850-ED27-9C75-EE9D4982F851}.wem"
      },
      {
       "Id": "179866252",
@@ -61,7 +61,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "car-explosion-1.wav",
-      "CachePath": "92/{92809C23-9FDE-21D3-C16A-543C5CB253B6}.wem"
+      "CachePath": "15/{15D2B7AA-B5D9-C023-8429-CF940C29F85A}.wem"
      },
      {
       "Id": "184000432",
@@ -69,7 +69,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "car-explosion-5.wav",
-      "CachePath": "CD/{CDA5B098-C361-2233-5E7A-0835F3B88585}.wem"
+      "CachePath": "0D/{0DD92B6E-2B4C-387A-19C7-068697F5788B}.wem"
      },
      {
       "Id": "191368066",
@@ -77,7 +77,15 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-3c.wav",
-      "CachePath": "B9/{B9657044-8C25-D675-E511-B2011E1B47F3}.wem"
+      "CachePath": "94/{94FCCCBF-4772-D5F2-C17C-678D43A9D0CF}.wem"
+     },
+     {
+      "Id": "225365045",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "hog-jump-cooling1.wav",
+      "CachePath": "C8/{C8865A99-61AE-073A-23B9-1EFB74F4934A}.wem"
      },
      {
       "Id": "289264218",
@@ -85,7 +93,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "eliminated.wav",
-      "CachePath": "97/{97553329-4566-72BA-E482-063FAB1985B3}.wem"
+      "CachePath": "7C/{7CE1E1EE-F8CD-292F-D4BF-1B5DEDE2E10B}.wem"
      },
      {
       "Id": "299928938",
@@ -93,7 +101,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-1a.wav",
-      "CachePath": "F2/{F2F47985-8B80-36A7-F513-FE5708E5FDDF}.wem"
+      "CachePath": "E5/{E50A7C1A-612A-CF3F-ACDE-8987AD459D27}.wem"
      },
      {
       "Id": "307100629",
@@ -101,7 +109,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "gear-shift-1.wav",
-      "CachePath": "BF/{BF9E2490-01AC-9E10-254F-E8B71CC94531}.wem"
+      "CachePath": "B2/{B2B519DE-9AFC-7C7D-B756-02B4ECE69C73}.wem"
      },
      {
       "Id": "330055359",
@@ -109,7 +117,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "1k-rpm-loop.wav",
-      "CachePath": "26/{2628AB21-A9BE-BBFB-41A7-709577A9415C}.wem"
+      "CachePath": "56/{56C334F5-9C5C-9C51-2351-C4D334CE1FFE}.wem"
      },
      {
       "Id": "331870255",
@@ -117,7 +125,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-3a.wav",
-      "CachePath": "AF/{AFCD46AD-D648-77F3-49F9-8CF4DAB47B0A}.wem"
+      "CachePath": "A5/{A5299357-3C97-B076-3741-351EA299A92C}.wem"
      },
      {
       "Id": "344684111",
@@ -125,7 +133,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "gear-shift-5.wav",
-      "CachePath": "5B/{5B1262CF-529A-BFFE-DB17-7837F76E91F8}.wem"
+      "CachePath": "0B/{0B80E2AA-0A21-5D7F-B7E6-F147B4980D12}.wem"
      },
      {
       "Id": "373189264",
@@ -133,7 +141,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "car-explosion-4.wav",
-      "CachePath": "43/{43D6F3F5-6DFC-CC4D-2C0E-0A669085EE06}.wem"
+      "CachePath": "45/{45B2EF58-095C-BD25-06F1-0877BCB5B6BF}.wem"
      },
      {
       "Id": "386328575",
@@ -141,7 +149,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "5k-rpm-loop.wav",
-      "CachePath": "E8/{E889B0D4-615A-2483-B1A6-89C48B846DD5}.wem"
+      "CachePath": "23/{230680F2-1B1B-6E7B-0A8E-DC0925976305}.wem"
      },
      {
       "Id": "388733350",
@@ -149,7 +157,23 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-2b.wav",
-      "CachePath": "B6/{B6602330-5174-4204-6526-96CECDC2AA41}.wem"
+      "CachePath": "D9/{D917E1B5-9772-D241-CFB5-D3243BEFF32C}.wem"
+     },
+     {
+      "Id": "406044240",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "hog-cooldown-complete.wav",
+      "CachePath": "66/{6649F04B-EAE6-5D72-A236-731B3C92F0D2}.wem"
+     },
+     {
+      "Id": "418233301",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "hog-jump-cooling2.wav",
+      "CachePath": "15/{15EE14F6-C9B9-DE4A-D231-9F8183EC123B}.wem"
      },
      {
       "Id": "438718516",
@@ -157,7 +181,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "winner.wav",
-      "CachePath": "07/{07FB2909-E70A-0736-F4BA-D049656BCE14}.wem"
+      "CachePath": "E5/{E5D38B36-4B96-6522-B29D-FB5772DEFFC3}.wem"
      },
      {
       "Id": "439209459",
@@ -165,7 +189,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "4_heavy.wav",
-      "CachePath": "6E/{6E7FD06B-86AF-36D8-A61A-B2D1728379C4}.wem"
+      "CachePath": "DC/{DCD6CF64-57E6-5BC9-8E14-ACB593B2CAF7}.wem"
      },
      {
       "Id": "464858496",
@@ -173,7 +197,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "car-explosion-5.wav",
-      "CachePath": "4B/{4BF2237F-1D25-9B87-05A7-3A05435E4340}.wem"
+      "CachePath": "C0/{C0A4DEA0-932D-0D66-6B06-171C2651F82D}.wem"
      },
      {
       "Id": "526038726",
@@ -181,7 +205,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "gear-shift-4.wav",
-      "CachePath": "3F/{3F3D6320-AAD6-85DB-F678-C2E5878F2537}.wem"
+      "CachePath": "26/{2680548A-B9A7-0F71-99A2-8949BD6FB19A}.wem"
      },
      {
       "Id": "553553016",
@@ -189,7 +213,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "tire-screeching-1.wav",
-      "CachePath": "E1/{E169A183-2F34-2503-3096-4DEF78E0C984}.wem"
+      "CachePath": "A9/{A9DF1485-1AB8-ED85-CBFC-02D1D4D7B9E4}.wem"
      },
      {
       "Id": "595717928",
@@ -197,7 +221,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "gear-shift-2.wav",
-      "CachePath": "0B/{0B0E7B9A-1BFF-21C3-CF92-BBFA9CEFE130}.wem"
+      "CachePath": "4D/{4D6FCE07-2FDC-F570-F5B2-EEC3AD0A4339}.wem"
      },
      {
       "Id": "599918648",
@@ -205,7 +229,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "30secs-remaining.wav",
-      "CachePath": "23/{23BA9362-75D2-122C-1FA3-7768A2ED2B67}.wem"
+      "CachePath": "98/{9819B0D8-9217-76D2-571F-AC32D5E9CB3B}.wem"
      },
      {
       "Id": "603757496",
@@ -213,7 +237,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "round-start.wav",
-      "CachePath": "B2/{B21F027C-D60B-6543-4358-5BADA38F7D4D}.wem"
+      "CachePath": "81/{8145100E-8F66-5B00-B258-90840CA82E9C}.wem"
      },
      {
       "Id": "607401393",
@@ -221,7 +245,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-3b.wav",
-      "CachePath": "28/{28979A50-A24A-0C69-7069-D2B836D0AD09}.wem"
+      "CachePath": "41/{41C16F17-8FBA-2E87-5A1B-2BF3F1D8E963}.wem"
      },
      {
       "Id": "708298719",
@@ -229,7 +253,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-1b.wav",
-      "CachePath": "37/{37447CE9-9B76-1AD0-AB45-26D21B98F106}.wem"
+      "CachePath": "42/{4248A475-19EA-E450-6816-F338529A9B91}.wem"
      },
      {
       "Id": "729798953",
@@ -237,7 +261,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-1c.wav",
-      "CachePath": "6D/{6DB6D7EF-97FA-B1A3-7213-C0EA8309BDA0}.wem"
+      "CachePath": "10/{10718833-1142-5B6B-85DD-2701C8B78364}.wem"
      },
      {
       "Id": "758309002",
@@ -245,7 +269,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "3k-rpm-loop.wav",
-      "CachePath": "B8/{B82C6134-2243-0A79-1843-F2AD25F59264}.wem"
+      "CachePath": "8B/{8BF39F56-FE46-ED6D-A6A3-DBF7863C6B63}.wem"
      },
      {
       "Id": "766515755",
@@ -253,7 +277,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "hog-jump1.wav",
-      "CachePath": "07/{07E94B3C-7585-B368-1E53-989FDD43EDFA}.wem"
+      "CachePath": "6A/{6A93AA65-3B0F-722F-3641-04C46D8EC321}.wem"
      },
      {
       "Id": "783942544",
@@ -261,7 +285,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-2c.wav",
-      "CachePath": "23/{239E381F-A6FB-8313-DFE1-8E0B08894BC3}.wem"
+      "CachePath": "ED/{EDC76917-6446-FA4C-5572-F57CB80A3E63}.wem"
      },
      {
       "Id": "796949936",
@@ -269,7 +293,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "2k-rpm-loop.wav",
-      "CachePath": "8A/{8A7FA16C-F8F1-EDE1-5AC8-69DE5D18EE0E}.wem"
+      "CachePath": "35/{356F6AF9-6ED4-4298-EB17-F144863E216B}.wem"
      },
      {
       "Id": "811391391",
@@ -277,7 +301,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "4k-rpm-loop.wav",
-      "CachePath": "B5/{B559CE53-BDB7-4A0C-3E98-8501CCCF27F3}.wem"
+      "CachePath": "C1/{C1B47AA4-EF53-E380-9AB3-CE17F3136F68}.wem"
      },
      {
       "Id": "842752452",
@@ -285,7 +309,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "gear-shift-3.wav",
-      "CachePath": "63/{631BF3EF-E5B1-AE4F-126C-64497A765ECB}.wem"
+      "CachePath": "70/{70065D4A-C8CE-388F-5222-0571DFE128FB}.wem"
      },
      {
       "Id": "862707693",
@@ -293,7 +317,15 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "car-explosion-2.wav",
-      "CachePath": "C4/{C4ED27A9-72B2-3354-59C3-28C49640D938}.wem"
+      "CachePath": "5F/{5F97042C-70BD-CE50-F9AA-F6049720CAAD}.wem"
+     },
+     {
+      "Id": "908125136",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "hog-jump-cooling3.wav",
+      "CachePath": "92/{92EFB117-F2AA-43DA-FCFF-7DBB29E8C3F1}.wem"
      },
      {
       "Id": "1032222109",
@@ -301,7 +333,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "impact-2a.wav",
-      "CachePath": "D1/{D1766F30-C590-A997-B26C-864CFC24F04A}.wem"
+      "CachePath": "8A/{8A8D8744-F648-AD8D-B5A9-A4B6BA1C0FB2}.wem"
      },
      {
       "Id": "1040679246",
@@ -309,7 +341,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "tire-screeching-2.wav",
-      "CachePath": "FE/{FED87297-BDB3-5898-213F-F429ECC884F3}.wem"
+      "CachePath": "DB/{DB7765BD-D580-FEBD-035F-2F1931C8E891}.wem"
      },
      {
       "Id": "1060462459",
@@ -317,7 +349,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "ui-navigation-click.wav",
-      "CachePath": "EE/{EE3D3735-906C-E2D9-0762-C266C94EA5C2}.wem"
+      "CachePath": "9D/{9D806EAF-C7D9-11BC-0920-26A28A329334}.wem"
      }
     ],
     "Events": [
@@ -399,6 +431,20 @@
        },
        {
         "Id": "842752452"
+       }
+      ]
+     },
+     {
+      "Id": "1209236599",
+      "Name": "HogCooldownComplete",
+      "ObjectPath": "\\Events\\Default Work Unit\\HogCooldownComplete",
+      "GUID": "{39E68715-53EB-4A53-BD06-79D34D813E12}",
+      "DurationType": "OneShot",
+      "DurationMin": "1.324854",
+      "DurationMax": "1.324854",
+      "MediaRefs": [
+       {
+        "Id": "406044240"
        }
       ]
      },
@@ -490,6 +536,26 @@
        },
        {
         "Id": "766515755"
+       }
+      ]
+     },
+     {
+      "Id": "1037279410",
+      "Name": "HogJumpCooling",
+      "ObjectPath": "\\Events\\Default Work Unit\\HogJumpCooling",
+      "GUID": "{B4DC7338-AAF4-47E7-A71E-A66F5B5198BB}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.24375",
+      "DurationMax": "0.49654168",
+      "MediaRefs": [
+       {
+        "Id": "225365045"
+       },
+       {
+        "Id": "418233301"
+       },
+       {
+        "Id": "908125136"
        }
       ]
      },
@@ -648,6 +714,6 @@
     ]
    }
   ],
-  "FileHash": "{39486596-71FC-B454-F41A-FDFB5A5B5E24}"
+  "FileHash": "{C51AAD67-2CBD-58DD-1A03-07FA2BC7737E}"
  }
 }

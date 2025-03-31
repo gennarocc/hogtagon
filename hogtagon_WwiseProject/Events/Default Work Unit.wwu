@@ -147,7 +147,7 @@
 						<Action Name="" ID="{3B175947-D5F6-4614-8F3B-A1FB37B1E212}" ShortID="529088533">
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="3_plonky" ID="{7C6DA8E2-BADD-4688-BA04-1032115ADC99}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+									<ObjectRef Name="level-playlist" ID="{21A0DEA0-97F6-4F33-AF5E-DA8AE16D6303}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
@@ -163,7 +163,7 @@
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="3_plonky" ID="{7C6DA8E2-BADD-4688-BA04-1032115ADC99}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+									<ObjectRef Name="level-playlist" ID="{21A0DEA0-97F6-4F33-AF5E-DA8AE16D6303}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
@@ -394,6 +394,28 @@
 							<ReferenceList>
 								<Reference Name="Target">
 									<ObjectRef Name="lobby" ID="{BEDB84E5-DDF5-4E9E-B8E9-855652E7A727}" WorkUnitID="{C2C8396E-1D2E-4F07-98DA-976FE55A844C}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="HogJumpCooling" ID="{B4DC7338-AAF4-47E7-A71E-A66F5B5198BB}">
+					<ChildrenList>
+						<Action Name="" ID="{9A86385F-37D8-415C-B6E6-51C8E532D9BC}" ShortID="479890151">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog-jump-cooling" ID="{9CFEDDB8-346D-433E-A0DF-65B4C794EA90}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="HogCooldownComplete" ID="{39E68715-53EB-4A53-BD06-79D34D813E12}">
+					<ChildrenList>
+						<Action Name="" ID="{56C786D3-7A90-406D-B2BD-6D7B4CB6EDE5}" ShortID="907822536">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog-cooldown-complete" ID="{94DC5DBC-006C-4927-B17E-CDE537A23785}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
