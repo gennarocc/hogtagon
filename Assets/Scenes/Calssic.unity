@@ -3499,11 +3499,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 309586443597465881, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_Value
-      value: 0
+      value: -11
       objectReference: {fileID: 0}
     - target: {fileID: 309586443597465881, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_MaxValue
-      value: 0
+      value: -11
       objectReference: {fileID: 0}
     - target: {fileID: 309586443597465881, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_MinValue
@@ -3551,11 +3551,11 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: a44cab77c37739a49ac20c92c3390560, type: 2}
     - target: {fileID: 2712010494377527710, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_Value
-      value: -10
+      value: -20
       objectReference: {fileID: 0}
     - target: {fileID: 2712010494377527710, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_MaxValue
-      value: -10
+      value: -20
       objectReference: {fileID: 0}
     - target: {fileID: 2712010494377527710, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_MinValue

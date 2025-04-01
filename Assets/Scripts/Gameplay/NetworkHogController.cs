@@ -204,6 +204,7 @@ public class NetworkHogController : NetworkBehaviour
             SmoothRemoteVehicleVisuals();
         }
 
+        rpm.SetGlobalValue(wheelColliders[0].rpm);
         // Common updates
         AnimateWheels();
         UpdateDriftEffects();
