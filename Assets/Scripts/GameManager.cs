@@ -91,40 +91,35 @@ public class GameManager : NetworkBehaviour
 
         public List<ulong> GetTeamPlayers(int teamNumber)
         {
-            if (teamPlayers.TryGetValue(teamNumber, out List<ulong> players))
-            {
-                return players;
-            }
-            return new List<ulong>();
+            return teamPlayers.TryGetValue(teamNumber, out List<ulong> players) ? players : new List<ulong>();
         }
 
         public string GetTeamName(int teamNumber)
         {
-            switch(teamNumber)
+            return teamNumber switch
             {
-                case 1: return "RED";
-                case 2: return "BLUE";
-                case 3: return "GREEN";
-                case 4: return "YELLOW";
-                default: return "UNKNOWN";
-            }
+                1 => "RED",
+                2 => "BLUE",
+                3 => "GREEN",
+                4 => "YELLOW",
+                _ => "UNKNOWN"
+            };
         }
 
         public Color GetTeamColor(int teamNumber)
         {
-            switch(teamNumber)
+            return teamNumber switch
             {
-                case 1: return new Color(1.0f, 0.2f, 0.2f); // Red
-                case 2: return new Color(0.2f, 0.4f, 1.0f); // Blue
-                case 3: return new Color(0.2f, 0.8f, 0.2f); // Green
-                case 4: return new Color(1.0f, 0.8f, 0.2f); // Yellow
-                default: return Color.white;
-            }
+                1 => new Color(1.0f, 0.2f, 0.2f), // Red
+                2 => new Color(0.2f, 0.4f, 1.0f), // Blue
+                3 => new Color(0.2f, 0.8f, 0.2f), // Green
+                4 => new Color(1.0f, 0.8f, 0.2f), // Yellow
+                _ => Color.white
+            };
         }
 
         public void Reset()
         {
-            // Clear team assignments but maintain the structure
             foreach (var team in teamPlayers.Keys.ToList())
             {
                 teamPlayers[team].Clear();
@@ -132,22 +127,18 @@ public class GameManager : NetworkBehaviour
             winningTeam = 0;
         }
         
-        // Reset winning team but preserve team assignments
         public void ResetWinningTeam()
         {
             winningTeam = 0;
         }
         
-        // Rebuild team assignments from player data (for use after reset)
         public void RebuildTeamAssignments()
         {
-            // Clear team assignments
             foreach (var team in teamPlayers.Keys.ToList())
             {
                 teamPlayers[team].Clear();
             }
             
-            // Fetch all player data and rebuild team assignments
             if (NetworkManager.Singleton != null)
             {
                 foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
@@ -168,7 +159,6 @@ public class GameManager : NetworkBehaviour
             }
         }
 
-        // Add a single player to a specific team
         public void AddPlayerToTeam(ulong clientId, int teamNumber)
         {
             if (teamNumber > 0 && teamNumber <= teamCount)
@@ -350,50 +340,37 @@ public class GameManager : NetworkBehaviour
         if (!IsServer) return;
         
         bool isTeamBattle = gameMode == MenuManager.GameMode.TeamBattle;
-        
-        Debug.Log($"[GameManager] Resetting game state. Team Battle: {isTeamBattle}");
 
-        // Reset all player states to Alive
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
             {
                 playerData.state = PlayerState.Alive;
-                playerData.score = 0; // Reset scores
+                playerData.score = 0;
                 
-                // Only reset team assignment when not in team battle mode
-                // This preserves team assignments between games in team battle mode
                 if (!isTeamBattle)
                 {
-                    playerData.team = 0;  // Reset team assignment
+                    playerData.team = 0;
                 }
                 
                 ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
             }
         }
 
-        // Reset team tracking but preserve assignments in TeamHelper
         if (isTeamBattle)
         {
-            // Only reset the winning team, but keep assignments
             winningTeamNumber = 0;
             teamHelper.ResetWinningTeam();
             teamHelper.RebuildTeamAssignments();
         }
         else
         {
-            // For non-team modes, fully reset team helper
             teamHelper.Reset();
             winningTeamNumber = 0;
         }
 
-        // Unlock game mode settings for new game
         UnlockGameModeSettings();
-
-        // Respawn all players at their spawn points
         RespawnAllPlayers();
-
-        // Clear any remaining processed deaths
         processedDeaths.Clear();
     }
 
@@ -437,81 +414,24 @@ public class GameManager : NetworkBehaviour
 
     private void OnPlayingEnter()
     {
-        // Lock game mode settings when game starts
         LockGameModeSettings();
-
-        Debug.Log("GameManager OnPlayingEnter");
-
-        // Clear processed deaths for new round
         processedDeaths.Clear();
 
-        // Check if NetworkManager and SoundManager are available
-        if (NetworkManager.Singleton == null)
-        {
-            Debug.LogError("[GameManager] NetworkManager.Singleton is null in OnPlayingEnter!");
+        if (!ValidateRequiredComponents())
             return;
-        }
-
-        if (!gameMusicPlaying && IsServer && SoundManager.Instance != null)
-        {
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOn);
-            gameMusicPlaying = true;
-        }
-
-        // Ensure ConnectionManager instance exists
-        if (ConnectionManager.Instance == null)
-        {
-            Debug.LogError("[GameManager] ConnectionManager.Instance is null in OnPlayingEnter!");
-            return;
-        }
-
-        // Ensure MenuManager reference exists
-        if (menuManager == null)
-        {
-            Debug.LogError("[GameManager] menuManager is null in OnPlayingEnter!");
-            return;
-        }
 
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
-            // Force-mark all players as alive when entering playing state
             if (IsServer)
             {
-                Debug.Log("[GameManager] Marking all players as alive");
-                foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
-                {
-                    if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
-                    {
-                        playerData.state = PlayerState.Alive;
-                        ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
-                        Debug.Log($"[GameManager] Set player {clientId} state to Alive");
-                    }
-                }
+                MarkAllPlayersAlive();
             }
             
-            // If team battle mode, assign players to teams
             if (gameMode == MenuManager.GameMode.TeamBattle)
             {
-                // Only assign teams when the game first starts (when all players have 0 score)
-                bool isFirstRound = IsServer && IsAllPlayersScoreZero();
-                if (isFirstRound)
-                {
-                    Debug.Log("[GameManager] First round detected - Assigning players to teams");
-                    AssignPlayersToTeams();
-                }
-                else
-                {
-                    Debug.Log("[GameManager] Using existing team assignments");
-                }
-                
-                // Broadcast team battle mode info to ensure clients have the correct mode set
-                if (IsServer)
-                {
-                    BroadcastTeamBattleModeClientRpc();
-                }
+                HandleTeamBattleMode();
             }
 
-            // Reset kill feed for new round
             if (killFeed != null)
             {
                 killFeed.ResetForNewRound();
@@ -520,7 +440,6 @@ public class GameManager : NetworkBehaviour
             LockPlayerMovement();
             gameTime = 0f;
             
-            // First set game state then respawn players
             SetGameState(GameState.Playing);
             RespawnAllPlayers();
             
@@ -534,21 +453,69 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Assign players to teams for team battle mode
+    private bool ValidateRequiredComponents()
+    {
+        if (NetworkManager.Singleton == null)
+        {
+            Debug.LogError("[GameManager] NetworkManager.Singleton is null in OnPlayingEnter!");
+            return false;
+        }
+
+        if (ConnectionManager.Instance == null)
+        {
+            Debug.LogError("[GameManager] ConnectionManager.Instance is null in OnPlayingEnter!");
+            return false;
+        }
+
+        if (menuManager == null)
+        {
+            Debug.LogError("[GameManager] menuManager is null in OnPlayingEnter!");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void MarkAllPlayersAlive()
+    {
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+                playerData.state = PlayerState.Alive;
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            }
+        }
+    }
+
+    private void HandleTeamBattleMode()
+    {
+        bool isFirstRound = IsServer && IsAllPlayersScoreZero();
+        if (isFirstRound)
+        {
+            AssignPlayersToTeams();
+        }
+        
+        if (IsServer)
+        {
+            BroadcastTeamBattleModeClientRpc();
+        }
+    }
+
     private void AssignPlayersToTeams()
     {
         if (!IsServer || gameMode != MenuManager.GameMode.TeamBattle) return;
 
-        // Get all connected players
+        // Double check this is the first round
+        if (!IsAllPlayersScoreZero())
+        {
+            return;
+        }
+
         List<ulong> players = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
-        
-        // Initialize team helper
         teamHelper.Initialize(teamCount);
-        
-        // Assign players to teams
         teamHelper.AssignPlayersToTeams(players);
         
-        // Update player data with team assignments
         for (int teamNumber = 1; teamNumber <= teamCount; teamNumber++)
         {
             foreach (ulong clientId in teamHelper.GetTeamPlayers(teamNumber))
@@ -557,7 +524,6 @@ public class GameManager : NetworkBehaviour
                 {
                     playerData.team = teamNumber;
                     ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
-                    Debug.Log($"Player {clientId} assigned to team {teamNumber}");
                 }
             }
         }
@@ -1201,61 +1167,44 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void BroadcastTeamBattleModeClientRpc()
     {
-        Debug.Log("[GameManager] Client received team battle mode broadcast");
-        
-        // Force refresh all UI that depends on game mode
         if (gameMode != MenuManager.GameMode.TeamBattle)
         {
-            Debug.Log("[GameManager] Correcting client game mode to team battle");
             gameMode = MenuManager.GameMode.TeamBattle;
         }
         
-        // On server: check for any players that don't have team assignments and assign them
         if (IsServer)
         {
-            Debug.Log("[GameManager] Server verifying team assignments");
             bool foundUnassignedPlayer = false;
-            
             foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
             {
                 if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
                 {
-                    // Check if player has no team assignment (team=0)
                     if (playerData.team <= 0)
                     {
                         foundUnassignedPlayer = true;
-                        Debug.Log($"[GameManager] Found unassigned player {clientId}");
                         break;
                     }
                 }
             }
             
-            // If any players don't have team assignments, find a team with the fewest players
             if (foundUnassignedPlayer)
             {
-                Debug.Log("[GameManager] Assigning unassigned players to teams");
                 AssignUnassignedPlayersToTeams();
             }
         }
-        
-        // On client: apply team colors to local player if needed
-        if (!IsServer && IsClient)
+        else if (IsClient)
         {
             ulong localClientId = NetworkManager.Singleton.LocalClientId;
             if (ConnectionManager.Instance.TryGetPlayerData(localClientId, out PlayerData playerData))
             {
                 if (playerData.team > 0)
                 {
-                    Debug.Log($"[GameManager] Local player on team {playerData.team}");
-                    
-                    // Find our Player component and update team color
                     Player[] players = FindObjectsByType<Player>(FindObjectsSortMode.None);
                     foreach (Player player in players)
                     {
                         if (player.IsOwner)
                         {
-                            Color teamColor = teamHelper.GetTeamColor(playerData.team);
-                            player.SetTeamColor(teamColor);
+                            player.SetTeamColor(teamHelper.GetTeamColor(playerData.team));
                             break;
                         }
                     }
@@ -1263,17 +1212,14 @@ public class GameManager : NetworkBehaviour
             }
         }
         
-        // Notify UI of game state change to trigger refresh
         OnGameStateChanged?.Invoke(state);
     }
-    
-    // Assign any unassigned players to teams with the fewest players
+
     private void AssignUnassignedPlayersToTeams()
     {
         if (!IsServer || gameMode != MenuManager.GameMode.TeamBattle)
             return;
             
-        // Get current team assignments
         Dictionary<int, int> teamCounts = new Dictionary<int, int>();
         for (int i = 1; i <= teamCount; i++)
         {
@@ -1282,7 +1228,6 @@ public class GameManager : NetworkBehaviour
         
         List<ulong> unassignedPlayers = new List<ulong>();
         
-        // Count players on each team
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
@@ -1298,10 +1243,8 @@ public class GameManager : NetworkBehaviour
             }
         }
         
-        // Assign unassigned players to teams with the fewest players
         foreach (ulong clientId in unassignedPlayers)
         {
-            // Find team with fewest players
             int targetTeam = 1;
             int minPlayers = int.MaxValue;
             
@@ -1314,16 +1257,11 @@ public class GameManager : NetworkBehaviour
                 }
             }
             
-            // Assign player to team
             if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
             {
                 playerData.team = targetTeam;
                 ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
-                
-                // Update tracking for next assignment
                 teamCounts[targetTeam]++;
-                
-                Debug.Log($"[GameManager] Assigned unassigned player {clientId} to team {targetTeam}");
             }
         }
     }
@@ -1332,7 +1270,9 @@ public class GameManager : NetworkBehaviour
     private bool IsAllPlayersScoreZero()
     {
         if (NetworkManager.Singleton == null || ConnectionManager.Instance == null)
+        {
             return false;
+        }
             
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
