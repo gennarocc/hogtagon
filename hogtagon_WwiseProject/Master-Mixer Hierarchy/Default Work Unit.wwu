@@ -18,6 +18,13 @@
 					</ReferenceList>
 					<ChildrenList>
 						<Bus Name="Music" ID="{5EF84C62-E229-4AE1-9A1D-4CFEC7C94548}">
+							<PropertyList>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-20</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ObjectLists>
 								<ObjectList Name="RTPC">
 									<Reference>
