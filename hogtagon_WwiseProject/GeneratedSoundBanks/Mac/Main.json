@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{143DDB06-40D6-89E6-57B4-06334FE02FB4}",
+    "Hash": "{3733558E-1869-C3C1-BC46-B441645844C4}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -165,7 +165,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "hog-cooldown-complete.wav",
-      "CachePath": "66/{6649F04B-EAE6-5D72-A236-731B3C92F0D2}.wem"
+      "CachePath": "F5/{F539A3B9-A10C-00A6-3748-19CCF2B5A0A6}.wem"
      },
      {
       "Id": "418233301",
@@ -714,6 +714,6 @@
     ]
    }
   ],
-  "FileHash": "{5B18C421-BE05-C6CF-EEC3-B62E06E86CC2}"
+  "FileHash": "{8BC465B7-478B-8581-0FD2-BD6B0F47B250}"
  }
 }

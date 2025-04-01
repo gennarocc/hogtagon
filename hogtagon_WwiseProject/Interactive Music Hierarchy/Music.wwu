@@ -2299,6 +2299,13 @@
 					</PropertyList>
 					<ChildrenList>
 						<MusicPlaylistContainer Name="lobby" ID="{BEDB84E5-DDF5-4E9E-B8E9-855652E7A727}" ShortID="360676848">
+							<PropertyList>
+								<Property Name="Highpass" Type="int16">
+									<ValueList>
+										<Value>20</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -2347,6 +2354,11 @@
 								<MusicSegment Name="v0_1-lobby" ID="{5FD3F92C-B773-41B9-AA21-4D79A83114F6}" ShortID="106343827">
 									<PropertyList>
 										<Property Name="EndPosition" Type="Real64" Value="106991.416666667"/>
+										<Property Name="Highpass" Type="int16">
+											<ValueList>
+												<Value>8</Value>
+											</ValueList>
+										</Property>
 									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
