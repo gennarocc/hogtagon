@@ -91,7 +91,6 @@ public class GameManager : NetworkBehaviour
         // Notify subscribers
         OnGameStateChanged?.Invoke(newState);
     }
-
     private void OnWinnerEnter()
     {
         Debug.Log("GameManager OnWinnerEnter");
@@ -196,8 +195,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    
-
     private void OnPlayingEnter()
     {
         // Lock game mode settings when game starts
@@ -211,6 +208,7 @@ public class GameManager : NetworkBehaviour
         if (!gameMusicPlaying && IsServer)
         {
             SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOn);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOff);
             gameMusicPlaying = true;
         }
 
@@ -289,6 +287,7 @@ public class GameManager : NetworkBehaviour
         if (IsServer)
         {
             SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOff);
         }
 
         SetGameState(GameState.Pending);
@@ -335,7 +334,6 @@ public class GameManager : NetworkBehaviour
             roundWinnerClientId = alive[0];
             TransitionToState(GameState.Ending);
 
-            // Play round win sound using NetworkSoundManager
             if (IsServer)
             {
                 SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundWin);

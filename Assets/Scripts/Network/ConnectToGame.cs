@@ -188,6 +188,7 @@ public class ConnectToGame : MonoBehaviour
         JoinRelay(lastJoinCode);
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
+        menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
     }
 
@@ -205,6 +206,7 @@ public class ConnectToGame : MonoBehaviour
         CreateRelay();
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
+        menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
         
         // Use Invoke instead of a coroutine to open lobby settings after a delay

@@ -103,6 +103,7 @@ public class MenuManager : NetworkBehaviour
     private int _teamCount = 2;
     private int _roundCount = 5;  // Default to 5 rounds
     private readonly int[] _validRoundCounts = new int[] { 1, 3, 5, 7, 9 };  // Valid round count values
+    public bool menuMusicPlaying = false;
 
     // Game Mode enum
     public enum GameMode { FreeForAll, TeamBattle }
@@ -345,11 +346,7 @@ public class MenuManager : NetworkBehaviour
         // Enable camera input
         EnableCameraInput();
 
-        // Play sound effect if available
-        if (PauseOff != null)
-        {
-            PauseOff.Post(gameObject);
-        }
+        PauseOff.Post(gameObject);
 
         // Switch back to gameplay input mode
         if (inputManager != null)
@@ -737,6 +734,7 @@ public class MenuManager : NetworkBehaviour
 
         // Play button sound
         ButtonClickAudio();
+        PauseOff.Post(gameObject);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -1048,7 +1046,11 @@ public class MenuManager : NetworkBehaviour
         HideAllMenusExcept(mainMenuPanel);
         mainMenuPanel.SetActive(true);
         startCamera.gameObject.SetActive(true);
-        MenuMusicOn.Post(gameObject);
+        if (!menuMusicPlaying) 
+        {
+            MenuMusicOn.Post(gameObject);
+            menuMusicPlaying = true;
+        }
 
         // Make sure all buttons are interactable
         if (playButton != null) playButton.interactable = true;

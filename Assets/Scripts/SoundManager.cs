@@ -26,15 +26,15 @@ public class SoundManager : NetworkBehaviour
 
         // Game state sounds
         LevelMusicOn = 100,
-        LevelMusicOff = 100,
-        LobbyMusicOn = 101,
-        LobbyMusicOff = 101,
-        MidRoundOn = 102,
-        MidRoundOff = 103,
-        PlayerEliminated = 104,
-        RoundStart = 105,
-        Round30Sec = 106,
-        RoundWin = 107,
+        LevelMusicOff = 101,
+        LobbyMusicOn = 102,
+        LobbyMusicOff = 103,
+        MidRoundOn = 104,
+        MidRoundOff = 105,
+        PlayerEliminated = 106,
+        RoundStart = 107,
+        Round30Sec = 108,
+        RoundWin = 109,
     }
 
     [Serializable]
