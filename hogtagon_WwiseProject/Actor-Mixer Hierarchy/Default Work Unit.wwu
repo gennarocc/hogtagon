@@ -355,7 +355,7 @@
 						</Sound>
 						<BlendContainer Name="hog-engine" ID="{DAE330E7-E8EA-41FC-8A39-48754BC09215}" ShortID="821123812">
 							<PropertyList>
-								<Property Name="3DSpatialization" Type="int16" Value="1"/>
+								<Property Name="3DSpatialization" Type="int16" Value="2"/>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 								<Property Name="OutputBusHighpass" Type="int16">
 									<ValueList>
