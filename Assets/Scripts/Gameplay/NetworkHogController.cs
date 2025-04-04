@@ -347,7 +347,30 @@ public class NetworkHogController : NetworkBehaviour
         float brakeInput = inputManager.BrakeInput;
 
         // Get raw steering input
-        float targetSteeringInput = inputManager.SteeringInput;
+        float targetSteeringInput = 0f;
+        
+        try
+        {
+            // Try to use the new SteeringInput property
+            targetSteeringInput = inputManager.SteeringInput;
+        }
+        catch (System.Exception)
+        {
+            // Fallback to using the keyboard A/D directly if the SteeringInput property isn't available
+            if (UnityEngine.InputSystem.Keyboard.current != null)
+            {
+                float horizontalInput = 0f;
+                if (UnityEngine.InputSystem.Keyboard.current.aKey.isPressed) horizontalInput -= 1f;
+                if (UnityEngine.InputSystem.Keyboard.current.dKey.isPressed) horizontalInput += 1f;
+                targetSteeringInput = horizontalInput;
+            }
+            
+            // For gamepad, try to use the left stick directly
+            if (UnityEngine.InputSystem.Gamepad.current != null && targetSteeringInput == 0f)
+            {
+                targetSteeringInput = UnityEngine.InputSystem.Gamepad.current.leftStick.x.ReadValue();
+            }
+        }
         
         // Smoothly interpolate to target steering input value
         currentSteeringInput = Mathf.Lerp(currentSteeringInput, targetSteeringInput, Time.deltaTime * (1f / steeringInputSmoothing));
