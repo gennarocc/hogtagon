@@ -24,8 +24,12 @@ public class InputManager : MonoBehaviour
     private float _throttleInput;
     private float _brakeInput;
     private Vector2 _lookInput;
+    private float _steeringInput;
     private bool _isHonking;
     private bool _isJumping;
+
+    // Sensitivity settings
+    [SerializeField] private float mouseSensitivity = 0.7f; // 0.7 = 30% reduction from normal
 
     // Current action map
     private enum InputState { Gameplay, UI }
@@ -51,6 +55,7 @@ public class InputManager : MonoBehaviour
     public float ThrottleInput => _throttleInput;
     public float BrakeInput => _brakeInput;
     public Vector2 LookInput => _lookInput;
+    public float SteeringInput => _steeringInput;
     public bool IsHonking => _isHonking;
     public bool IsUsingGamepad => _usingGamepad;
 
@@ -82,6 +87,10 @@ public class InputManager : MonoBehaviour
         controls.Gameplay.Brake.performed += ctx => _brakeInput = ctx.ReadValue<float>();
         controls.Gameplay.Brake.canceled += ctx => _brakeInput = 0f;
 
+        // Steering input
+        controls.Gameplay.Steer.performed += ctx => _steeringInput = ctx.ReadValue<float>();
+        controls.Gameplay.Steer.canceled += ctx => _steeringInput = 0f;
+
         // Jump action
         controls.Gameplay.Jump.performed += ctx => JumpPressed?.Invoke();
 
@@ -94,7 +103,20 @@ public class InputManager : MonoBehaviour
         controls.Gameplay.Honk.canceled += ctx => _isHonking = false;
 
         // Look input
-        controls.Gameplay.Look.performed += ctx => _lookInput = ctx.ReadValue<Vector2>();
+        controls.Gameplay.Look.performed += ctx => 
+        {
+            // Apply sensitivity reduction only for mouse input
+            if (!_usingGamepad && Mouse.current != null) 
+            {
+                Vector2 rawInput = ctx.ReadValue<Vector2>();
+                _lookInput = rawInput * mouseSensitivity;
+            }
+            else
+            {
+                // Keep gamepad sensitivity at 100%
+                _lookInput = ctx.ReadValue<Vector2>();
+            }
+        };
         controls.Gameplay.Look.canceled += ctx => _lookInput = Vector2.zero;
 
         // ShowScoreboard
@@ -188,6 +210,7 @@ public class InputManager : MonoBehaviour
         // Reset input values when switching to UI
         _throttleInput = 0f;
         _brakeInput = 0f;
+        _steeringInput = 0f;
         _lookInput = Vector2.zero;
         _isHonking = false;
     }
@@ -245,6 +268,8 @@ public class InputManager : MonoBehaviour
     // Device detection
     private void DetectInputDevice()
     {
+        bool wasUsingGamepad = _usingGamepad;
+        
         // Check if we're using gamepad based on last input
         if (Gamepad.current != null && Gamepad.current.wasUpdatedThisFrame
             && Gamepad.current.CheckStateIsAtDefault() == false)
@@ -253,10 +278,16 @@ public class InputManager : MonoBehaviour
         }
 
         // Check if we're using mouse/keyboard
-        if ((Mouse.current != null && Mouse.current.delta.ReadValue().sqrMagnitude > 0)
+        if ((Mouse.current != null && Mouse.current.delta.ReadValue().sqrMagnitude > 0.01f)
             || (Keyboard.current != null && Keyboard.current.wasUpdatedThisFrame))
         {
             _usingGamepad = false;
+        }
+        
+        // Debug log when device changes to help with troubleshooting
+        if (wasUsingGamepad != _usingGamepad)
+        {
+            Debug.Log($"Input device changed: {(_usingGamepad ? "Gamepad" : "Mouse/Keyboard")}");
         }
     }
 

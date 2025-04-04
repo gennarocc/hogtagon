@@ -1,8 +1,17 @@
+// NetworkHogController.cs
+// This controller handles the networked hog vehicle with:
+// - Movement with W/S and right trigger/left trigger
+// - Steering with A/D and left stick 
+// - Camera control with mouse and right stick (decoupled from steering)
+// - Server-authoritative physics with client prediction
+// - Smooth networked visual effects for jumps and drifting
+
 using UnityEngine;
 using Unity.Netcode;
 using Cinemachine;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody))]
 public class NetworkHogController : NetworkBehaviour
@@ -17,6 +26,7 @@ public class NetworkHogController : NetworkBehaviour
     [SerializeField] private float brakeTorque = 300f;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
+    [SerializeField, Range(0.1f, 3f)] private float steeringInputSmoothing = 0.8f; // How quickly steering increases to max
     [SerializeField, Range(0.1f, 10f)] private float accelerationFactor = 2f;
     [SerializeField, Range(0.1f, 5f)] private float decelerationFactor = 1f;
     [SerializeField] private float jumpForce = 7f;
@@ -44,6 +54,7 @@ public class NetworkHogController : NetworkBehaviour
     private bool hasReceivedInitialSync = false;
     private float currentTorque;
     private float localVelocityX;
+    private float currentSteeringInput = 0f; // Current smoothed steering input value
     private bool collisionForceOnCooldown = false;
     private float cameraAngle;
     private bool jumpOnCooldown = false;
@@ -335,12 +346,14 @@ public class NetworkHogController : NetworkBehaviour
         float moveInput = inputManager.ThrottleInput - inputManager.BrakeInput;
         float brakeInput = inputManager.BrakeInput;
 
-        // Get camera angle
-        Vector2 lookInput = inputManager.LookInput;
-        cameraAngle = CalculateCameraAngle(lookInput);
+        // Get raw steering input
+        float targetSteeringInput = inputManager.SteeringInput;
+        
+        // Smoothly interpolate to target steering input value
+        currentSteeringInput = Mathf.Lerp(currentSteeringInput, targetSteeringInput, Time.deltaTime * (1f / steeringInputSmoothing));
 
         // Calculate steering angle
-        float steeringAngle = CalculateSteering(cameraAngle, moveInput);
+        float steeringAngle = CalculateSteering(currentSteeringInput, moveInput);
 
         // Apply steering to wheels
         ApplySteeringToWheels(steeringAngle);
@@ -432,26 +445,51 @@ public class NetworkHogController : NetworkBehaviour
 
     private float CalculateSteering(float steeringInput, float moveInput)
     {
+        // Apply speed-based steering response
         float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
         bool isMovingInReverse = forwardVelocity < -0.5f;
-
-        // Invert steering for reverse driving
-        if (isMovingInReverse && moveInput < 0)
+        
+        // Improved reverse detection - check if player is intending to go in reverse
+        bool isReverseGear = moveInput < -0.1f;
+        bool shouldUseReverseControls = isReverseGear;
+        
+        // Invert steering for reverse driving for more natural feel
+        if (shouldUseReverseControls)
         {
             steeringInput = -steeringInput;
+            
+            // Boost steering response slightly in reverse for better control
+            float reverseSteeringBoost = Mathf.Lerp(1.2f, 1.0f, Mathf.Clamp01(rb.linearVelocity.magnitude / 5f));
+            steeringInput *= reverseSteeringBoost;
         }
-
-        return Mathf.Clamp(steeringInput, -maxSteeringAngle, maxSteeringAngle);
+        
+        // Convert the -1 to 1 steering input to an angle based on maxSteeringAngle
+        float steeringAngle = steeringInput * maxSteeringAngle;
+        
+        // If steering input is very small, treat it as zero
+        if (Mathf.Abs(steeringInput) < 0.01f)
+            steeringAngle = 0f;
+        
+        // Apply progressive steering response - less responsive at higher speeds
+        float speedFactor = Mathf.Clamp01(rb.linearVelocity.magnitude / 20f);
+        float steeringResponse = Mathf.Lerp(1.0f, 0.6f, speedFactor);
+        
+        return steeringAngle * steeringResponse;
     }
 
     private void ApplySteeringToWheels(float steeringAngle)
     {
+        // Determine if we're in reverse
+        bool isReverseGear = vehicleState.Value.motorTorque < 0;
+        
         // Front wheels steering
         wheelColliders[0].steerAngle = Mathf.Lerp(wheelColliders[0].steerAngle, steeringAngle, steeringSpeed);
         wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringAngle, steeringSpeed);
 
-        // Rear wheels counter-steering
-        float rearSteeringAngle = steeringAngle * -0.35f;
+        // Rear wheels counter-steering - reduced in reverse for better control
+        float rearFactor = isReverseGear ? 0.15f : 0.35f;
+        float rearSteeringAngle = steeringAngle * -rearFactor;
+        
         wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, rearSteeringAngle, steeringSpeed);
         wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, rearSteeringAngle, steeringSpeed);
     }

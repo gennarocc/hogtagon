@@ -11983,8 +11983,9 @@ MonoBehaviour:
   canJump: 1
   maxTorque: 500
   brakeTorque: 300
-  maxSteeringAngle: 60
+  maxSteeringAngle: 30
   steeringSpeed: 0.7
+  steeringInputSmoothing: 0.3
   accelerationFactor: 2
   decelerationFactor: 1
   jumpForce: 7
