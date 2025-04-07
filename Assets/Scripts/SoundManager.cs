@@ -132,18 +132,7 @@ public class SoundManager : NetworkBehaviour
     {
         if (soundEffectMap.TryGetValue(effectType, out AK.Wwise.Event audioEvent))
         {
-            // Make sure we're playing on the correct object that has the Wwise listeners
-            NetworkHogController hogController = soundObject.GetComponentInChildren<NetworkHogController>();
-            if (hogController != null)
-            {
-                // Play on the NetworkHogController GameObject
-                audioEvent.Post(hogController.gameObject);
-            }
-            else
-            {
-                // Fall back to the passed object
                 audioEvent.Post(soundObject);
-            }
         }
         else
         {

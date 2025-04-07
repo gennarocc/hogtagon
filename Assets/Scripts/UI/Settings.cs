@@ -223,10 +223,10 @@ public class Settings : MonoBehaviour
     public void SetCameraSensitivty()
     {
         var player = ConnectionManager.Instance.GetPlayer(NetworkManager.Singleton.LocalClientId);
-        if (player != null && player.mainCamera != null)
+        if (player != null && player.playerCamera != null)
         {
-            player.mainCamera.m_XAxis.m_MaxSpeed = cameraSensitivity.value * 100f;
-            player.mainCamera.m_YAxis.m_MaxSpeed = cameraSensitivity.value * 1f;
+            player.playerCamera.m_XAxis.m_MaxSpeed = cameraSensitivity.value * 100f;
+            player.playerCamera.m_YAxis.m_MaxSpeed = cameraSensitivity.value * 1f;
         }
     }
 

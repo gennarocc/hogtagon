@@ -31,15 +31,18 @@ public class KillBall : NetworkBehaviour
         // Only the server should process trigger collisions for consistency
         if (!IsServer) return;
 
-        // First check if we should process this collision
-        if (!ShouldProcessCollision(col)) return;
+        if (!col.gameObject.CompareTag("Player")) return;
 
+        Debug.Log("Is Player Tag");
+        
         // Get the Player component from the colliding object's root
         Player playerComponent = col.transform.root.GetComponent<Player>();
         if (playerComponent == null) return;
+        
+        Debug.Log("Has Player Object");
 
         // Get the NetworkObject from the colliding player
-        NetworkObject playerNetObj = playerComponent.GetComponent<NetworkObject>();
+        NetworkObject playerNetObj = playerComponent.transform.root.GetComponent<NetworkObject>();
         if (playerNetObj == null) return;
 
         ulong clientId = playerNetObj.OwnerClientId;
@@ -63,19 +66,6 @@ public class KillBall : NetworkBehaviour
         ProcessPlayerCollision(clientId);
     }
     
-    // Helper method to check if we should process this collision
-    private bool ShouldProcessCollision(Collider col)
-    {
-        // Check if this is a player
-        if (!col.gameObject.CompareTag("Player")) return false;
-        
-        // Get the root GameObject
-        Transform root = col.transform.root;
-        
-        // Check if we have the specific component we're looking for
-        return root.GetComponent<Player>() != null;
-    }
-
     private void ProcessPlayerCollision(ulong clientId)
     {
         if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)) return;
