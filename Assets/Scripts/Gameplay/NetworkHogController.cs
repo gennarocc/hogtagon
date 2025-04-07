@@ -31,7 +31,6 @@ public class NetworkHogController : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] private Rigidbody rb;
-    [SerializeField] private CinemachineFreeLook freeLookCamera;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
     [SerializeField] private HogVisualEffects vfxController;
@@ -41,6 +40,7 @@ public class NetworkHogController : NetworkBehaviour
 
     private InputManager inputManager;
 
+    private Player player;
     private bool hasReceivedInitialSync = false;
     private float currentTorque;
     private float localVelocityX;
@@ -104,6 +104,7 @@ public class NetworkHogController : NetworkBehaviour
 
         // Get input manager reference
         inputManager = InputManager.Instance;
+        player = GetComponent<Player>();
 
         vfxController.Initialize(transform, centerOfMass, OwnerClientId);
         // Initialize the vehicle
@@ -141,7 +142,7 @@ public class NetworkHogController : NetworkBehaviour
         // Only the server or owner should play the engine off sound
         if (IsOwner || IsServer)
         {
-            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.EngineOff);
+            SoundManager.Instance.PlayNetworkedSound(transform.gameObject, SoundManager.SoundEffectType.EngineOff);
         }
     }
 
@@ -153,7 +154,7 @@ public class NetworkHogController : NetworkBehaviour
         // Only the server or owner should play the engine on sound
         if (IsOwner || IsServer)
         {
-            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.EngineOn);
+            SoundManager.Instance.PlayNetworkedSound(transform.gameObject, SoundManager.SoundEffectType.EngineOn);
         }
 
         // Initialize visual smoothing targets
@@ -238,15 +239,15 @@ public class NetworkHogController : NetworkBehaviour
             // Play sound effect based on impact magnitude
             if (speed >= 1 && speed < 5)
             {
-                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactLow);
+                SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogImpactLow);
             }
             else if (speed >= 5 && speed < 13)
             {
-                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactMed);
+                SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogImpactMed);
             }
             else if (speed >= 13)
             {
-                SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogImpactHigh);
+                SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogImpactHigh);
             }
         }
 
@@ -285,27 +286,22 @@ public class NetworkHogController : NetworkBehaviour
     private void InitializeServerControlledVehicle()
     {
         // Get the Player component to access spawn point
-        Player playerComponent = transform.root.GetComponent<Player>();
-
-        if (playerComponent != null)
+        // Get player data to use spawn point
+        if (ConnectionManager.Instance.TryGetPlayerData(player.clientId, out PlayerData playerData))
         {
-            // Get player data to use spawn point
-            if (ConnectionManager.Instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
+            Vector3 initialPosition = playerData.spawnPoint;
+            Quaternion initialRotation = Quaternion.LookRotation(
+                SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
+
+            // Set transform and physics state
+            transform.position = initialPosition;
+            transform.rotation = initialRotation;
+            rb.position = initialPosition;
+            rb.rotation = initialRotation;
+
+            if (debugMode)
             {
-                Vector3 initialPosition = playerData.spawnPoint;
-                Quaternion initialRotation = Quaternion.LookRotation(
-                    SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
-
-                // Set transform and physics state
-                transform.position = initialPosition;
-                transform.rotation = initialRotation;
-                rb.position = initialPosition;
-                rb.rotation = initialRotation;
-
-                if (debugMode)
-                {
-                    Debug.Log($"[Server] Setting non-owner vehicle position to spawn point: {initialPosition}");
-                }
+                Debug.Log($"[Server] Setting non-owner vehicle position to spawn point: {initialPosition}");
             }
         }
 
@@ -372,9 +368,9 @@ public class NetworkHogController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (!transform.root.gameObject.GetComponent<Player>().isSpectating)
+        if (!player.isSpectating)
         {
-            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogHorn);
+            SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
         }
     }
     private void OnJumpPressed()
@@ -383,7 +379,7 @@ public class NetworkHogController : NetworkBehaviour
 
         // Check if player can jump and is not spectating
         bool canPerformJump = canMove && canJump && !jumpOnCooldown &&
-                             !transform.root.gameObject.GetComponent<Player>().isSpectating;
+                             !player.isSpectating;
 
         if (canPerformJump)
         {
@@ -410,7 +406,7 @@ public class NetworkHogController : NetworkBehaviour
             // Return current camera angle without updating it
             return cameraAngle;
         }
-        
+
         // If using gamepad with sufficient input magnitude
         if (inputManager.IsUsingGamepad && lookInput.sqrMagnitude > 0.01f)
         {
@@ -420,7 +416,7 @@ public class NetworkHogController : NetworkBehaviour
         else
         {
             // Use traditional position-based calculation for mouse/keyboard
-            Vector3 cameraVector = transform.position - freeLookCamera.transform.position;
+            Vector3 cameraVector = transform.position - player.playerCamera.transform.position;
             cameraVector.y = 0;
             Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z);
             return Vector3.Angle(carDirection, cameraVector) * Math.Sign(Vector3.Dot(cameraVector, transform.right));
@@ -532,7 +528,7 @@ public class NetworkHogController : NetworkBehaviour
         vfxController.PlayJumpEffects();
 
         // Play jump sound - owner will trigger it through the network
-        SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogJump);
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogJump);
     }
 
     // Notify other clients to show jump effects
@@ -552,25 +548,21 @@ public class NetworkHogController : NetworkBehaviour
     public void RequestRespawnServerRpc()
     {
         // Get player data from connection manager
-        Player playerComponent = transform.root.GetComponent<Player>();
 
-        if (playerComponent != null)
+        // Get the latest player data
+        if (ConnectionManager.Instance.TryGetPlayerData(player.clientId, out PlayerData playerData))
         {
-            // Get the latest player data
-            if (ConnectionManager.Instance.TryGetPlayerData(playerComponent.clientId, out PlayerData playerData))
-            {
-                // Set respawn position and rotation
-                Vector3 respawnPosition = playerData.spawnPoint;
-                Quaternion respawnRotation = Quaternion.LookRotation(
-                    SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
+            // Set respawn position and rotation
+            Vector3 respawnPosition = playerData.spawnPoint;
+            Quaternion respawnRotation = Quaternion.LookRotation(
+                SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
 
-                // Update player state
-                playerData.state = PlayerState.Alive;
-                ConnectionManager.Instance.UpdatePlayerDataClientRpc(playerComponent.clientId, playerData);
+            // Update player state
+            playerData.state = PlayerState.Alive;
+            ConnectionManager.Instance.UpdatePlayerDataClientRpc(player.clientId, playerData);
 
-                // Execute respawn for everyone
-                ExecuteRespawnClientRpc(respawnPosition, respawnRotation);
-            }
+            // Execute respawn for everyone
+            ExecuteRespawnClientRpc(respawnPosition, respawnRotation);
         }
     }
 
@@ -578,25 +570,25 @@ public class NetworkHogController : NetworkBehaviour
     public void ExecuteRespawnClientRpc(Vector3 respawnPosition, Quaternion respawnRotation)
     {
         Debug.Log($"Executing respawn on client at position {respawnPosition}");
-        
+
         // Reset physics state
         rb.isKinematic = true;
         rb.position = respawnPosition;
         rb.rotation = respawnRotation;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-        
+
         // Update transform position
         transform.position = respawnPosition;
         transform.rotation = respawnRotation;
-        
+
         // Reset driving state
         currentTorque = 0f;
-        
+
         // CRITICAL: Re-enable movement after respawn
         canMove = true;
         isDrifting.Value = false;
-        
+
         // Update visual targets for non-owners
         if (!IsOwner)
         {
@@ -604,7 +596,7 @@ public class NetworkHogController : NetworkBehaviour
             visualRotationTarget = respawnRotation;
             visualVelocityTarget = Vector3.zero;
         }
-        
+
         // Update state snapshot for owner
         if (IsOwner)
         {
@@ -623,7 +615,7 @@ public class NetworkHogController : NetworkBehaviour
             // Set state and send to server
             vehicleState.Value = snapshot;
         }
-        
+
         // Re-enable physics after a short delay
         StartCoroutine(EnablePhysicsAfterRespawn());
     }
