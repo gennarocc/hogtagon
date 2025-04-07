@@ -36,8 +36,11 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] public TextMeshProUGUI connectionRefusedReasonText;
     [SerializeField] public GameObject connectionPending;
 
-    [Header("References")]
-    [SerializeField] public Camera startCamera;
+    [Header("Cameras")]
+    [SerializeField] public CinemachineVirtualCamera menuCamera;
+    private CinemachineBrain cinemachineBrain;
+    private CinemachineInputProvider cameraInputProvider;
+    private CinemachineOrbitalTransposer orbitalTransposer;
 
     [Header("Scoreboard")]
     [SerializeField] private GameObject scoreboardUI;
@@ -64,10 +67,9 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private AK.Wwise.Event uiConfirm;
     [SerializeField] private AK.Wwise.Event uiCancel;
     private int countdownTime;
-
-    [SerializeField] private CinemachineVirtualCamera virtualCamera;
     [SerializeField] private float rotationSpeed = 0.01f;
-    private CinemachineOrbitalTransposer orbitalTransposer;
+
+
 
     // Reference to Input Manager
     private InputManager inputManager;
@@ -78,11 +80,6 @@ public class MenuManager : NetworkBehaviour
 
     // Add tracking for whether settings was opened from pause menu
     private bool settingsOpenedFromPauseMenu = false;
-
-    // These references are kept for backward compatibility
-    private Camera mainCamera;
-    private Cinemachine.CinemachineInputProvider cameraInputProvider;
-    private Cinemachine.CinemachineBrain cinemachineBrain;
 
     [Header("Lobby Settings")]
     [SerializeField] private TextMeshProUGUI lobbyCodeDisplay;
@@ -142,7 +139,7 @@ public class MenuManager : NetworkBehaviour
         inputManager = InputManager.Instance;
 
         // Find the player's camera input provider
-        var playerCameras = FindObjectsByType<Cinemachine.CinemachineFreeLook>(FindObjectsSortMode.None);
+        var playerCameras = FindObjectsByType<CinemachineFreeLook>(FindObjectsSortMode.None);
         var playerCamera = playerCameras.Length > 0 ? playerCameras[0] : null;
         if (playerCamera != null)
         {
@@ -262,11 +259,6 @@ public class MenuManager : NetworkBehaviour
 
         // Initialize main menu
         ShowMainMenu();
-        startCamera.cullingMask = 31;
-
-        // Get camera reference if not set
-        if (virtualCamera == null)
-            virtualCamera = GetComponent<CinemachineVirtualCamera>();
     }
 
     private void Update()
@@ -621,7 +613,7 @@ public class MenuManager : NetworkBehaviour
     public void DisplayWinnerClientRpc(string player)
     {
         tempUI.SetActive(true);
-        
+
         // Find client ID for the player name
         ulong? winnerClientId = null;
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
@@ -632,12 +624,12 @@ public class MenuManager : NetworkBehaviour
                 break;
             }
         }
-        
+
         // Get colored text if client ID was found
         string coloredPlayerName = winnerClientId.HasValue
             ? ConnectionManager.Instance.GetPlayerColoredName(winnerClientId.Value)
             : player;
-            
+
         winnerText.text = coloredPlayerName + " won the round";
         StartCoroutine(BetweenRoundTime());
     }
@@ -646,7 +638,7 @@ public class MenuManager : NetworkBehaviour
     public void DisplayGameWinnerClientRpc(string player)
     {
         tempUI.SetActive(true);
-        
+
         // Find client ID for the player name
         ulong? winnerClientId = null;
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
@@ -657,12 +649,12 @@ public class MenuManager : NetworkBehaviour
                 break;
             }
         }
-        
+
         // Get colored text if client ID was found
         string coloredPlayerName = winnerClientId.HasValue
             ? ConnectionManager.Instance.GetPlayerColoredName(winnerClientId.Value)
             : player;
-            
+
         winnerText.text = $"{coloredPlayerName} IS THE BIG WINNER!";
 
         // Make sure cursor is visible for UI interaction
@@ -1045,8 +1037,8 @@ public class MenuManager : NetworkBehaviour
         // Make the main menu active and hide all others
         HideAllMenusExcept(mainMenuPanel);
         mainMenuPanel.SetActive(true);
-        startCamera.gameObject.SetActive(true);
-        if (!menuMusicPlaying) 
+        menuCamera.gameObject.SetActive(true);
+        if (!menuMusicPlaying)
         {
             MenuMusicOn.Post(gameObject);
             menuMusicPlaying = true;
@@ -1058,13 +1050,10 @@ public class MenuManager : NetworkBehaviour
         if (quitButton != null) quitButton.interactable = true;
 
         // Restore main menu camera priority
-        if (virtualCamera != null)
-        {
-            virtualCamera.Priority = 20;
-            orbitalTransposer = virtualCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
-            if (orbitalTransposer != null)
-                orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
-        }
+        menuCamera.Priority = 20;
+        orbitalTransposer = menuCamera.GetCinemachineComponent<CinemachineOrbitalTransposer>();
+        if (orbitalTransposer != null)
+            orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
 
         // Critical: Ensure cursor is visible and unlocked before switching input mode
         Cursor.visible = true;
@@ -1095,8 +1084,8 @@ public class MenuManager : NetworkBehaviour
         playMenuPanel.SetActive(true);
 
         // Lower the priority of the menu camera
-        if (virtualCamera != null && virtualCamera.GetComponent<CinemachineVirtualCamera>() != null)
-            virtualCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
+        if (menuCamera != null && menuCamera.GetComponent<CinemachineVirtualCamera>() != null)
+            menuCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
 
         // Make sure we're in UI mode for the play menu
         if (inputManager != null)
@@ -1307,7 +1296,7 @@ public class MenuManager : NetworkBehaviour
         if (GameManager.Instance != null)
         {
             GameManager.Instance.SetGameMode(newMode);
-            
+
             // If switching to Team Battle, also set team count
             if (newMode == GameMode.TeamBattle)
             {

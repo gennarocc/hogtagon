@@ -13,13 +13,10 @@ public class KillPlane : MonoBehaviour
         // Check if this is a player tagged object
         if (!collider.gameObject.CompareTag("Player")) return;
         
-        // Get Player component from the root
-        Transform root = collider.transform.root;
-        Player player = root.GetComponent<Player>();
+        Player player = collider.transform.root.GetComponent<Player>();
         
-        // Skip if no Player component found
         if (player == null) return;
-        
+
         NetworkObject networkObject = player.gameObject.GetComponent<NetworkObject>();
         if (networkObject == null) return;
         

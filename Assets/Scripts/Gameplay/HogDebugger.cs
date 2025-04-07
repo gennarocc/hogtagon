@@ -64,7 +64,7 @@ public class HogDebugger : NetworkBehaviour
             
         rb = hogController?.GetComponent<Rigidbody>();
         networkManager = NetworkManager.Singleton;
-        playerComponent = hogController?.transform.root.GetComponent<Player>();
+        playerComponent = hogController?.transform.GetComponent<Player>();
     }
     
     public override void OnNetworkSpawn()

@@ -36,7 +36,7 @@ public class HogVisualEffects : MonoBehaviour
                 if (!driftingSoundOn && canMove)
                 {
                     driftingSoundOn = true;
-                    SoundManager.Instance.PlayNetworkedSound(hogTransform.root.gameObject, SoundManager.SoundEffectType.TireScreechOn);
+                    SoundManager.Instance.PlayNetworkedSound(hogTransform.gameObject, SoundManager.SoundEffectType.TireScreechOn);
                 }
                 rearLeftWheelParticleSystem.Play();
                 rearLeftWheelTireSkid.emitting = true;
@@ -98,7 +98,7 @@ public class HogVisualEffects : MonoBehaviour
         currentExplosionInstance = Instantiate(explosionPrefab, hogTransform.position + centerOfMass, hogTransform.rotation, hogTransform);
 
         // Play explosion sound
-        SoundManager.Instance.PlayNetworkedSound(hogTransform.root.gameObject, SoundManager.SoundEffectType.CarExplosion);
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.CarExplosion);
 
         // Stop drift sounds if active
 

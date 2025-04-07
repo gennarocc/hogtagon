@@ -253,6 +253,7 @@ public class GameManager : NetworkBehaviour
         // Play round start sound and stop midround music
         if (IsServer)
         {
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOff);
             SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundStart);
         }
     }
@@ -337,6 +338,7 @@ public class GameManager : NetworkBehaviour
             if (IsServer)
             {
                 SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundWin);
+                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOn);
             }
         }
     }

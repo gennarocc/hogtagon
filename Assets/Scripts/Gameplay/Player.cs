@@ -20,10 +20,9 @@ public class Player : NetworkBehaviour
 
 
     [Header("Camera")]
-    [SerializeField] public CinemachineFreeLook mainCamera;
-    [SerializeField] public AudioListener audioListener;
-    [SerializeField] public Transform cameraTarget;
-    [SerializeField] private Transform cameraOffset;
+    [SerializeField] public CinemachineFreeLook playerCamera;
+    [SerializeField] public CameraTarget cameraTarget;
+
 
     private NetworkVariable<PlayerData> networkPlayerData = new NetworkVariable<PlayerData>(
          new PlayerData
@@ -49,74 +48,58 @@ public class Player : NetworkBehaviour
         base.OnNetworkSpawn();
         networkPlayerData.OnValueChanged += OnPlayerDataChanged;
         clientId = OwnerClientId;
-        if (networkPlayerData.Value.username != "")
+        ConnectionManager.Instance.isConnected = true;
+
+        ApplyPlayerData(networkPlayerData.Value);
+
+        // Deactivate main menu camera.
+        menuManager = GameObject.Find("Menus").GetComponent<MenuManager>();
+        menuManager.menuCamera.gameObject.SetActive(false);
+        menuManager.connectionPending.SetActive(false);
+        if (IsOwner)
         {
-            ApplyPlayerData(networkPlayerData.Value);
+            // Activate player camera;
+            playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
+            playerCamera.gameObject.SetActive(true);
+
+            cameraTarget = GameObject.Find("CameraTarget").GetComponent<CameraTarget>();
+            cameraTarget.SetTarget(transform);
         }
-
-    }
-
-    private void Awake()
-    {
-        menuManager = GameObject.Find("Menus").GetComponent<MenuManager>(); // ugh...
     }
 
     private void Start()
     {
         Cursor.visible = !Cursor.visible; // toggle visibility
         Cursor.lockState = CursorLockMode.Locked;
-        ConnectionManager.Instance.isConnected = true;
         menuManager.jumpUI.SetActive(true);
 
         if (IsOwner)
         {
-            menuManager.startCamera.gameObject.SetActive(false);
-            menuManager.connectionPending.SetActive(false);
-            audioListener.enabled = true;
-            mainCamera.Priority = 1;
-            // Set up FreeLook camera targets
-            if (mainCamera != null)
-            {
-                mainCamera.Follow = cameraTarget;
-                mainCamera.LookAt = cameraTarget;
-            }
-            
             // If this is the host/server, open the lobby settings menu
             if (IsServer && GameManager.Instance != null && GameManager.Instance.state == GameState.Pending)
             {
                 Debug.Log("[Player] Host player spawned, opening lobby settings menu");
-                
+
                 // Wait a frame to ensure everything is initialized
                 StartCoroutine(OpenLobbySettingsAfterPlayerSpawn());
             }
         }
-        else
-        {
-            mainCamera.Priority = 0;
-        }
-
-        cameraTarget.rotation = Quaternion.identity;
 
         Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
-        localPlayerCameraTransform = localPlayer.mainCamera.transform;
+        localPlayerCameraTransform = localPlayer.playerCamera.transform;
     }
 
     // Coroutine to open lobby settings with proper timing after player spawn
-    private System.Collections.IEnumerator OpenLobbySettingsAfterPlayerSpawn()
+    private IEnumerator OpenLobbySettingsAfterPlayerSpawn()
     {
-        // Immediate cursor state change to ensure visibility from start
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        
         // Wait a frame for everything to initialize
         yield return null;
-        
-        // Second cursor unlock for redundancy
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        
+
         Debug.Log("[Player] Opening lobby settings from player spawn");
-        
+
         if (menuManager != null)
         {
             menuManager.OpenLobbySettingsMenu();
@@ -135,9 +118,8 @@ public class Player : NetworkBehaviour
             nameplate.transform.rotation = Quaternion.Slerp(nameplate.transform.rotation, targetRotation, smoothingSpeed * Time.deltaTime);
         }
 
-        cameraTarget.position = cameraOffset.position;
         ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
-        // Set camera to spectator if dead
+
         if (playerData.state != PlayerState.Alive && GameManager.Instance.state != GameState.Pending)
         {
             List<ulong> aliveClients = ConnectionManager.Instance.GetAliveClients();
@@ -155,8 +137,7 @@ public class Player : NetworkBehaviour
                 // Only follow/look if we got a valid player
                 if (spectatePlayer != null)
                 {
-                    mainCamera.Follow = spectatePlayer.cameraTarget;
-                    mainCamera.LookAt = spectatePlayer.cameraTarget;
+                    cameraTarget.SetTarget(spectatePlayer.transform);
                 }
 
                 // Handle changing spectate target
@@ -167,15 +148,12 @@ public class Player : NetworkBehaviour
             }
             else
             {
-                // No alive players to spectate, fall back to own camera
-                mainCamera.Follow = cameraTarget;
-                mainCamera.LookAt = cameraTarget;
+                cameraTarget.SetTarget(transform);
             }
         }
         else
         {
-            mainCamera.Follow = cameraTarget;
-            mainCamera.LookAt = cameraTarget;
+            cameraTarget.SetTarget(transform);
         }
 
         playerIndicator.SetActive(playerData.isLobbyLeader);
@@ -215,9 +193,8 @@ public class Player : NetworkBehaviour
         {
             // Client-side respawn request
             Debug.Log("Client requesting respawn");
-
             // Find the HogController component in children
-            NetworkHogController hogController = GetComponentInChildren<NetworkHogController>();
+            NetworkHogController hogController = GetComponent<NetworkHogController>();
 
             if (hogController != null)
             {
