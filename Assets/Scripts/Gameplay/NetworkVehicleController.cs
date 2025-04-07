@@ -1,8 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 [RequireComponent(typeof(Rigidbody))]
-public class NetworkVehicleController : MonoBehaviour
+public class NetworkVehicleController : NetworkBehaviour
 {
     #region Inspector Fields
     [Header("Vehicle Properties")]
@@ -59,6 +60,9 @@ public class NetworkVehicleController : MonoBehaviour
     [Header("Deterministic Physics")]
     [SerializeField] private bool enableQuantization = true;
     [Tooltip("Toggle this during gameplay to test with/without quantization")]
+    
+    [Header("Network Integration")]
+    [SerializeField] private bool isLocallyControlled = true;
     #endregion
 
     #region Private Fields
@@ -78,11 +82,25 @@ public class NetworkVehicleController : MonoBehaviour
     // Debug info
     private float currentSpeed;
     private Vector3 localVelocity;
+    
+    // Reference to the network synchronizer
+    private VehicleNetworkSynchronizer networkSynchronizer;
     #endregion
 
     #region Initialization Methods
     private void Awake()
     {
+        // Get references that don't depend on network state
+        rb = GetComponent<Rigidbody>();
+        
+        // Find the network synchronizer
+        networkSynchronizer = GetComponent<VehicleNetworkSynchronizer>();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        
         // Initialize PhysicsQuantizer
         PhysicsQuantizer.Configure(
             defaultPrecision: 1000,
@@ -91,13 +109,14 @@ public class NetworkVehicleController : MonoBehaviour
             enabled: enableQuantization
         );
         
-        rb = GetComponent<Rigidbody>();
+        // Set up physics properties
         rb.mass = vehicleMass;
 
         if (centerOfMass != null)
             rb.centerOfMass = centerOfMass.localPosition;
 
         // Create wheels
+        wheels.Clear(); // Clear any existing wheels
         if (frontLeftWheelTransform) wheels.Add(new Wheel(frontLeftWheelTransform, frontLeftWheelMesh, true, true));
         if (frontRightWheelTransform) wheels.Add(new Wheel(frontRightWheelTransform, frontRightWheelMesh, false, true));
         if (rearLeftWheelTransform) wheels.Add(new Wheel(rearLeftWheelTransform, rearLeftWheelMesh, true, false));
@@ -105,18 +124,31 @@ public class NetworkVehicleController : MonoBehaviour
 
         // Get InputManager instance
         inputManager = InputManager.Instance;
-
-        inputManager.SwitchToGameplayMode();
+        
+        // Determine if this is locally controlled based on ownership
+        isLocallyControlled = IsOwner;
+        
+        // Register for jump event if we own this vehicle
+        if (isLocallyControlled && inputManager != null)
+        {
+            inputManager.JumpPressed += OnJumpPressed;
+            
+            // Switch input mode to gameplay
+            inputManager.SwitchToGameplayMode();
+        }
+        
+        Debug.Log($"Vehicle controller spawned. IsOwner={IsOwner}, IsLocallyControlled={isLocallyControlled}");
     }
 
-    private void OnEnable()
+    public override void OnNetworkDespawn()
     {
-        inputManager.JumpPressed += OnJumpPressed;
-    }
-
-    private void OnDisable()
-    {
-        inputManager.JumpPressed -= OnJumpPressed;
+        base.OnNetworkDespawn();
+        
+        // Unregister from input events
+        if (inputManager != null)
+        {
+            inputManager.JumpPressed -= OnJumpPressed;
+        }
     }
     #endregion
 
@@ -126,8 +158,8 @@ public class NetworkVehicleController : MonoBehaviour
         // Check if enableQuantization was changed in inspector
         PhysicsQuantizer.Configure(enabled: enableQuantization);
         
-        // Check if InputManager is available
-        if (inputManager != null && inputManager.IsInGameplayMode())
+        // Only process inputs for locally controlled vehicles
+        if (isLocallyControlled && inputManager != null && inputManager.IsInGameplayMode())
         {
             // Get input from InputManager with quantization
             throttleInput = PhysicsQuantizer.QInput(inputManager.ThrottleInput);
@@ -140,14 +172,7 @@ public class NetworkVehicleController : MonoBehaviour
             float steeringAngle = CalculateSteeringAngle(lookInput);
 
             // Normalize to input range (-1 to 1) with quantization
-            steeringInput = PhysicsQuantizer.QInput(Mathf.Clamp(steeringAngle / 45f, -1f, 1f));
-        }
-        else
-        {
-            // Reset inputs if input manager is unavailable or not in gameplay mode
-            throttleInput = 0f;
-            brakeInput = 0f;
-            steeringInput = 0f;
+            steeringInput = PhysicsQuantizer.QInput(Mathf.Clamp(steeringAngle / maxSteeringAngle, -1f, 1f));
         }
 
         // Calculate speed for debugging
@@ -174,30 +199,8 @@ public class NetworkVehicleController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        foreach (var wheel in wheels)
-        {
-            // Cast ray to find ground with quantized raycast
-            wheel.CastRayQuantized();
-
-            if (wheel.isGrounded)
-            {
-                // 1. Calculate suspension force (GREEN)
-                CalculateSuspensionForceQuantized(wheel);
-
-                // 2. Calculate steering/grip force (RED)
-                CalculateSteeringForceQuantized(wheel);
-
-                // 3. Calculate acceleration/braking force (BLUE)
-                CalculateAccelerationForceQuantized(wheel);
-
-                // Apply forces at the wheel transform position with quantization
-                // This is one of the most critical parts for determinism
-                Vector3 totalForce = PhysicsQuantizer.QVector3(
-                    wheel.suspensionForce + wheel.steeringForce + wheel.accelerationForce);
-                    
-                PhysicsQuantizer.QAddForceAtPosition(rb, totalForce, wheel.transform.position);
-            }
-        }
+        // Apply wheel physics
+        ApplyWheelPhysics();
 
         // Animate wheel meshes after physics update
         AnimateWheels();
@@ -211,6 +214,15 @@ public class NetworkVehicleController : MonoBehaviour
     #endregion
 
     #region Input Handling
+    // Calculate steering input from look vector (0-1 range)
+    public float CalculateSteeringInputFromLook(Vector2 lookInput)
+    {
+        float steeringAngle = CalculateSteeringAngle(lookInput);
+        
+        // Normalize to input range (-1 to 1) with quantization
+        return PhysicsQuantizer.QInput(Mathf.Clamp(steeringAngle / maxSteeringAngle, -1f, 1f));
+    }
+
     // Calculate steering angle based on input device and camera position
     private float CalculateSteeringAngle(Vector2 lookInput)
     {
@@ -252,7 +264,89 @@ public class NetworkVehicleController : MonoBehaviour
     }
     #endregion
 
+    #region Network Methods
+    // Set whether this vehicle is locally controlled
+    public void SetLocallyControlled(bool isLocal)
+    {
+        isLocallyControlled = isLocal;
+        
+        // Update input event registration
+        if (inputManager != null)
+        {
+            if (isLocallyControlled)
+            {
+                inputManager.JumpPressed += OnJumpPressed;
+            }
+            else
+            {
+                inputManager.JumpPressed -= OnJumpPressed;
+            }
+        }
+    }
+    
+    // Apply input from the network
+    public void ApplyNetworkInput(float throttle, float brake, float steering, bool jumpPressed)
+    {
+        throttleInput = throttle;
+        brakeInput = brake;
+        steeringInput = steering;
+        
+        // Handle jump if needed
+        if (jumpPressed && canJump && isGrounded)
+        {
+            Vector3 jumpVector = PhysicsQuantizer.QVector3(Vector3.up * jumpForce);
+            PhysicsQuantizer.QAddForce(rb, jumpVector, ForceMode.Impulse);
+        }
+    }
+    
+    // Simulate a single physics step (used for client-side prediction)
+    public void SimulatePhysicsStep()
+    {
+        ApplyWheelPhysics();
+    }
+    
+    // Access to input manager for the network synchronizer
+    public InputManager GetInputManager()
+    {
+        return inputManager;
+    }
+    
+    // Enable/disable debug UI
+    public bool IsDebugUIEnabled()
+    {
+        return showDebugUI;
+    }
+    #endregion
+
     #region Physics Calculations
+    // Extract wheel physics into a separate method
+    private void ApplyWheelPhysics()
+    {
+        foreach (var wheel in wheels)
+        {
+            // Cast ray to find ground with quantized raycast
+            wheel.CastRayQuantized();
+
+            if (wheel.isGrounded)
+            {
+                // 1. Calculate suspension force
+                CalculateSuspensionForceQuantized(wheel);
+
+                // 2. Calculate steering/grip force
+                CalculateSteeringForceQuantized(wheel);
+
+                // 3. Calculate acceleration/braking force
+                CalculateAccelerationForceQuantized(wheel);
+
+                // Apply forces at the wheel transform position with quantization
+                Vector3 totalForce = PhysicsQuantizer.QVector3(
+                    wheel.suspensionForce + wheel.steeringForce + wheel.accelerationForce);
+                    
+                PhysicsQuantizer.QAddForceAtPosition(rb, totalForce, wheel.transform.position);
+            }
+        }
+    }
+
     private void CalculateSuspensionForceQuantized(Wheel wheel)
     {
         if (!wheel.isGrounded) return;
@@ -485,7 +579,7 @@ public class NetworkVehicleController : MonoBehaviour
         int lineHeight = 20;
 
         // Count how many lines we need (compact version)
-        int totalLines = 7; // Basic vehicle info + quantization status
+        int totalLines = 8; // Basic vehicle info + quantization status + network status
 
         if (showDetailedWheelInfo)
         {
@@ -508,6 +602,25 @@ public class NetworkVehicleController : MonoBehaviour
 
         // Header
         GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "VEHICLE TELEMETRY", headerStyle);
+        yPos += lineHeight;
+
+        // Network status
+        GUI.Label(new Rect(20, yPos, 70, lineHeight), "Control:", labelStyle);
+        GUI.Label(new Rect(90, yPos, width - 90, lineHeight),
+            isLocallyControlled ? "Local" : "Remote", valueStyle);
+        yPos += lineHeight;
+        
+        // Add Network Role
+        GUI.Label(new Rect(20, yPos, 70, lineHeight), "Role:", labelStyle);
+        string roleText = "Unknown";
+        if (IsSpawned)
+        {
+            if (IsOwner) roleText = "Owner";
+            else roleText = "Remote";
+            if (IsServer) roleText += ", Server";
+            if (IsClient) roleText += ", Client";
+        }
+        GUI.Label(new Rect(90, yPos, width - 90, lineHeight), roleText, valueStyle);
         yPos += lineHeight;
 
         // Vehicle info - using both label and value styles for color differentiation
@@ -687,7 +800,7 @@ public class NetworkVehicleController : MonoBehaviour
             this.isFront = isFront;
 
             // Set default values
-            suspensionLength = transform.root.GetComponent<NetworkVehicleController>().suspensionRestDistance;
+            suspensionLength = transform.parent.parent.GetComponent<NetworkVehicleController>().suspensionRestDistance;
             lastSuspensionLength = suspensionLength;
         }
 
@@ -695,7 +808,7 @@ public class NetworkVehicleController : MonoBehaviour
         public void CastRayQuantized()
         {
             float maxDistance = PhysicsQuantizer.QFloat(
-                transform.root.GetComponent<NetworkVehicleController>().raycastDistance + 0.2f);
+                transform.parent.parent.GetComponent<NetworkVehicleController>().raycastDistance + 0.2f);
 
             // Use quantized raycast
             if (PhysicsQuantizer.QRaycast(

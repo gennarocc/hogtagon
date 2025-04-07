@@ -26,6 +26,9 @@ public class InputManager : MonoBehaviour
     private Vector2 _lookInput;
     private bool _isHonking;
     private bool _isJumping;
+    
+    // Track jump button state for WasJumpPressed
+    private bool _jumpWasPressed = false;
 
     // Current action map
     private enum InputState { Gameplay, UI }
@@ -83,7 +86,11 @@ public class InputManager : MonoBehaviour
         controls.Gameplay.Brake.canceled += ctx => _brakeInput = 0f;
 
         // Jump action
-        controls.Gameplay.Jump.performed += ctx => JumpPressed?.Invoke();
+        controls.Gameplay.Jump.performed += ctx => 
+        {
+            _jumpWasPressed = true;
+            JumpPressed?.Invoke();
+        };
 
         // Honk handlers
         controls.Gameplay.Honk.performed += ctx =>
@@ -125,6 +132,19 @@ public class InputManager : MonoBehaviour
     private void OnDisable()
     {
         controls.Disable();
+    }
+
+    // Check if jump was pressed since the last check
+    public bool WasJumpPressed()
+    {
+        // Store current state
+        bool wasPressed = _jumpWasPressed;
+        
+        // Reset for next check
+        _jumpWasPressed = false;
+        
+        // Return if it was pressed
+        return wasPressed;
     }
 
     // Switch to gameplay controls
@@ -190,6 +210,7 @@ public class InputManager : MonoBehaviour
         _brakeInput = 0f;
         _lookInput = Vector2.zero;
         _isHonking = false;
+        _jumpWasPressed = false;
     }
 
     // Update to check for Escape key during gameplay and handle device detection
