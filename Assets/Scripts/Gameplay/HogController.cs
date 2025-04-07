@@ -802,4 +802,19 @@ public class HogController : NetworkBehaviour
         }
     }
     #endregion
+
+    // Add camera assignment method
+    public void AssignCamera(CinemachineFreeLook camera)
+    {
+        if (camera == null)
+        {
+            Debug.LogError("Attempted to assign null camera to HogController");
+            return;
+        }
+
+        freeLookCamera = camera;
+        freeLookCamera.Follow = transform;
+        freeLookCamera.LookAt = transform;
+        Debug.Log($"Camera assigned to HogController on {gameObject.name}");
+    }
 }

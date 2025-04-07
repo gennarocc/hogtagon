@@ -346,6 +346,16 @@ public class MenuManager : NetworkBehaviour
         // Enable camera input
         EnableCameraInput();
 
+        // Also unlock the local player's camera input
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null)
+        {
+            var localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject?.GetComponent<Player>();
+            if (localPlayer != null)
+            {
+                localPlayer.UnlockCameraInput();
+            }
+        }
+
         PauseOff.Post(gameObject);
 
         // Switch back to gameplay input mode
@@ -388,6 +398,16 @@ public class MenuManager : NetworkBehaviour
 
         // Disable camera input - this is key to stopping camera rotation
         DisableCameraInput();
+
+        // Also lock the local player's camera input
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClient != null)
+        {
+            var localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject?.GetComponent<Player>();
+            if (localPlayer != null)
+            {
+                localPlayer.LockCameraInput();
+            }
+        }
 
         // Set pause state AFTER disabling camera
         gameIsPaused = true;
@@ -1578,6 +1598,12 @@ public class MenuManager : NetworkBehaviour
             quitNav.selectOnUp = optionsButton;
             quitButton.navigation = quitNav;
         }
+    }
+
+    // Public method to get the virtual camera
+    public CinemachineVirtualCamera GetVirtualCamera()
+    {
+        return virtualCamera;
     }
 }
 

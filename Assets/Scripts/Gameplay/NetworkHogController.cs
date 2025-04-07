@@ -99,17 +99,33 @@ public class NetworkHogController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        Debug.Log($"NetworkHogController OnNetworkSpawn - IsOwner: {IsOwner}, IsServer: {IsServer}");
+
         // Register for state change callback
         vehicleState.OnValueChanged += OnVehicleStateChanged;
 
         // Get input manager reference
         inputManager = InputManager.Instance;
+        if (inputManager == null)
+        {
+            Debug.LogError("Failed to find InputManager instance!");
+            return;
+        }
 
-        vfxController.Initialize(transform, centerOfMass, OwnerClientId);
+        // Initialize VFX controller if available
+        if (vfxController != null)
+        {
+            vfxController.Initialize(transform, centerOfMass, OwnerClientId);
+        }
+        else
+        {
+            Debug.LogWarning("VFX Controller not assigned!");
+        }
+
         // Initialize the vehicle
         if (IsOwner)
         {
-            // Owner initializes immediately
+            Debug.Log("Initializing owner vehicle");
             InitializeOwnerVehicle();
             inputManager.JumpPressed += OnJumpPressed;
             inputManager.HornPressed += OnHornPressed;
@@ -124,7 +140,6 @@ public class NetworkHogController : NetworkBehaviour
             // Remote client needs server to tell it what to do
             RequestInitialStateServerRpc();
         }
-
     }
 
     public override void OnNetworkDespawn()
@@ -147,13 +162,41 @@ public class NetworkHogController : NetworkBehaviour
 
     private void Start()
     {
+        Debug.Log($"NetworkHogController Start - Checking references");
+
+        // Get references if not already set
+        if (rb == null)
+        {
+            rb = GetComponent<Rigidbody>();
+            if (rb == null)
+            {
+                Debug.LogError("No Rigidbody found on NetworkHogController!");
+                return;
+            }
+        }
+
+        // Check wheel colliders
+        if (wheelColliders == null || wheelColliders.Length != 4)
+        {
+            Debug.LogError("Wheel colliders not properly assigned!");
+            return;
+        }
+
+        // Check wheel meshes
+        if (wheelMeshes == null || wheelMeshes.Length != 4)
+        {
+            Debug.LogError("Wheel meshes not properly assigned!");
+            return;
+        }
+
+        // Set up physics properties
         rb.centerOfMass = centerOfMass;
         InitializeWheelFriction();
 
         // Only the server or owner should play the engine on sound
         if (IsOwner || IsServer)
         {
-            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.EngineOn);
+            SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
         }
 
         // Initialize visual smoothing targets
@@ -161,9 +204,9 @@ public class NetworkHogController : NetworkBehaviour
         visualRotationTarget = transform.rotation;
         visualVelocityTarget = Vector3.zero;
 
-        if (debugMode && IsOwner)
+        if (debugMode)
         {
-            Debug.Log($"Owner vehicle spawned at {rb.position}");
+            Debug.Log($"NetworkHogController initialized at position: {rb.position}");
         }
     }
 
@@ -268,17 +311,40 @@ public class NetworkHogController : NetworkBehaviour
 
     private void InitializeOwnerVehicle()
     {
-        // Configure physics
-        rb.isKinematic = false;
-        EnableWheelColliders();
-
-        // Mark as initialized
-        hasReceivedInitialSync = true;
-
-        if (debugMode)
+        Debug.Log("Initializing owner vehicle");
+        
+        // Make sure we have input manager
+        if (inputManager == null)
         {
-            Debug.Log("[Owner] Vehicle initialized");
+            inputManager = InputManager.Instance;
+            if (inputManager == null)
+            {
+                Debug.LogError("Failed to find InputManager for owner vehicle!");
+                return;
+            }
         }
+        
+        // Switch to gameplay mode to enable input
+        inputManager.SwitchToGameplayMode();
+        Debug.Log("Switched to gameplay mode for owner vehicle");
+        
+        // Set up physics properties
+        rb.isKinematic = false;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        
+        // Store initial state
+        visualPositionTarget = transform.position;
+        visualRotationTarget = transform.rotation;
+        visualVelocityTarget = Vector3.zero;
+        
+        // Enable wheel colliders
+        foreach (var wheel in wheelColliders)
+        {
+            wheel.enabled = true;
+        }
+        
+        Debug.Log("Owner vehicle initialization complete");
     }
 
     private void InitializeServerControlledVehicle()
@@ -331,9 +397,27 @@ public class NetworkHogController : NetworkBehaviour
 
     private void HandleOwnerInput()
     {
+        if (!canMove || rb == null)
+        {
+            Debug.LogWarning($"HandleOwnerInput skipped - canMove: {canMove}, rb null: {rb == null}");
+            return;
+        }
+
+        if (inputManager == null)
+        {
+            Debug.LogError("InputManager is null!");
+            return;
+        }
+
         // Get movement input using InputManager
         float moveInput = inputManager.ThrottleInput - inputManager.BrakeInput;
         float brakeInput = inputManager.BrakeInput;
+
+        // Debug log to check input values
+        if (debugMode && (moveInput != 0 || brakeInput != 0))
+        {
+            Debug.Log($"Move Input: {moveInput}, Brake Input: {brakeInput}, Current Torque: {currentTorque}");
+        }
 
         // Get camera angle
         Vector2 lookInput = inputManager.LookInput;
@@ -360,56 +444,110 @@ public class NetworkHogController : NetworkBehaviour
             currentTorque += Mathf.Sign(targetTorque - currentTorque) * torqueDelta;
         }
 
-        ApplyMotorTorqueToWheels(currentTorque);
+        // Apply motor torque to wheels
+        if (wheelColliders != null && wheelColliders.Length == 4)
+        {
+            ApplyMotorTorqueToWheels(currentTorque);
+            
+            // Debug log wheel torques
+            if (debugMode && currentTorque != 0)
+            {
+                Debug.Log($"Applied torque: {currentTorque}, Wheel0 torque: {wheelColliders[0].motorTorque}");
+            }
+        }
+        else
+        {
+            Debug.LogError("Wheel colliders not properly set up!");
+        }
 
         // Update local velocity for drift detection
-        localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-        isDrifting.Value = localVelocityX > 0.4f;
+        if (rb != null)
+        {
+            localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
+            isDrifting.Value = localVelocityX > 0.4f;
+        }
     }
 
     private void OnHornPressed()
     {
         if (!IsOwner) return;
 
-        if (!transform.root.gameObject.GetComponent<Player>().isSpectating)
+        if (!GetComponentInChildren<Player>().isSpectating)
         {
-            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogHorn);
+            SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
         }
     }
+
     private void OnJumpPressed()
     {
         if (!IsOwner) return;
 
         // Check if player can jump and is not spectating
         bool canPerformJump = canMove && canJump && !jumpOnCooldown &&
-                             !transform.root.gameObject.GetComponent<Player>().isSpectating;
+                             !GetComponentInChildren<Player>().isSpectating;
 
         if (canPerformJump)
         {
-            // Apply jump physics directly on the client
             ApplyJumpPhysics();
-
-            // Start cooldown
-            jumpOnCooldown = true;
-            jumpCooldownRemaining = jumpCooldown;
-
-            // Notify other clients about the jump (for effects only)
-            NotifyJumpClientRpc();
-
-            // Send updated state immediately after jump
-            SendStateToServer();
+            JumpServerRpc();
         }
+    }
+
+    private void ApplyJumpPhysics()
+    {
+        if (!IsOwner) return;
+
+        // Store current horizontal velocity
+        Vector3 currentVelocity = rb.linearVelocity;
+        Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+
+        // Start with a position boost for immediate feedback
+        Vector3 currentPos = rb.position;
+        Vector3 targetPos = currentPos + Vector3.up * 1.5f; // Small initial boost
+        rb.MovePosition(targetPos);
+
+        // Apply a sharper upward impulse for faster rise
+        float upwardVelocity = jumpForce * 1.2f;
+
+        // Combine horizontal momentum with new vertical impulse
+        Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
+        rb.linearVelocity = newVelocity;
+
+        // Add a bit more forward boost in the car's facing direction
+        rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+
+        // Play local jump effects
+        if (vfxController != null)
+        {
+            vfxController.PlayJumpEffects();
+        }
+
+        // Play jump sound - owner will trigger it through the network
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogJump);
+    }
+
+    [ServerRpc]
+    private void JumpServerRpc()
+    {
+        // Start cooldown
+        jumpOnCooldown = true;
+        jumpCooldownRemaining = jumpCooldown;
+
+        // Notify other clients about the jump (for effects only)
+        NotifyJumpClientRpc();
+
+        // Send updated state immediately after jump
+        SendStateToServer();
     }
 
     private float CalculateCameraAngle(Vector2 lookInput = default)
     {
-        // Check if any menus are active - if so, don't update camera angle
-        if (MenuManager.Instance != null && MenuManager.Instance.gameIsPaused)
+        if (freeLookCamera == null)
         {
-            // Return current camera angle without updating it
-            return cameraAngle;
+            Debug.LogWarning("Camera not assigned yet, returning 0");
+            return 0f;
         }
-        
+
         // If using gamepad with sufficient input magnitude
         if (inputManager.IsUsingGamepad && lookInput.sqrMagnitude > 0.01f)
         {
@@ -462,14 +600,39 @@ public class NetworkHogController : NetworkBehaviour
         {
             foreach (var wheel in wheelColliders)
             {
-                wheel.motorTorque = 0;
+                if (wheel != null)
+                {
+                    wheel.motorTorque = 0;
+                }
             }
             return;
         }
 
+        // Apply torque to each wheel
         foreach (var wheel in wheelColliders)
         {
-            wheel.motorTorque = torqueValue;
+            if (wheel != null)
+            {
+                wheel.motorTorque = torqueValue;
+                
+                // Make sure brake torque is zero when accelerating
+                if (torqueValue != 0)
+                {
+                    wheel.brakeTorque = 0;
+                }
+            }
+        }
+
+        // Apply brake torque if we're braking
+        if (inputManager.BrakeInput > 0)
+        {
+            foreach (var wheel in wheelColliders)
+            {
+                if (wheel != null)
+                {
+                    wheel.brakeTorque = brakeTorque * inputManager.BrakeInput;
+                }
+            }
         }
     }
 
@@ -502,36 +665,6 @@ public class NetworkHogController : NetworkBehaviour
                 jumpOnCooldown = false;
             }
         }
-    }
-
-    private void ApplyJumpPhysics()
-    {
-        if (!IsOwner) return;
-
-        // Store current horizontal velocity
-        Vector3 currentVelocity = rb.linearVelocity;
-        Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
-
-        // Start with a position boost for immediate feedback
-        Vector3 currentPos = rb.position;
-        Vector3 targetPos = currentPos + Vector3.up * 1.5f; // Small initial boost
-        rb.MovePosition(targetPos);
-
-        // Apply a sharper upward impulse for faster rise
-        float upwardVelocity = jumpForce * 1.2f;
-
-        // Combine horizontal momentum with new vertical impulse
-        Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
-        rb.linearVelocity = newVelocity;
-
-        // Add a bit more forward boost in the car's facing direction
-        rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
-
-        // Play local jump effects
-        vfxController.PlayJumpEffects();
-
-        // Play jump sound - owner will trigger it through the network
-        SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.HogJump);
     }
 
     // Notify other clients to show jump effects
@@ -908,6 +1041,29 @@ public class NetworkHogController : NetworkBehaviour
         foreach (var wheel in wheelColliders)
         {
             wheel.enabled = true;
+        }
+    }
+
+    // Public method to assign a camera to this controller
+    public void AssignCamera(CinemachineFreeLook camera)
+    {
+        if (camera == null)
+        {
+            Debug.LogError("NetworkHogController: Attempted to assign null camera");
+            return;
+        }
+        
+        // Store the camera reference
+        freeLookCamera = camera;
+        
+        // Don't override the Follow and LookAt targets as they should be set by the Player script
+        Debug.Log($"NetworkHogController: Camera assigned to {gameObject.name}");
+        
+        // Make sure input is enabled
+        if (IsOwner && inputManager != null)
+        {
+            inputManager.SwitchToGameplayMode();
+            Debug.Log("Enabled gameplay input for camera control");
         }
     }
     #endregion
