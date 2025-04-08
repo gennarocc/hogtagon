@@ -18,10 +18,8 @@ public class Player : NetworkBehaviour
     [SerializeField] private GameObject body; // Used to set color texture
     [SerializeField] private GameObject playerIndicator;
 
-
-    [Header("Camera")]
-    [SerializeField] public CinemachineFreeLook playerCamera;
-    [SerializeField] public CameraTarget cameraTarget;
+    [HideInInspector] public CinemachineFreeLook playerCamera;
+    [HideInInspector] public CameraTarget cameraTarget;
 
 
     private NetworkVariable<PlayerData> networkPlayerData = new NetworkVariable<PlayerData>(
@@ -56,6 +54,7 @@ public class Player : NetworkBehaviour
         menuManager = GameObject.Find("Menus").GetComponent<MenuManager>();
         menuManager.menuCamera.gameObject.SetActive(false);
         menuManager.connectionPending.SetActive(false);
+
         if (IsOwner)
         {
             // Activate player camera;
