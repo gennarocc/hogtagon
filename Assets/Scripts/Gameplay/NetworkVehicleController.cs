@@ -37,8 +37,14 @@ public class NetworkVehicleController : NetworkBehaviour
 
     [Header("Acceleration (Blue Force)")]
     [SerializeField] private float enginePower = 15000f;
+    [SerializeField] private float reversePowerFactor = 0.7f;
     [SerializeField] private float brakeForce = 10000f;
     [SerializeField] private float rollingResistance = 50f;
+
+    [Header("Input Buffer Settings")]
+    [SerializeField] private int bufferSize = 120; // Store 2 seconds of inputs at 60 ticks/second
+    [SerializeField] private bool autoCleanupOldInputs = true;
+    [SerializeField] private uint autoCleanupThreshold = 60; // Remove inputs older than 1 second (at 60 ticks/second)
 
     [Header("Debug Visualization")]
     [SerializeField] private bool showDebugForces = true;
@@ -47,26 +53,26 @@ public class NetworkVehicleController : NetworkBehaviour
     [SerializeField] private Color valueTextColor = new Color(0.9f, 0.9f, 0.2f, 1.0f); // Yellow for values
     [SerializeField] private Color labelTextColor = new Color(1.0f, 1.0f, 1.0f, 1.0f); // White for labels
     [SerializeField] private Color debugBackgroundColor = new Color(0, 0, 0, 0.7f);
-    [SerializeField] private bool showDetailedWheelInfo = false; // Option to show detailed wheel info
 
     [Header("Jump Settings")]
     [SerializeField] private bool canJump = true;
     [SerializeField] private float jumpForce = 300f;
     [SerializeField] private float jumpCooldown = 1.5f;
-
-    [Header("Deterministic Physics")]
-    [SerializeField] private bool enableQuantization = true;
-    [Tooltip("Toggle this during gameplay to test with/without quantization")]
-
-    [Header("Network Integration")]
-    [SerializeField] private bool isLocallyControlled = true;
     #endregion
+
 
     #region Private Fields
     // Input values
     private float throttleInput;
     private float brakeInput;
     private float steeringInput;
+
+    // Input buffer
+    private NetworkedInputBuffer<ClientInput> inputBuffer;
+
+    // Network Time tracking
+    private uint lastProcessedTick;
+    private bool isTimeInitialized = false;
 
     // References
     private InputManager inputManager;
@@ -78,9 +84,6 @@ public class NetworkVehicleController : NetworkBehaviour
     // Debug info
     private float currentSpeed;
     private Vector3 localVelocity;
-
-    // Reference to the network synchronizer
-    private VehicleNetworkSynchronizer networkSynchronizer;
     #endregion
 
     #region Initialization Methods
@@ -88,9 +91,7 @@ public class NetworkVehicleController : NetworkBehaviour
     {
         // Get references that don't depend on network state
         rb = GetComponent<Rigidbody>();
-
         // Find the network synchronizer
-        networkSynchronizer = GetComponent<VehicleNetworkSynchronizer>();
         player = GetComponent<Player>();
     }
 
@@ -102,8 +103,7 @@ public class NetworkVehicleController : NetworkBehaviour
         PhysicsQuantizer.Configure(
             defaultPrecision: 1000,
             inputPrecision: 100,
-            highPrecision: 10000,
-            enabled: enableQuantization
+            highPrecision: 10000
         );
 
         // Set up physics properties
@@ -122,56 +122,103 @@ public class NetworkVehicleController : NetworkBehaviour
         // Get InputManager instance
         inputManager = InputManager.Instance;
 
-        // Determine if this is locally controlled based on ownership
-        isLocallyControlled = IsOwner;
-
-        // Register for jump event if we own this vehicle
-        if (isLocallyControlled && inputManager != null)
+        // For remote vehicles, we need to ensure physics doesn't take over
+        if (!IsOwner && !IsServer)
         {
-            inputManager.JumpPressed += OnJumpPressed;
-
-            // Switch input mode to gameplay
-            inputManager.SwitchToGameplayMode();
+            rb.isKinematic = true;
+        }
+        else
+        {
+            rb.isKinematic = false;
         }
 
-        Debug.Log($"Vehicle controller spawned. IsOwner={IsOwner}, IsLocallyControlled={isLocallyControlled}");
+        // Initialize the input buffer using Netcode's NetworkManager
+        inputBuffer = new NetworkedInputBuffer<ClientInput>(NetworkManager.Singleton, bufferSize);
+
+        // Subscribe to the NetworkTickSystem
+        NetworkManager.Singleton.NetworkTickSystem.Tick += OnNetworkTick;
+
+        // If we're the owner, subscribe to input events
+        if (IsOwner)
+        {
+            inputManager.JumpPressed += OnJumpPressed;
+        }
+
+        // Switch input mode to gameplay
+        inputManager.SwitchToGameplayMode();
+
+        Debug.Log($"Vehicle controller spawned. IsOwner={IsOwner}, IsServer={IsServer}, Kinematic={rb.isKinematic}");
     }
 
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
 
-        // Unregister from input events
-        if (inputManager != null)
+        // Clean up event handlers
+        if (IsOwner)
         {
             inputManager.JumpPressed -= OnJumpPressed;
+        }
+
+        inputBuffer.Dispose();
+
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.NetworkTickSystem.Tick -= OnNetworkTick;
         }
     }
     #endregion
 
-    #region Update Methods
-    private void Update()
+    #region Network Tick System
+    private void OnNetworkTick()
     {
-        // Check if enableQuantization was changed in inspector
-        PhysicsQuantizer.Configure(enabled: enableQuantization);
+        // Get current network tick
+        uint currentTick = (uint)NetworkManager.Singleton.NetworkTickSystem.LocalTime.Tick;
 
-        // Only process inputs for locally controlled vehicles
-        if (isLocallyControlled && inputManager != null && inputManager.IsInGameplayMode())
+        if (!isTimeInitialized)
         {
-            // Get input from InputManager with quantization
-            throttleInput = PhysicsQuantizer.QInput(inputManager.ThrottleInput);
-            brakeInput = PhysicsQuantizer.QInput(inputManager.BrakeInput);
-
-            // Get look input with quantization
-            Vector2 lookInput = PhysicsQuantizer.QVector2(inputManager.LookInput);
-
-            // Calculate steering angle
-            float steeringAngle = CalculateSteeringAngle(lookInput);
-
-            // Normalize to input range (-1 to 1) with quantization
-            steeringInput = PhysicsQuantizer.QInput(Mathf.Clamp(steeringAngle / maxSteeringAngle, -1f, 1f));
+            lastProcessedTick = currentTick;
+            isTimeInitialized = true;
         }
 
+        // Process network updates based on role
+        if (IsOwner)
+        {
+            // Owner is responsible for capturing input and sending to server
+            CaptureAndSendInput(currentTick);
+            // Process the current input for immediate feedback
+            if (inputBuffer.TryGetInput(currentTick, out ClientInput currentInput))
+            {
+
+                // Apply input and simulate physics locally
+                throttleInput = currentInput.moveInput;
+                brakeInput = currentInput.brakeInput;
+                steeringInput = currentInput.steerInput;
+                ApplyWheelPhysics();
+            }
+        }
+
+        if (IsServer)
+        {
+            // Server is responsible for physics and state authority
+            ProcessInputsOnServer(currentTick);
+        }
+
+        // Update last processed tick
+        lastProcessedTick = currentTick;
+
+        // Auto-cleanup if enabled (on both client and server)
+        if (autoCleanupOldInputs)
+        {
+            uint cleanupThreshold = currentTick > autoCleanupThreshold ? currentTick - autoCleanupThreshold : 0;
+            inputBuffer.RemoveInputsBefore(cleanupThreshold);
+        }
+    }
+
+    #endregion
+
+    private void Update()
+    {
         // Calculate speed for debugging
         currentSpeed = PhysicsQuantizer.QFloat(rb.linearVelocity.magnitude);
         localVelocity = PhysicsQuantizer.QVector3(transform.InverseTransformDirection(rb.linearVelocity));
@@ -196,21 +243,49 @@ public class NetworkVehicleController : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        // Apply wheel physics
-        ApplyWheelPhysics();
-
-        // Animate wheel meshes after physics update
+        // Physics update - animations always happen for visuals
         AnimateWheels();
-
-        // Add some angular drag to prevent excessive spinning with quantization
-        if (rb.angularVelocity.magnitude > 0.1f)
-        {
-            rb.angularVelocity = PhysicsQuantizer.QVector3(rb.angularVelocity * 0.95f);
-        }
     }
-    #endregion
 
     #region Input Handling
+    private void CaptureAndSendInput(uint tick)
+    {
+        // Capture current input
+        if (inputManager.IsInGameplayMode())
+        {
+            throttleInput = PhysicsQuantizer.QInput(inputManager.ThrottleInput);
+            brakeInput = PhysicsQuantizer.QInput(inputManager.BrakeInput);
+            steeringInput = PhysicsQuantizer.QInput(Mathf.Clamp(
+                CalculateSteeringAngle(PhysicsQuantizer.QVector2(inputManager.LookInput)) / maxSteeringAngle,
+                -1f,
+                1f
+            ));
+        }
+        else
+        {
+            // If game is paused set input to 0;
+            throttleInput = 0;
+            brakeInput = 0;
+        }
+
+
+        // Create input struct
+        ClientInput input = new ClientInput
+        {
+            clientId = NetworkManager.Singleton.LocalClientId,
+            tick = tick,
+            moveInput = throttleInput,
+            brakeInput = brakeInput,
+            steerInput = steeringInput
+        };
+
+        // Add to local buffer
+        inputBuffer.AddInput(tick, input);
+
+        // Send to server
+        SendInputServerRpc(input);
+    }
+
     // Calculate steering input from look vector (0-1 range)
     public float CalculateSteeringInputFromLook(Vector2 lookInput)
     {
@@ -245,62 +320,44 @@ public class NetworkVehicleController : NetworkBehaviour
     }
     #endregion
 
-    #region Network Methods
-    // Set whether this vehicle is locally controlled
-    public void SetLocallyControlled(bool isLocal)
+    #region Server Input Processing
+    private void ProcessInputsOnServer(uint currentTick)
     {
-        isLocallyControlled = isLocal;
+        if (!IsServer) return;
 
-        // Update input event registration
-        if (inputManager != null)
+        // Get the most recent input for this vehicle
+        if (inputBuffer.TryGetInput(currentTick, out ClientInput input))
         {
-            if (isLocallyControlled)
+            // Apply the input to the vehicle
+            throttleInput = input.moveInput;
+            brakeInput = input.brakeInput;
+            steeringInput = input.steerInput;
+
+            // Run physics with these inputs
+            ApplyWheelPhysics();
+        }
+        else if (inputBuffer.GetNewestTick() > 0)
+        {
+            // Use the most recent input if we don't have one for this tick
+            uint newestTick = inputBuffer.GetNewestTick();
+            if (inputBuffer.TryGetInput(newestTick, out ClientInput latestInput))
             {
-                inputManager.JumpPressed += OnJumpPressed;
-            }
-            else
-            {
-                inputManager.JumpPressed -= OnJumpPressed;
+                throttleInput = latestInput.moveInput;
+                brakeInput = latestInput.brakeInput;
+                steeringInput = latestInput.steerInput;
+
+                // Run physics with these inputs
+                ApplyWheelPhysics();
             }
         }
+
+        // After physics are processed, sync vehicle state to clients
+        SyncVehicleStateClientRpc(currentTick, rb.position, rb.rotation, rb.linearVelocity, rb.angularVelocity);
     }
 
-    // Apply input from the network
-    public void ApplyNetworkInput(float throttle, float brake, float steering, bool jumpPressed)
-    {
-        throttleInput = throttle;
-        brakeInput = brake;
-        steeringInput = steering;
-
-        // Handle jump if needed
-        if (jumpPressed && canJump && isGrounded)
-        {
-            Vector3 jumpVector = PhysicsQuantizer.QVector3(Vector3.up * jumpForce);
-            PhysicsQuantizer.QAddForce(rb, jumpVector, ForceMode.Impulse);
-        }
-    }
-
-    // Simulate a single physics step (used for client-side prediction)
-    public void SimulatePhysicsStep()
-    {
-        ApplyWheelPhysics();
-    }
-
-    // Access to input manager for the network synchronizer
-    public InputManager GetInputManager()
-    {
-        return inputManager;
-    }
-
-    // Enable/disable debug UI
-    public bool IsDebugUIEnabled()
-    {
-        return showDebugUI;
-    }
     #endregion
 
-    #region Physics Calculations
-    // Extract wheel physics into a separate method
+    #region Physics 
     private void ApplyWheelPhysics()
     {
         foreach (var wheel in wheels)
@@ -453,15 +510,17 @@ public class NetworkVehicleController : NetworkBehaviour
         // Calculate acceleration force with quantization
         float accelerationForceValue = 0f;
 
-        // 4-wheel drive - apply engine power to all wheels with quantization
-        accelerationForceValue += PhysicsQuantizer.QFloat(throttleInput * enginePower * powerFactor);
+        // Apply throttle input - always pushes forward
+        if (throttleInput > 0)
+        {
+            accelerationForceValue += PhysicsQuantizer.QFloat(throttleInput * enginePower * powerFactor);
+        }
 
-        // Apply braking force to all wheels with quantization
+        // Apply brake input - always pushes backward
         if (brakeInput > 0)
         {
-            // Braking force opposes current forward velocity
-            accelerationForceValue -= PhysicsQuantizer.QFloat(
-                Mathf.Sign(wheel.forwardVelocity) * brakeInput * brakeForce);
+            // Use engine power with reverse factor for both braking and reversing
+            accelerationForceValue -= PhysicsQuantizer.QFloat(brakeInput * enginePower * powerFactor * reversePowerFactor);
         }
 
         // Apply rolling resistance with quantization
@@ -477,9 +536,86 @@ public class NetworkVehicleController : NetworkBehaviour
         // Apply the acceleration force with quantization
         wheel.accelerationForce = PhysicsQuantizer.QVector3(wheelForwardDir * accelerationForceValue);
     }
+
+    private void OnJumpPressed()
+    {
+        // Only process jumps if we should be running physics
+        if (!canJump || !isGrounded || (!IsServer && !IsOwner))
+            return;
+
+        // Apply upward force to the vehicle with quantization
+        Vector3 jumpVector = PhysicsQuantizer.QVector3(Vector3.up * jumpForce);
+        PhysicsQuantizer.QAddForce(rb, jumpVector, ForceMode.Impulse);
+
+        // If we're the owner but not the server, send jump event to server
+        if (IsOwner && !IsServer)
+        {
+            JumpServerRpc((uint)NetworkManager.Singleton.NetworkTickSystem.LocalTime.Tick);
+        }
+    }
     #endregion
 
-    #region Wheel Handling
+    #region Network RPCs
+    [ServerRpc]
+    private void SendInputServerRpc(ClientInput input)
+    {
+        // Store input in server's buffer
+        inputBuffer.AddInput(input.tick, input);
+    }
+
+    [ServerRpc]
+    private void JumpServerRpc(uint tick)
+    {
+        // Only process if we're the server and the vehicle is grounded
+        if (!IsServer || !isGrounded || !canJump)
+            return;
+
+        // Apply jump force
+        Vector3 jumpVector = PhysicsQuantizer.QVector3(Vector3.up * jumpForce);
+        PhysicsQuantizer.QAddForce(rb, jumpVector, ForceMode.Impulse);
+
+        // Notify all clients about the jump
+        JumpClientRpc(tick);
+    }
+
+    [ClientRpc]
+    private void JumpClientRpc(uint tick)
+    {
+        // Skip if this is the owner (they already processed the jump)
+        if (IsOwner)
+            return;
+
+        // Apply jump effect on remote clients (visual only if kinematic)
+        if (isGrounded && canJump)
+        {
+            // For non-owners, just animate the jump visually if needed
+            // This is especially important for kinematic rigidbodies
+            // You could play particles, sounds, etc. here
+            Debug.Log($"Remote vehicle jumped at tick {tick}");
+        }
+    }
+
+    [ClientRpc]
+    private void SyncVehicleStateClientRpc(uint tick, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angularVelocity)
+    {
+        // Skip if this is the server or owner (they're already up to date)
+        if (IsServer || IsOwner)
+            return;
+
+        // Apply state to remote client's vehicle
+        transform.position = position;
+        transform.rotation = rotation;
+
+        // Only apply velocities if the remote client isn't kinematic
+        if (!rb.isKinematic)
+        {
+            rb.linearVelocity = velocity;
+            rb.angularVelocity = angularVelocity;
+        }
+    }
+    #endregion
+
+    #region Visuals
     // Update wheel animations
     private void AnimateWheels()
     {
@@ -504,26 +640,16 @@ public class NetworkVehicleController : NetworkBehaviour
 
             wheel.mesh.localRotation = steeringRotation;
 
+            // For visual consistency, animate all wheel rotations (even on remote clients)
             // Calculate wheel rotation with quantization
             float wheelCircumference = PhysicsQuantizer.QFloat(2f * Mathf.PI * wheelRadius);
             float rotationSpeed = PhysicsQuantizer.QFloat(wheel.forwardVelocity / wheelCircumference * 360f);
 
             // Convert to degrees for Unity
             rotationSpeed = PhysicsQuantizer.QFloat(rotationSpeed * Mathf.Rad2Deg);
-
-            wheel.mesh.Rotate(rotationSpeed, 0, 0, Space.Self);
+            inputBuffer.TryGetInput((uint)NetworkManager.Singleton.NetworkTickSystem.LocalTime.Tick, out ClientInput currentInput);
+            wheel.mesh.Rotate(currentInput.moveInput * rotationSpeed * currentSpeed, 0, 0, Space.Self);
         }
-    }
-
-    // Handle Jump functionality with quantization
-    private void OnJumpPressed()
-    {
-        if (!canJump || !isGrounded)
-            return;
-
-        // Apply upward force to the vehicle with quantization
-        Vector3 jumpVector = PhysicsQuantizer.QVector3(Vector3.up * jumpForce);
-        PhysicsQuantizer.QAddForce(rb, jumpVector, ForceMode.Impulse);
     }
     #endregion
 
@@ -560,24 +686,14 @@ public class NetworkVehicleController : NetworkBehaviour
         int lineHeight = 20;
 
         // Count how many lines we need (compact version)
-        int totalLines = 8; // Basic vehicle info + quantization status
+        int totalLines = 9; // Basic vehicle info + quantization status + kinematic status
 
         // Add network stats lines
         int networkStatsLines = 6; // Header + Control + Role + 4 network stats lines (including ping)
         totalLines += networkStatsLines;
 
-        if (showDetailedWheelInfo)
-        {
-            foreach (var wheel in wheels)
-            {
-                totalLines += wheel.isGrounded ? 4 : 1;
-            }
-        }
-        else
-        {
-            // Just add one line for wheels grounded status
-            totalLines += 1;
-        }
+        // Just add one line for wheels grounded status
+        totalLines += 1;
 
         // Draw background box
         GUI.Box(new Rect(10, startY, width, totalLines * lineHeight + padding * 2), "", boxStyle);
@@ -589,23 +705,9 @@ public class NetworkVehicleController : NetworkBehaviour
         GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "VEHICLE TELEMETRY", headerStyle);
         yPos += lineHeight;
 
-        // Network status
-        GUI.Label(new Rect(20, yPos, 70, lineHeight), "Control:", labelStyle);
-        GUI.Label(new Rect(90, yPos, width - 90, lineHeight),
-            isLocallyControlled ? "Local" : "Remote", valueStyle);
-        yPos += lineHeight;
-
-        // Add Network Role
-        GUI.Label(new Rect(20, yPos, 70, lineHeight), "Role:", labelStyle);
-        string roleText = "Unknown";
-        if (IsSpawned)
-        {
-            if (IsOwner) roleText = "Owner";
-            else roleText = "Remote";
-            if (IsServer) roleText += ", Server";
-            if (IsClient) roleText += ", Client";
-        }
-        GUI.Label(new Rect(90, yPos, width - 90, lineHeight), roleText, valueStyle);
+        // Add kinematic status
+        GUI.Label(new Rect(20, yPos, 70, lineHeight), "Kinematic:", labelStyle);
+        GUI.Label(new Rect(90, yPos, width - 90, lineHeight), rb.isKinematic.ToString(), valueStyle);
         yPos += lineHeight;
 
         // Vehicle info - using both label and value styles for color differentiation
@@ -627,11 +729,6 @@ public class NetworkVehicleController : NetworkBehaviour
         GUI.Label(new Rect(20, yPos, 70, lineHeight), "Grounded:", labelStyle);
         GUI.Label(new Rect(90, yPos, width - 90, lineHeight),
             $"{isGrounded}", valueStyle);
-        yPos += lineHeight;
-
-        GUI.Label(new Rect(20, yPos, 70, lineHeight), "Quantized:", labelStyle);
-        GUI.Label(new Rect(90, yPos, width - 90, lineHeight),
-            $"{enableQuantization}", valueStyle);
         yPos += lineHeight;
 
         // Calculate average wheel forces for a simpler display
@@ -672,75 +769,31 @@ public class NetworkVehicleController : NetworkBehaviour
             $"{wheelsGrounded}/{wheels.Count} grounded", valueStyle);
         yPos += lineHeight;
 
+        // Add network tick information
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Network Tick:", labelStyle);
+        int currentTick = NetworkManager.Singleton != null ? NetworkManager.Singleton.NetworkTickSystem.LocalTime.Tick : 0;
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{currentTick} (Buffer: {inputBuffer?.Count ?? 0})", valueStyle);
+        yPos += lineHeight;
+
         // Network stats header with a bit of space before it
         yPos += 5; // Extra space
         GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "NETWORK STATS", headerStyle);
         yPos += lineHeight;
 
-        // Get network stats from the network synchronizer
-        if (networkSynchronizer != null)
+        // Network role information
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Role:", labelStyle);
+        string role = IsServer ? (IsOwner ? "Host" : "Server") : (IsOwner ? "Client Owner" : "Client Remote");
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight), role, valueStyle);
+        yPos += lineHeight;
+
+        // Network ping if available
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
         {
-            int currentTick = networkSynchronizer.GetCurrentTick();
-            int lastProcessed = networkSynchronizer.GetLastProcessedTick();
-            int inputBufferSize = networkSynchronizer.GetInputBufferSize();
-            int currentPing = networkSynchronizer.GetCurrentPing();
-
-            // Display network stats
-            GUI.Label(new Rect(20, yPos, 100, lineHeight), "Current Tick:", labelStyle);
-            GUI.Label(new Rect(120, yPos, width - 120, lineHeight), $"{currentTick}", valueStyle);
-            yPos += lineHeight;
-
-            GUI.Label(new Rect(20, yPos, 100, lineHeight), "Last Processed:", labelStyle);
-            GUI.Label(new Rect(120, yPos, width - 120, lineHeight), $"{lastProcessed}", valueStyle);
-            yPos += lineHeight;
-
-            GUI.Label(new Rect(20, yPos, 100, lineHeight), "Input Buffer:", labelStyle);
-            GUI.Label(new Rect(120, yPos, width - 120, lineHeight), $"{inputBufferSize}/100", valueStyle);
-            yPos += lineHeight;
-
-            GUI.Label(new Rect(20, yPos, 100, lineHeight), "Ping:", labelStyle);
-            GUI.Label(new Rect(120, yPos, width - 120, lineHeight), $"{currentPing} ms", valueStyle);
-            yPos += lineHeight;
-        }
-        else
-        {
-            GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "Network synchronizer not available", labelStyle);
-            yPos += lineHeight;
-        }
-
-        // Only show detailed wheel info if enabled
-        if (showDetailedWheelInfo)
-        {
-            yPos += 5; // Extra space before wheel details
-            GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "WHEEL DETAILS", headerStyle);
-            yPos += lineHeight;
-
-            foreach (var wheel in wheels)
-            {
-                string wheelName = (wheel.isFront ? "Front" : "Rear") + (wheel.isLeft ? " Left" : " Right");
-
-                GUI.Label(new Rect(20, yPos, width - 20, lineHeight),
-                    $"{wheelName} - Grounded: {wheel.isGrounded}", labelStyle);
-                yPos += lineHeight;
-
-                if (wheel.isGrounded)
-                {
-                    GUI.Label(new Rect(40, yPos, 85, lineHeight), "Suspension:", labelStyle);
-                    GUI.Label(new Rect(125, yPos, width - 125, lineHeight),
-                        $"{wheel.suspensionForce.magnitude:F0} N (Load: {wheel.load:P0})", valueStyle);
-                    yPos += lineHeight;
-
-                    GUI.Label(new Rect(40, yPos, 85, lineHeight), "Steering:", labelStyle);
-                    GUI.Label(new Rect(125, yPos, width - 125, lineHeight),
-                        $"{wheel.steeringForce.magnitude:F0} N (Slip: {wheel.slipPercentage:P0})", valueStyle);
-                    yPos += lineHeight;
-
-                    GUI.Label(new Rect(40, yPos, 85, lineHeight), "Acceleration:", labelStyle);
-                    GUI.Label(new Rect(125, yPos, width - 125, lineHeight),
-                        $"{wheel.accelerationForce.magnitude:F0} N", valueStyle);
-                    yPos += lineHeight;
-                }
-            }
+            GUI.Label(new Rect(20, yPos, 85, lineHeight), "Ping:", labelStyle);
+            float rtt = NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetCurrentRtt(0) / 1000f;
+            GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+                $"{rtt * 1000:F0} ms", valueStyle);
         }
     }
 
@@ -823,7 +876,7 @@ public class NetworkVehicleController : NetworkBehaviour
             this.isFront = isFront;
 
             // Set default values
-            suspensionLength = transform.parent.parent.GetComponent<NetworkVehicleController>().suspensionRestDistance;
+            suspensionLength = transform.root.GetComponent<NetworkVehicleController>().suspensionRestDistance;
             lastSuspensionLength = suspensionLength;
         }
 
@@ -831,7 +884,7 @@ public class NetworkVehicleController : NetworkBehaviour
         public void CastRayQuantized()
         {
             float maxDistance = PhysicsQuantizer.QFloat(
-                transform.parent.parent.GetComponent<NetworkVehicleController>().raycastDistance + 0.2f);
+                transform.root.GetComponent<NetworkVehicleController>().raycastDistance + 0.2f);
 
             // Use quantized raycast
             if (PhysicsQuantizer.QRaycast(
@@ -865,4 +918,5 @@ public class NetworkVehicleController : NetworkBehaviour
         }
     }
     #endregion
+
 }

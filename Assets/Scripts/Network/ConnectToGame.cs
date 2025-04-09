@@ -8,8 +8,6 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
-using UnityEditor;
-using System.Collections;
 
 public class ConnectToGame : MonoBehaviour
 {
@@ -197,10 +195,8 @@ public class ConnectToGame : MonoBehaviour
         // Get username from PlayerPrefs
         string username = PlayerPrefs.GetString("Username", "Player");
         
-        // Configure connection with username as payload
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
         
-        // Clear last join code since we're hosting
         lastJoinCode = "";
         
         CreateRelay();
@@ -208,20 +204,5 @@ public class ConnectToGame : MonoBehaviour
         MenuMusicOff.Post(gameObject);
         menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
-        
-        // Use Invoke instead of a coroutine to open lobby settings after a delay
-        Invoke("OpenLobbySettingsAfterDelay", 1.5f);
     }
-    
-    // Simple method to open the lobby settings after a delay
-    private void OpenLobbySettingsAfterDelay()
-    {
-        if (menuManager != null)
-        {
-            Debug.Log("[ConnectToGame] Opening lobby settings menu");
-            menuManager.OpenLobbySettingsMenu();
-            Debug.Log("[ConnectToGame] Lobby settings should now be visible");
-        }
-    }
-
 }

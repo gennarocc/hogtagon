@@ -48,7 +48,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8473114086879205239}
   m_Layer: 0
-  m_Name: RR
+  m_Name: RLWheelTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -629,7 +629,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9054576131758368884}
   m_Layer: 0
-  m_Name: FL
+  m_Name: FLWheelTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -910,7 +910,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8028264185225673132}
   m_Layer: 0
-  m_Name: FR
+  m_Name: FRWheelTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -941,7 +941,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1045068597809175743}
   m_Layer: 0
-  m_Name: RL
+  m_Name: RLWheelTransform
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1501,7 +1501,6 @@ GameObject:
   - component: {fileID: 6303839431595344395}
   - component: {fileID: 7442380920396829155}
   - component: {fileID: 5604322269440028886}
-  - component: {fileID: 7308625366472685373}
   m_Layer: 0
   m_Name: DeterministicPlayer
   m_TagString: Untagged
@@ -1602,7 +1601,6 @@ MonoBehaviour:
   body: {fileID: 3257004186121356715}
   playerIndicator: {fileID: 7409566763525954300}
   playerCamera: {fileID: 0}
-  cameraTarget: {fileID: 0}
 --- !u!114 &5604322269440028886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1616,9 +1614,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  vehicleMass: 1300
+  vehicleMass: 1500
   centerOfMass: {fileID: 4988418653965495081}
-  topSpeed: 30
+  topSpeed: 25
   frontLeftWheelTransform: {fileID: 9054576131758368884}
   frontRightWheelTransform: {fileID: 8028264185225673132}
   rearLeftWheelTransform: {fileID: 1045068597809175743}
@@ -1628,49 +1626,28 @@ MonoBehaviour:
   rearLeftWheelMesh: {fileID: 8964650293524094927}
   rearRightWheelMesh: {fileID: 1581129841556128344}
   wheelRadius: 0.6
-  suspensionRestDistance: 0.6
-  suspensionStrength: 25000
-  suspensionDamping: 3000
+  suspensionRestDistance: 0.5
+  suspensionStrength: 35000
+  suspensionDamping: 4000
   raycastDistance: 1
-  maxSteeringAngle: 35
+  maxSteeringAngle: 30
   frontGrip: 0.9
   rearGrip: 0.65
-  enginePower: 6000
-  brakeForce: 5000
-  rollingResistance: 100
+  enginePower: 7700
+  brakeForce: 7700
+  rollingResistance: 50
+  bufferSize: 120
+  autoCleanupOldInputs: 1
+  autoCleanupThreshold: 60
   showDebugForces: 1
   debugForceScale: 0.001
   showDebugUI: 1
   valueTextColor: {r: 0.9, g: 0.9, b: 0.2, a: 1}
   labelTextColor: {r: 1, g: 1, b: 1, a: 1}
   debugBackgroundColor: {r: 0, g: 0, b: 0, a: 0.7}
-  showDetailedWheelInfo: 0
-  freeLookCamera: {fileID: 0}
   canJump: 1
-  jumpForce: 15
+  jumpForce: 300
   jumpCooldown: 1.5
-  enableQuantization: 1
-  isLocallyControlled: 1
---- !u!114 &7308625366472685373
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8887243548422293154}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0036123848534314c801d767c2a90c83, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  vehicleController: {fileID: 5604322269440028886}
-  vehicleRigidbody: {fileID: 2461248750640797098}
-  clientSendRate: 20
-  serverBroadcastRate: 15
-  networkInterpolationTime: 0.1
-  clientPredictionErrorThreshold: 0.5
-  inputBufferSize: 100
 --- !u!1001 &7644148327844177837
 PrefabInstance:
   m_ObjectHideFlags: 0

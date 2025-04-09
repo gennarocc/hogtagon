@@ -46,6 +46,7 @@ public class ConnectionManager : NetworkBehaviour
         var clientId = request.ClientNetworkId;
         response.Approved = false;
 
+        Debug.Log("New client connecting");
         // Set player username
         string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
         if (decodedUsername.Length == 0 || CheckUsernameAvailability(decodedUsername))
