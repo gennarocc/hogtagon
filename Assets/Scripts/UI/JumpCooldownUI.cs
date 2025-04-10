@@ -15,7 +15,7 @@ public class JumpCooldownUI : MonoBehaviour
     [SerializeField] private Color cooldownColor = Color.red;
     
     // Reference to player's HogController
-    private NetworkHogController playerHogController;
+    private HogController playerHogController;
     
     private void Start()
     {
@@ -25,7 +25,7 @@ public class JumpCooldownUI : MonoBehaviour
             Player localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject?.GetComponent<Player>();
             if (localPlayer != null)
             {
-                playerHogController = localPlayer.GetComponentInChildren<NetworkHogController>();
+                playerHogController = localPlayer.GetComponentInChildren<HogController>();
             }
         }
         
@@ -41,7 +41,7 @@ public class JumpCooldownUI : MonoBehaviour
             Player localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject?.GetComponent<Player>();
             if (localPlayer != null)
             {
-                playerHogController = localPlayer.GetComponentInChildren<NetworkHogController>();
+                playerHogController = localPlayer.GetComponentInChildren<HogController>();
             }
             
             if (playerHogController == null) return;

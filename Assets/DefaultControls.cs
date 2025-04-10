@@ -300,8 +300,8 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""Keyboard AD"",
-                    ""id"": ""8e62d74f-4b7a-4b42-9e9c-6a3c7e3c4d5a"",
+                    ""name"": ""1D Axis"",
+                    ""id"": ""d0ad5a4e-28e3-41a5-9c67-f6dfab6cef42"",
                     ""path"": ""1DAxis"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -312,7 +312,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": ""negative"",
-                    ""id"": ""9a8c0b1f-2d3e-4f5a-6b7c-8d9e0f1a2b3c"",
+                    ""id"": ""c8a4c85c-e1d5-4772-9d5b-2f6c9697a9a7"",
                     ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -323,7 +323,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": ""positive"",
-                    ""id"": ""4a5b6c7d-8e9f-0a1b-2c3d-4e5f6a7b8c9d"",
+                    ""id"": ""3b25b1f2-9fc2-41d8-b5cf-0d1fe50cf7b2"",
                     ""path"": ""<Keyboard>/d"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -334,10 +334,10 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""0f1a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c"",
+                    ""id"": ""4cb32ce6-a006-4bdd-9a5d-b803c3472acd"",
                     ""path"": ""<Gamepad>/leftStick/x"",
                     ""interactions"": """",
-                    ""processors"": ""StickDeadzone"",
+                    ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Steer"",
                     ""isComposite"": false,

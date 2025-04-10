@@ -95,8 +95,8 @@ public class KillBall : NetworkBehaviour
             GameManager.Instance.PlayerDied(clientId);
         }
 
-        // Get the NetworkHogController instead of HogController
-        NetworkHogController hogController = client.PlayerObject.GetComponentInChildren<NetworkHogController>();
+        // Get the HogController instead of NetworkHogController
+        HogController hogController = client.PlayerObject.GetComponentInChildren<HogController>();
         if (hogController != null)
         {
             // Call the explosion effect on all clients
@@ -104,7 +104,7 @@ public class KillBall : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning($"Couldn't find NetworkHogController for player {clientId}");
+            Debug.LogWarning($"Couldn't find HogController for player {clientId}");
         }
     }
 }

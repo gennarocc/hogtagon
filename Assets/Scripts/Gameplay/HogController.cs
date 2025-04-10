@@ -27,9 +27,9 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float velocity; // Monitoring variable
     
     [Header("Suspension")]
-    [SerializeField] private float suspensionDistance = 0.1f;
-    [SerializeField] private float suspensionSpring = 70000f;
-    [SerializeField] private float suspensionDamper = 9000f;
+    [SerializeField] private float suspensionDistance = 0.08f;    // Reduced from 0.1f
+    [SerializeField] private float suspensionSpring = 90000f;    // Increased from 70000f
+    [SerializeField] private float suspensionDamper = 12000f;     // Increased from 9000f
     
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
@@ -53,10 +53,10 @@ public class HogController : NetworkBehaviour
 
     [Header("Network")]
     [SerializeField] private float serverValidationThreshold = 5.0f;  // How far client can move before server corrections
-    [SerializeField] private float clientUpdateInterval = 0.05f;      // How often client sends updates (20Hz)
-    [SerializeField] private float stateUpdateInterval = 0.1f;        // How often server broadcasts state (10Hz)
+    [SerializeField] private float clientUpdateInterval = 0.03f;      // How often client sends updates (33Hz) - faster now
+    [SerializeField] private float stateUpdateInterval = 0.06f;       // How often server broadcasts state (16Hz) - faster now
     [SerializeField] private float visualSmoothingSpeed = 10f;
-    [SerializeField] private bool debugMode = false;
+    [SerializeField] private bool debugMode = true;                   // Enable debug mode by default
 
     [Header("References")]
     [SerializeField] private Rigidbody rb;
@@ -372,7 +372,10 @@ public class HogController : NetworkBehaviour
             // Owner controls the vehicle
             HandleOwnerInput();
 
-            // Periodically send state to server for validation and broadcasting
+            // Send input to server every frame
+            ClientMove();
+
+            // Periodically send full state to server for validation and broadcasting
             _clientUpdateTimer += Time.deltaTime;
             if (_clientUpdateTimer >= clientUpdateInterval)
             {
@@ -424,6 +427,16 @@ public class HogController : NetworkBehaviour
         if (IsOwner)
         {
             // Owner physics already handled by input in HandleOwnerInput
+            if (!IsServer)
+            {
+                // Add some extra handling for non-host client owners
+                // This compensates for network delay by applying extra force
+                if (rb.linearVelocity.magnitude < 1f && Mathf.Abs(currentTorque) > 10f)
+                {
+                    // If we're applying torque but barely moving, add some extra force
+                    rb.AddForce(transform.forward * currentTorque * 0.1f, ForceMode.Acceleration);
+                }
+            }
         }
         else if (IsServer && !IsOwner)
         {
@@ -519,15 +532,38 @@ public class HogController : NetworkBehaviour
 
     private void ClientMove()
     {
+        // Only collect and send input if we're the owner
+        if (!IsOwner) return;
+        
         ClientInput input = CollectPlayerInput();
         
-        // Debug steering input
-        if (Mathf.Abs(input.steeringInput) > 0.01f)
+        // More verbose debug for throttle input
+        if (debugMode && (Mathf.Abs(input.moveInput) > 0.01f || Mathf.Abs(input.steeringInput) > 0.01f))
         {
-            Debug.Log($"Steering input: {input.steeringInput}");
+            Debug.Log($"Client sending input: moveInput={input.moveInput}, steeringInput={input.steeringInput}, brake={input.brakeInput}");
         }
         
+        // Send input to server
         SendInputServerRpc(input);
+        
+        // Also apply input locally for responsive feel
+        if (!IsServer) // If we're not the host
+        {
+            // Calculate steering angle locally
+            SteeringData steeringData = CalculateSteeringFromInput(input.steeringInput, input.moveInput);
+            
+            // Apply steering to wheels
+            ApplySteering(steeringData);
+            
+            // Calculate and apply torque locally for responsive feel
+            float targetTorque = Mathf.Clamp(input.moveInput, -1f, 1f) * maxTorque;
+            
+            // Apply motor torque directly for immediate response
+            for (int i = 0; i < wheelColliders.Length; i++)
+            {
+                wheelColliders[i].motorTorque = targetTorque;
+            }
+        }
     }
 
     private ClientInput CollectPlayerInput()
@@ -646,11 +682,30 @@ public class HogController : NetworkBehaviour
             currentTorque += Mathf.Sign(targetTorque - currentTorque) * torqueDelta;
         }
 
-        ApplyMotorTorque(moveInput, brakeInput);
+        if (debugMode && moveInput != 0)
+        {
+            Debug.Log($"Owner: moveInput={moveInput}, targetTorque={targetTorque}, currentTorque={currentTorque}");
+        }
+
+        // Apply motor torque with the calculated currentTorque
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            wheelColliders[i].motorTorque = currentTorque;
+        }
 
         // Update local velocity for drift detection
         localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
-        isDrifting.Value = localVelocityX > 0.4f;
+        
+        // Only update drift status on server, not directly from client
+        if (IsServer)
+        {
+            isDrifting.Value = Mathf.Abs(localVelocityX) > 0.4f;
+        }
+        else if (IsOwner)
+        {
+            // If client owner, send drift status to server via RPC
+            UpdateDriftingServerRpc(Mathf.Abs(localVelocityX) > 0.4f);
+        }
     }
 
     #endregion
@@ -663,10 +718,40 @@ public class HogController : NetworkBehaviour
         // Calculate steering angle server-side to ensure consistency
         SteeringData steeringData = CalculateSteeringFromInput(input.steeringInput, input.moveInput);
 
-        ApplyMotorTorque(input.moveInput, input.brakeInput);
+        // Debug input from client
+        if (debugMode && (Mathf.Abs(input.moveInput) > 0.01f || Mathf.Abs(input.steeringInput) > 0.01f))
+        {
+            Debug.Log($"Server received input from client {input.clientId}: moveInput={input.moveInput}, steeringInput={input.steeringInput}");
+        }
+
+        // Apply the same motor torque logic as in HandleOwnerInput
+        float targetTorque = Mathf.Clamp(input.moveInput, -1f, 1f) * maxTorque;
+        float torqueDelta = input.moveInput != 0 ?
+            (Time.deltaTime * maxTorque * accelerationFactor) :
+            (Time.deltaTime * maxTorque * decelerationFactor);
+
+        if (Mathf.Abs(targetTorque - currentTorque) <= torqueDelta)
+        {
+            currentTorque = targetTorque;
+        }
+        else
+        {
+            currentTorque += Mathf.Sign(targetTorque - currentTorque) * torqueDelta;
+        }
+
+        // Apply motor torque with the calculated currentTorque
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            wheelColliders[i].motorTorque = currentTorque;
+        }
+
         ApplySteering(steeringData);
 
-        isDrifting.Value = Mathf.Abs(localVelocityX) > .45f;
+        // Update local velocity for drift detection
+        localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
+        
+        // Only update drift status on server
+        isDrifting.Value = Mathf.Abs(localVelocityX) > 0.4f;
     }
 
     [ClientRpc]
@@ -769,12 +854,31 @@ public class HogController : NetworkBehaviour
             return;
         }
 
+        // Apply torque directly rather than using currentTorque to ensure consistency
         float motorTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
+
+        if (debugMode && moveInput != 0)
+        {
+            Debug.Log($"ApplyMotorTorque: moveInput={moveInput}, motorTorque={motorTorque}");
+        }
 
         for (int i = 0; i < wheelColliders.Length; i++)
         {
             wheelColliders[i].motorTorque = motorTorque;
+            
+            // Apply brake torque if requested
+            if (brakeInput > 0)
+            {
+                wheelColliders[i].brakeTorque = brakeInput * brakeTorque;
+            }
+            else
+            {
+                wheelColliders[i].brakeTorque = 0;
+            }
         }
+        
+        // Cache the current torque
+        currentTorque = motorTorque;
     }
 
     private void ApplySteering(SteeringData steeringData)
@@ -1088,6 +1192,15 @@ public class HogController : NetworkBehaviour
     {
         // Basic initialization for remote vehicles
         rb.isKinematic = false;
+        
+        // Ensure physics properties are consistent
+        rb.mass = 1200f;
+        rb.linearDamping = 0.1f;  // FIXED: Changed from linearDamping to drag
+        rb.angularDamping = 0.5f;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        
+        // Initialize the vehicle's physics
+        InitializeVehiclePhysics();
         
         // Initialize visual targets for interpolation
         visualPositionTarget = transform.position;
@@ -1429,6 +1542,13 @@ public class HogController : NetworkBehaviour
         {
             Debug.Log($"Physics re-enabled after respawn at {rb.position}");
         }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    private void UpdateDriftingServerRpc(bool isDriftingValue)
+    {
+        // Update the drift status on the server
+        isDrifting.Value = isDriftingValue;
     }
 
     #endregion

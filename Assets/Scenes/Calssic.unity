@@ -11612,7 +11612,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 807089655}
-    PlayerPrefab: {fileID: 4860473420482358805, guid: 53138586e07814f44b31acd45620b52a, type: 3}
+    PlayerPrefab: {fileID: 5750314436783337430, guid: 96685d1154cd97e4e8f4fb281f67cd83, type: 3}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: c09290748f1edf04eb767f0a127cc30c, type: 2}
@@ -13080,6 +13080,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca1ff9670fd63b943832e0fa5d9855e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mouseSensitivity: 0.7
 --- !u!4 &1651163010
 Transform:
   m_ObjectHideFlags: 0
