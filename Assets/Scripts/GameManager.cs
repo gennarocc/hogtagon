@@ -446,16 +446,36 @@ public class GameManager : NetworkBehaviour
 
     private void LockPlayerMovement()
     {
-        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
-        foreach (HogController player in players)
-            player.canMove = false;
+        // Server authority: only set canMove directly on server
+        if (IsServer)
+        {
+            HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+            foreach (HogController player in players)
+            {
+                player.canMove = false;
+                if (player.IsSpawned)
+                {
+                    player.SetCanMoveClientRpc(false);
+                }
+            }
+        }
     }
 
     private void UnlockPlayerMovement()
     {
-        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
-        foreach (HogController player in players)
-            player.canMove = true;
+        // Server authority: only set canMove directly on server
+        if (IsServer)
+        {
+            HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+            foreach (HogController player in players)
+            {
+                player.canMove = true;
+                if (player.IsSpawned)
+                {
+                    player.SetCanMoveClientRpc(true);
+                }
+            }
+        }
     }
 
     [ClientRpc]

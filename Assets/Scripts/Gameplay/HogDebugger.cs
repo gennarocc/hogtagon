@@ -300,7 +300,7 @@ public class HogDebugger : NetworkBehaviour
     private void CreateDebugUI()
     {
         // Create canvas if needed
-        Canvas canvas = FindObjectOfType<Canvas>();
+        Canvas canvas = FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             GameObject canvasObj = new GameObject("DebugCanvas");
@@ -338,9 +338,16 @@ public class HogDebugger : NetworkBehaviour
         debugText.fontSize = 20; // Much larger font size
         debugText.color = Color.white;
         debugText.alignment = TextAlignmentOptions.TopLeft;
-        debugText.enableWordWrapping = true;
+        debugText.textWrappingMode = TMPro.TextWrappingModes.Normal; // Enable word wrapping
         debugText.margin = new Vector4(5, 5, 5, 5); // Add margin for better readability
         debugText.richText = true; // Enable rich text for colors
+        
+        // Find TMP text component
+        var textComponent = FindFirstObjectByType<TMPro.TMP_Text>();
+        if (textComponent != null)
+        {
+            textComponent.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+        }
     }
     
     // Methods for external access to debug data
