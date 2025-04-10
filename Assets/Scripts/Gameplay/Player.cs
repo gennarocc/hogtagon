@@ -233,12 +233,8 @@ public class Player : NetworkBehaviour
     
     public void Respawn()
     {
-        // Ensure ConnectionManager exists
-        if (ConnectionManager.Instance == null) return;
-        
-        // Get updated playerData from connectionManager
-        PlayerData playerData = new PlayerData();
-        ConnectionManager.Instance.TryGetPlayerData(clientId, out playerData);
+        // Get the latest player data
+        ConnectionManager.Instance.TryGetPlayerData(clientId, out var playerData);
 
         if (IsServer)
         {
@@ -266,7 +262,7 @@ public class Player : NetworkBehaviour
         {
             // Client-side respawn request
             Debug.Log("Client requesting respawn");
-            // Find the HogController component in children
+            // Get the HogController component (now directly attached to this GameObject)
             HogController hogController = GetComponent<HogController>();
 
             if (hogController != null)

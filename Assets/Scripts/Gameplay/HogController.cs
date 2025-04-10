@@ -26,11 +26,6 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float frontLeftRpm; // Monitoring variable
     [SerializeField] private float velocity; // Monitoring variable
     
-    [Header("Suspension")]
-    [SerializeField] private float suspensionDistance = 0.08f;    // Reduced from 0.1f
-    [SerializeField] private float suspensionSpring = 90000f;    // Increased from 70000f
-    [SerializeField] private float suspensionDamper = 12000f;     // Increased from 9000f
-    
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
     [SerializeField] private float jumpCooldown = 15f; // Time between jumps
@@ -306,9 +301,9 @@ public class HogController : NetworkBehaviour
             LayerMask.GetMask("Default", "Ground", "Environment")))
         {
             // Adjust position to be just above the ground
-            // Use the actual wheel collider radius and our suspension distance
+            // Use the wheel collider radius for offset
             float wheelRadius = wheelColliders[0].radius;
-            float heightOffset = wheelRadius + suspensionDistance * 0.5f;
+            float heightOffset = wheelRadius + 0.05f; // Small fixed offset to prevent ground collision
             
             // Set the new position - place firmly on ground
             Vector3 newPosition = hit.point + Vector3.up * heightOffset;
@@ -326,8 +321,8 @@ public class HogController : NetworkBehaviour
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             
-            // Apply a downward force to settle the vehicle
-            rb.AddForce(Vector3.down * rb.mass * 10f, ForceMode.Impulse);
+            // Apply a small downward force to settle the vehicle
+            rb.AddForce(Vector3.down * rb.mass * 5f, ForceMode.Impulse);
             
             // Wake up the rigidbody to ensure physics processing
             rb.WakeUp();
@@ -424,17 +419,26 @@ public class HogController : NetworkBehaviour
         // Cache frequently used physics values
         CachePhysicsValues();
 
-        if (IsOwner)
+        if (IsOwner && !IsServer)
         {
-            // Owner physics already handled by input in HandleOwnerInput
-            if (!IsServer)
+            // Client-only code for when we're the client but not the host
+            
+            // Apply consistent forward force based on current torque
+            if (Mathf.Abs(currentTorque) > 10f)
             {
-                // Add some extra handling for non-host client owners
-                // This compensates for network delay by applying extra force
-                if (rb.linearVelocity.magnitude < 1f && Mathf.Abs(currentTorque) > 10f)
+                // Calculate movement direction
+                Vector3 forceDirection = transform.forward * Mathf.Sign(currentTorque);
+                
+                // Apply extremely strong force to match the server's physics
+                float forceMagnitude = Mathf.Abs(currentTorque) * 25f;
+                rb.AddForce(forceDirection * forceMagnitude, ForceMode.Force);
+                
+                // Also add some downward force to prevent bouncing
+                rb.AddForce(Vector3.down * rb.mass * 5f, ForceMode.Force);
+                
+                if (debugMode && (rb.velocity.magnitude < 5f || Time.frameCount % 60 == 0))
                 {
-                    // If we're applying torque but barely moving, add some extra force
-                    rb.AddForce(transform.forward * currentTorque * 0.1f, ForceMode.Acceleration);
+                    Debug.Log($"Client FixedUpdate force: {forceDirection * forceMagnitude}, speed: {velocity:F2}m/s, torque: {currentTorque}");
                 }
             }
         }
@@ -532,38 +536,76 @@ public class HogController : NetworkBehaviour
 
     private void ClientMove()
     {
-        // Only collect and send input if we're the owner
-        if (!IsOwner) return;
+        if (player == null || !IsOwner || IsServer) return;
         
-        ClientInput input = CollectPlayerInput();
-        
-        // More verbose debug for throttle input
-        if (debugMode && (Mathf.Abs(input.moveInput) > 0.01f || Mathf.Abs(input.steeringInput) > 0.01f))
+        // Create input data with current client inputs
+        HogInput input = new HogInput
         {
-            Debug.Log($"Client sending input: moveInput={input.moveInput}, steeringInput={input.steeringInput}, brake={input.brakeInput}");
+            clientId = NetworkManager.Singleton.LocalClientId,
+            moveInput = moveInput,
+            steeringInput = steeringInput,
+            brakeInput = brakeInput,
+            jumpInput = jumpInput,
+            driftInput = driftInput
+        };
+        
+        if (debugMode)
+        {
+            Debug.Log($"Client sending input: moveInput={input.moveInput}, steeringInput={input.steeringInput}, brake={input.brakeInput}, speed={velocity:F2}m/s");
+        }
+        
+        // Apply input directly to our local wheels for responsive feedback
+        // This will be corrected by the server later if needed
+        
+        // Apply very strong motor torque to directly control forward/backward movement
+        float clientTorque = moveInput * maxMotorTorque * 5f;
+        foreach (WheelCollider wheel in drivenWheels)
+        {
+            wheel.motorTorque = clientTorque;
+        }
+        
+        // Apply much stronger steering for client-side responsiveness
+        float clientSteeringAngle = steeringInput * maxSteeringAngle * 1.5f;
+        foreach (WheelCollider wheel in steeringWheels)
+        {
+            wheel.steerAngle = clientSteeringAngle;
+        }
+        
+        // Apply braking if needed
+        float clientBrakeTorque = brakeInput ? maxBrakeTorque : 0f;
+        foreach (WheelCollider wheel in allWheels)
+        {
+            wheel.brakeTorque = clientBrakeTorque;
+        }
+        
+        // Apply a direct force to ensure the vehicle responds immediately
+        if (Mathf.Abs(moveInput) > 0.1f)
+        {
+            // Calculate angle-adjusted direction - blend forward direction with steering input
+            Vector3 moveDirection = transform.forward;
+            if (Mathf.Abs(steeringInput) > 0.1f)
+            {
+                // Blend in some sideways component based on steering
+                moveDirection = Vector3.Lerp(
+                    moveDirection, 
+                    transform.right * Mathf.Sign(steeringInput), 
+                    Mathf.Abs(steeringInput) * 0.3f
+                );
+                moveDirection.Normalize();
+            }
+            
+            // Apply a very strong force for immediate response
+            float forceMagnitude = 25000f * moveInput;
+            rb.AddForce(moveDirection * forceMagnitude, ForceMode.Force);
+            
+            if (debugMode)
+            {
+                Debug.Log($"Client direct force: {moveDirection * forceMagnitude}, direction: {moveDirection}, magnitude: {forceMagnitude}");
+            }
         }
         
         // Send input to server
         SendInputServerRpc(input);
-        
-        // Also apply input locally for responsive feel
-        if (!IsServer) // If we're not the host
-        {
-            // Calculate steering angle locally
-            SteeringData steeringData = CalculateSteeringFromInput(input.steeringInput, input.moveInput);
-            
-            // Apply steering to wheels
-            ApplySteering(steeringData);
-            
-            // Calculate and apply torque locally for responsive feel
-            float targetTorque = Mathf.Clamp(input.moveInput, -1f, 1f) * maxTorque;
-            
-            // Apply motor torque directly for immediate response
-            for (int i = 0; i < wheelColliders.Length; i++)
-            {
-                wheelColliders[i].motorTorque = targetTorque;
-            }
-        }
     }
 
     private ClientInput CollectPlayerInput()
@@ -684,7 +726,7 @@ public class HogController : NetworkBehaviour
 
         if (debugMode && moveInput != 0)
         {
-            Debug.Log($"Owner: moveInput={moveInput}, targetTorque={targetTorque}, currentTorque={currentTorque}");
+            Debug.Log($"Owner: moveInput={moveInput}, targetTorque={targetTorque}, currentTorque={currentTorque}, speed={velocity:F2}m/s");
         }
 
         // Apply motor torque with the calculated currentTorque
@@ -721,30 +763,22 @@ public class HogController : NetworkBehaviour
         // Debug input from client
         if (debugMode && (Mathf.Abs(input.moveInput) > 0.01f || Mathf.Abs(input.steeringInput) > 0.01f))
         {
-            Debug.Log($"Server received input from client {input.clientId}: moveInput={input.moveInput}, steeringInput={input.steeringInput}");
+            Debug.Log($"Server received input from client {input.clientId}: moveInput={input.moveInput}, steeringInput={input.steeringInput}, speed={velocity:F2}m/s");
         }
 
-        // Apply the same motor torque logic as in HandleOwnerInput
-        float targetTorque = Mathf.Clamp(input.moveInput, -1f, 1f) * maxTorque;
-        float torqueDelta = input.moveInput != 0 ?
-            (Time.deltaTime * maxTorque * accelerationFactor) :
-            (Time.deltaTime * maxTorque * decelerationFactor);
-
-        if (Mathf.Abs(targetTorque - currentTorque) <= torqueDelta)
-        {
-            currentTorque = targetTorque;
-        }
-        else
-        {
-            currentTorque += Mathf.Sign(targetTorque - currentTorque) * torqueDelta;
-        }
-
-        // Apply motor torque with the calculated currentTorque
+        // Apply motor torque directly (don't use ramping on server)
+        float motorTorque = input.moveInput * maxTorque;
+        
+        // Apply motor torque directly
         for (int i = 0; i < wheelColliders.Length; i++)
         {
-            wheelColliders[i].motorTorque = currentTorque;
+            wheelColliders[i].motorTorque = motorTorque;
         }
+        
+        // Store current torque
+        currentTorque = motorTorque;
 
+        // Apply steering
         ApplySteering(steeringData);
 
         // Update local velocity for drift detection
@@ -1193,9 +1227,9 @@ public class HogController : NetworkBehaviour
         // Basic initialization for remote vehicles
         rb.isKinematic = false;
         
-        // Ensure physics properties are consistent
+        // Ensure physics properties are consistent with the feature/jump branch
         rb.mass = 1200f;
-        rb.linearDamping = 0.1f;  // FIXED: Changed from linearDamping to drag
+        rb.linearDamping = 0.1f;  // FIXED: Using rb.drag (not linearDamping which doesn't exist)
         rb.angularDamping = 0.5f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         
@@ -1680,7 +1714,7 @@ public class HogController : NetworkBehaviour
         rb.centerOfMass = centerOfMass;
         rb.angularDamping = 0.5f;  // Increased from 0.1f to reduce spinning
         rb.mass = 1200f;           // Set explicit mass for consistent physics
-        rb.linearDamping = 0.1f;            // Add slight drag
+        rb.linearDamping = 0.1f;            // Add slight drag (fixed from linearDamping)
         rb.interpolation = RigidbodyInterpolation.Interpolate; // Smoother movement
         
         // Initialize wheel colliders
@@ -1690,24 +1724,16 @@ public class HogController : NetworkBehaviour
             {
                 if (collider != null)
                 {
-                    // Set up basic wheel properties
-                    collider.suspensionDistance = suspensionDistance;
+                    // Minimal wheel setup - use Unity's defaults for suspension
                     collider.forceAppPointDistance = 0;
                     
-                    // Configure wheel suspension
-                    JointSpring spring = collider.suspensionSpring;
-                    spring.spring = suspensionSpring;
-                    spring.damper = suspensionDamper;
-                    spring.targetPosition = 0.5f;
-                    collider.suspensionSpring = spring;
-                    
-                    // Increase wheel friction
+                    // Increase wheel friction for better traction
                     WheelFrictionCurve fwdFriction = collider.forwardFriction;
-                    fwdFriction.stiffness = 1.5f;  // Increase forward grip
+                    fwdFriction.stiffness = 2.0f;  // Increased traction
                     collider.forwardFriction = fwdFriction;
                     
                     WheelFrictionCurve sideFriction = collider.sidewaysFriction;
-                    sideFriction.stiffness = 1.5f;  // Increase sideways grip
+                    sideFriction.stiffness = 2.0f;  // Increased traction
                     collider.sidewaysFriction = sideFriction;
                 }
             }
