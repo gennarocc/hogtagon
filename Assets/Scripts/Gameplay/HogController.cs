@@ -26,6 +26,11 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float frontLeftRpm; // Monitoring variable
     [SerializeField] private float velocity; // Monitoring variable
     
+    [Header("Suspension")]
+    [SerializeField] private float suspensionDistance = 0.2f;
+    [SerializeField] private float suspensionSpring = 35000f;
+    [SerializeField] private float suspensionDamper = 4500f;
+    
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
     [SerializeField] private float jumpCooldown = 15f; // Time between jumps
@@ -68,6 +73,17 @@ public class HogController : NetworkBehaviour
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.RTPC rpm;
 
+    [Header("Engine Settings")]
+    [SerializeField] private float minRPM = 500f;
+    [SerializeField] private float maxRPM = 7000f;
+    [SerializeField] private float idleRPM = 800f;
+    private float targetRPM;
+    private bool engineRunning;
+
+    [Header("Audio & Visual Effects")]
+    [SerializeField] private ParticleSystem exhaustParticles;
+    [SerializeField] private AudioSource engineAudioSource;
+
     #endregion
 
     #region Private Fields
@@ -86,14 +102,11 @@ public class HogController : NetworkBehaviour
     private List<float> _steeringInputsList = new List<float>();
     private float currentSteeringInput = 0f; // Current smoothed steering input
 
-    // Network variables
-    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
-    private NetworkVariable<bool> isJumping = new NetworkVariable<bool>(false);
-    private NetworkVariable<bool> jumpReady = new NetworkVariable<bool>(true);
-    private NetworkVariable<StateSnapshot> vehicleState = new NetworkVariable<StateSnapshot>(
-        new StateSnapshot(),
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Owner);
+    // Network variables moved to Awake to initialize early
+    private NetworkVariable<bool> isDrifting;
+    private NetworkVariable<bool> isJumping;
+    private NetworkVariable<bool> jumpReady;
+    private NetworkVariable<StateSnapshot> vehicleState;
 
     // Physics and control variables
     private float currentTorque;
@@ -177,48 +190,154 @@ public class HogController : NetworkBehaviour
 
     #region Unity Lifecycle Methods
 
+    private void Awake()
+    {
+        // Initialize network variables early to avoid permission issues
+        isDrifting = new NetworkVariable<bool>(false, 
+            NetworkVariableReadPermission.Everyone, 
+            NetworkVariableWritePermission.Server);
+            
+        isJumping = new NetworkVariable<bool>(false,
+            NetworkVariableReadPermission.Everyone, 
+            NetworkVariableWritePermission.Server);
+            
+        jumpReady = new NetworkVariable<bool>(true,
+            NetworkVariableReadPermission.Everyone, 
+            NetworkVariableWritePermission.Server);
+            
+        vehicleState = new NetworkVariable<StateSnapshot>(
+            new StateSnapshot(),
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Owner);
+            
+        // Initialize steering input buffer
+        _recentSteeringInputs = new Queue<float>(steeringBufferSize);
+        
+        // Get reference to the InputManager early
+        inputManager = InputManager.Instance;
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
         
-        // Register for state change callback
-        vehicleState.OnValueChanged += OnVehicleStateChanged;
-
-        // Get input manager reference
-        inputManager = InputManager.Instance;
+        // Get component references
+        SetupComponents();
         
-        // Get player component
-        player = transform.root.GetComponent<Player>();
+        // Initialize wheel meshes
+        SetupWheelMeshes();
         
-        if (player == null)
+        // Set initial state
+        engineRunning = false;
+        targetRPM = minRPM;
+        
+        // Only spawn effects on clients
+        if (IsClient)
         {
-            player = GetComponent<Player>();
-        }
-
-        if (IsOwner)
-        {
-            // Owner initializes immediately
-            InitializeOwnerVehicle();
+            // Setup visual effects
+            SetupEffects();
             
-            // Subscribe to input events
-            if (inputManager != null)
-            {
-                inputManager.JumpPressed += OnJumpPressed;
-                inputManager.HornPressed += OnHornPressed;
-            }
+            // Enable particle effects for all clients to see
+            EnableParticleEffects(false);
         }
-        else if (IsServer && !IsOwner)
+        
+        // Initialize the vehicle's physics
+        InitializeVehiclePhysics();
+        
+        if (debugMode)
         {
-            // Server initializes non-owned vehicles
-            InitializeServerControlledVehicle();
-        }
-        else
-        {
-            // Remote client needs server to tell it what to do
-            RequestInitialStateServerRpc();
+            Debug.Log($"OnNetworkSpawn - IsOwner: {IsOwner}, IsServer: {IsServer}, HasStateAuthority: {HasStateAuthority}");
         }
     }
     
+    private void Start()
+    {
+        // Ensure physically bodies settle on the ground
+        StartCoroutine(DelayedPhysicsEnable());
+        
+        // Initialize visual smoothing targets
+        visualPositionTarget = transform.position;
+        visualRotationTarget = transform.rotation;
+        visualVelocityTarget = Vector3.zero;
+
+        if (debugMode && IsOwner)
+        {
+            Debug.Log($"Start - Owner vehicle at {rb.position}, IsKinematic: {rb.isKinematic}");
+        }
+    }
+    
+    private IEnumerator DelayedPhysicsEnable()
+    {
+        // Wait one physics frame to ensure proper initialization
+        yield return new WaitForFixedUpdate();
+        
+        // Make sure rigidbody is not kinematic for all clients
+        rb.isKinematic = false;
+        
+        // Enable all wheel colliders
+        EnableWheelColliders();
+        
+        // Make sure all physics bodies are awake
+        rb.WakeUp();
+        
+        // Ensure the car is properly placed on the ground
+        AdjustPositionToGround();
+        
+        // Set hasReceivedInitialSync to true for all clients
+        hasReceivedInitialSync = true;
+        
+        if (debugMode)
+        {
+            Debug.Log($"DelayedPhysicsEnable - Position: {rb.position}, IsKinematic: {rb.isKinematic}");
+        }
+    }
+
+    private void AdjustPositionToGround()
+    {
+        // Only run this on the server or for the owner
+        if (!IsServer && !IsOwner) return;
+        
+        // Get the car's current position
+        Vector3 currentPosition = rb.position;
+        
+        // Cast a ray downward to find the ground
+        RaycastHit hit;
+        if (Physics.Raycast(currentPosition + Vector3.up * 5f, Vector3.down, out hit, 20f))
+        {
+            // Adjust position to be just above the ground
+            // Calculate how high the car should be based on wheel radius and suspension
+            float wheelRadius = 0.4f; // Approximate wheel radius
+            float suspensionDistance = 0.2f; // Approximate suspension distance
+            float heightOffset = wheelRadius + suspensionDistance;
+            
+            // Set the new position
+            Vector3 newPosition = hit.point + Vector3.up * heightOffset;
+            
+            // Apply the new position to both transform and rigidbody
+            transform.position = newPosition;
+            rb.position = newPosition;
+            
+            // Zero out any existing velocity
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            
+            // Wake up the rigidbody to ensure physics processing
+            rb.WakeUp();
+            
+            if (debugMode)
+            {
+                Debug.Log($"Adjusted car position to ground at {newPosition}, ground hit at {hit.point}");
+            }
+        }
+        else
+        {
+            if (debugMode)
+            {
+                Debug.LogWarning("Failed to find ground beneath car for position adjustment");
+            }
+        }
+    }
+
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
@@ -237,46 +356,9 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    private void Start()
-    {
-        // Get reference to the InputManager
-        if (inputManager == null)
-        {
-            inputManager = InputManager.Instance;
-            if (inputManager == null)
-            {
-                Debug.LogError("InputManager not found in the scene");
-            }
-        }
-
-        // Initialize steering input buffer
-        _recentSteeringInputs = new Queue<float>(steeringBufferSize);
-
-        rb.centerOfMass = centerOfMass;
-        InitializeWheelFriction();
-
-        // Only the server or owner should play the engine on sound
-        if (IsOwner || IsServer)
-        {
-            SoundManager.Instance.PlayNetworkedSound(transform.gameObject, SoundManager.SoundEffectType.EngineOn);
-        }
-
-        // Initialize visual smoothing targets
-        visualPositionTarget = transform.position;
-        visualRotationTarget = transform.rotation;
-        visualVelocityTarget = Vector3.zero;
-
-        if (debugMode && IsOwner)
-        {
-            Debug.Log($"Owner vehicle spawned at {rb.position}");
-        }
-    }
-
     private void Update()
     {
-        // Wait until properly initialized
-        if (!hasReceivedInitialSync) return;
-
+        // Perform updates regardless of initialization status
         if (IsOwner)
         {
             // Owner controls the vehicle
@@ -319,15 +401,14 @@ public class HogController : NetworkBehaviour
             SmoothRemoteVehicleVisuals();
         }
 
-        // Common updates
+        // Common updates - always perform them for visual consistency
         AnimateWheels();
         UpdateDriftEffects();
     }
 
     private void FixedUpdate()
     {
-        // Wait until properly initialized
-        if (!hasReceivedInitialSync) return;
+        // Always apply physics for consistent behavior
         
         // Cache frequently used physics values
         CachePhysicsValues();
@@ -567,7 +648,7 @@ public class HogController : NetworkBehaviour
 
     #region Networking
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = true)]
     private void SendInputServerRpc(ClientInput input)
     {
         // Calculate steering angle server-side to ensure consistency
@@ -713,7 +794,7 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = true)]
     private void JumpServerRpc()
     {
         // Check if jump is allowed
@@ -951,14 +1032,17 @@ public class HogController : NetworkBehaviour
     {
         // Configure physics
         rb.isKinematic = false;
-        EnableWheelColliders();
-
+        
+        // Update transform and rigidbody positions to match
+        transform.position = rb.position;
+        transform.rotation = rb.rotation;
+        
         // Mark as initialized
         hasReceivedInitialSync = true;
 
         if (debugMode)
         {
-            Debug.Log("[Owner] Vehicle initialized");
+            Debug.Log($"[Owner] Vehicle initialized at {rb.position}");
         }
     }
 
@@ -966,7 +1050,7 @@ public class HogController : NetworkBehaviour
     {
         // Get the Player component to access spawn point
         // Get player data to use spawn point
-        if (ConnectionManager.Instance.TryGetPlayerData(player.clientId, out PlayerData playerData))
+        if (ConnectionManager.Instance != null && ConnectionManager.Instance.TryGetPlayerData(player.clientId, out PlayerData playerData))
         {
             Vector3 initialPosition = playerData.spawnPoint;
             Quaternion initialRotation = Quaternion.LookRotation(
@@ -986,17 +1070,33 @@ public class HogController : NetworkBehaviour
 
         // Configure physics
         rb.isKinematic = false;
-        EnableWheelColliders();
-
+        
         // Mark as initialized
         hasReceivedInitialSync = true;
+    }
+    
+    private void InitializeClientVehicle()
+    {
+        // Basic initialization for remote vehicles
+        rb.isKinematic = false;
+        
+        // Initialize visual targets for interpolation
+        visualPositionTarget = transform.position;
+        visualRotationTarget = transform.rotation;
+        visualVelocityTarget = Vector3.zero;
+        
+        // Mark as not ready yet - will be marked ready in DelayedPhysicsEnable
+        hasReceivedInitialSync = false;
     }
 
     private void EnableWheelColliders()
     {
         foreach (var wheel in wheelColliders)
         {
-            wheel.enabled = true;
+            if (wheel != null)
+            {
+                wheel.enabled = true;
+            }
         }
     }
 
@@ -1146,35 +1246,27 @@ public class HogController : NetworkBehaviour
     
     #region Network RPCs
 
-    [ServerRpc(RequireOwnership = true)]
-    private void SendStateForValidationServerRpc(StateSnapshot state)
-    {
-        // This RPC is just to notify the server to validate the state
-        // The actual state is already sent via NetworkVariable
-        if (debugMode)
-        {
-            Debug.Log($"[Server] Received state for validation: {state.position}");
-        }
-    }
-
     [ServerRpc(RequireOwnership = false)]
-    private void RequestInitialStateServerRpc()
+    private void RequestInitialStateServerRpc(ServerRpcParams serverRpcParams = default)
     {
+        ulong clientId = serverRpcParams.Receive.SenderClientId;
+        
         // Client requests initial state from server
         if (debugMode)
         {
-            Debug.Log("[Server] Client requested initial state");
+            Debug.Log($"[Server] Client {clientId} requested initial state");
         }
 
         // Send the current state to the requesting client
-        SendInitialStateClientRpc(vehicleState.Value);
+        SendInitialStateClientRpc(vehicleState.Value, 
+            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } } });
     }
 
     [ClientRpc]
-    private void SendInitialStateClientRpc(StateSnapshot state)
+    private void SendInitialStateClientRpc(StateSnapshot state, ClientRpcParams clientRpcParams = default)
     {
-        // Skip server and owner (they don't need initialization)
-        if (IsServer || IsOwner || hasReceivedInitialSync) return;
+        // Skip if we're already initialized
+        if (hasReceivedInitialSync) return;
 
         // Apply initial state
         rb.position = state.position;
@@ -1197,6 +1289,17 @@ public class HogController : NetworkBehaviour
         if (debugMode)
         {
             Debug.Log($"[Client] Received initial state: {state.position}");
+        }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    private void SendStateForValidationServerRpc(StateSnapshot state)
+    {
+        // This RPC is just to notify the server to validate the state
+        // The actual state is already sent via NetworkVariable
+        if (debugMode)
+        {
+            Debug.Log($"[Server] Received state for validation: {state.position}");
         }
     }
 
@@ -1320,4 +1423,157 @@ public class HogController : NetworkBehaviour
     }
 
     #endregion
+
+    private void SetupComponents()
+    {
+        // Get input manager reference (in case Instance wasn't ready in Awake)
+        if (inputManager == null)
+        {
+            inputManager = InputManager.Instance;
+        }
+        
+        // Get player component
+        player = transform.root.GetComponent<Player>();
+        
+        if (player == null)
+        {
+            player = GetComponent<Player>();
+        }
+
+        // Set up basic physics properties
+        rb.centerOfMass = centerOfMass;
+        
+        // Subscribe to input events if this is the owner
+        if (IsOwner && inputManager != null)
+        {
+            inputManager.JumpPressed += OnJumpPressed;
+            inputManager.HornPressed += OnHornPressed;
+        }
+
+        // Register for state change callback
+        vehicleState.OnValueChanged += OnVehicleStateChanged;
+    }
+
+    private void SetupWheelMeshes()
+    {
+        // Initialize wheel meshes if they're assigned
+        if (wheelTransforms != null && wheelTransforms.Length > 0 && wheelColliders != null && wheelColliders.Length > 0)
+        {
+            // Ensure counts match
+            int meshCount = Mathf.Min(wheelTransforms.Length, wheelColliders.Length);
+            
+            for (int i = 0; i < meshCount; i++)
+            {
+                if (wheelTransforms[i] != null && wheelColliders[i] != null)
+                {
+                    // Initialize wheel position and rotation
+                    UpdateWheelMesh(wheelColliders[i], wheelTransforms[i]);
+                }
+            }
+        }
+    }
+
+    private void SetupEffects()
+    {
+        // Find visual effects if not assigned
+        if (wheelParticleSystems == null || wheelParticleSystems.Length < 2)
+        {
+            Debug.LogWarning("Wheel particle systems not assigned in HogController");
+            return;
+        }
+        
+        // Find audio sources if not assigned
+        if (engineAudioSource == null)
+        {
+            AudioSource[] sources = GetComponentsInChildren<AudioSource>();
+            if (sources.Length > 0)
+            {
+                engineAudioSource = sources[0];
+            }
+        }
+    }
+
+    private void EnableParticleEffects(bool enable)
+    {
+        // Enable/disable wheel particle effects
+        if (wheelParticleSystems != null && wheelParticleSystems.Length > 0)
+        {
+            foreach (var ps in wheelParticleSystems)
+            {
+                if (ps != null)
+                {
+                    if (enable)
+                    {
+                        ps.Play();
+                    }
+                    else
+                    {
+                        ps.Stop();
+                    }
+                }
+            }
+        }
+
+        // Enable/disable exhaust particles
+        if (exhaustParticles != null)
+        {
+            if (enable)
+            {
+                exhaustParticles.Play();
+            }
+            else
+            {
+                exhaustParticles.Stop();
+            }
+        }
+    }
+
+    private void UpdateWheelMesh(WheelCollider collider, Transform wheelTransform)
+    {
+        if (collider == null || wheelTransform == null) return;
+        
+        // Get wheel pose
+        Vector3 position;
+        Quaternion rotation;
+        collider.GetWorldPose(out position, out rotation);
+        
+        // Apply to visual wheel
+        wheelTransform.position = position;
+        wheelTransform.rotation = rotation;
+    }
+
+    // Helper property for checking state authority
+    public bool HasStateAuthority => IsServer || IsOwner;
+
+    private void InitializeVehiclePhysics()
+    {
+        // Set up basic physics properties
+        rb.centerOfMass = centerOfMass;
+        rb.angularDamping = 0.1f;
+        
+        // Initialize wheel colliders
+        if (wheelColliders != null && wheelColliders.Length > 0)
+        {
+            foreach (var collider in wheelColliders)
+            {
+                if (collider != null)
+                {
+                    // Set up basic wheel properties
+                    collider.suspensionDistance = suspensionDistance;
+                    collider.forceAppPointDistance = 0;
+                    
+                    // Configure wheel suspension
+                    JointSpring spring = collider.suspensionSpring;
+                    spring.spring = suspensionSpring;
+                    spring.damper = suspensionDamper;
+                    spring.targetPosition = 0.5f;
+                    collider.suspensionSpring = spring;
+                }
+            }
+        }
+        
+        // Set initial vehicle parameters
+        engineRunning = false;
+        targetRPM = minRPM;
+    }
 }
