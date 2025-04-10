@@ -45,6 +45,13 @@ The `ClientAuthoritativePlayer` prefab has the Rigidbody at the top level, while
    - Jumps and explosion effects
    - Respawning after death
 
+### 5. Update NetworkManager Prefab Configuration
+
+1. Find the NetworkManager in the scene hierarchy
+2. In the inspector, locate the NetworkManager component's "Network Prefabs" list
+3. Make sure it's using the updated `Player` prefab and not the `ClientAuthoritativePlayer` prefab
+4. Update the reference, or if using a Network Prefab Asset, ensure it's updated there (check `DefaultNetworkPrefabs.asset`)
+
 ## Important Changes to Player.cs
 
 If `Player.cs` has references to `NetworkHogController`, update them to use `HogController` instead:
