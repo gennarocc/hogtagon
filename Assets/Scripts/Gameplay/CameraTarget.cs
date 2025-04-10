@@ -12,6 +12,13 @@ public class CameraTarget : MonoBehaviour
     [Tooltip("Whether to smooth position using fixed update for more consistent results")]
     [SerializeField] private bool useFixedUpdate = true;
     
+    [Header("Position Offset")]
+    [Tooltip("Offset from the target's center (local space)")]
+    [SerializeField] private Vector3 targetOffset = new Vector3(0, 1.5f, 2f);
+    
+    [Tooltip("Whether to apply the offset in local or world space")]
+    [SerializeField] private bool useLocalOffset = true;
+    
     [Header("Advanced Settings")]
     [Tooltip("Apply prediction to target movement to reduce lag")]
     [SerializeField] private bool predictTargetMovement = true;
@@ -29,8 +36,8 @@ public class CameraTarget : MonoBehaviour
     {
         if (_target != null)
         {
-            transform.position = _target.position;
-            _lastTargetPosition = _target.position;
+            UpdateTargetPosition();
+            _lastTargetPosition = GetOffsetTargetPosition();
         }
     }
 
@@ -50,19 +57,37 @@ public class CameraTarget : MonoBehaviour
         }
     }
     
+    private Vector3 GetOffsetTargetPosition()
+    {
+        if (_target == null) return transform.position;
+        
+        if (useLocalOffset)
+        {
+            // Apply offset in the target's local space
+            return _target.TransformPoint(targetOffset);
+        }
+        else
+        {
+            // Apply offset in world space
+            return _target.position + targetOffset;
+        }
+    }
+    
     private void UpdateCameraPosition(float deltaTime)
     {
         if (_target == null) return;
         
+        Vector3 offsetTargetPos = GetOffsetTargetPosition();
+        
         // Calculate target velocity for prediction
         if (predictTargetMovement)
         {
-            _targetVelocity = (_target.position - _lastTargetPosition) / deltaTime;
-            _lastTargetPosition = _target.position;
+            _targetVelocity = (offsetTargetPos - _lastTargetPosition) / deltaTime;
+            _lastTargetPosition = offsetTargetPos;
         }
         
         // Calculate target position with prediction
-        Vector3 targetPosition = _target.position;
+        Vector3 targetPosition = offsetTargetPos;
         if (predictTargetMovement)
         {
             targetPosition += _targetVelocity * predictionStrength;
@@ -83,6 +108,15 @@ public class CameraTarget : MonoBehaviour
             );
         }
     }
+    
+    // Helper method to immediately update target position (useful for teleporting)
+    private void UpdateTargetPosition()
+    {
+        if (_target != null)
+        {
+            transform.position = GetOffsetTargetPosition();
+        }
+    }
 
     public void SetTarget(Transform target)
     {
@@ -91,7 +125,8 @@ public class CameraTarget : MonoBehaviour
         // Reset tracking when target changes
         if (_target != null)
         {
-            _lastTargetPosition = _target.position;
+            UpdateTargetPosition(); // Immediately update position
+            _lastTargetPosition = GetOffsetTargetPosition();
             _targetVelocity = Vector3.zero;
             _currentVelocity = Vector3.zero;
         }
