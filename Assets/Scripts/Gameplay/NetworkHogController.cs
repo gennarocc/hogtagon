@@ -3,6 +3,7 @@ using Unity.Netcode;
 using Cinemachine;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Rigidbody))]
 public class NetworkHogController : NetworkBehaviour
@@ -17,10 +18,23 @@ public class NetworkHogController : NetworkBehaviour
     [SerializeField] private float brakeTorque = 300f;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
+    [SerializeField, Range(0.1f, 3f)] private float steeringInputSmoothing = 0.8f; // How quickly steering increases to max
     [SerializeField, Range(0.1f, 10f)] private float accelerationFactor = 2f;
     [SerializeField, Range(0.1f, 5f)] private float decelerationFactor = 1f;
     [SerializeField] private float jumpForce = 7f;
     [SerializeField] private float jumpCooldown = 15f;
+    [SerializeField, Range(0f, 1f)] private float rearSteeringAmount = .35f;
+
+    [Header("Input Smoothing Settings")]
+    [SerializeField, Range(1, 10)] public int steeringBufferSize = 5;
+    [SerializeField, Range(0f, 20f)] public float minDeadzone = 3f;
+    [SerializeField, Range(0f, 30f)] public float maxDeadzone = 10f;
+    [SerializeField, Range(10f, 50f)] public float maxSpeedForSteering = 20f;
+    [SerializeField, Range(0.1f, 1f)] public float minSteeringResponse = 0.6f;
+    [SerializeField, Range(0.5f, 1f)] public float maxSteeringResponse = 1.0f;
+    [SerializeField] public enum WeightingMethod { Exponential, Logarithmic, Linear }
+    [SerializeField] public WeightingMethod inputWeightingMethod = WeightingMethod.Linear;
+    [SerializeField, Range(0.1f, 3f)] public float weightingFactor = 1.0f;
 
     [Header("Network")]
     [SerializeField] private float serverValidationThreshold = 5.0f;  // How far client can move before server corrections
@@ -31,6 +45,7 @@ public class NetworkHogController : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] private Rigidbody rb;
+    [SerializeField] private CinemachineFreeLook freeLookCamera;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
     [SerializeField] private Transform[] wheelMeshes = new Transform[4];
     [SerializeField] private HogVisualEffects vfxController;
@@ -44,6 +59,7 @@ public class NetworkHogController : NetworkBehaviour
     private bool hasReceivedInitialSync = false;
     private float currentTorque;
     private float localVelocityX;
+    private float currentSteeringInput = 0f; // Current smoothed steering input value
     private bool collisionForceOnCooldown = false;
     private float cameraAngle;
     private bool jumpOnCooldown = false;
@@ -64,6 +80,15 @@ public class NetworkHogController : NetworkBehaviour
     public bool JumpOnCooldown => jumpOnCooldown;
     public float JumpCooldownRemaining => jumpCooldownRemaining;
     public float JumpCooldownTotal => jumpCooldown;
+    
+    // Input Smoothing
+    private Queue<float> _recentSteeringInputs;
+    private List<float> _steeringInputsList = new List<float>();
+    private float cachedSpeed;
+    private float cachedForwardVelocity;
+    
+    // Constants
+    private const float MIN_VELOCITY_FOR_REVERSE = -0.5f;
 
     #endregion
 
@@ -151,10 +176,16 @@ public class NetworkHogController : NetworkBehaviour
         rb.centerOfMass = centerOfMass;
         InitializeWheelFriction();
 
+        // Initialize steering input buffer
+        _recentSteeringInputs = new Queue<float>(steeringBufferSize);
+        
+        // Get player component
+        player = transform.root.GetComponent<Player>();
+
         // Only the server or owner should play the engine on sound
         if (IsOwner || IsServer)
         {
-            SoundManager.Instance.PlayNetworkedSound(transform.gameObject, SoundManager.SoundEffectType.EngineOn);
+            SoundManager.Instance.PlayNetworkedSound(transform.root.gameObject, SoundManager.SoundEffectType.EngineOn);
         }
 
         // Initialize visual smoothing targets
@@ -332,16 +363,23 @@ public class NetworkHogController : NetworkBehaviour
         float moveInput = inputManager.ThrottleInput - inputManager.BrakeInput;
         float brakeInput = inputManager.BrakeInput;
 
-        // Get camera angle
-        Vector2 lookInput = inputManager.LookInput;
-        cameraAngle = CalculateCameraAngle(lookInput);
+        // Get steering input directly from input manager - COMPLETELY INDEPENDENT FROM CAMERA
+        float rawSteeringInput = inputManager.SteeringInput;
+        
+        // Apply input smoothing to steering
+        currentSteeringInput = Mathf.Lerp(currentSteeringInput, rawSteeringInput, Time.deltaTime * (1f / steeringInputSmoothing));
+        float smoothedSteeringInput = ApplyInputSmoothing(currentSteeringInput);
 
-        // Calculate steering angle
-        float steeringAngle = CalculateSteering(cameraAngle, moveInput);
+        // Calculate steering angle from input using the direct control method
+        float steeringAngle = CalculateSteering(smoothedSteeringInput, moveInput);
 
         // Apply steering to wheels
         ApplySteeringToWheels(steeringAngle);
 
+        // Calculate camera angle separately from steering - THIS IS ONLY FOR CAMERA CONTROL, NOT STEERING
+        Vector2 lookInput = inputManager.LookInput;
+        cameraAngle = CalculateCameraAngle(lookInput);
+        
         // Calculate and apply torque
         float targetTorque = Mathf.Clamp(moveInput, -1f, 1f) * maxTorque;
         float torqueDelta = moveInput != 0 ?
@@ -398,6 +436,9 @@ public class NetworkHogController : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Calculates the camera angle based on input - ONLY USED FOR CAMERA CONTROL, NOT FOR STEERING
+    /// </summary>
     private float CalculateCameraAngle(Vector2 lookInput = default)
     {
         // Check if any menus are active - if so, don't update camera angle
@@ -423,22 +464,112 @@ public class NetworkHogController : NetworkBehaviour
         }
     }
 
+    private float ApplyInputSmoothing(float rawSteeringInput)
+    {
+        // Add to input buffer for smoothing
+        _recentSteeringInputs.Enqueue(rawSteeringInput);
+        if (_recentSteeringInputs.Count > steeringBufferSize)
+            _recentSteeringInputs.Dequeue();
+
+        // Convert queue to list for weighted processing
+        _steeringInputsList.Clear();
+        _steeringInputsList.AddRange(_recentSteeringInputs);
+
+        // Return weighted average if we have inputs
+        if (_steeringInputsList.Count > 0)
+        {
+            return CalculateWeightedAverage(_steeringInputsList, weightingFactor);
+        }
+
+        return rawSteeringInput;
+    }
+
+    private float CalculateWeightedAverage(List<float> values, float weightingFactor)
+    {
+        if (values.Count == 0) return 0f;
+        if (values.Count == 1) return values[0];
+
+        float total = 0f;
+        float weightSum = 0f;
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            // Position from most recent (0) to oldest (count-1)
+            int position = values.Count - 1 - i;
+
+            // Calculate weight based on weighting method
+            float weight = 1.0f;
+
+            switch (inputWeightingMethod)
+            {
+                case WeightingMethod.Exponential:
+                    // Exponential drop-off: weight = e^(-factor*position)
+                    weight = Mathf.Exp(-weightingFactor * position);
+                    break;
+
+                case WeightingMethod.Logarithmic:
+                    // Logarithmic drop-off: weight = 1 / (1 + factor*ln(position+1))
+                    weight = 1.0f / (1.0f + weightingFactor * Mathf.Log(position + 1));
+                    break;
+
+                case WeightingMethod.Linear:
+                    // Linear drop-off: weight = 1 - (position * factor / count)
+                    weight = Mathf.Max(0, 1.0f - (position * weightingFactor / values.Count));
+                    break;
+            }
+
+            float angle = values[i];
+            total += angle * weight;
+            weightSum += weight;
+        }
+
+        return total / weightSum;
+    }
+
     #endregion
 
     #region Vehicle Physics
 
     private float CalculateSteering(float steeringInput, float moveInput)
     {
-        float forwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
-        bool isMovingInReverse = forwardVelocity < -0.5f;
+        cachedSpeed = rb.linearVelocity.magnitude;
+        cachedForwardVelocity = Vector3.Dot(rb.linearVelocity, transform.forward);
+        
+        // Apply adaptive deadzone - higher deadzone at higher speeds
+        float speedFactor = Mathf.Clamp01(cachedSpeed / maxSpeedForSteering);
+        
+        // Convert the -1 to 1 steering input to an angle based on maxSteeringAngle
+        float steeringAngle = steeringInput * maxSteeringAngle;
+        
+        // If steering input is small, treat it as zero
+        if (Math.Abs(steeringInput) < 0.05f)
+            steeringAngle = 0f;
 
-        // Invert steering for reverse driving
-        if (isMovingInReverse && moveInput < 0)
+        // Check if car is actually moving in reverse
+        bool isMovingInReverse = cachedForwardVelocity < MIN_VELOCITY_FOR_REVERSE;
+
+        // Improved reverse handling - check both the car's actual movement direction 
+        // and the player's intent (trying to go backward with S/down)
+        bool isReverseGear = moveInput < -0.1f;
+        bool shouldUseReverseControls = isReverseGear;
+        
+        // For reverse, we invert the steering direction
+        float adjustedSteeringAngle = steeringAngle;
+        if (shouldUseReverseControls)
         {
-            steeringInput = -steeringInput;
+            // In reverse gear, invert the steering for natural feel
+            adjustedSteeringAngle = -steeringAngle;
+            
+            // Increase steering response in reverse for better control at low speeds
+            float reverseSteeringBoost = Mathf.Lerp(1.2f, 1.0f, Mathf.Clamp01(cachedSpeed / 5f));
+            adjustedSteeringAngle *= reverseSteeringBoost;
         }
 
-        return Mathf.Clamp(steeringInput, -maxSteeringAngle, maxSteeringAngle);
+        // Apply speed-based response - gentler at higher speeds for stability
+        float steeringResponse = Mathf.Lerp(maxSteeringResponse, minSteeringResponse, speedFactor);
+        float finalSteeringAngle = adjustedSteeringAngle * steeringResponse;
+        
+        return finalSteeringAngle;
     }
 
     private void ApplySteeringToWheels(float steeringAngle)
@@ -448,7 +579,7 @@ public class NetworkHogController : NetworkBehaviour
         wheelColliders[1].steerAngle = Mathf.Lerp(wheelColliders[1].steerAngle, steeringAngle, steeringSpeed);
 
         // Rear wheels counter-steering
-        float rearSteeringAngle = steeringAngle * -0.35f;
+        float rearSteeringAngle = steeringAngle * -rearSteeringAmount;
         wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, rearSteeringAngle, steeringSpeed);
         wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, rearSteeringAngle, steeringSpeed);
     }
@@ -476,7 +607,7 @@ public class NetworkHogController : NetworkBehaviour
         // This is used for server-side validation and for AI vehicles
         if (!IsOwner && IsServer)
         {
-            // Apply steering and motor torque
+            // Apply direct steering angle from network state (not camera-based)
             ApplySteeringToWheels(vehicleState.Value.steeringAngle);
             ApplyMotorTorqueToWheels(vehicleState.Value.motorTorque);
         }
@@ -652,7 +783,7 @@ public class NetworkHogController : NetworkBehaviour
             rotation = rb.rotation,
             velocity = rb.linearVelocity,
             angularVelocity = rb.angularVelocity,
-            steeringAngle = wheelColliders[0].steerAngle,
+            steeringAngle = wheelColliders[0].steerAngle, // Use actual wheel steering angle
             motorTorque = wheelColliders[0].motorTorque,
             updateId = (uint)Time.frameCount // Simple unique ID
         };

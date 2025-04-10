@@ -24,8 +24,12 @@ public class InputManager : MonoBehaviour
     private float _throttleInput;
     private float _brakeInput;
     private Vector2 _lookInput;
+    private float _steeringInput; // Added steering input for direct control
     private bool _isHonking;
     private bool _isJumping;
+
+    // Sensitivity settings
+    [SerializeField] private float mouseSensitivity = 0.7f; // 0.7 = 30% reduction from normal
 
     // Current action map
     private enum InputState { Gameplay, UI }
@@ -51,6 +55,7 @@ public class InputManager : MonoBehaviour
     public float ThrottleInput => _throttleInput;
     public float BrakeInput => _brakeInput;
     public Vector2 LookInput => _lookInput;
+    public float SteeringInput => _steeringInput; // Added accessor for direct steering
     public bool IsHonking => _isHonking;
     public bool IsUsingGamepad => _usingGamepad;
 
@@ -82,6 +87,10 @@ public class InputManager : MonoBehaviour
         controls.Gameplay.Brake.performed += ctx => _brakeInput = ctx.ReadValue<float>();
         controls.Gameplay.Brake.canceled += ctx => _brakeInput = 0f;
 
+        // Steering input for direct control - uses horizontal input from keyboard (A/D) or gamepad left stick
+        controls.Gameplay.Steer.performed += ctx => _steeringInput = ctx.ReadValue<float>();
+        controls.Gameplay.Steer.canceled += ctx => _steeringInput = 0f;
+
         // Jump action
         controls.Gameplay.Jump.performed += ctx => JumpPressed?.Invoke();
 
@@ -94,7 +103,20 @@ public class InputManager : MonoBehaviour
         controls.Gameplay.Honk.canceled += ctx => _isHonking = false;
 
         // Look input
-        controls.Gameplay.Look.performed += ctx => _lookInput = ctx.ReadValue<Vector2>();
+        controls.Gameplay.Look.performed += ctx => 
+        {
+            // Apply sensitivity reduction only for mouse input
+            if (!_usingGamepad && Mouse.current != null) 
+            {
+                Vector2 rawInput = ctx.ReadValue<Vector2>();
+                _lookInput = rawInput * mouseSensitivity;
+            }
+            else
+            {
+                // Keep gamepad sensitivity at 100%
+                _lookInput = ctx.ReadValue<Vector2>();
+            }
+        };
         controls.Gameplay.Look.canceled += ctx => _lookInput = Vector2.zero;
 
         // ShowScoreboard
