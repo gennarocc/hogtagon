@@ -27,9 +27,9 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float velocity; // Monitoring variable
     
     [Header("Suspension")]
-    [SerializeField] private float suspensionDistance = 0.2f;
-    [SerializeField] private float suspensionSpring = 35000f;
-    [SerializeField] private float suspensionDamper = 4500f;
+    [SerializeField] private float suspensionDistance = 0.1f;
+    [SerializeField] private float suspensionSpring = 70000f;
+    [SerializeField] private float suspensionDamper = 9000f;
     
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
@@ -302,24 +302,32 @@ public class HogController : NetworkBehaviour
         
         // Cast a ray downward to find the ground
         RaycastHit hit;
-        if (Physics.Raycast(currentPosition + Vector3.up * 5f, Vector3.down, out hit, 20f))
+        if (Physics.Raycast(currentPosition + Vector3.up * 5f, Vector3.down, out hit, 20f, 
+            LayerMask.GetMask("Default", "Ground", "Environment")))
         {
             // Adjust position to be just above the ground
-            // Calculate how high the car should be based on wheel radius and suspension
-            float wheelRadius = 0.4f; // Approximate wheel radius
-            float suspensionDistance = 0.2f; // Approximate suspension distance
-            float heightOffset = wheelRadius + suspensionDistance;
+            // Use the actual wheel collider radius and our suspension distance
+            float wheelRadius = wheelColliders[0].radius;
+            float heightOffset = wheelRadius + suspensionDistance * 0.5f;
             
-            // Set the new position
+            // Set the new position - place firmly on ground
             Vector3 newPosition = hit.point + Vector3.up * heightOffset;
             
             // Apply the new position to both transform and rigidbody
             transform.position = newPosition;
             rb.position = newPosition;
             
+            // Make sure rotation is upright aligned with ground normal
+            Quaternion groundAlignment = Quaternion.FromToRotation(transform.up, hit.normal);
+            transform.rotation = groundAlignment * transform.rotation;
+            rb.rotation = transform.rotation;
+            
             // Zero out any existing velocity
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            
+            // Apply a downward force to settle the vehicle
+            rb.AddForce(Vector3.down * rb.mass * 10f, ForceMode.Impulse);
             
             // Wake up the rigidbody to ensure physics processing
             rb.WakeUp();
@@ -470,28 +478,29 @@ public class HogController : NetworkBehaviour
         Vector3 currentVelocity = rb.linearVelocity;
         Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
 
-        // Start with a position boost for immediate feedback
-        Vector3 currentPos = rb.position;
-        Vector3 targetPos = currentPos + Vector3.up * 1.5f; // Small initial boost
-        rb.MovePosition(targetPos);
+        // Calculate jump force based on vehicle mass
+        float adjustedJumpForce = jumpForce * (rb.mass / 1000f);
 
         // Apply a sharper upward impulse for faster rise
-        float upwardVelocity = jumpForce * 1.2f;
+        float upwardVelocity = adjustedJumpForce * 2.0f;
 
         // Combine horizontal momentum with new vertical impulse
-        Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
+        Vector3 newVelocity = horizontalVelocity + Vector3.up * upwardVelocity;
         rb.linearVelocity = newVelocity;
 
         // Add a bit more forward boost in the car's facing direction
-        rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+        rb.AddForce(transform.forward * adjustedJumpForce * 4f, ForceMode.Impulse);
+
+        // Start coroutine to temporarily increase gravity after apex of jump
+        StartCoroutine(TemporarilyIncreaseGravity(rb));
 
         // Play jump sound
         SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogJump);
-        
-        // Play jump particle effects
-        foreach (var ps in jumpParticleSystems)
+
+        // Trigger jump visual effects
+        if (IsOwner)
         {
-            ps.Play();
+            JumpServerRpc();
         }
     }
 
@@ -1549,7 +1558,10 @@ public class HogController : NetworkBehaviour
     {
         // Set up basic physics properties
         rb.centerOfMass = centerOfMass;
-        rb.angularDamping = 0.1f;
+        rb.angularDamping = 0.5f;  // Increased from 0.1f to reduce spinning
+        rb.mass = 1200f;           // Set explicit mass for consistent physics
+        rb.linearDamping = 0.1f;            // Add slight drag
+        rb.interpolation = RigidbodyInterpolation.Interpolate; // Smoother movement
         
         // Initialize wheel colliders
         if (wheelColliders != null && wheelColliders.Length > 0)
@@ -1568,6 +1580,15 @@ public class HogController : NetworkBehaviour
                     spring.damper = suspensionDamper;
                     spring.targetPosition = 0.5f;
                     collider.suspensionSpring = spring;
+                    
+                    // Increase wheel friction
+                    WheelFrictionCurve fwdFriction = collider.forwardFriction;
+                    fwdFriction.stiffness = 1.5f;  // Increase forward grip
+                    collider.forwardFriction = fwdFriction;
+                    
+                    WheelFrictionCurve sideFriction = collider.sidewaysFriction;
+                    sideFriction.stiffness = 1.5f;  // Increase sideways grip
+                    collider.sidewaysFriction = sideFriction;
                 }
             }
         }
