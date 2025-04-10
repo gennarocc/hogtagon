@@ -194,7 +194,7 @@ public class Player : NetworkBehaviour
             // Client-side respawn request
             Debug.Log("Client requesting respawn");
             // Find the HogController component in children
-            NetworkHogController hogController = GetComponent<NetworkHogController>();
+            HogController hogController = GetComponent<HogController>();
 
             if (hogController != null)
             {

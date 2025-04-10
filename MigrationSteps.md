@@ -60,6 +60,83 @@ if (hogController != null)
 }
 ```
 
+## Required System Updates
+
+To ensure proper integration with the NetworkManager, several scripts need to be updated to reference `HogController` instead of `NetworkHogController`:
+
+### 1. KillBall.cs Updates
+
+Update the KillBall script to use HogController instead of NetworkHogController:
+
+```csharp
+// Get the HogController instead of NetworkHogController
+HogController hogController = client.PlayerObject.GetComponentInChildren<HogController>();
+if (hogController != null)
+{
+    // Call the explosion effect on all clients
+    hogController.ExplodeCarClientRpc();
+}
+```
+
+### 2. JumpCooldownUI.cs Updates
+
+The JumpCooldownUI references need to be updated:
+
+```csharp
+// Reference to player's HogController
+private HogController playerHogController;
+
+private void Start()
+{
+    // Find the local player's HogController
+    if (playerHogController == null)
+    {
+        Player localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject?.GetComponent<Player>();
+        if (localPlayer != null)
+        {
+            playerHogController = localPlayer.GetComponentInChildren<HogController>();
+        }
+    }
+}
+```
+
+### 3. GameManager.cs Updates
+
+The GameManager needs to be updated to find and manage HogController instances:
+
+```csharp
+private void LockPlayerMovement()
+{
+    HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+    foreach (HogController player in players)
+        player.canMove = false;
+}
+
+private void UnlockPlayerMovement()
+{
+    HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+    foreach (HogController player in players)
+        player.canMove = true;
+}
+```
+
+### 4. HogDebugger.cs Updates
+
+Update the HogDebugger to work with HogController instead:
+
+```csharp
+// References
+private HogController hogController;
+
+private void Awake()
+{
+    // Find required components
+    hogController = GetComponentInParent<HogController>();
+    if (hogController == null)
+        hogController = GetComponent<HogController>();
+}
+```
+
 ## Key Benefits of This Migration
 
 1. **Server Authority**: More robust validation of player positions with server authority
@@ -73,3 +150,4 @@ if (hogController != null)
 - If visual effects don't appear correctly, double-check the references to particle systems and trail renderers
 - Ensure all network RPCs are set up with the correct `RequireOwnership` parameters
 - Debug messages can be enabled by setting `debugMode = true` on the HogController 
+- After updating all script references, be sure to test the NetworkManager functionality thoroughly to ensure proper client-server communication 
