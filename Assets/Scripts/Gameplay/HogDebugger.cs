@@ -29,7 +29,7 @@ public class HogDebugger : NetworkBehaviour
     [SerializeField] private KeyCode toggleDebugKey = KeyCode.F3;
     
     // References
-    private NetworkHogController hogController;
+    private HogController hogController;
     private NetworkManager networkManager;
     private Rigidbody rb;
     private Player playerComponent;
@@ -58,9 +58,9 @@ public class HogDebugger : NetworkBehaviour
     private void Awake()
     {
         // Find required components
-        hogController = GetComponentInParent<NetworkHogController>();
+        hogController = GetComponentInParent<HogController>();
         if (hogController == null)
-            hogController = GetComponent<NetworkHogController>();
+            hogController = GetComponent<HogController>();
             
         rb = hogController?.GetComponent<Rigidbody>();
         networkManager = NetworkManager.Singleton;
