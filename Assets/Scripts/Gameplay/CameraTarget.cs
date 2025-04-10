@@ -3,67 +3,45 @@ using UnityEngine;
 public class CameraTarget : MonoBehaviour
 {
     [Header("Follow Settings")]
-    [Tooltip("How fast the camera target moves to the player position (lower = smoother but more lag)")]
-    [SerializeField] private float positionSmoothSpeed = 5f; // Reduced from 10f for smoother follow
+    [Tooltip("How fast the camera approaches the target position (lower = smoother)")]
+    [Range(0.5f, 20f)]
+    [SerializeField] private float smoothSpeed = 3f;
     
-    [Tooltip("Distance to maintain from target to reduce micro-jitters")]
-    [SerializeField] private float dampingDistance = 0.02f; // Increased to ignore more tiny movements
-    
-    [Tooltip("Whether to smooth position using fixed update for more consistent results")]
-    [SerializeField] private bool useFixedUpdate = true;
-    
-    [Header("Position Offset")]
     [Tooltip("Offset from the target's center (local space)")]
     [SerializeField] private Vector3 targetOffset = new Vector3(0, 1.5f, 2f);
     
-    [Tooltip("Whether to apply the offset in local or world space")]
-    [SerializeField] private bool useLocalOffset = true;
-    
-    [Header("Advanced Settings")]
-    [Tooltip("Apply prediction to target movement to reduce lag")]
-    [SerializeField] private bool predictTargetMovement = true;
-    
-    [Tooltip("Strength of position prediction (higher = more responsive but can overshoot)")]
-    [Range(0f, 1f)]
-    [SerializeField] private float predictionStrength = 0.1f; // Reduced from 0.2f for less jitter
-    
-    [Tooltip("Smoothing factor for velocity calculations (higher = smoother velocity)")]
-    [Range(0f, 0.95f)]
-    [SerializeField] private float velocitySmoothingFactor = 0.8f;
+    [Tooltip("Whether to use FixedUpdate instead of Update")]
+    [SerializeField] private bool useFixedUpdate = true;
     
     [Header("Stability Settings")]
-    [Tooltip("Use a low-pass filter on position to reduce high-frequency jitter")]
-    [SerializeField] private bool useLowPassFilter = true;
+    [Tooltip("Ignore very small movements below this threshold")]
+    [Range(0.001f, 0.1f)]
+    [SerializeField] private float movementThreshold = 0.005f;
     
-    [Tooltip("The strength of the low-pass filter (higher = smoother but more lag)")]
-    [Range(0f, 0.98f)]
-    [SerializeField] private float lowPassFilterStrength = 0.85f;
+    [Tooltip("Weight for current frame position (lower = smoother but more lag)")]
+    [Range(0.01f, 0.2f)]
+    [SerializeField] private float positionWeight = 0.06f;
     
     private Transform _target;
-    private Vector3 _lastTargetPosition;
-    private Vector3 _targetVelocity;
-    private Vector3 _smoothedVelocity; // For velocity smoothing
-    private Vector3 _currentVelocity; // For SmoothDamp
-    private Vector3 _filteredPosition; // For low-pass filtering
-    private bool _positionInitialized = false;
+    private Vector3 _smoothedPosition;
+    private bool _isInitialized = false;
     
     private void Start()
     {
         if (_target != null)
         {
-            Vector3 offsetPos = GetOffsetTargetPosition();
-            transform.position = offsetPos;
-            _lastTargetPosition = offsetPos;
-            _filteredPosition = offsetPos;
-            _positionInitialized = true;
+            Vector3 targetPos = CalculateTargetPosition();
+            transform.position = targetPos;
+            _smoothedPosition = targetPos;
+            _isInitialized = true;
         }
     }
-
+    
     private void Update()
     {
         if (!useFixedUpdate)
         {
-            UpdateCameraPosition(Time.deltaTime);
+            UpdatePosition();
         }
     }
     
@@ -71,112 +49,63 @@ public class CameraTarget : MonoBehaviour
     {
         if (useFixedUpdate)
         {
-            UpdateCameraPosition(Time.fixedDeltaTime);
+            UpdatePosition();
         }
     }
     
-    private Vector3 GetOffsetTargetPosition()
-    {
-        if (_target == null) return transform.position;
-        
-        if (useLocalOffset)
-        {
-            // Apply offset in the target's local space
-            return _target.TransformPoint(targetOffset);
-        }
-        else
-        {
-            // Apply offset in world space
-            return _target.position + targetOffset;
-        }
-    }
-    
-    private void UpdateCameraPosition(float deltaTime)
+    private void UpdatePosition()
     {
         if (_target == null) return;
         
-        Vector3 offsetTargetPos = GetOffsetTargetPosition();
+        // Calculate the desired position with offset
+        Vector3 targetPosition = CalculateTargetPosition();
         
-        // Calculate target velocity with smoothing
-        if (predictTargetMovement)
+        // Initialize on first update if needed
+        if (!_isInitialized)
         {
-            // Calculate raw velocity
-            Vector3 rawVelocity = (offsetTargetPos - _lastTargetPosition) / deltaTime;
-            
-            // Apply exponential smoothing to velocity
-            _smoothedVelocity = Vector3.Lerp(_smoothedVelocity, rawVelocity, 1 - velocitySmoothingFactor);
-            
-            // Update last position
-            _lastTargetPosition = offsetTargetPos;
-            
-            // Use smoothed velocity for prediction
-            _targetVelocity = _smoothedVelocity;
+            _smoothedPosition = targetPosition;
+            transform.position = targetPosition;
+            _isInitialized = true;
+            return;
         }
         
-        // Calculate target position with prediction
-        Vector3 targetPosition = offsetTargetPos;
-        if (predictTargetMovement)
-        {
-            targetPosition += _targetVelocity * predictionStrength;
-        }
+        // Use weighted average for ultra-smooth movement
+        // This is more stable than Vector3.Lerp for this purpose
+        _smoothedPosition = Vector3.Lerp(_smoothedPosition, targetPosition, positionWeight);
         
-        // Apply low-pass filter to reduce high-frequency jitter
-        if (useLowPassFilter)
+        // Only move if we've moved significantly
+        float distanceToTarget = Vector3.Distance(transform.position, _smoothedPosition);
+        if (distanceToTarget > movementThreshold)
         {
-            if (!_positionInitialized)
-            {
-                _filteredPosition = targetPosition;
-                _positionInitialized = true;
-            }
-            else
-            {
-                _filteredPosition = Vector3.Lerp(_filteredPosition, targetPosition, 1 - lowPassFilterStrength);
-            }
-            targetPosition = _filteredPosition;
-        }
-        
-        // Only move if we're beyond the damping distance
-        float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
-        if (distanceToTarget > dampingDistance)
-        {
-            // Use SmoothDamp for more natural movement
-            transform.position = Vector3.SmoothDamp(
-                transform.position, 
-                targetPosition, 
-                ref _currentVelocity, 
-                1f / positionSmoothSpeed, 
-                Mathf.Infinity, 
-                deltaTime
+            // Update position using exponential smoothing
+            transform.position = Vector3.Lerp(
+                transform.position,
+                _smoothedPosition,
+                smoothSpeed * (useFixedUpdate ? Time.fixedDeltaTime : Time.deltaTime)
             );
         }
     }
     
-    // Helper method to immediately update target position (useful for teleporting)
-    private void UpdateTargetPosition()
+    private Vector3 CalculateTargetPosition()
     {
-        if (_target != null)
-        {
-            Vector3 offsetPos = GetOffsetTargetPosition();
-            transform.position = offsetPos;
-            _filteredPosition = offsetPos;
-        }
+        if (_target == null) return transform.position;
+        
+        // Apply the offset in local space
+        return _target.TransformPoint(targetOffset);
     }
-
+    
     public void SetTarget(Transform target)
     {
+        bool wasNull = _target == null;
         _target = target;
         
-        // Reset tracking when target changes
-        if (_target != null)
+        if (_target != null && wasNull)
         {
-            UpdateTargetPosition(); // Immediately update position
-            Vector3 offsetPos = GetOffsetTargetPosition();
-            _lastTargetPosition = offsetPos;
-            _targetVelocity = Vector3.zero;
-            _smoothedVelocity = Vector3.zero;
-            _currentVelocity = Vector3.zero;
-            _filteredPosition = offsetPos;
-            _positionInitialized = true;
+            // Only reset position on first assignment
+            Vector3 targetPos = CalculateTargetPosition();
+            transform.position = targetPos;
+            _smoothedPosition = targetPos;
+            _isInitialized = true;
         }
     }
 }
