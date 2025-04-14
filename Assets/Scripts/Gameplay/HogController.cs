@@ -5,11 +5,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Hogtagon.Core.Infrastructure;
+using UnityEngine.InputSystem;
 
 // TODO: After opening Unity, regenerate DefaultControls.cs file by saving the DefaultControls.inputactions asset in the editor
 // This will ensure the new Steer action is properly included in the generated code
 
-public class HogController : NetworkBehaviour
+public class HogController : NetworkBehaviour, DefaultControls.IGameplayActions
 {
     #region Configuration Parameters
 
@@ -23,6 +24,8 @@ public class HogController : NetworkBehaviour
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .7f;
     [SerializeField, Range(0.1f, 10f)] private float accelerationFactor = 2.0f;
     [SerializeField, Range(0.1f, 5f)] private float decelerationFactor = 1f;
+    [SerializeField, Range(0.5f, 2.0f)] private float hostTorqueMultiplier = 1.5f; // Increased from hostAccelerationFactor for better balance
+    [SerializeField, Range(1.0f, 10.0f)] private float clientTorqueMultiplier = 6.0f; // Explicit client multiplier
     [SerializeField] private float frontLeftRpm; // Monitoring variable
     [SerializeField] private float velocity; // Monitoring variable
     
@@ -47,9 +50,7 @@ public class HogController : NetworkBehaviour
     [SerializeField, Range(0.1f, 3f)] public float weightingFactor = 1.0f;
 
     [Header("Network")]
-    [SerializeField] private float serverValidationThreshold = 5.0f;  // How far client can move before server corrections
-    [SerializeField] private float clientUpdateInterval = 0.03f;      // How often client sends updates (33Hz) - faster now
-    [SerializeField] private float stateUpdateInterval = 0.06f;       // How often server broadcasts state (16Hz) - faster now
+    [SerializeField] private float serverValidationThreshold = 10.0f;  // Increased from 5.0f to 10.0f
     [SerializeField] private float visualSmoothingSpeed = 10f;
     [SerializeField] private bool debugMode = true;                   // Enable debug mode by default
 
@@ -79,6 +80,14 @@ public class HogController : NetworkBehaviour
     [SerializeField] private ParticleSystem exhaustParticles;
     [SerializeField] private AudioSource engineAudioSource;
 
+    [Header("Physics Settings")]
+    [SerializeField] private float baseDrag = 0.05f;
+    [SerializeField] private float baseAngularDrag = 0.05f;
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float groundClearance = 0.5f;
+    [SerializeField] private float groundCheckInterval = 0.5f;
+    private float lastGroundCheckTime = 0f;
+
     #endregion
 
     #region Private Fields
@@ -86,8 +95,11 @@ public class HogController : NetworkBehaviour
     // Constants
     private const float MIN_VELOCITY_FOR_REVERSE = -0.5f;
 
-    // Input reference - replace with direct input calls
+    // Input reference - properly using input action map now
     private DefaultControls inputControls;
+    private float throttleValue;
+    private float brakeValue;
+    private float steerValue;
     
     // Player reference
     private Player player;
@@ -109,11 +121,10 @@ public class HogController : NetworkBehaviour
     private List<float> _steeringInputsList = new List<float>();
     private float currentSteeringInput = 0f; // Current smoothed steering input
 
-    // Network variables moved to Awake to initialize early
+    // Network variables for state that still needs synchronization
     private NetworkVariable<bool> isDrifting;
     private NetworkVariable<bool> isJumping;
     private NetworkVariable<bool> jumpReady;
-    private NetworkVariable<StateSnapshot> vehicleState;
 
     // Physics and control variables
     private float currentTorque;
@@ -121,8 +132,6 @@ public class HogController : NetworkBehaviour
     private bool collisionForceOnCooldown = false;
     private bool jumpOnCooldown = false;
     private float jumpCooldownRemaining = 0f;
-    private float _stateUpdateTimer = 0f;
-    private float _clientUpdateTimer = 0f;
     private bool hasReceivedInitialSync = false;
 
     // Cached physics values
@@ -130,16 +139,16 @@ public class HogController : NetworkBehaviour
     private float cachedSpeed;
     private float[] cachedWheelRpms = new float[4];
     private float cachedForwardVelocity;
-    
-    // Visual smoothing (for remote clients)
-    private Vector3 visualPositionTarget;
-    private Quaternion visualRotationTarget;
-    private Vector3 visualVelocityTarget;
-    private bool needsSmoothing = false;
 
     // Wheel friction data
     private WheelFrictionCurve[] wheelFrictions = new WheelFrictionCurve[4];
     private float[] originalExtremumSlip = new float[4];
+
+    // Private interpolation variables
+    private Vector3 targetPosition;
+    private Quaternion targetRotation;
+    private Vector3 targetVelocity;
+    private float interpSpeed = 30f; // Increased from 10f for smoother transitions
 
     #endregion
 
@@ -159,50 +168,6 @@ public class HogController : NetworkBehaviour
             serializer.SerializeValue(ref moveInput);
             serializer.SerializeValue(ref brakeInput);
             serializer.SerializeValue(ref steeringInput);
-        }
-    }
-
-    // HogInput struct for client to server communication
-    public struct HogInput : INetworkSerializable
-    {
-        public ulong clientId;
-        public float moveInput;
-        public float steeringInput;
-        public float brakeInput;
-        public bool jumpInput;
-        public bool driftInput;
-
-        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-        {
-            serializer.SerializeValue(ref clientId);
-            serializer.SerializeValue(ref moveInput);
-            serializer.SerializeValue(ref steeringInput);
-            serializer.SerializeValue(ref brakeInput);
-            serializer.SerializeValue(ref jumpInput);
-            serializer.SerializeValue(ref driftInput);
-        }
-    }
-
-    // State snapshot for networking
-    public struct StateSnapshot : INetworkSerializable
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public Vector3 velocity;
-        public Vector3 angularVelocity;
-        public float steeringAngle;
-        public float motorTorque;
-        public uint updateId;
-
-        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-        {
-            serializer.SerializeValue(ref position);
-            serializer.SerializeValue(ref rotation);
-            serializer.SerializeValue(ref velocity);
-            serializer.SerializeValue(ref angularVelocity);
-            serializer.SerializeValue(ref steeringAngle);
-            serializer.SerializeValue(ref motorTorque);
-            serializer.SerializeValue(ref updateId);
         }
     }
 
@@ -233,158 +198,103 @@ public class HogController : NetworkBehaviour
             NetworkVariableReadPermission.Everyone, 
             NetworkVariableWritePermission.Server);
             
-        vehicleState = new NetworkVariable<StateSnapshot>(
-            new StateSnapshot(),
-            NetworkVariableReadPermission.Everyone,
-            NetworkVariableWritePermission.Owner);
-            
         // Initialize steering input buffer
         _recentSteeringInputs = new Queue<float>(steeringBufferSize);
         
-        // We'll use direct input instead of the DefaultControls
+        // Initialize input actions
+        inputControls = new DefaultControls();
+        inputControls.Gameplay.SetCallbacks(this);
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
         
-        // Get component references
-        SetupComponents();
+        Debug.Log($"OnNetworkSpawn - IsOwner: {IsOwner}, IsServer: {IsServer}, HasStateAuthority: {HasStateAuthority}");
         
-        // Initialize wheel meshes
-        SetupWheelMeshes();
+        // Initialize the vehicle's physics components
+        InitializeVehicle();
         
-        // Set initial state
-        engineRunning = false;
-        targetRPM = minRPM;
-        
-        // Only spawn effects on clients
-        if (IsClient)
+        // Set initial kinematic state - start kinematic to prevent bouncing
+        if (rb)
         {
-            // Setup visual effects
-            SetupEffects();
+            rb.isKinematic = true;
             
-            // Enable particle effects for all clients to see
-            EnableParticleEffects(false);
+            // We'll disable kinematic after a short delay to let the network transform sync
+            StartCoroutine(EnablePhysicsWithDelay());
         }
         
-        // Initialize the vehicle's physics
-        InitializeVehiclePhysics();
-        
-        if (debugMode)
-        {
-            Debug.Log($"OnNetworkSpawn - IsOwner: {IsOwner}, IsServer: {IsServer}, HasStateAuthority: {HasStateAuthority}");
-        }
-        
-        // Setup input events for the owner - using standard Unity Input system instead of InputSystem package
+        // Register owner input if we're the owner
         if (IsOwner)
         {
-            // We'll use direct polling in GetMoveInput, GetSteeringInput, etc. instead of events
+            Debug.Log("Input actions initialized for owner");
+            RegisterInputEvents();
+            
+            // Ensure ground check runs properly on owner spawn
+            lastGroundCheckTime = Time.time - groundCheckInterval - 1;
         }
+        
+        // Mark that sync has been initialized
+        hasReceivedInitialSync = true;
     }
     
-    private void Start()
+    private IEnumerator EnablePhysicsWithDelay()
     {
-        // Ensure physically bodies settle on the ground
-        StartCoroutine(DelayedPhysicsEnable());
+        // Wait a bit for everything to settle
+        yield return new WaitForSeconds(0.5f);
         
-        // Initialize visual smoothing targets
-        visualPositionTarget = transform.position;
-        visualRotationTarget = transform.rotation;
-        visualVelocityTarget = Vector3.zero;
-
-        if (debugMode && IsOwner)
+        // Check if we need to adjust to ground
+        Vector3 startPosition = transform.position;
+        Debug.Log($"Start - Owner vehicle at {startPosition}, IsKinematic: {rb.isKinematic}");
+        
+        // Raycast to find ground
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position + Vector3.up * 2, Vector3.down, out hit, 10f, groundLayer))
         {
-            Debug.Log($"Start - Owner vehicle at {rb.position}, IsKinematic: {rb.isKinematic}");
+            // Adjust to ground height with some offset to prevent clipping
+            Vector3 groundedPosition = new Vector3(transform.position.x, hit.point.y + groundClearance, transform.position.z);
+            transform.position = groundedPosition;
+            rb.position = groundedPosition;
+            Debug.Log($"Adjusted car position to ground at {groundedPosition}, ground hit at {hit.point}");
         }
-    }
-    
-    private IEnumerator DelayedPhysicsEnable()
-    {
-        // Wait one physics frame to ensure proper initialization
-        yield return new WaitForFixedUpdate();
         
-        // Make sure rigidbody is not kinematic for all clients
+        // Enable physics with a second delay to ensure proper ground placement
+        yield return new WaitForSeconds(0.2f);
+        
+        // For clients, also wait for initial network transform to arrive
+        if (!IsServer)
+        {
+            yield return new WaitForSeconds(0.3f);
+        }
+        
+        // CRITICAL: Set isKinematic to false BEFORE setting any physics properties
         rb.isKinematic = false;
         
-        // Enable all wheel colliders
-        EnableWheelColliders();
+        // Wait another frame to ensure kinematic change is processed
+        yield return null;
         
-        // Make sure all physics bodies are awake
-        rb.WakeUp();
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         
-        // Ensure the car is properly placed on the ground
-        AdjustPositionToGround();
+        // Set the position one more time to ensure we're on the ground
+        Vector3 finalPosition = transform.position;
+        Debug.Log($"DelayedPhysicsEnable - Position: {finalPosition}, IsKinematic: {rb.isKinematic}");
         
-        // Set hasReceivedInitialSync to true for all clients
-        hasReceivedInitialSync = true;
-        
-        if (debugMode)
-        {
-            Debug.Log($"DelayedPhysicsEnable - Position: {rb.position}, IsKinematic: {rb.isKinematic}");
-        }
-    }
-
-    private void AdjustPositionToGround()
-    {
-        // Only run this on the server or for the owner
-        if (!IsServer && !IsOwner) return;
-        
-        // Get the car's current position
-        Vector3 currentPosition = rb.position;
-        
-        // Cast a ray downward to find the ground
-        RaycastHit hit;
-        if (Physics.Raycast(currentPosition + Vector3.up * 5f, Vector3.down, out hit, 20f, 
-            LayerMask.GetMask("Default", "Ground", "Environment")))
-        {
-            // Adjust position to be just above the ground
-            // Use the wheel collider radius for offset
-            float wheelRadius = wheelColliders[0].radius;
-            float heightOffset = wheelRadius + 0.05f; // Small fixed offset to prevent ground collision
-            
-            // Set the new position - place firmly on ground
-            Vector3 newPosition = hit.point + Vector3.up * heightOffset;
-            
-            // Apply the new position to both transform and rigidbody
-            transform.position = newPosition;
-            rb.position = newPosition;
-            
-            // Make sure rotation is upright aligned with ground normal
-            Quaternion groundAlignment = Quaternion.FromToRotation(transform.up, hit.normal);
-            transform.rotation = groundAlignment * transform.rotation;
-            rb.rotation = transform.rotation;
-            
-            // Zero out any existing velocity
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            
-            // Apply a small downward force to settle the vehicle
-            rb.AddForce(Vector3.down * rb.mass * 5f, ForceMode.Impulse);
-            
-            // Wake up the rigidbody to ensure physics processing
-            rb.WakeUp();
-            
-            if (debugMode)
-            {
-                Debug.Log($"Adjusted car position to ground at {newPosition}, ground hit at {hit.point}");
-            }
-        }
-        else
-        {
-            if (debugMode)
-            {
-                Debug.LogWarning("Failed to find ground beneath car for position adjustment");
-            }
-        }
+        // Apply initial drag (fix property names)
+        rb.linearDamping = baseDrag;
+        rb.angularDamping = baseAngularDrag;
     }
 
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
 
-        // Unsubscribe from input events
-        // Using direct input polling now, so no events to unsubscribe from
+        // Disable input events
+        if (IsOwner && inputControls != null)
+        {
+            inputControls.Gameplay.Disable();
+            Debug.Log("Disabled input controls on despawn");
+        }
 
         // Only the server or owner should play the engine off sound
         if (IsOwner || IsServer)
@@ -396,59 +306,59 @@ public class HogController : NetworkBehaviour
 
     private void Update()
     {
-        // Perform updates regardless of initialization status
+        // Skip if we're not properly initialized
+        if (rb == null || !hasReceivedInitialSync)
+            return;
+
+        // Cache local velocity for effects and handling
+        if (rb != null)
+        {
+            localVelocityX = transform.InverseTransformDirection(rb.linearVelocity).x;
+        }
+        
+        // For non-owner clients, smoothly interpolate to target position/rotation
+        if (!IsOwner && !IsServer)
+        {
+            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * interpSpeed);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * interpSpeed);
+            rb.position = transform.position;
+            rb.rotation = transform.rotation;
+            
+            // SAFETY: Only apply velocity if not kinematic
+            if (CanApplyVelocity())
+            {
+                rb.linearVelocity = Vector3.Lerp(rb.linearVelocity, targetVelocity, Time.deltaTime * interpSpeed);
+            }
+        }
+        
+        // Update wheel meshes for animation
+        AnimateWheels();
+        
+        // Owner-specific updates (handle input)
         if (IsOwner)
         {
-            // Owner controls the vehicle
-            HandleOwnerInput();
-
-            // Send input to server if we're not the host (server)
-            if (!IsServer)
-            {
-                // Only clients need to send inputs to server
-                ClientMove();
-
-                // Periodically send full state to server for validation and broadcasting
-                _clientUpdateTimer += Time.deltaTime;
-                if (_clientUpdateTimer >= clientUpdateInterval)
-                {
-                    _clientUpdateTimer = 0f;
-                    SendStateToServer();
-                }
-            }
-            
-            // Update jump cooldown
+            // Update jump cooldown for owner
             if (jumpOnCooldown)
             {
-                jumpCooldownRemaining -= Time.deltaTime;
-                if (jumpCooldownRemaining <= 0)
+                if (jumpCooldownRemaining > 0f)
+                {
+                    jumpCooldownRemaining -= Time.deltaTime;
+                }
+                else
                 {
                     jumpOnCooldown = false;
                 }
             }
+            
+            // Process owner input (both client and host)
+            HandleOwnerInput();
         }
-        else if (IsServer && !IsOwner)
+        
+        // Client-specific movement handling (when not host)
+        if (IsOwner && !IsServer)
         {
-            // Server controls non-owned vehicles
-            // For non-player vehicles like AI or dropped vehicles
-
-            // Send broadcasts periodically
-            _stateUpdateTimer += Time.deltaTime;
-            if (_stateUpdateTimer >= stateUpdateInterval)
-            {
-                _stateUpdateTimer = 0f;
-                BroadcastServerStateClientRpc(vehicleState.Value);
-            }
+            ClientMove();
         }
-        else
-        {
-            // Remote client - smooth visual representation of other vehicles
-            SmoothRemoteVehicleVisuals();
-        }
-
-        // Common updates - always perform them for visual consistency
-        AnimateWheels();
-        UpdateDriftEffects();
     }
 
     private void FixedUpdate()
@@ -456,52 +366,15 @@ public class HogController : NetworkBehaviour
         // Cache frequently used physics values
         CachePhysicsValues();
 
-        if (IsOwner && !IsServer)
+        // All movement is now handled through wheel torque only
+        // We rely on the ClientMove and HandleOwnerInput methods to handle wheel torque
+        
+        // For clients, sync position to server more frequently
+        if (IsOwner && !IsServer && Time.frameCount % 5 == 0) // Every 5 frames instead of 60
         {
-            // Client-only code for when we're the client but not the host
-            
-            // Apply consistent forward force based on current torque
-            if (Mathf.Abs(currentTorque) > 10f || Mathf.Abs(moveInput) > 0.1f) // Added moveInput check to improve response
-            {
-                // Calculate movement direction based on input and current torque
-                Vector3 forceDirection = transform.forward * Mathf.Sign(moveInput != 0 ? moveInput : currentTorque);
-                
-                // Apply much stronger force for client acceleration
-                // Increased from 20f to 40f for significantly better client movement
-                float forceMagnitude = (Mathf.Abs(currentTorque) + maxTorque * 0.5f) * 40f;
-                rb.AddForce(forceDirection * forceMagnitude, ForceMode.Force);
-                
-                // Also add some downward force to prevent bouncing
-                rb.AddForce(Vector3.down * rb.mass * 3f, ForceMode.Force);
-                
-                if (debugMode && (rb.linearVelocity.magnitude < 5f || Time.frameCount % 60 == 0))
-                {
-                    Debug.Log($"Client FixedUpdate force: {forceDirection * forceMagnitude}, speed: {velocity:F2}m/s, torque: {currentTorque}");
-                }
-            }
+            SyncPositionToServerRpc(transform.position, transform.rotation, rb.linearVelocity);
         }
-        else if (IsServer && IsOwner)
-        {
-            // Host-specific physics boost - scaled back to match the enhanced client
-            if (Mathf.Abs(moveInput) > 0.1f && cachedSpeed < 20f)
-            {
-                // Apply a moderate force for host (reduced from previous fix to balance with client)
-                Vector3 forceDirection = transform.forward * Mathf.Sign(moveInput);
-                float forceMagnitude = Mathf.Abs(moveInput) * maxTorque * 0.3f; // Increased from 0.15f to 0.3f
-                rb.AddForce(forceDirection * forceMagnitude, ForceMode.Acceleration);
-                
-                if (debugMode && Time.frameCount % 120 == 0)
-                {
-                    Debug.Log($"Host acceleration boost: {forceDirection * forceMagnitude}, speed: {velocity:F2}m/s");
-                }
-            }
-        }
-        else if (IsServer && !IsOwner)
-        {
-            // Server applies physics for non-owned vehicles
-            ApplyServerPhysics();
-        }
-
+        
         // Always perform these for consistent behavior
         AnimateWheels();
         UpdateDriftEffects();
@@ -510,6 +383,107 @@ public class HogController : NetworkBehaviour
     #endregion
 
     #region Input Handling
+
+    // Handle input events from the input action map
+    public void OnThrottle(InputAction.CallbackContext context)
+    {
+        if (context.performed || context.canceled)
+        {
+            // Handle different control types appropriately
+            try 
+            {
+                // For gamepad triggers/sticks that return Vector2
+                throttleValue = context.ReadValue<Vector2>().y;
+            }
+            catch (InvalidOperationException)
+            {
+                // For keyboard that returns float (0 or 1)
+                throttleValue = context.ReadValue<float>();
+            }
+            
+            if (IsOwner && !IsServer && Mathf.Abs(throttleValue) > 0.1f)
+            {
+                Debug.Log($"Throttle input: {throttleValue}");
+            }
+        }
+    }
+
+    public void OnBrake(InputAction.CallbackContext context)
+    {
+        if (context.performed || context.canceled)
+        {
+            // Handle different control types appropriately
+            try 
+            {
+                // For gamepad triggers/sticks that return Vector2
+                brakeValue = context.ReadValue<Vector2>().y;
+            }
+            catch (InvalidOperationException)
+            {
+                // For keyboard that returns float (0 or 1)
+                brakeValue = context.ReadValue<float>();
+            }
+            
+            if (IsOwner && !IsServer && brakeValue > 0.1f)
+            {
+                Debug.Log($"Brake input: {brakeValue}");
+            }
+        }
+    }
+
+    public void OnSteer(InputAction.CallbackContext context)
+    {
+        if (context.performed || context.canceled)
+        {
+            steerValue = context.ReadValue<float>();
+            
+            if (IsOwner && !IsServer && Mathf.Abs(steerValue) > 0.1f && Time.frameCount % 60 == 0)
+            {
+                Debug.Log($"Steer input: {steerValue}");
+            }
+        }
+    }
+
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            OnJumpPressed();
+        }
+    }
+
+    public void OnHonk(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            OnHornPressed();
+        }
+    }
+
+    // Required by interface but not used
+    public void OnLook(InputAction.CallbackContext context) { }
+    public void OnShowScoreboard(InputAction.CallbackContext context) { }
+    public void OnPauseMenu(InputAction.CallbackContext context) { }
+
+    // Updated to use input action values
+    private float GetMoveInput()
+    {
+        // Return the throttle value from the input system
+        return throttleValue;
+    }
+
+    // Updated to use input action values
+    private float GetSteeringInput()
+    {
+        // Return the steering value from the input system
+        return steerValue;
+    }
+
+    // Updated to use input action values
+    private float GetBrakeInput()
+    {
+        return brakeValue;
+    }
 
     private void OnHornPressed()
     {
@@ -553,38 +527,42 @@ public class HogController : NetworkBehaviour
             brakeInput = brakeInput > 0 ? 1 : 0
         };
         
-        if (debugMode && Time.frameCount % 300 == 0)
-        {
-            Debug.Log($"Client sending input: moveInput={input.moveInput}, steeringInput={input.steeringInput}, brake={input.brakeInput}, speed={velocity:F2}m/s");
-        }
+        // Debug log to verify inputs are captured correctly
+        Debug.Log($"CLIENT trying to move: moveInput={moveInput}, steeringInput={steeringInput}, brakeInput={brakeInput}");
         
-        // Apply input directly to our local wheels for responsive feedback
-        // This will be corrected by the server later if needed
+        // Apply client-side prediction (VERY SIMPLE VERSION)
+        float clientTorque = moveInput * maxTorque * 15.0f;
         
-        // Apply stronger motor torque for client responsiveness
-        // Increased from 1.0f to 2.0f for better client acceleration
-        float clientTorque = moveInput * maxTorque * 2.0f;
-        foreach (WheelCollider wheel in drivenWheels)
+        // Apply torque DIRECTLY to ALL wheels
+        foreach (WheelCollider wheel in wheelColliders)
         {
+            // DIRECT torque application
             wheel.motorTorque = clientTorque;
+            
+            // Apply brake torque if requested
+            wheel.brakeTorque = brakeInput > 0 ? brakeTorque : 0f;
         }
         
-        // Apply responsive steering for client-side control
-        float clientSteeringAngle = steeringInput * maxSteeringAngle * 1.1f;
-        foreach (WheelCollider wheel in steeringWheels)
+        // Apply steering DIRECTLY
+        float steeringAngle = steeringInput * maxSteeringAngle;
+        
+        // Front wheels
+        wheelColliders[0].steerAngle = steeringAngle;
+        wheelColliders[1].steerAngle = steeringAngle;
+        
+        // Rear wheels (counter-steering)
+        wheelColliders[2].steerAngle = -steeringAngle * rearSteeringAmount;
+        wheelColliders[3].steerAngle = -steeringAngle * rearSteeringAmount;
+        
+        // Send input to server - CRITICAL!
+        try
         {
-            wheel.steerAngle = clientSteeringAngle;
+            SendInputServerRpc(input);
         }
-        
-        // Apply braking if needed
-        float clientBrakeTorque = brakeInput > 0 ? brakeTorque : 0f;
-        foreach (WheelCollider wheel in allWheels)
+        catch (Exception e)
         {
-            wheel.brakeTorque = clientBrakeTorque;
+            Debug.LogError($"Failed to send input to server: {e.Message}");
         }
-        
-        // Send input to server
-        SendInputServerRpc(input);
     }
 
     private ClientInput CollectPlayerInput()
@@ -596,45 +574,6 @@ public class HogController : NetworkBehaviour
             brakeInput = GetBrakeInput(),
             steeringInput = ApplyInputSmoothing(GetSteeringInput())
         };
-    }
-    
-    private float GetMoveInput()
-    {
-        float move = 0;
-        
-        // Keyboard input
-        if (Input.GetKey(KeyCode.W))
-        {
-            move = 1f;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            move = -1f;
-        }
-        
-        return move;
-    }
-    
-    private float GetBrakeInput()
-    {
-        return Input.GetKey(KeyCode.B) ? 1f : 0f;
-    }
-    
-    private float GetSteeringInput()
-    {
-        float steer = 0;
-        
-        // Keyboard input
-        if (Input.GetKey(KeyCode.A))
-        {
-            steer = -1f;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            steer = 1f;
-        }
-        
-        return steer;
     }
 
     private float ApplyInputSmoothing(float rawSteeringInput)
@@ -729,8 +668,8 @@ public class HogController : NetworkBehaviour
         wheelColliders[2].steerAngle = Mathf.Lerp(wheelColliders[2].steerAngle, -directSteeringAngle * rearSteeringAmount, steeringSpeed * Time.deltaTime * 10f);
         wheelColliders[3].steerAngle = Mathf.Lerp(wheelColliders[3].steerAngle, -directSteeringAngle * rearSteeringAmount, steeringSpeed * Time.deltaTime * 10f);
         
-        // Apply motor torque directly for both server and client with REDUCED acceleration
-        float torqueMultiplier = 0.8f; // Reduced from 1.5f to 0.8f
+        // Apply motor torque directly based on host/client status
+        float torqueMultiplier = IsServer ? hostTorqueMultiplier : clientTorqueMultiplier;
         float directMotorTorque = moveInput * maxTorque * torqueMultiplier;
         float directBrakeTorque = brakeInput > 0 ? brakeTorque : 0f;
         
@@ -744,13 +683,6 @@ public class HogController : NetworkBehaviour
         if (IsServer)
         {
             currentTorque = directMotorTorque;
-            
-            // Add additional force for the host, but much less than before
-            if (Mathf.Abs(moveInput) > 0.1f && cachedSpeed < 20f)
-            {
-                // Add minimal extra force - reduced from 0.4f to 0.1f
-                rb.AddForce(transform.forward * moveInput * maxTorque * 0.1f, ForceMode.Acceleration);
-            }
         }
     }
 
@@ -761,90 +693,59 @@ public class HogController : NetworkBehaviour
     [ServerRpc(RequireOwnership = true)]
     private void SendInputServerRpc(ClientInput input)
     {
-        // Calculate steering angle server-side to ensure consistency
-        SteeringData steeringData = CalculateSteeringFromInput(input.steeringInput, input.moveInput);
+        // Debug log to verify the server is receiving input
+        Debug.Log($"SERVER received input: moveInput={input.moveInput}, steeringInput={input.steeringInput}, brakeInput={input.brakeInput}");
         
-        // Debug input for diagnostics only (no validation that affects gameplay)
-        if (debugMode && Time.frameCount % 120 == 0)
+        // Only apply motor torque when there's actual input
+        float motorTorque = 0f;
+        
+        if (Mathf.Abs(input.moveInput) > 0.01f)
         {
-            Debug.Log($"Server processing input: moveInput={input.moveInput}, steeringInput={input.steeringInput}, speed={velocity:F2}m/s");
+            // Calculate torque directly without MoveTowards (simpler, more reliable)
+            motorTorque = input.moveInput * maxTorque * 5.0f; // Increased torque multiplier
+            currentTorque = motorTorque;
+            
+            // Set higher friction for better traction
+            SetWheelFriction(true);
         }
-
-        // Apply motor torque with faster response time for better client handling
-        // Increased torque multiplier from 0.9f to 1.5f for more power
-        float motorTorque = input.moveInput * maxTorque * 1.5f;
+        else
+        {
+            // No torque when no input
+            currentTorque = 0f;
+            
+            // Reset friction to normal
+            SetWheelFriction(false);
+        }
         
-        // Apply torque change with faster response (increased from 7f to 15f)
-        // This ensures clients feel more responsive controls
-        currentTorque = Mathf.MoveTowards(currentTorque, motorTorque, Time.deltaTime * 15f * accelerationFactor);
-        
+        // Apply torque to wheels - DIRECT APPLICATION
         for (int i = 0; i < wheelColliders.Length; i++)
         {
+            // Direct torque application
             wheelColliders[i].motorTorque = currentTorque;
             
             // Apply brake torque if requested
-            if (input.brakeInput > 0)
+            wheelColliders[i].brakeTorque = input.brakeInput > 0 ? brakeTorque : 0;
+            
+            // Make sure wheels have contact with ground
+            WheelHit hit;
+            if (wheelColliders[i].GetGroundHit(out hit))
             {
-                wheelColliders[i].brakeTorque = input.brakeInput * brakeTorque;
-            }
-            else
-            {
-                wheelColliders[i].brakeTorque = 0;
+                // Add moderate downforce for grip
+                rb.AddForceAtPosition(Vector3.down * 300f, wheelColliders[i].transform.position);
             }
         }
 
-        // Apply steering
-        ApplySteering(steeringData);
+        // Calculate steering angle server-side to ensure consistency
+        float steeringAngle = input.steeringInput * maxSteeringAngle;
+        
+        // Apply steering directly
+        wheelColliders[0].steerAngle = steeringAngle;
+        wheelColliders[1].steerAngle = steeringAngle;
+        wheelColliders[2].steerAngle = -steeringAngle * rearSteeringAmount;
+        wheelColliders[3].steerAngle = -steeringAngle * rearSteeringAmount;
 
         // Set drift state
-        isDrifting.Value = Mathf.Abs(localVelocityX) > 0.25f;
-    }
-
-    private void SendStateToServer()
-    {
-        if (!IsOwner) return;
-
-        // Create current state snapshot
-        var snapshot = new StateSnapshot
-        {
-            position = rb.position,
-            rotation = rb.rotation,
-            velocity = rb.linearVelocity,
-            angularVelocity = rb.angularVelocity,
-            steeringAngle = wheelColliders[0].steerAngle,
-            motorTorque = wheelColliders[0].motorTorque,
-            updateId = (uint)Time.frameCount
-        };
-
-        // Update network variable
-        vehicleState.Value = snapshot;
-        
-        // Skip the additional validation RPC to reduce overhead
-        // SendStateForValidationServerRpc(snapshot);  // Comment out to improve performance
-    }
-
-    [ClientRpc]
-    private void BroadcastServerStateClientRpc(StateSnapshot state)
-    {
-        // Skip for server and owner - they already have the latest state
-        if (IsServer || IsOwner) return;
-
-        // For other clients, update visual targets for smoothing
-        visualPositionTarget = state.position;
-        visualRotationTarget = state.rotation;
-        visualVelocityTarget = state.velocity;
-        needsSmoothing = true;
-        
-        // Set the steering angle for all wheels directly
-        for (int i = 0; i < 2; i++)
-        {
-            wheelColliders[i].steerAngle = state.steeringAngle;
-        }
-        
-        for (int i = 2; i < 4; i++)
-        {
-            wheelColliders[i].steerAngle = -state.steeringAngle * rearSteeringAmount;
-        }
+        isDrifting.Value = Mathf.Abs(localVelocityX) > 0.25f && cachedSpeed > 3f;
     }
 
     [ServerRpc]
@@ -858,8 +759,9 @@ public class HogController : NetworkBehaviour
         jumpReady.Value = false;
 
         // Get reference to the rigidbody
-        if (rb != null)
+        if (rb != null && !rb.isKinematic)
         {
+            // For jump we still need the impulse forces
             // Store current horizontal velocity
             Vector3 currentVelocity = rb.linearVelocity;
             Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
@@ -869,13 +771,18 @@ public class HogController : NetworkBehaviour
 
             // Combine horizontal momentum with new vertical impulse
             Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
-            rb.linearVelocity = newVelocity;
-
-            // Add a bit more forward boost in the car's facing direction
-            rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
-
-            // Temporarily increase gravity for faster fall
-            StartCoroutine(TemporarilyIncreaseGravity(rb));
+            
+            // SAFETY: Only set velocity if not kinematic
+            if (CanApplyVelocity())
+            {
+                rb.linearVelocity = newVelocity;
+                
+                // Add a bit more forward boost in the car's facing direction
+                rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+                
+                // Temporarily increase gravity for faster fall
+                StartCoroutine(TemporarilyIncreaseGravity(rb));
+            }
         }
 
         // Execute visual effects on all clients
@@ -883,24 +790,6 @@ public class HogController : NetworkBehaviour
 
         // Start cooldown
         StartCoroutine(JumpCooldownServer());
-    }
-
-    private IEnumerator TemporarilyIncreaseGravity(Rigidbody rb)
-    {
-        // Store original gravity
-        float gravity = Physics.gravity.y;
-
-        // Wait for the rise phase
-        yield return new WaitForSeconds(0.3f);
-
-        // Apply stronger gravity for faster fall
-        Physics.gravity = new Vector3(0, gravity * 1.5f, 0);
-
-        // Wait for the fall phase
-        yield return new WaitForSeconds(0.5f);
-
-        // Restore original gravity
-        Physics.gravity = new Vector3(0, gravity, 0);
     }
 
     [ClientRpc]
@@ -922,11 +811,107 @@ public class HogController : NetworkBehaviour
         }
     }
     
+    private IEnumerator TemporarilyIncreaseGravity(Rigidbody rb)
+    {
+        // Store original gravity
+        float gravity = Physics.gravity.y;
+
+        // Wait for the rise phase
+        yield return new WaitForSeconds(0.3f);
+
+        // Apply stronger gravity for faster fall
+        Physics.gravity = new Vector3(0, gravity * 1.5f, 0);
+
+        // Wait for the fall phase
+        yield return new WaitForSeconds(0.5f);
+
+        // Restore original gravity
+        Physics.gravity = new Vector3(0, gravity, 0);
+    }
+    
     private IEnumerator JumpCooldownServer()
     {
         yield return new WaitForSeconds(jumpCooldown);
         jumpReady.Value = true;
         isJumping.Value = false;
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    public void RequestRespawnServerRpc()
+    {
+        // Get player data from connection manager
+        if (ConnectionManager.Instance.TryGetPlayerData(player.clientId, out PlayerData playerData))
+        {
+            // Set respawn position and rotation
+            Vector3 respawnPosition = playerData.spawnPoint;
+            Quaternion respawnRotation = Quaternion.LookRotation(
+                SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
+
+            // Update player state
+            playerData.state = PlayerState.Alive;
+            ConnectionManager.Instance.UpdatePlayerDataClientRpc(player.clientId, playerData);
+
+            // Execute respawn on all clients
+            ExecuteRespawnClientRpc(respawnPosition, respawnRotation);
+        }
+    }
+
+    [ClientRpc]
+    public void ExecuteRespawnClientRpc(Vector3 respawnPosition, Quaternion respawnRotation)
+    {
+        // Set vehicle state
+        rb.isKinematic = true;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        
+        // Set position and rotation
+        transform.position = respawnPosition;
+        transform.rotation = respawnRotation;
+        rb.position = respawnPosition;
+        rb.rotation = respawnRotation;
+        
+        // Enable physics after a delay
+        StartCoroutine(EnablePhysicsAfterRespawn());
+
+        // Notify player (owner only)
+        if (IsOwner)
+        {
+            player.Respawn();
+        }
+    }
+
+    private IEnumerator EnablePhysicsAfterRespawn()
+    {
+        // Wait a moment for everything to settle
+        yield return new WaitForSeconds(0.5f);
+        
+        // Enable physics
+        rb.isKinematic = false;
+        
+        // Wake the rigidbody
+        rb.WakeUp();
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    private void UpdateDriftingServerRpc(bool isDriftingValue)
+    {
+        isDrifting.Value = isDriftingValue;
+    }
+
+    [ClientRpc]
+    public void ExplodeCarClientRpc()
+    {
+        if (Explosion != null)
+        {
+            // Create explosion effect
+            GameObject explosionInstance = Instantiate(Explosion, transform.position, Quaternion.identity);
+            
+            // Hide the car and disable controls
+            canMove = false;
+            
+            // Start respawn timer
+            StartCoroutine(ResetAfterExplosion(explosionInstance));
+        }
     }
 
     #endregion
@@ -1119,22 +1104,17 @@ public class HogController : NetworkBehaviour
         // Basic initialization for remote vehicles
         rb.isKinematic = false;
         
-        // Ensure physics properties are consistent with the feature/jump branch
+        // Ensure physics properties are consistent
         rb.mass = 1200f;
-        rb.linearDamping = 0.1f;  // FIXED: Using rb.drag instead of linearDamping
-        rb.angularDamping = 0.5f; // FIXED: Using rb.angularDrag instead of angularDamping
+        rb.linearDamping = 0.1f;
+        rb.angularDamping = 0.5f;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         
         // Initialize the vehicle's physics
         InitializeVehiclePhysics();
         
-        // Initialize visual targets for interpolation
-        visualPositionTarget = transform.position;
-        visualRotationTarget = transform.rotation;
-        visualVelocityTarget = Vector3.zero;
-        
-        // Mark as not ready yet - will be marked ready in DelayedPhysicsEnable
-        hasReceivedInitialSync = false;
+        // Mark as ready for updates
+        hasReceivedInitialSync = true;
     }
 
     private void EnableWheelColliders()
@@ -1145,338 +1125,6 @@ public class HogController : NetworkBehaviour
             {
                 wheel.enabled = true;
             }
-        }
-    }
-
-    #endregion
-
-    #region Network State Management
-
-    private void OnVehicleStateChanged(StateSnapshot previousValue, StateSnapshot newValue)
-    {
-        // Only non-owners need to react to state changes
-        if (IsOwner) return;
-
-        if (IsServer)
-        {
-            // Server validates owner's state
-            ValidateOwnerState(newValue);
-        }
-        else
-        {
-            // Remote client applies state for visual representation
-            ApplyRemoteState(newValue);
-        }
-    }
-
-    private void ValidateOwnerState(StateSnapshot ownerState)
-    {
-        if (!IsServer) return;
-
-        // Simple validation - check if position is within valid range
-        Vector3 currentPos = rb.position;
-        float distance = Vector3.Distance(currentPos, ownerState.position);
-
-        if (distance > serverValidationThreshold)
-        {
-            if (debugMode)
-            {
-                Debug.LogWarning($"[Server] Detected invalid position from owner. Distance: {distance}m");
-            }
-
-            // Option 1: Correct the client (stricter approach)
-            // CorrectClientPositionClientRpc(currentPos);
-
-            // Option 2: Trust the client but log the issue (more lenient)
-            // Just accept the position but log it
-            rb.position = ownerState.position;
-            rb.rotation = ownerState.rotation;
-            rb.linearVelocity = ownerState.velocity;
-            rb.angularVelocity = ownerState.angularVelocity;
-
-            // Broadcast to other clients
-            BroadcastServerStateClientRpc(ownerState);
-        }
-        else
-        {
-            // State is valid, apply it on the server
-            rb.position = ownerState.position;
-            rb.rotation = ownerState.rotation;
-            rb.linearVelocity = ownerState.velocity;
-            rb.angularVelocity = ownerState.angularVelocity;
-
-            // Broadcast to other clients (less frequently)
-            _stateUpdateTimer += Time.deltaTime;
-            if (_stateUpdateTimer >= stateUpdateInterval)
-            {
-                _stateUpdateTimer = 0f;
-                BroadcastServerStateClientRpc(ownerState);
-            }
-        }
-    }
-
-    private void ApplyRemoteState(StateSnapshot state)
-    {
-        // For remote client representation of other players' vehicles
-        visualPositionTarget = state.position;
-        visualRotationTarget = state.rotation;
-        visualVelocityTarget = state.velocity;
-        needsSmoothing = true;
-    }
-
-    private void SmoothRemoteVehicleVisuals()
-    {
-        if (IsOwner || IsServer || !needsSmoothing) return;
-
-        // Smoothly update visuals for remote client
-        transform.position = Vector3.Lerp(transform.position, visualPositionTarget,
-                                        Time.deltaTime * visualSmoothingSpeed);
-        transform.rotation = Quaternion.Slerp(transform.rotation, visualRotationTarget,
-                                           Time.deltaTime * visualSmoothingSpeed);
-
-        // Apply visual wheel effects
-        SteeringData steeringData = new SteeringData
-        {
-            frontSteeringAngle = vehicleState.Value.steeringAngle,
-            rearSteeringAngle = vehicleState.Value.steeringAngle * -rearSteeringAmount,
-            isReversing = false
-        };
-        ApplySteering(steeringData);
-
-        // Continue smoothing while the difference is significant
-        needsSmoothing =
-            Vector3.Distance(transform.position, visualPositionTarget) > 0.01f ||
-            Quaternion.Angle(transform.rotation, visualRotationTarget) > 0.1f;
-    }
-
-    private void ApplyServerPhysics()
-    {
-        // Server applies physics for non-owned vehicles
-        // This is used for server-side validation and for AI vehicles
-        if (!IsOwner && IsServer)
-        {
-            // Apply direct steering angle from network state (not camera-based)
-            SteeringData steeringData = new SteeringData
-            {
-                frontSteeringAngle = vehicleState.Value.steeringAngle,
-                rearSteeringAngle = vehicleState.Value.steeringAngle * -rearSteeringAmount,
-                isReversing = false
-            };
-            ApplySteering(steeringData);
-            ApplyMotorTorque(vehicleState.Value.motorTorque, 0f);
-        }
-    }
-    
-    #endregion
-    
-    #region Network RPCs
-
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestInitialStateServerRpc(ServerRpcParams serverRpcParams = default)
-    {
-        ulong clientId = serverRpcParams.Receive.SenderClientId;
-        
-        // Client requests initial state from server
-        if (debugMode)
-        {
-            Debug.Log($"[Server] Client {clientId} requested initial state");
-        }
-
-        // Send the current state to the requesting client
-        SendInitialStateClientRpc(vehicleState.Value, 
-            new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } } });
-    }
-
-    [ClientRpc]
-    private void SendInitialStateClientRpc(StateSnapshot state, ClientRpcParams clientRpcParams = default)
-    {
-        // Skip if we're already initialized
-        if (hasReceivedInitialSync) return;
-
-        // Apply initial state
-        rb.position = state.position;
-        rb.rotation = state.rotation;
-        rb.linearVelocity = state.velocity;
-        rb.angularVelocity = state.angularVelocity;
-
-        // Set visual targets
-        visualPositionTarget = state.position;
-        visualRotationTarget = state.rotation;
-        visualVelocityTarget = state.velocity;
-
-        // Enable physics
-        rb.isKinematic = false;
-        EnableWheelColliders();
-
-        // Mark as initialized
-        hasReceivedInitialSync = true;
-
-        if (debugMode)
-        {
-            Debug.Log($"[Client] Received initial state: {state.position}");
-        }
-    }
-
-    [ServerRpc(RequireOwnership = true)]
-    private void SendStateForValidationServerRpc(StateSnapshot clientState)
-    {
-        // Skip validation for better performance
-        // This was causing client performance issues
-        
-        // Just broadcast state directly without checks
-        BroadcastServerStateClientRpc(clientState);
-    }
-
-    [ClientRpc]
-    private void CorrectClientPositionClientRpc(Vector3 correctedPosition)
-    {
-        // Only the owner responds to correction
-        if (!IsOwner) return;
-
-        if (debugMode)
-        {
-            Debug.LogWarning($"[Client] Position corrected by server. New position: {correctedPosition}");
-        }
-
-        // Apply correction
-        rb.position = correctedPosition;
-
-        // Send updated state
-        SendStateToServer();
-    }
-    
-    [ServerRpc(RequireOwnership = true)]
-    public void RequestRespawnServerRpc()
-    {
-        // Get player data from connection manager
-        if (ConnectionManager.Instance.TryGetPlayerData(player.clientId, out PlayerData playerData))
-        {
-            // Set respawn position and rotation
-            Vector3 respawnPosition = playerData.spawnPoint;
-            Quaternion respawnRotation = Quaternion.LookRotation(
-                SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
-
-            // Update player state
-            playerData.state = PlayerState.Alive;
-            ConnectionManager.Instance.UpdatePlayerDataClientRpc(player.clientId, playerData);
-
-            // Execute respawn for everyone
-            ExecuteRespawnClientRpc(respawnPosition, respawnRotation);
-        }
-    }
-
-    [ClientRpc]
-    public void ExecuteRespawnClientRpc(Vector3 respawnPosition, Quaternion respawnRotation)
-    {
-        Debug.Log($"Executing respawn on client at position {respawnPosition}");
-
-        // Reset physics state
-        rb.isKinematic = true;
-        rb.position = respawnPosition;
-        rb.rotation = respawnRotation;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-
-        // Update transform position
-        transform.position = respawnPosition;
-        transform.rotation = respawnRotation;
-
-        // Reset driving state
-        currentTorque = 0f;
-
-        // CRITICAL: Re-enable movement after respawn
-        canMove = true;
-        isDrifting.Value = false;
-
-        // Update visual targets for non-owners
-        if (!IsOwner)
-        {
-            visualPositionTarget = respawnPosition;
-            visualRotationTarget = respawnRotation;
-            visualVelocityTarget = Vector3.zero;
-        }
-
-        // Update state snapshot for owner
-        if (IsOwner)
-        {
-            // Create and send updated state
-            var snapshot = new StateSnapshot
-            {
-                position = respawnPosition,
-                rotation = respawnRotation,
-                velocity = Vector3.zero,
-                angularVelocity = Vector3.zero,
-                steeringAngle = 0f,
-                motorTorque = 0f,
-                updateId = (uint)Time.frameCount
-            };
-
-            // Set state and send to server
-            vehicleState.Value = snapshot;
-        }
-
-        // Re-enable physics after a short delay
-        StartCoroutine(EnablePhysicsAfterRespawn());
-    }
-
-    private IEnumerator EnablePhysicsAfterRespawn()
-    {
-        // Short delay to ensure everything is in place
-        yield return new WaitForSeconds(0.1f);
-
-        // Re-enable physics
-        rb.isKinematic = false;
-
-        // Make sure wheel colliders are enabled
-        EnableWheelColliders();
-
-        if (debugMode)
-        {
-            Debug.Log($"Physics re-enabled after respawn at {rb.position}");
-        }
-    }
-
-    [ServerRpc(RequireOwnership = true)]
-    private void UpdateDriftingServerRpc(bool isDriftingValue)
-    {
-        // Update the drift status on the server
-        isDrifting.Value = isDriftingValue;
-    }
-
-    [ClientRpc]
-    public void ExplodeCarClientRpc()
-    {
-        // Disable movement temporarily
-        canMove = false;
-
-        // Create explosion effect if the prefab is set
-        if (Explosion != null)
-        {
-            GameObject explosionInstance = Instantiate(Explosion, transform.position + Vector3.up * 1.0f, Quaternion.identity);
-            StartCoroutine(ResetAfterExplosion(explosionInstance));
-        }
-
-        // Disable wheel effects
-        foreach (var ps in wheelParticleSystems)
-        {
-            if (ps != null && ps.isPlaying)
-            {
-                ps.Stop();
-            }
-        }
-
-        foreach (var skid in tireSkids)
-        {
-            if (skid != null)
-            {
-                skid.emitting = false;
-            }
-        }
-
-        // Play explosion sound if we're the owner
-        if (IsOwner)
-        {
-            // Audio is handled via the explosion prefab
         }
     }
 
@@ -1496,9 +1144,6 @@ public class HogController : NetworkBehaviour
         rb.centerOfMass = centerOfMass;
         
         // We're using direct input polling now, no events to subscribe to
-
-        // Register for state change callback
-        vehicleState.OnValueChanged += OnVehicleStateChanged;
     }
 
     private void SetupWheelMeshes()
@@ -1608,17 +1253,24 @@ public class HogController : NetworkBehaviour
             {
                 if (collider != null)
                 {
-                    // Minimal wheel setup - use Unity's defaults for suspension
+                    // Improved wheel setup with stronger friction
                     collider.forceAppPointDistance = 0;
                     
                     // Increase wheel friction for better traction
                     WheelFrictionCurve fwdFriction = collider.forwardFriction;
-                    fwdFriction.stiffness = 2.0f;  // Increased traction
+                    fwdFriction.stiffness = 2.5f;  // Increased from 2.0f for better grip
                     collider.forwardFriction = fwdFriction;
                     
                     WheelFrictionCurve sideFriction = collider.sidewaysFriction;
-                    sideFriction.stiffness = 2.0f;  // Increased traction
+                    sideFriction.stiffness = 2.0f;  // Keep lateral slide the same
                     collider.sidewaysFriction = sideFriction;
+                    
+                    // Improve wheel suspension properties
+                    JointSpring spring = collider.suspensionSpring;
+                    spring.spring = 35000f;      // Stiffer springs
+                    spring.damper = 4500f;       // More damping
+                    collider.suspensionSpring = spring;
+                    collider.suspensionDistance = 0.2f; // Shorter travel
                 }
             }
         }
@@ -1702,6 +1354,113 @@ public class HogController : NetworkBehaviour
         {
             wheel.motorTorque = motorTorque;
             wheel.brakeTorque = brakeTorque;
+        }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    private void SyncPositionToServerRpc(Vector3 position, Quaternion rotation, Vector3 velocity)
+    {
+        // Only process if we're actually the server
+        if (!IsServer) return;
+        
+        // Update the vehicle's transform on the server
+        transform.position = position;
+        transform.rotation = rotation;
+        rb.position = position;
+        transform.rotation = rotation;
+        
+        // SAFETY: Only update velocity if not kinematic
+        if (CanApplyVelocity() && Vector3.Distance(rb.linearVelocity, velocity) > 2f)
+        {
+            rb.linearVelocity = velocity;
+        }
+        
+        // Broadcast to clients more frequently
+        SyncPositionClientRpc(position, rotation, velocity);
+    }
+
+    [ClientRpc]
+    private void SyncPositionClientRpc(Vector3 position, Quaternion rotation, Vector3 velocity)
+    {
+        // Skip for owner (they already have their own position)
+        if (IsOwner) return;
+        
+        // Store targets for interpolation instead of directly applying
+        targetPosition = position;
+        targetRotation = rotation;
+        targetVelocity = velocity;
+        
+        // Only update rigidbody if we have authority and it's not kinematic
+        if (IsServer && CanApplyVelocity())
+        {
+            rb.position = position;
+            rb.rotation = rotation;
+            rb.linearVelocity = velocity;
+        }
+    }
+
+    // Add initialization methods
+    private void InitializeVehicle()
+    {
+        // Get component references
+        SetupComponents();
+        
+        // Initialize wheel meshes
+        SetupWheelMeshes();
+        
+        // Set initial state
+        engineRunning = false;
+        targetRPM = minRPM;
+        
+        // Only spawn effects on clients
+        if (IsClient)
+        {
+            // Setup visual effects
+            SetupEffects();
+            
+            // Enable particle effects for all clients to see
+            EnableParticleEffects(false);
+        }
+        
+        // Initialize the vehicle's physics
+        InitializeVehiclePhysics();
+    }
+    
+    private void RegisterInputEvents()
+    {
+        // Enable the input actions for gameplay
+        inputControls.Gameplay.Enable();
+    }
+
+    // Add a safety method to check if we can apply velocity
+    private bool CanApplyVelocity()
+    {
+        return rb != null && !rb.isKinematic;
+    }
+
+    // Add friction control method
+    private void SetWheelFriction(bool increaseTraction)
+    {
+        foreach (WheelCollider wheel in wheelColliders)
+        {
+            WheelFrictionCurve fwdFriction = wheel.forwardFriction;
+            WheelFrictionCurve sideFriction = wheel.sidewaysFriction;
+            
+            if (increaseTraction)
+            {
+                // Increase stiffness for better traction when accelerating
+                fwdFriction.stiffness = 2.0f;
+                sideFriction.stiffness = 2.0f;
+            }
+            else
+            {
+                // Default stiffness when not accelerating
+                fwdFriction.stiffness = 1.0f;
+                sideFriction.stiffness = 1.0f;
+            }
+            
+            wheel.forwardFriction = fwdFriction;
+            wheel.sidewaysFriction = sideFriction;
         }
     }
 }

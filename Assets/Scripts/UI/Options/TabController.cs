@@ -310,7 +310,7 @@ public class TabController : MonoBehaviour
         Debug.Log("TabController.BackToMainMenu called");
         
         // Find the MenuManager
-        MenuManager menuManager = FindObjectOfType<MenuManager>();
+        MenuManager menuManager = FindFirstObjectByType<MenuManager>();
         if (menuManager != null)
         {
             // Trigger the back button functionality 

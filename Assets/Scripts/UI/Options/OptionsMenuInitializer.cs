@@ -23,10 +23,11 @@ public class OptionsMenuInitializer : MonoBehaviour
         
         if (settingsInstance == null)
         {
-            settingsInstance = FindObjectOfType<Settings>();
-            if (settingsInstance == null)
+            // Find any existing OptionsMenuInitializer
+            OptionsMenuInitializer existingInitializer = FindFirstObjectByType<OptionsMenuInitializer>();
+            if (existingInitializer == null)
             {
-                Debug.LogError("OptionsMenuInitializer: Could not find Settings component!");
+                Debug.LogError("OptionsMenuInitializer: Could not find existing OptionsMenuInitializer!");
             }
         }
         

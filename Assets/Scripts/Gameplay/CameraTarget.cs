@@ -1,30 +1,37 @@
 using UnityEngine;
+using Unity.Netcode;
 
 public class CameraTarget : MonoBehaviour
 {
     [Header("Follow Settings")]
     [Tooltip("How fast the camera approaches the target position (lower = smoother)")]
     [Range(0.5f, 20f)]
-    [SerializeField] private float smoothSpeed = 3f;
+    [SerializeField] private float smoothSpeed = 5f;
     
     [Tooltip("Offset from the target's center (local space)")]
     [SerializeField] private Vector3 targetOffset = new Vector3(0, 1.5f, 2f);
     
     [Tooltip("Whether to use FixedUpdate instead of Update")]
-    [SerializeField] private bool useFixedUpdate = true;
+    [SerializeField] private bool useFixedUpdate = false;
     
     [Header("Stability Settings")]
     [Tooltip("Ignore very small movements below this threshold")]
     [Range(0.001f, 0.1f)]
-    [SerializeField] private float movementThreshold = 0.005f;
+    [SerializeField] private float movementThreshold = 0.002f;
     
     [Tooltip("Weight for current frame position (lower = smoother but more lag)")]
     [Range(0.01f, 0.2f)]
-    [SerializeField] private float positionWeight = 0.06f;
+    [SerializeField] private float positionWeight = 0.12f;
+    
+    [Header("Network Settings")]
+    [Tooltip("Additional responsiveness for non-host clients")]
+    [Range(1f, 3f)]
+    [SerializeField] private float clientResponseMultiplier = 1.5f;
     
     private Transform _target;
     private Vector3 _smoothedPosition;
     private bool _isInitialized = false;
+    private bool _isLocalPlayer = false;
     
     private void Start()
     {
@@ -69,19 +76,29 @@ public class CameraTarget : MonoBehaviour
             return;
         }
         
-        // Use weighted average for ultra-smooth movement
-        // This is more stable than Vector3.Lerp for this purpose
-        _smoothedPosition = Vector3.Lerp(_smoothedPosition, targetPosition, positionWeight);
+        // Determine if we need more responsiveness for non-host
+        float actualPositionWeight = positionWeight;
+        float actualSmoothSpeed = smoothSpeed;
         
-        // Only move if we've moved significantly
+        // If we're a client but not the host, be more responsive
+        if (_isLocalPlayer && !IsHost())
+        {
+            actualPositionWeight *= clientResponseMultiplier;
+            actualSmoothSpeed *= clientResponseMultiplier;
+        }
+        
+        // Use weighted average for smooth movement
+        _smoothedPosition = Vector3.Lerp(_smoothedPosition, targetPosition, actualPositionWeight);
+        
+        // Only move if we've moved significantly or if we're a non-host client
         float distanceToTarget = Vector3.Distance(transform.position, _smoothedPosition);
-        if (distanceToTarget > movementThreshold)
+        if (distanceToTarget > movementThreshold || (_isLocalPlayer && !IsHost()))
         {
             // Update position using exponential smoothing
             transform.position = Vector3.Lerp(
                 transform.position,
                 _smoothedPosition,
-                smoothSpeed * (useFixedUpdate ? Time.fixedDeltaTime : Time.deltaTime)
+                actualSmoothSpeed * (useFixedUpdate ? Time.fixedDeltaTime : Time.deltaTime)
             );
         }
     }
@@ -94,14 +111,30 @@ public class CameraTarget : MonoBehaviour
         return _target.TransformPoint(targetOffset);
     }
     
+    private bool IsHost()
+    {
+        // Check if NetworkManager exists and if we're the host
+        return NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost;
+    }
+    
     public void SetTarget(Transform target)
     {
         bool wasNull = _target == null;
         _target = target;
         
+        // Check if this is the local player's transform
+        if (_target != null)
+        {
+            Player playerComponent = _target.GetComponent<Player>();
+            if (playerComponent != null)
+            {
+                _isLocalPlayer = playerComponent.IsOwner;
+            }
+        }
+        
         if (_target != null && wasNull)
         {
-            // Only reset position on first assignment
+            // Immediately jump to position on first assignment
             Vector3 targetPos = CalculateTargetPosition();
             transform.position = targetPos;
             _smoothedPosition = targetPos;

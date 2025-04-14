@@ -5680,6 +5680,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4234e59758e5a5a41b410dbaea8c8859, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  smoothSpeed: 5
+  targetOffset: {x: 0, y: 1.5, z: 2}
+  useFixedUpdate: 0
+  movementThreshold: 0.002
+  positionWeight: 0.12
+  clientResponseMultiplier: 1.5
 --- !u!1 &423498031
 GameObject:
   m_ObjectHideFlags: 0
@@ -11582,7 +11588,7 @@ MonoBehaviour:
   m_ProtocolType: 1
   m_UseWebSockets: 0
   m_UseEncryption: 0
-  m_MaxPacketQueueSize: 128
+  m_MaxPacketQueueSize: 4096
   m_MaxPayloadSize: 6144
   m_HeartbeatTimeoutMS: 500
   m_ConnectTimeoutMS: 1000
@@ -11638,7 +11644,7 @@ MonoBehaviour:
     NetworkProfilingMetrics: 1
     OldPrefabList: []
   RunInBackground: 1
-  LogLevel: 1
+  LogLevel: 0
 --- !u!4 &807089657
 Transform:
   m_ObjectHideFlags: 0
