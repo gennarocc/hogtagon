@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{D42CAECE-34B5-0A0E-C7F5-094BB4C38B6D}",
+    "Hash": "{A66FDE2E-2E55-30D0-F8B2-506BE0271EDF}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -394,6 +394,7 @@
       "Name": "EngineOn",
       "ObjectPath": "\\Events\\Default Work Unit\\EngineOn",
       "GUID": "{6DC496AD-3332-4DA5-8F13-711E68963147}",
+      "MaxAttenuation": "85",
       "DurationType": "Infinite",
       "MediaRefs": [
        {
@@ -714,6 +715,6 @@
     ]
    }
   ],
-  "FileHash": "{20610B05-B38B-7F3E-0850-346484D6834C}"
+  "FileHash": "{CD21B0B9-43BE-54FF-EB5A-B54204693915}"
  }
 }
