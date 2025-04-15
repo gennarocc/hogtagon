@@ -18,11 +18,7 @@ public class Player : NetworkBehaviour
     [SerializeField] private GameObject body; // Used to set color texture
     [SerializeField] private GameObject playerIndicator;
 
-
-    [Header("Camera")]
-    [SerializeField] public CinemachineFreeLook playerCamera;
-    [SerializeField] public CameraTarget cameraTarget;
-
+    [HideInInspector] public CinemachineFreeLook playerCamera;
 
     private NetworkVariable<PlayerData> networkPlayerData = new NetworkVariable<PlayerData>(
          new PlayerData
@@ -52,58 +48,42 @@ public class Player : NetworkBehaviour
 
         ApplyPlayerData(networkPlayerData.Value);
 
-        // Deactivate main menu camera.
+        Cursor.visible = !Cursor.visible; // toggle visibility
+        Cursor.lockState = CursorLockMode.Locked;
+
         menuManager = GameObject.Find("Menus").GetComponent<MenuManager>();
         menuManager.menuCamera.gameObject.SetActive(false);
         menuManager.connectionPending.SetActive(false);
+        menuManager.jumpUI.SetActive(true);
+        if (IsServer) menuManager.ShowLobbySettingsMenu();
+
+        playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
+
         if (IsOwner)
         {
             // Activate player camera;
             playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
             playerCamera.gameObject.SetActive(true);
-
-            cameraTarget = GameObject.Find("CameraTarget").GetComponent<CameraTarget>();
-            cameraTarget.SetTarget(transform);
+            playerCamera.LookAt = transform;
+            playerCamera.Follow = transform;
         }
     }
 
-    private void Start()
+    public void Start()
     {
-        Cursor.visible = !Cursor.visible; // toggle visibility
-        Cursor.lockState = CursorLockMode.Locked;
-        menuManager.jumpUI.SetActive(true);
-
-        if (IsOwner)
-        {
-            // If this is the host/server, open the lobby settings menu
-            if (IsServer && GameManager.Instance != null && GameManager.Instance.state == GameState.Pending)
-            {
-                Debug.Log("[Player] Host player spawned, opening lobby settings menu");
-
-                // Wait a frame to ensure everything is initialized
-                StartCoroutine(OpenLobbySettingsAfterPlayerSpawn());
-            }
-        }
-
+        // Needs to be in start due to network initialization.
         Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
         localPlayerCameraTransform = localPlayer.playerCamera.transform;
     }
-
-    // Coroutine to open lobby settings with proper timing after player spawn
-    private IEnumerator OpenLobbySettingsAfterPlayerSpawn()
+    
+    public override void OnNetworkDespawn()
     {
-        // Wait a frame for everything to initialize
-        yield return null;
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        Debug.Log("[Player] Opening lobby settings from player spawn");
-
-        if (menuManager != null)
+        if (nameplate != null && nameplate.gameObject != null)
         {
-            menuManager.OpenLobbySettingsMenu();
+            Destroy(nameplate.gameObject);
         }
+        menuManager.jumpUI.SetActive(false);
     }
 
     private void Update()
@@ -118,56 +98,50 @@ public class Player : NetworkBehaviour
             nameplate.transform.rotation = Quaternion.Slerp(nameplate.transform.rotation, targetRotation, smoothingSpeed * Time.deltaTime);
         }
 
+        // Handle spectator input
+        if (IsOwner)
+        {
+            HandleSpectatorInput();
+        }
+
+        // Update player leader indicator
         ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
-
-        if (playerData.state != PlayerState.Alive && GameManager.Instance.state != GameState.Pending)
-        {
-            List<ulong> aliveClients = ConnectionManager.Instance.GetAliveClients();
-
-            // Check if there are ANY alive clients before proceeding
-            if (aliveClients.Count > 0)
-            {
-                // Make sure spectatingPlayerIndex is within bounds
-                if (spectatingPlayerIndex >= aliveClients.Count)
-                    spectatingPlayerIndex = 0;
-
-                // Get the player to spectate
-                Player spectatePlayer = ConnectionManager.Instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
-
-                // Only follow/look if we got a valid player
-                if (spectatePlayer != null)
-                {
-                    cameraTarget.SetTarget(spectatePlayer.transform);
-                }
-
-                // Handle changing spectate target
-                if (Input.GetKeyDown(KeyCode.Mouse0))
-                {
-                    spectatingPlayerIndex = (spectatingPlayerIndex + 1) % aliveClients.Count;
-                }
-            }
-            else
-            {
-                cameraTarget.SetTarget(transform);
-            }
-        }
-        else
-        {
-            cameraTarget.SetTarget(transform);
-        }
-
         playerIndicator.SetActive(playerData.isLobbyLeader);
     }
-    public override void OnDestroy()
-    {
-        base.OnDestroy();
 
-        if (nameplate != null && nameplate.gameObject != null)
+    private void HandleSpectatorInput()
+    {
+        // Only check for input if player is dead and game is active
+        ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
+
+        if (playerData.state != PlayerState.Alive && GameManager.Instance.state != GameState.Playing)
         {
-            Destroy(nameplate.gameObject);
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                CycleSpectatorTarget();
+            }
         }
-        menuManager.jumpUI.SetActive(false);
     }
+
+    private void CycleSpectatorTarget()
+    {
+        List<ulong> aliveClients = ConnectionManager.Instance.GetAliveClients();
+
+        if (aliveClients.Count > 0)
+        {
+            spectatingPlayerIndex = (spectatingPlayerIndex + 1) % aliveClients.Count;
+            Player spectatePlayer = ConnectionManager.Instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
+
+            if (spectatePlayer != null)
+            {
+                playerCamera.LookAt = spectatePlayer.transform;
+                playerCamera.Follow = spectatePlayer.transform;
+            }
+        }
+    }
+
+
+
     public void Respawn()
     {
         // Get updated playerData from connectionManager
@@ -210,7 +184,48 @@ public class Player : NetworkBehaviour
 
     private void OnPlayerDataChanged(PlayerData previousValue, PlayerData newValue)
     {
+        // Apply visual updates
         ApplyPlayerData(newValue);
+
+        // Check if this is the local player and the state has changed
+        if (IsOwner && previousValue.state != newValue.state)
+        {
+            if (newValue.state != PlayerState.Alive)
+            {
+                // Player just died, switch to spectator mode
+                SetSpectatorCamera();
+            }
+            else
+            {
+                // Player became alive, switch back to own camera
+                playerCamera.LookAt = transform;
+                playerCamera.Follow = transform;
+            }
+        }
+    }
+
+    private void SetSpectatorCamera()
+    {
+        List<ulong> aliveClients = ConnectionManager.Instance.GetAliveClients();
+
+        // Only proceed if there are alive players to spectate
+        if (aliveClients.Count > 0)
+        {
+            spectatingPlayerIndex = 0;
+            Player spectatePlayer = ConnectionManager.Instance.GetPlayer(aliveClients[spectatingPlayerIndex]);
+
+            if (spectatePlayer != null)
+            {
+                playerCamera.LookAt = spectatePlayer.transform;
+                playerCamera.Follow = spectatePlayer.transform;
+            }
+        }
+        else
+        {
+            // No alive players to spectate, focus on self
+            playerCamera.LookAt = transform;
+            playerCamera.Follow = transform;
+        }
     }
 
     private void ApplyPlayerData(PlayerData playerData)
@@ -250,6 +265,4 @@ public class Player : NetworkBehaviour
             networkPlayerData.Value = playerData;
         }
     }
-
-
 }

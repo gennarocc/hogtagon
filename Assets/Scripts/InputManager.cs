@@ -23,6 +23,7 @@ public class InputManager : MonoBehaviour
     // Input values
     private float _throttleInput;
     private float _brakeInput;
+    private float _steerInput; // Added for steering
     private Vector2 _lookInput;
     private bool _isHonking;
     private bool _isJumping;
@@ -50,6 +51,7 @@ public class InputManager : MonoBehaviour
     // Public accessors
     public float ThrottleInput => _throttleInput;
     public float BrakeInput => _brakeInput;
+    public float SteerInput => _steerInput; // Added for steering
     public Vector2 LookInput => _lookInput;
     public bool IsHonking => _isHonking;
     public bool IsUsingGamepad => _usingGamepad;
@@ -82,6 +84,10 @@ public class InputManager : MonoBehaviour
         controls.Gameplay.Brake.performed += ctx => _brakeInput = ctx.ReadValue<float>();
         controls.Gameplay.Brake.canceled += ctx => _brakeInput = 0f;
 
+        // Steering controls (added)
+        controls.Gameplay.Steer.performed += ctx => _steerInput = ctx.ReadValue<float>();
+        controls.Gameplay.Steer.canceled += ctx => _steerInput = 0f;
+
         // Jump action
         controls.Gameplay.Jump.performed += ctx => JumpPressed?.Invoke();
 
@@ -101,7 +107,7 @@ public class InputManager : MonoBehaviour
         controls.Gameplay.ShowScoreboard.performed += ctx => ScoreboardToggled?.Invoke(true);
         controls.Gameplay.ShowScoreboard.canceled += ctx => ScoreboardToggled?.Invoke(false);
         
-        // Pause Menu (added)
+        // Pause Menu
         controls.Gameplay.PauseMenu.performed += ctx => MenuToggled?.Invoke();
 
         // UI controls
@@ -188,6 +194,7 @@ public class InputManager : MonoBehaviour
         // Reset input values when switching to UI
         _throttleInput = 0f;
         _brakeInput = 0f;
+        _steerInput = 0f; // Reset steering input
         _lookInput = Vector2.zero;
         _isHonking = false;
     }
@@ -232,6 +239,7 @@ public class InputManager : MonoBehaviour
             // When navigation is disabled (for text input), ensure we don't process 
             // small stick drift as navigation input
             _lookInput = Vector2.zero;
+            _steerInput = 0f; // Reset steering input when navigation is disabled
         }
         
         // If we're in UI mode (menus are open), force look input to zero
@@ -239,6 +247,7 @@ public class InputManager : MonoBehaviour
         if (_currentInputState == InputState.UI)
         {
             _lookInput = Vector2.zero;
+            _steerInput = 0f; // Reset steering input in UI mode
         }
     }
 
@@ -309,6 +318,7 @@ public class InputManager : MonoBehaviour
             _lookInput = Vector2.zero;
             _throttleInput = 0f;
             _brakeInput = 0f;
+            _steerInput = 0f; // Reset steering input
         }
     }
 

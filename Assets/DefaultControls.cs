@@ -46,6 +46,15 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""Steer"",
+                    ""type"": ""Value"",
+                    ""id"": ""3d2a3d56-f721-4a41-b551-a8b3ff57c37e"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Jump"",
                     ""type"": ""Button"",
                     ""id"": ""88ae7bbd-8160-4245-88f1-26b543db4c91"",
@@ -289,6 +298,50 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""action"": ""PauseMenu"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""d0ad5a4e-28e3-41a5-9c67-f6dfab6cef42"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Steer"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""c8a4c85c-e1d5-4772-9d5b-2f6c9697a9a7"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Steer"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""3b25b1f2-9fc2-41d8-b5cf-0d1fe50cf7b2"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Steer"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4cb32ce6-a006-4bdd-9a5d-b803c3472acd"",
+                    ""path"": ""<Gamepad>/leftStick/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Steer"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -398,6 +451,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
         m_Gameplay_Throttle = m_Gameplay.FindAction("Throttle", throwIfNotFound: true);
         m_Gameplay_Brake = m_Gameplay.FindAction("Brake", throwIfNotFound: true);
+        m_Gameplay_Steer = m_Gameplay.FindAction("Steer", throwIfNotFound: true);
         m_Gameplay_Jump = m_Gameplay.FindAction("Jump", throwIfNotFound: true);
         m_Gameplay_Honk = m_Gameplay.FindAction("Honk", throwIfNotFound: true);
         m_Gameplay_Look = m_Gameplay.FindAction("Look", throwIfNotFound: true);
@@ -478,6 +532,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
     private List<IGameplayActions> m_GameplayActionsCallbackInterfaces = new List<IGameplayActions>();
     private readonly InputAction m_Gameplay_Throttle;
     private readonly InputAction m_Gameplay_Brake;
+    private readonly InputAction m_Gameplay_Steer;
     private readonly InputAction m_Gameplay_Jump;
     private readonly InputAction m_Gameplay_Honk;
     private readonly InputAction m_Gameplay_Look;
@@ -489,6 +544,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         public GameplayActions(@DefaultControls wrapper) { m_Wrapper = wrapper; }
         public InputAction @Throttle => m_Wrapper.m_Gameplay_Throttle;
         public InputAction @Brake => m_Wrapper.m_Gameplay_Brake;
+        public InputAction @Steer => m_Wrapper.m_Gameplay_Steer;
         public InputAction @Jump => m_Wrapper.m_Gameplay_Jump;
         public InputAction @Honk => m_Wrapper.m_Gameplay_Honk;
         public InputAction @Look => m_Wrapper.m_Gameplay_Look;
@@ -509,6 +565,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @Brake.started += instance.OnBrake;
             @Brake.performed += instance.OnBrake;
             @Brake.canceled += instance.OnBrake;
+            @Steer.started += instance.OnSteer;
+            @Steer.performed += instance.OnSteer;
+            @Steer.canceled += instance.OnSteer;
             @Jump.started += instance.OnJump;
             @Jump.performed += instance.OnJump;
             @Jump.canceled += instance.OnJump;
@@ -534,6 +593,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @Brake.started -= instance.OnBrake;
             @Brake.performed -= instance.OnBrake;
             @Brake.canceled -= instance.OnBrake;
+            @Steer.started -= instance.OnSteer;
+            @Steer.performed -= instance.OnSteer;
+            @Steer.canceled -= instance.OnSteer;
             @Jump.started -= instance.OnJump;
             @Jump.performed -= instance.OnJump;
             @Jump.canceled -= instance.OnJump;
@@ -640,6 +702,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
     {
         void OnThrottle(InputAction.CallbackContext context);
         void OnBrake(InputAction.CallbackContext context);
+        void OnSteer(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
         void OnHonk(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
