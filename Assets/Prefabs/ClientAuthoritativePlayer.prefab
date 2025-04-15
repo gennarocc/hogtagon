@@ -11212,7 +11212,7 @@ MonoBehaviour:
   maxTorque: 500
   brakeTorque: 300
   maxSteeringAngle: 60
-  steeringSpeed: 0.7
+  steeringSpeed: 0.3
   accelerationFactor: 2
   decelerationFactor: 1
   jumpForce: 7
