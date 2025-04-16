@@ -72,6 +72,7 @@ public class HogVisualEffects : MonoBehaviour
 
     public void PlayJumpEffects()
     {
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogJump);
         if (jumpParticleSystems != null && jumpParticleSystems.Length >= 2)
         {
             jumpParticleSystems[0].Play();

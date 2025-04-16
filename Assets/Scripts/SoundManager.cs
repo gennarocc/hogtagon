@@ -103,6 +103,7 @@ public class SoundManager : NetworkBehaviour
 
         // Request server to broadcast the sound
         // This matches your server-authoritative model
+        Debug.Log("Playing Network sound");
         PlaySoundServerRpc((byte)effectType, networkObject.NetworkObjectId);
     }
 
@@ -150,6 +151,7 @@ public class SoundManager : NetworkBehaviour
         // Get the client ID that sent the RPC
         ulong senderClientId = serverRpcParams.Receive.SenderClientId;
 
+        Debug.Log("Playing server sound");
         // Validate the request (server-authoritative)
 
         // Create client RPC params that exclude the sender

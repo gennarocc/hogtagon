@@ -96,11 +96,11 @@ public class KillBall : NetworkBehaviour
         }
 
         // Get the NetworkHogController instead of HogController
-        NetworkHogController hogController = client.PlayerObject.GetComponentInChildren<NetworkHogController>();
+        HogVisualEffects hogController = client.PlayerObject.GetComponent<HogVisualEffects>();
         if (hogController != null)
         {
             // Call the explosion effect on all clients
-            hogController.ExplodeCarClientRpc();
+            hogController.CreateExplosion();
         }
         else
         {

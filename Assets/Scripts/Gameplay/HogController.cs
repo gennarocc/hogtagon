@@ -70,16 +70,14 @@ public class HogController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+
         // Get reference to the InputManager
         inputManager = InputManager.Instance;
-        if (inputManager == null)
-        {
-            Debug.LogError("InputManager not found in the scene");
-        }
-        else if (IsOwner)
+        if (IsOwner)
         {
             // Subscribe to the jump event
             inputManager.JumpPressed += OnJumpPressed;
+            inputManager.HornPressed += OnHornPressed;
         }
 
         if (IsServer || IsOwner)
@@ -93,15 +91,7 @@ public class HogController : NetworkBehaviour
             DisableWheelColliderPhysics();
         }
 
-        // Initialize VFX component if available
-        if (visualEffects != null)
-        {
-            visualEffects.Initialize(transform, centerOfMass, OwnerClientId);
-        }
-        else
-        {
-            Debug.LogWarning("HogVisualEffects component not assigned to HogController");
-        }
+        visualEffects.Initialize(transform, centerOfMass, OwnerClientId);
 
         // Create texture for debug UI background
         debugBackgroundTexture = MakeTexture(2, 2, debugBackgroundColor);
@@ -109,6 +99,12 @@ public class HogController : NetworkBehaviour
         // Subscribe to network variable changes to trigger effects
         isDrifting.OnValueChanged += OnDriftingChanged;
         isJumping.OnValueChanged += OnJumpingChanged;
+
+    }
+
+    private void Start()
+    {
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
     }
 
     private void OnJumpPressed()
@@ -117,6 +113,11 @@ public class HogController : NetworkBehaviour
         {
             jumpInputReceived = true;
         }
+    }
+
+    private void OnHornPressed()
+    {
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
     }
 
     public override void OnNetworkDespawn()
@@ -135,6 +136,8 @@ public class HogController : NetworkBehaviour
 
         if (debugBackgroundTexture != null)
             Destroy(debugBackgroundTexture);
+
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOff);
     }
 
     private void OnDriftingChanged(bool previousValue, bool newValue)
@@ -181,7 +184,6 @@ public class HogController : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        // OWNER CLIENT: handle input and local visualization
         if (IsOwner)
         {
             ClientInput input = CollectInput();
@@ -199,7 +201,7 @@ public class HogController : NetworkBehaviour
             CheckDriftCondition();
 
             // Audio feedback
-            rpm.SetGlobalValue(Mathf.Clamp(input.throttleInput, -1f, 1f) * maxTorque);
+            rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5);
         }
         // NON-OWNER CLIENTS: apply network synchronized wheel visuals
         else if (!IsServer)
@@ -407,8 +409,6 @@ public class HogController : NetworkBehaviour
 
         // Add a bit more forward boost in the car's facing direction
         rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
-
-        Debug.Log($"Applied jump with preserving momentum: {horizontalVelocity}, new velocity: {newVelocity}");
     }
 
     private void CheckServerDriftCondition()
@@ -616,6 +616,20 @@ public class HogController : NetworkBehaviour
         if (myPlayer == null || otherPlayer == null) return;
 
         Debug.Log($"[COLLISION] Player {myPlayer.clientId} collided with Player {otherPlayer.clientId}");
+
+        var impactSound = SoundManager.SoundEffectType.HogImpactLow;
+        var playerSpeed = rb.linearVelocity.magnitude;
+
+        if (playerSpeed < 12f && playerSpeed > 5f)
+        {
+            impactSound = SoundManager.SoundEffectType.HogImpactMed;
+        }
+        else if(playerSpeed >= 12f)
+        {
+            impactSound = SoundManager.SoundEffectType.HogImpactHigh;
+        }
+
+        SoundManager.Instance.PlayNetworkedSound(gameObject, impactSound);
 
         // Get the colliding player's name from ConnectionManager
         if (ConnectionManager.Instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
