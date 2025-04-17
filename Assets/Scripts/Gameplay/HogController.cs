@@ -18,7 +18,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
     [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .4f;
-
+    
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
     [SerializeField] private float jumpCooldown = 15f; // Time between jumps
@@ -62,7 +62,7 @@ public class HogController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
+        
         // Get reference to the InputManager
         inputManager = InputManager.Instance;
         if (inputManager == null)
@@ -88,16 +88,16 @@ public class HogController : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner) return;
-
-        // Update jump cooldown
-        if (jumpOnCooldown)
-        {
-            jumpCooldownRemaining -= Time.deltaTime;
-            if (jumpCooldownRemaining <= 0)
+            
+            // Update jump cooldown
+            if (jumpOnCooldown)
             {
-                jumpOnCooldown = false;
+                jumpCooldownRemaining -= Time.deltaTime;
+                if (jumpCooldownRemaining <= 0)
+                {
+                    jumpOnCooldown = false;
+                }
             }
-        }
 
         // Toggle debug UI with F1
         if (Input.GetKeyDown(KeyCode.F1))
@@ -371,7 +371,7 @@ public class HogController : NetworkBehaviour
             wheelTransforms[i].localRotation = Quaternion.Euler(0, frontSteeringAngle, 0);
             wheelTransforms[i].Rotate(rotationAmount, 0, 0, Space.Self);
         }
-
+        
         // Rear wheels
         for (int i = 2; i < 4; i++)
         {
@@ -406,27 +406,27 @@ public class HogController : NetworkBehaviour
             var playerObject = NetworkManager.ConnectedClients[clientId].PlayerObject;
             Rigidbody rb = playerObject.GetComponentInChildren<Rigidbody>();
 
-            if (rb != null)
-            {
-                // Store current horizontal velocity
-                Vector3 currentVelocity = rb.linearVelocity;
-                Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+        if (rb != null)
+        {
+            // Store current horizontal velocity
+            Vector3 currentVelocity = rb.linearVelocity;
+            Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
 
                 // Start with a position boost for immediate feedback
                 Vector3 currentPos = rb.position;
                 Vector3 targetPos = currentPos + Vector3.up * 1.5f; // Smaller initial boost
                 rb.MovePosition(targetPos);
 
-                // Apply a sharper upward impulse for faster rise
+            // Apply a sharper upward impulse for faster rise
                 float upwardVelocity = jumpForce * 1.2f; // Faster rise
 
-                // Combine horizontal momentum with new vertical impulse
+            // Combine horizontal momentum with new vertical impulse
                 // Multiply horizontal speed to maintain or enhance momentum
-                Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
-                rb.linearVelocity = newVelocity;
+            Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
+            rb.linearVelocity = newVelocity;
 
-                // Add a bit more forward boost in the car's facing direction
-                rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+            // Add a bit more forward boost in the car's facing direction
+            rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
 
                 Debug.Log($"Applied jump with preserving momentum: {horizontalVelocity}, new velocity: {newVelocity}");
             }
@@ -435,7 +435,7 @@ public class HogController : NetworkBehaviour
         // Start cooldown
         StartCoroutine(JumpCooldownServer());
     }
-
+    
     private IEnumerator JumpCooldownServer()
     {
         yield return new WaitForSeconds(jumpCooldown);
