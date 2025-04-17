@@ -64,6 +64,7 @@ public class HogController : NetworkBehaviour
     private float localVelocityX;
     private bool jumpOnCooldown = false;
     private float jumpCooldownRemaining = 0f;
+    private float lerpedThrottleInput;
     private Texture2D debugBackgroundTexture;
 
     public override void OnNetworkSpawn()
@@ -200,14 +201,24 @@ public class HogController : NetworkBehaviour
             // Check for drift conditions and send to server
             CheckDriftCondition();
 
-            // Audio feedback
-            rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5);
+            CalculateEngineAudio(input);
         }
         // NON-OWNER CLIENTS: apply network synchronized wheel visuals
         else if (!IsServer)
         {
             AnimateWheelsFromNetwork();
         }
+    }
+
+    private void CalculateEngineAudio(ClientInput input)
+    {
+        // Interpolate the throttle input so get smoother engine transitions.
+        float netInput = Math.Sign(input.throttleInput - input.brakeInput);
+        var lerp = Mathf.Lerp(lerpedThrottleInput, netInput, Time.deltaTime * 3); // Lerp speed is 3
+        lerpedThrottleInput = lerp;
+
+        // Wwise expects a value between 1-100 so we multiply by 5 (car speed is around 1-23)
+        rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5 * lerpedThrottleInput); 
     }
 
     private void CheckDriftCondition()
@@ -624,7 +635,7 @@ public class HogController : NetworkBehaviour
         {
             impactSound = SoundManager.SoundEffectType.HogImpactMed;
         }
-        else if(playerSpeed >= 12f)
+        else if (playerSpeed >= 12f)
         {
             impactSound = SoundManager.SoundEffectType.HogImpactHigh;
         }
