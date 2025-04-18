@@ -11250,7 +11250,7 @@ MonoBehaviour:
   rearRightWheelParticleSystem: {fileID: 726239328357988392}
   rearLeftWheelTireSkid: {fileID: 362347677443509517}
   rearRightWheelTireSkid: {fileID: 2553562073284689455}
-  explosionPrefab: {fileID: 801768762681791778, guid: 8ac8c65bc56d73f44886274bcf0ddfd6, type: 3}
+  explosionPrefab: {fileID: 7727365421969017434, guid: 8ac8c65bc56d73f44886274bcf0ddfd6, type: 3}
   jumpParticleSystems:
   - {fileID: 6138714427622281252}
   - {fileID: 6080697285567330973}

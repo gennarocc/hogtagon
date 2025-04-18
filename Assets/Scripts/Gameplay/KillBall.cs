@@ -9,6 +9,7 @@ public class KillBall : NetworkBehaviour
     [SerializeField] public Vector3 initialSize;
     [SerializeField] public Vector3 targetSize;
     [SerializeField] private float duration = 60;
+    [SerializeField] private GameObject killBallPulseEffect;
     
     // Dictionary to track last kill time for each player to prevent duplicate kills
     private Dictionary<ulong, float> lastKillTime = new Dictionary<ulong, float>();
@@ -73,6 +74,12 @@ public class KillBall : NetworkBehaviour
         var client = NetworkManager.Singleton.ConnectedClients[clientId];
         Debug.Log($"{clientId} - Add blow up force to {client.PlayerObject.name}");
 
+        // Play the kill ball pulse effect
+        if (killBallPulseEffect != null)
+        {
+            PlayKillBallEffectClientRpc();
+        }
+
         // Get the rigidbody
         Rigidbody rb = client.PlayerObject.GetComponentInChildren<Rigidbody>();
         if (rb == null) return;
@@ -105,6 +112,19 @@ public class KillBall : NetworkBehaviour
         else
         {
             Debug.LogWarning($"Couldn't find NetworkHogController for player {clientId}");
+        }
+    }
+
+    [ClientRpc]
+    private void PlayKillBallEffectClientRpc()
+    {
+        if (killBallPulseEffect != null)
+        {
+            Instantiate(killBallPulseEffect, transform.position, Quaternion.identity);
+        }
+        else
+        {
+            Debug.LogWarning("KillBallPulse effect prefab is not assigned!");
         }
     }
 }
