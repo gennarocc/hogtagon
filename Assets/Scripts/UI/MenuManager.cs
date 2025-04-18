@@ -648,12 +648,6 @@ public class MenuManager : NetworkBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
 
-        // Switch to UI input mode
-        if (inputManager != null)
-        {
-            inputManager.SwitchToUIMode();
-        }
-
         // Play celebration sound if available
         ButtonConfirmAudio();
     }
