@@ -75,7 +75,7 @@ public class Player : NetworkBehaviour
         Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
         localPlayerCameraTransform = localPlayer.playerCamera.transform;
     }
-    
+
     public override void OnNetworkDespawn()
     {
 
@@ -140,45 +140,24 @@ public class Player : NetworkBehaviour
         }
     }
 
-
-
     public void Respawn()
     {
         // Get updated playerData from connectionManager
         ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
 
-        if (IsServer)
-        {
-            // Server-side respawn logic
-            Debug.Log("Server respawning Player");
-            rb.position = playerData.spawnPoint;
-            rb.transform.LookAt(SpawnPointManager.Instance.transform);
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+        if (!IsServer) return;
+        // Server-side respawn logic
+        Debug.Log("Respawning Player - " + playerData.username);
+        rb.position = playerData.spawnPoint;
+        rb.transform.LookAt(SpawnPointManager.Instance.transform);
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
 
-            // Set player state to alive and update clients
-            if (playerData.state != PlayerState.Alive)
-            {
-                playerData.state = PlayerState.Alive;
-                ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
-            }
-        }
-        else if (IsOwner)
+        // Set player state to alive and update clients
+        if (playerData.state != PlayerState.Alive)
         {
-            // Client-side respawn request
-            Debug.Log("Client requesting respawn");
-            // Find the HogController component in children
-            NetworkHogController hogController = GetComponent<NetworkHogController>();
-
-            if (hogController != null)
-            {
-                // Request respawn via HogController
-                hogController.RequestRespawnServerRpc();
-            }
-            else
-            {
-                Debug.LogError("Could not find HogController component for respawn");
-            }
+            playerData.state = PlayerState.Alive;
+            ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
         }
     }
 
@@ -193,11 +172,14 @@ public class Player : NetworkBehaviour
             if (newValue.state != PlayerState.Alive)
             {
                 // Player just died, switch to spectator mode
+                Debug.Log("Entering Spectator Mode"); 
                 SetSpectatorCamera();
             }
             else
             {
                 // Player became alive, switch back to own camera
+                if (previousValue.state == PlayerState.Dead) Debug.Log("Exiting Spectator Mode"); 
+                SetSpectatorCamera();
                 playerCamera.LookAt = transform;
                 playerCamera.Follow = transform;
             }

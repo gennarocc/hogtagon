@@ -17,12 +17,15 @@ public class KillBall : NetworkBehaviour
     
     private void Update()
     {
-        if (GameManager.Instance.state == GameState.Pending)
+
+        if (GameManager.Instance.state == GameState.Pending || !ConnectionManager.Instance.isConnected)
         {
             // Ensure we always reset to the initial size in Pending state
             transform.localScale = pendingSize;
             return;
         }
+
+        if (!IsServer) return;
         float scaleLerp = Mathf.Clamp01(GameManager.Instance.gameTime / duration);
         transform.localScale = Vector3.Lerp(initialSize, targetSize, scaleLerp);
     }

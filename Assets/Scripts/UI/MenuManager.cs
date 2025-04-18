@@ -635,25 +635,12 @@ public class MenuManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void DisplayGameWinnerClientRpc(string player)
+    public void DisplayGameWinnerClientRpc(ulong roundWinnerClientId, PlayerData winner)
     {
         tempUI.SetActive(true);
 
-        // Find client ID for the player name
-        ulong? winnerClientId = null;
-        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
-        {
-            if (ConnectionManager.Instance.GetClientUsername(clientId) == player)
-            {
-                winnerClientId = clientId;
-                break;
-            }
-        }
-
         // Get colored text if client ID was found
-        string coloredPlayerName = winnerClientId.HasValue
-            ? ConnectionManager.Instance.GetPlayerColoredName(winnerClientId.Value)
-            : player;
+        string coloredPlayerName = ConnectionManager.Instance.GetPlayerColoredName(roundWinnerClientId);
 
         winnerText.text = $"{coloredPlayerName} IS THE BIG WINNER!";
 

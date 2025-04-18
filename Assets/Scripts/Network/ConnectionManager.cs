@@ -194,15 +194,7 @@ public class ConnectionManager : NetworkBehaviour
         PlayerData playerData = pendingPlayerData[clientId];
         clientDataDictionary.Add(clientId, playerData);
 
-        // Find and set the player's NetworkVariable
-        foreach (Player player in FindObjectsByType<Player>(FindObjectsSortMode.None))
-        {
-            if (player.clientId == clientId)
-            {
-                player.SetPlayerData(playerData);  // This will update the NetworkVariable
-                break;
-            }
-        }
+        GetPlayer(clientId).SetPlayerData(playerData); 
 
         // Notify all clients about the new player for the client dictionary
         UpdatePlayerDataClientRpc(clientId, playerData);
@@ -224,6 +216,11 @@ public class ConnectionManager : NetworkBehaviour
         else
             clientDataDictionary.Add(clientId, player);
 
+        if (IsServer)
+        {
+            Player playerObject = GetPlayer(clientId);
+            playerObject.SetPlayerData(player);
+        }
         scoreboard.UpdatePlayerList();
     }
 
@@ -431,10 +428,10 @@ public class ConnectionManager : NetworkBehaviour
             // Convert the player's car color to a suitable text color
             Color textColor = GetTextColorFromCarColor(playerData.colorIndex);
             string colorHex = ColorUtility.ToHtmlStringRGB(textColor);
-            
+
             return $"<color=#{colorHex}>{playerData.username}</color>";
         }
-        
+
         return "Unknown";
     }
 
@@ -452,7 +449,7 @@ public class ConnectionManager : NetworkBehaviour
         if (carMaterial != null)
         {
             string materialName = carMaterial.name;
-            
+
             // Check for color names in the material name
             if (materialName.Contains("Red") || materialName.Contains("red"))
             {
@@ -482,7 +479,7 @@ public class ConnectionManager : NetworkBehaviour
             {
                 return new Color(1.0f, 0.4f, 0.7f); // Bright pink
             }
-            else if (materialName.Contains("Cyan") || materialName.Contains("cyan") || 
+            else if (materialName.Contains("Cyan") || materialName.Contains("cyan") ||
                      materialName.Contains("Teal") || materialName.Contains("teal"))
             {
                 return new Color(0.0f, 0.9f, 1.0f); // Bright cyan
@@ -495,12 +492,12 @@ public class ConnectionManager : NetworkBehaviour
             {
                 return new Color(0.9f, 0.9f, 0.9f); // Off-white
             }
-            else if (materialName.Contains("Gray") || materialName.Contains("gray") || 
+            else if (materialName.Contains("Gray") || materialName.Contains("gray") ||
                      materialName.Contains("Grey") || materialName.Contains("grey"))
             {
                 return new Color(0.6f, 0.6f, 0.6f); // Medium gray
             }
-            
+
             // Special cases with brand names or other color-associated terms
             else if (materialName.Contains("Gold") || materialName.Contains("gold"))
             {
@@ -515,7 +512,7 @@ public class ConnectionManager : NetworkBehaviour
                 return new Color(0.8f, 0.5f, 0.2f); // Bronze
             }
         }
-        
+
         // Fallback to the index-based system if no color is found in the name
         // Use predefined distinct, vibrant colors based on index
         Color[] fallbackColors = new Color[] {
@@ -528,7 +525,7 @@ public class ConnectionManager : NetworkBehaviour
             new Color(1.0f, 0.5f, 0.0f), // Orange
             new Color(0.5f, 0.0f, 1.0f)  // Purple
         };
-        
+
         // Ensure the index is valid for the fallback colors
         int safeIndex = colorIndex % fallbackColors.Length;
         return fallbackColors[safeIndex];

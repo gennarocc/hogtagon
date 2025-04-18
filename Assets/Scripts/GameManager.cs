@@ -69,11 +69,11 @@ public class GameManager : NetworkBehaviour
             case GameState.Playing:
                 OnPlayingEnter();
                 break;
-            case GameState.Ending:
-                OnEndingEnter();
+            case GameState.BetweenRound:
+                OnBetweenRoundEnter();
                 break;
-            case GameState.Winner:
-                OnWinnerEnter();
+            case GameState.GameEnd:
+                OnGameEndEnter();
                 break;
         }
     }
@@ -91,22 +91,19 @@ public class GameManager : NetworkBehaviour
         // Notify subscribers
         OnGameStateChanged?.Invoke(newState);
     }
-    private void OnWinnerEnter()
+    private void OnGameEndEnter()
     {
         Debug.Log("GameManager OnWinnerEnter");
-        SetGameState(GameState.Winner);
+        SetGameState(GameState.GameEnd);
 
         // Pause kill feed and keep last message
-        if (killFeed != null)
-        {
-            killFeed.PauseAndKeepLastMessage();
-        }
+        killFeed.PauseAndKeepLastMessage();
 
         // Get the winning player's data
         if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
         {
             // Display winner celebration message
-            menuManager.DisplayGameWinnerClientRpc(winner.username);
+            menuManager.DisplayGameWinnerClientRpc(roundWinnerClientId, winner);
 
             // Show scoreboard after a delay
             StartCoroutine(ShowFinalScoreboard());
@@ -126,11 +123,6 @@ public class GameManager : NetworkBehaviour
             ResetGameState();
             // Return to pending state (lobby)
             TransitionToState(GameState.Pending);
-        }
-        else
-        {
-            // Clients request the server to handle the transition
-            RequestTransitionToPendingServerRpc();
         }
 
         menuManager.HideScoreboardClientRpc();
@@ -162,37 +154,34 @@ public class GameManager : NetworkBehaviour
         processedDeaths.Clear();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestTransitionToPendingServerRpc()
-    {
-        if (!IsServer) return;
-
-        // Reset game state
-        ResetGameState();
-        // Transition to pending state
-        TransitionToState(GameState.Pending);
-    }
-
-    private void OnEndingEnter()
+    private void OnBetweenRoundEnter()
     {
         Debug.Log("GameManager OnWinnerEnter");
-        SetGameState(GameState.Winner);
+        SetGameState(GameState.BetweenRound);
 
         // Pause kill feed and keep last message
-        if (killFeed != null)
-        {
-            killFeed.PauseAndKeepLastMessage();
-        }
+        killFeed.PauseAndKeepLastMessage();
 
         // Get the winning player's data
         if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
         {
             // Display winner celebration message
-            menuManager.DisplayGameWinnerClientRpc(winner.username);
+            menuManager.DisplayGameWinnerClientRpc(roundWinnerClientId, winner);
+            if (IsServer)
+            {
+                winner.score++;
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, winner);
+            }
 
-            // Show scoreboard after a delay
-            StartCoroutine(ShowFinalScoreboard());
+            // Check if game is over.
+            if (winner.score > roundsToWin)
+            {
+                TransitionToState(GameState.GameEnd);
+                return;
+            }
         }
+
+        StartCoroutine(BetweenRoundTimer());
     }
 
     private void OnPlayingEnter()
@@ -215,11 +204,7 @@ public class GameManager : NetworkBehaviour
         if (NetworkManager.Singleton.ConnectedClients.Count > 1)
         {
             // Reset kill feed for new round
-            if (killFeed != null)
-            {
-                killFeed.ResetForNewRound();
-            }
-
+            killFeed.ResetForNewRound();
             LockPlayerMovement();
             gameTime = 0f;
             RespawnAllPlayers();
@@ -333,7 +318,7 @@ public class GameManager : NetworkBehaviour
         if (alive.Count == 1)
         {
             roundWinnerClientId = alive[0];
-            TransitionToState(GameState.Ending);
+            TransitionToState(GameState.BetweenRound);
 
             if (IsServer)
             {
@@ -347,7 +332,7 @@ public class GameManager : NetworkBehaviour
     public void PlayerDied(ulong clientId)
     {
         // Only the server should process deaths
-        if (!IsServer) 
+        if (!IsServer)
         {
             Debug.LogWarning($"[GameManager] Non-server tried to process death for client {clientId}");
             return;
@@ -386,24 +371,16 @@ public class GameManager : NetworkBehaviour
             {
                 player.state = PlayerState.Dead;
                 ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, player);
+                // Play death sound
+                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.PlayerEliminated);
             }
 
-            // Play death sound
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.PlayerEliminated);
 
             // Create kill feed message
             // Allow killfeed in both Playing and Pending states
             if (state == GameState.Playing || state == GameState.Pending)
             {
-                if (killFeed == null)
-                {
-                    killFeed = ServiceLocator.GetService<KillFeed>();
-                    if (killFeed == null)
-                    {
-                        Debug.LogError("[GameManager] Failed to get KillFeed from ServiceLocator!");
-                        return; // Don't proceed with kill messages if no killfeed
-                    }
-                }
+                killFeed = ServiceLocator.GetService<KillFeed>();
 
                 var playerCollisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
                 if (playerCollisionTracker != null)
@@ -446,15 +423,15 @@ public class GameManager : NetworkBehaviour
 
     private void LockPlayerMovement()
     {
-        NetworkHogController[] players = FindObjectsByType<NetworkHogController>(FindObjectsSortMode.None);
-        foreach (NetworkHogController player in players)
+        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+        foreach (HogController player in players)
             player.canMove = false;
     }
 
     private void UnlockPlayerMovement()
     {
-        NetworkHogController[] players = FindObjectsByType<NetworkHogController>(FindObjectsSortMode.None);
-        foreach (NetworkHogController player in players)
+        HogController[] players = FindObjectsByType<HogController>(FindObjectsSortMode.None);
+        foreach (HogController player in players)
             player.canMove = true;
     }
 
@@ -463,7 +440,7 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
         state = newState;
-        if (state == GameState.Ending) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOff);
+        if (state == GameState.BetweenRound) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOff);
     }
 
     // Method to set game mode (called from MenuManager)
