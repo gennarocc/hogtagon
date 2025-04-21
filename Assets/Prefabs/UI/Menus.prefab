@@ -4589,13 +4589,13 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7201721305331867520}
   - {fileID: 8819880320963006065}
   - {fileID: 7575127717095693524}
   - {fileID: 5515344059504946359}
   - {fileID: 3568927756253872839}
   - {fileID: 3960395819953152354}
   - {fileID: 4788033333911514773}
-  - {fileID: 7201721305331867520}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -4678,7 +4678,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1327797830
+  GlobalObjectIdHash: 1620184703
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -4722,7 +4722,7 @@ MonoBehaviour:
   winnerText: {fileID: 4764344885938995686}
   connectionRefusedReasonText: {fileID: 2189348904056688029}
   connectionPending: {fileID: 2497900056878319504}
-  startCamera: {fileID: 0}
+  menuCamera: {fileID: 0}
   scoreboardUI: {fileID: 4954660012093629017}
   scoreboard: {fileID: 4959352646382674643}
   defaultPauseMenuButton: {fileID: 5188457309475043584}
@@ -4755,7 +4755,6 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: a44cab77c37739a49ac20c92c3390560, type: 2}
-  virtualCamera: {fileID: 0}
   rotationSpeed: 0.01
   lobbyCodeDisplay: {fileID: 2975270771101032614}
   lobbyCodeCopyButton: {fileID: 5206511640553526581}
@@ -4769,6 +4768,7 @@ MonoBehaviour:
   teamCountText: {fileID: 5603351727408089962}
   roundCountSlider: {fileID: 6043331169556466551}
   roundCountText: {fileID: 2753634528702188818}
+  menuMusicPlaying: 0
   pauseResumeButton: {fileID: 5188457309475043584}
   pauseOptionsButton: {fileID: 2615461259164976922}
   pauseLobbySettingsButton: {fileID: 8421355646891450092}
@@ -5816,6 +5816,10 @@ MonoBehaviour:
     idInternal: 0
     valueGuidInternal: 
     WwiseObjectReference: {fileID: 11400000, guid: f87528b60581a3044ae9486b356f4970, type: 2}
+  LobbyMusicOn:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 0}
 --- !u!114 &8476279728438799132
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9753,8 +9757,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f1058501c84524fb1c8df371d61c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  players: {fileID: 2054209747373150623}
-  score: {fileID: 6985123713418329512}
+  playerEntryPrefab: {fileID: 0}
+  playerListContainer: {fileID: 0}
+  headerText: {fileID: 0}
+  technoFont: {fileID: 0}
+  headerColor: {r: 0, g: 1, b: 0, a: 1}
+  rowBackgroundColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.9}
+  alternateRowColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.9}
+  rowSpacing: 2
+  headerFontSize: 36
+  rankFontSize: 24
+  nameFontSize: 24
+  scoreFontSize: 24
 --- !u!1 &5082840748763541990
 GameObject:
   m_ObjectHideFlags: 0
