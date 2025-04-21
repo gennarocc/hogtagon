@@ -219,7 +219,7 @@ public class HogController : NetworkBehaviour
         lerpedThrottleInput = lerp;
 
         // Wwise expects a value between 1-100 so we multiply by 5 (car speed is around 1-23)
-        rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5 * lerpedThrottleInput); 
+        rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5 * lerpedThrottleInput);
     }
 
     private void CheckDriftCondition()
@@ -421,6 +421,21 @@ public class HogController : NetworkBehaviour
 
         // Add a bit more forward boost in the car's facing direction
         rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+
+        // Notify all clients about the jump and cooldown
+        SyncJumpCooldownClientRpc(jumpCooldown, false);
+    }
+
+
+    [ClientRpc]
+    private void SyncJumpCooldownClientRpc(float cooldownDuration, bool isOnCooldown)
+    {
+        // This will be called on all clients when jump state changes
+        if (IsOwner)
+        {
+            jumpOnCooldown = isOnCooldown;
+            jumpCooldownRemaining = cooldownDuration;
+        }
     }
 
     private void CheckServerDriftCondition()
@@ -610,9 +625,15 @@ public class HogController : NetworkBehaviour
 
     private IEnumerator JumpCooldownServer()
     {
+        // Initial cooldown notification to clients (cooldown active)
+        SyncJumpCooldownClientRpc(jumpCooldown, true);
+
         yield return new WaitForSeconds(jumpCooldown);
         jumpReady.Value = true;
         isJumping.Value = false;
+
+        // Notify clients that cooldown is complete
+        SyncJumpCooldownClientRpc(0, false);
     }
 
     #endregion

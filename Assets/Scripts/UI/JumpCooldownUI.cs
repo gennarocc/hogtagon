@@ -15,35 +15,36 @@ public class JumpCooldownUI : MonoBehaviour
     [SerializeField] private Color cooldownColor = Color.red;
     
     // Reference to player's HogController
-    private NetworkHogController playerHogController;
+    private HogController playerHogController;
     
     private void Start()
     {
         // Find the local player's HogController
-        if (playerHogController == null)
-        {
-            Player localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject?.GetComponent<Player>();
-            if (localPlayer != null)
-            {
-                playerHogController = localPlayer.GetComponentInChildren<NetworkHogController>();
-            }
-        }
+        FindLocalPlayerHogController();
         
         // Initialize UI
         UpdateCooldownUI(false, 0, 1);
+    }
+    
+    private void FindLocalPlayerHogController()
+    {
+        if (NetworkManager.Singleton == null || 
+            NetworkManager.Singleton.LocalClient == null || 
+            NetworkManager.Singleton.LocalClient.PlayerObject == null)
+            return;
+            
+        Player localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<Player>();
+        if (localPlayer != null)
+        {
+            playerHogController = localPlayer.GetComponentInChildren<HogController>();
+        }
     }
     
     private void Update()
     {
         if (playerHogController == null)
         {
-            // Try to find the controller again if it's not set
-            Player localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject?.GetComponent<Player>();
-            if (localPlayer != null)
-            {
-                playerHogController = localPlayer.GetComponentInChildren<NetworkHogController>();
-            }
-            
+            FindLocalPlayerHogController();
             if (playerHogController == null) return;
         }
         
@@ -61,7 +62,7 @@ public class JumpCooldownUI : MonoBehaviour
         // Show/hide the cooldown panel based on state
         if (cooldownPanel != null)
         {
-            cooldownPanel.SetActive(true); // Always show, but could toggle visibility
+            cooldownPanel.SetActive(true); // Always visible
         }
         
         // Update the fill amount
@@ -87,11 +88,11 @@ public class JumpCooldownUI : MonoBehaviour
             if (onCooldown)
             {
                 cooldownText.text = Mathf.Ceil(remaining).ToString();
-                cooldownText.color = Color.magenta;
+                cooldownText.color = cooldownColor;
             }
             else
             {
-                cooldownText.text = "";
+                cooldownText.text = "READY";
                 cooldownText.color = readyColor;
             }
         }
