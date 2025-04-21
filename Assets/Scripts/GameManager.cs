@@ -174,7 +174,7 @@ public class GameManager : NetworkBehaviour
             }
 
             // Check if game is over.
-            if (winner.score > roundsToWin)
+            if (winner.score >= roundsToWin)
             {
                 TransitionToState(GameState.GameEnd);
                 return;
