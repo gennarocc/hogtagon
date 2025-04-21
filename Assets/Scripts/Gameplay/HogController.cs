@@ -520,25 +520,60 @@ public class HogController : NetworkBehaviour
         }
     }
 
+    private float previousDirection = 0f; // Add this as a class variable
+
     private void CalculateSteeringAxis(float steeringInput)
     {
-        // Calculate the step based on steering speed and deltaTime
-        float step = steeringSpeed * Time.fixedDeltaTime;
+        // Calculate the current direction of steering
+        float currentDirection = Mathf.Sign(steeringInput);
 
-        // Calculate the direction of movement
-        float direction = Mathf.Sign(steeringInput - steeringAxis);
+        // Calculate the direction of movement needed
+        float moveDirection = Mathf.Sign(steeringInput - steeringAxis);
 
-        // Calculate the distance from the current value to the target
+        // Detect direction change (left to right or right to left)
+        bool isDirectionChange = (previousDirection != 0f &&
+                                 currentDirection != 0f &&
+                                 currentDirection != previousDirection);
+
+        // Base step calculation
+        float baseStep = steeringSpeed * Time.fixedDeltaTime;
+
+        // Calculate the distance from current to target
         float distance = Mathf.Abs(steeringInput - steeringAxis);
 
-        // Apply exponential curve - the further from center, the faster it moves
-        float exponentialStep = step * (1.0f + distance * 2.0f);
+        // Apply different responsiveness based on the scenario
+        float responseFactor;
 
-        // Ensure we don't overshoot the target
-        exponentialStep = Mathf.Min(exponentialStep, distance);
+        if (isDirectionChange)
+        {
+            // When changing direction (left to right or right to left), be more responsive
+            responseFactor = 4.0f + distance * 3.0f;
+        }
+        else if (Mathf.Abs(steeringInput) < 0.1f && Mathf.Abs(steeringAxis) > 0.1f)
+        {
+            // When returning to center from a significant turn, be moderately responsive
+            responseFactor = 2.0f + distance * 2.0f;
+        }
+        else
+        {
+            // For all other adjustments, maintain smoother response
+            responseFactor = 1.0f + distance * 1.5f;
+        }
+
+        // Calculate the step with the appropriate response factor
+        float adaptiveStep = baseStep * responseFactor;
+
+        // Prevent overshooting
+        adaptiveStep = Mathf.Min(adaptiveStep, distance);
 
         // Apply the calculated step in the correct direction
-        steeringAxis += direction * exponentialStep;
+        steeringAxis += moveDirection * adaptiveStep;
+
+        // Store the current direction for next frame's comparison
+        if (Mathf.Abs(steeringInput) > 0.1f)
+        {
+            previousDirection = currentDirection;
+        }
     }
 
     private void ApplySteering()

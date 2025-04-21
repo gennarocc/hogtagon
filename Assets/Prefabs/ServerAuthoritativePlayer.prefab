@@ -11209,7 +11209,7 @@ MonoBehaviour:
   rearSteeringAmount: 0.3
   centerOfMass: {x: 0, y: 0.1, z: 0}
   maxSteeringAngle: 45
-  steeringSpeed: 0.3
+  steeringSpeed: 1
   jumpForce: 6
   jumpCooldown: 15
   canJump: 1
