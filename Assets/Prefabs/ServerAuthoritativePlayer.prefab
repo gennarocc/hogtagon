@@ -11204,16 +11204,17 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   torqueResponseSpeed: 3
-  coastDampener: 2
+  coastDampener: 20
+  coastBrake: 100
   rearSteeringAmount: 0.3
-  centerOfMass: {x: 0, y: 0.15, z: 0}
+  centerOfMass: {x: 0, y: 0.1, z: 0}
   maxSteeringAngle: 45
   steeringSpeed: 0.3
   jumpForce: 6
   jumpCooldown: 15
   canJump: 1
   driftThreshold: 0.5
-  driftMinSpeed: 7
+  driftMinSpeed: 12
   rb: {fileID: 3010862004317786802}
   wheelColliders:
   - {fileID: 7947942277690021792}

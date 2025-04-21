@@ -15,6 +15,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private AnimationCurve accelerationCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField] private float torqueResponseSpeed = 3f; // How quickly torque responds to input changes
     [SerializeField] private float coastDampener = 2f; // How quickly throttle returns to zero when no input
+    [SerializeField] private float coastBrake = 2f; // How quickly throttle returns to zero when no input
     [SerializeField, Range(0f, 1f)] private float rearSteeringAmount = .35f;
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
@@ -483,6 +484,7 @@ public class HogController : NetworkBehaviour
         {
             // Use coastDampener for quicker return to zero when coasting
             responseMultiplier = coastDampener;
+            brakeTorque = coastBrake * Mathf.Clamp01(currentSpeed);
             targetTorque = 0;
         }
         else
