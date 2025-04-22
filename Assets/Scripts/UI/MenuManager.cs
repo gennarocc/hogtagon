@@ -79,7 +79,7 @@ public class MenuManager : NetworkBehaviour
     private float menuToggleCooldown = 0.5f;
 
     // Add tracking for whether settings was opened from pause menu
-    private bool settingsOpenedFromPauseMenu = false;
+    public bool settingsOpenedFromPauseMenu = false;
 
     [Header("Lobby Settings")]
     [SerializeField] private TextMeshProUGUI lobbyCodeDisplay;
@@ -488,94 +488,57 @@ public class MenuManager : NetworkBehaviour
     {
         Debug.Log("Settings method called. gameIsPaused=" + gameIsPaused);
 
-        // First check if we're in the pause menu
+        // Store whether we opened this from pause menu for later
+        settingsOpenedFromPauseMenu = gameIsPaused;
+        Debug.Log("Setting settingsOpenedFromPauseMenu to " + settingsOpenedFromPauseMenu);
+
+        // Play sound feedback
+        ButtonClickAudio();
+
+        // Hide current menu
         if (gameIsPaused)
         {
-            // We're in the pause menu, so settings should return to pause menu when closed
-            settingsOpenedFromPauseMenu = true;
-            Debug.Log("Setting settingsOpenedFromPauseMenu to TRUE - Settings opened from pause menu");
-
-            // We're in the pause menu, toggle between pause menu and settings menu
-            if (newOptionsMenuUI != null)
+            pauseMenuUI.SetActive(false);
+        }
+        
+        // Show settings menu with new SettingsManager
+        if (newOptionsMenuUI != null)
+        {
+            // Hide all other menus and show the new options menu
+            HideAllMenusExcept(newOptionsMenuUI);
+            newOptionsMenuUI.SetActive(true);
+            
+            // Ensure cursor is visible for UI interaction
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            
+            // Switch to UI input mode
+            if (inputManager != null)
             {
-                // Use the new tabbed options menu if available
-                pauseMenuUI.SetActive(false);
-                newOptionsMenuUI.SetActive(true);
-
-                // Force controller selection to be enabled for the options menu
-                controllerSelectionEnabled = true;
-
-                // Note: Camera freezing is now handled by CameraFreezeBehavior
-
-                // Force enable all direct children in the hierarchy
-                foreach (Transform child in newOptionsMenuUI.transform)
-                {
-                    child.gameObject.SetActive(true);
-                }
-
-                // Initialize the tab controller
-                TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
-                if (tabController != null)
-                {
-                    // Ensure tab controller GameObject is active
-                    tabController.gameObject.SetActive(true);
-
-                    // Find all content panels and make sure they exist
-                    Transform contentTransform = tabController.transform.Find("Content");
-                    if (contentTransform != null)
-                    {
-                        contentTransform.gameObject.SetActive(true);
-
-                        // Force enable the Video panel as default
-                        Transform videoPanel = contentTransform.Find("VideoPanel");
-                        if (videoPanel != null)
-                        {
-                            // Force video panel active
-                            videoPanel.gameObject.SetActive(true);
-
-                            // Make sure other panels are inactive
-                            foreach (Transform panel in contentTransform)
-                            {
-                                if (panel != videoPanel && panel.name.Contains("Panel"))
-                                {
-                                    panel.gameObject.SetActive(false);
-                                }
-                            }
-                        }
-                    }
-
-                    // Force select the Video tab
-                    tabController.SelectTab(0);
-                }
-
-                // Handle button selection for settings menu
-                if (defaultSettingsMenuButton != null)
-                {
-                    HandleButtonSelection(defaultSettingsMenuButton);
-                }
+                inputManager.SwitchToUIMode();
+                if (inputManager.IsInUIMode())
+                    inputManager.ForceEnableCurrentActionMap();
             }
-            else
+            
+            // Enable controller selection for navigation
+            controllerSelectionEnabled = true;
+            
+            // Find and select the default button
+            if (defaultSettingsMenuButton != null)
             {
-                // Use the old settings menu
-                settingsMenuUI.SetActive(true);
-                pauseMenuUI.SetActive(false);
-
-                // Note: Camera freezing is now handled by CameraFreezeBehavior
-
-                // Handle button selection for settings menu
-                if (defaultSettingsMenuButton != null)
-                {
-                    HandleButtonSelection(defaultSettingsMenuButton);
-                }
+                HandleButtonSelection(defaultSettingsMenuButton);
             }
         }
-        else
+        else if (settingsMenuUI != null)
         {
-            // We're not in the pause menu, opened from main menu
-            settingsOpenedFromPauseMenu = false;
-
-            // Open the main menu
-            ShowMainMenu();
+            // Fallback to old settings menu
+            HideAllMenusExcept(settingsMenuUI);
+            settingsMenuUI.SetActive(true);
+            
+            if (defaultSettingsMenuButton != null)
+            {
+                HandleButtonSelection(defaultSettingsMenuButton);
+            }
         }
     }
 
@@ -1080,62 +1043,19 @@ public class MenuManager : NetworkBehaviour
     public void OnOptionsClicked()
     {
         Debug.Log("[MenuManager] OnOptionsClicked called");
-        // Reset all menu state flags
+        
+        // Reset menu state flags - we're opening from main menu
         settingsOpenedFromPauseMenu = false;
         gameIsPaused = false;
 
-        ButtonClickAudio();
-
-        // Hide all menus except the options menu
-        if (newOptionsMenuUI != null)
-        {
-            Debug.Log("[MenuManager] Opening new options menu");
-            HideAllMenusExcept(newOptionsMenuUI);
-            newOptionsMenuUI.SetActive(true);
-            controllerSelectionEnabled = true;
-
-            // Set up the tab controller
-            TabController tabController = newOptionsMenuUI.GetComponentInChildren<TabController>();
-            if (tabController != null)
-            {
-                tabController.gameObject.SetActive(true);
-                SetupTabController(tabController);
-            }
-
-            // Handle button selection
-            HandleButtonSelection(defaultSettingsMenuButton);
-        }
-        else
-        {
-            Debug.Log("[MenuManager] Opening old settings menu");
-            HideAllMenusExcept(settingsMenuUI);
-            settingsMenuUI.SetActive(true);
-            HandleButtonSelection(defaultSettingsMenuButton);
-        }
+        // Call the main Settings method to handle the menu transition
+        Settings();
     }
 
     private void SetupTabController(TabController tabController)
     {
-        Transform contentTransform = tabController.transform.Find("Content");
-        if (contentTransform != null)
-        {
-            contentTransform.gameObject.SetActive(true);
-            Transform videoPanel = contentTransform.Find("VideoPanel");
-            if (videoPanel != null)
-            {
-                videoPanel.gameObject.SetActive(true);
-                // Deactivate other panels
-                foreach (Transform panel in contentTransform)
-                {
-                    if (panel != videoPanel && panel.name.Contains("Panel"))
-                    {
-                        panel.gameObject.SetActive(false);
-                    }
-                }
-            }
-        }
-
-        tabController.SelectTab(0);
+        // This method is no longer needed since the SettingsManager handles tab setup
+        // Keep the method for backwards compatibility but don't perform any actions
     }
 
     // Method to open Lobby Settings Menu (called when host creates lobby or from pause menu)
@@ -1415,6 +1335,18 @@ public class MenuManager : NetworkBehaviour
             EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
         }
     }
+    
+    /// <summary>
+    /// Public method to show the pause menu that other scripts can call
+    /// </summary>
+    public void ShowPauseMenu()
+    {
+        // Directly use the ReturnToPauseMenu method to ensure consistent behavior
+        ReturnToPauseMenu();
+        
+        // Make sure we're marked as paused
+        gameIsPaused = true;
+    }
 
     // Game Mode Setting Methods
     public void SetTeamCount(int count)
@@ -1547,6 +1479,24 @@ public class MenuManager : NetworkBehaviour
             quitNav.selectOnDown = playButton;
             quitNav.selectOnUp = optionsButton;
             quitButton.navigation = quitNav;
+        }
+    }
+
+    /// <summary>
+    /// Public method for returning from settings menu
+    /// Called by SettingsManager when Back button is clicked
+    /// </summary>
+    public void ReturnFromSettingsMenu()
+    {
+        if (settingsOpenedFromPauseMenu)
+        {
+            Debug.Log("[MenuManager] Returning to pause menu from settings");
+            ShowPauseMenu();
+        }
+        else
+        {
+            Debug.Log("[MenuManager] Returning to main menu from settings");
+            ShowMainMenu();
         }
     }
 }

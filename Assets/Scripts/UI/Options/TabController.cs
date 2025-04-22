@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Controls tab switching for settings UI
+/// </summary>
 public class TabController : MonoBehaviour
 {
     [System.Serializable]
@@ -28,115 +31,90 @@ public class TabController : MonoBehaviour
     
     private void OnEnable()
     {
-        // Ensure this component is active
-        this.enabled = true;
-        
-        // Verify the tabs collection has content
+        // Auto-discover tabs if none are assigned
         if (tabs == null || tabs.Count == 0)
         {
-            Debug.LogWarning("TabController: No tabs found in the tabs collection.");
-            // Try to find tab objects in children if none are assigned
-            Button[] tabButtons = GetComponentsInChildren<Button>(true);
-            foreach (Button button in tabButtons)
+            AutoDiscoverTabs();
+        }
+        
+        // Set up tab button listeners
+        SetupTabButtons();
+        
+        // Select default tab
+        SelectTab(defaultTabIndex);
+    }
+    
+    private void AutoDiscoverTabs()
+    {
+        tabs = new List<TabData>();
+        
+        // Find tab buttons in children
+        Button[] buttons = GetComponentsInChildren<Button>(true);
+        foreach (Button button in buttons)
+        {
+            if (button.name.Contains("Tab"))
             {
-                if (button.name.Contains("Tab"))
-                {
-                    try {
-                        // Try to find corresponding panel - use the exact panel names from hierarchy
-                        string panelName = button.name.Replace("Tab", "Panel");
-                        Transform panel = transform.parent.Find("Content/" + panelName);
+                try {
+                    // Try to find corresponding panel
+                    string panelName = button.name.Replace("Tab", "Panel");
+                    Transform content = transform.parent.Find("Content");
+                    
+                    if (content != null)
+                    {
+                        Transform panel = content.Find(panelName);
                         if (panel != null)
                         {
-                            TabData newTab = new TabData();
-                            newTab.tabName = button.name.Replace("Tab", "");
-                            newTab.tabButton = button;
-                            newTab.tabContent = panel.gameObject;
-                            newTab.tabText = button.GetComponentInChildren<TextMeshProUGUI>();
+                            TabData newTab = new TabData
+                            {
+                                tabName = button.name.Replace("Tab", ""),
+                                tabButton = button,
+                                tabContent = panel.gameObject,
+                                tabText = button.GetComponentInChildren<TextMeshProUGUI>()
+                            };
+                            
                             tabs.Add(newTab);
-                        }
-                        else
-                        {
-                            Debug.LogWarning("TabController: Could not find panel for " + button.name);
+                            Debug.Log($"TabController: Auto-discovered tab {newTab.tabName}");
                         }
                     }
-                    catch (System.Exception e) {
-                        Debug.LogError("Error setting up tab: " + e.Message);
-                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"Error setting up tab: {e.Message}");
                 }
             }
         }
-        
-        // Remove any invalid tabs
-        for (int i = tabs.Count - 1; i >= 0; i--)
-        {
-            if (tabs[i].tabButton == null || tabs[i].tabContent == null)
-            {
-                Debug.LogWarning("TabController: Removing invalid tab at index " + i);
-                tabs.RemoveAt(i);
-            }
-        }
-        
-        // If no valid tabs, early exit
-        if (tabs.Count == 0)
-        {
-            Debug.LogWarning("TabController: No valid tabs found, aborting setup");
-            return;
-        }
-        
-        // Ensure all tab buttons have click listeners
+    }
+    
+    private void SetupTabButtons()
+    {
+        // Set up each tab button
         for (int i = 0; i < tabs.Count; i++)
         {
-            if (tabs[i].tabButton != null)
-            {
-                // Ensure button is active
-                tabs[i].tabButton.gameObject.SetActive(true);
-                
-                int tabIndex = i; // Capture the index for the lambda
-                
-                // Clear previous listeners to avoid duplicates
-                tabs[i].tabButton.onClick.RemoveAllListeners();
-                
-                // Add fresh listener
-                tabs[i].tabButton.onClick.AddListener(() => SelectTab(tabIndex));
-            }
-        }
-        
-        // Reset tab states - deactivate all content first
-        foreach (var tab in tabs)
-        {
-            if (tab.tabContent != null)
-            {
-                tab.tabContent.SetActive(false);
-            }
+            TabData tab = tabs[i];
             
-            if (tab.tabText != null)
+            if (tab.tabButton != null)
             {
-                tab.tabText.color = inactiveTabColor;
-            }
-        }
-        
-        // Validate default tab index
-        if (defaultTabIndex < 0 || defaultTabIndex >= tabs.Count)
-        {
-            defaultTabIndex = 0;
-        }
-        
-        // Always select the default tab when enabled
-        if (tabs.Count > 0)
-        {
-            SelectTab(defaultTabIndex);
-        }
-        
-        // Double check that tab content is active
-        if (currentTabIndex >= 0 && currentTabIndex < tabs.Count)
-        {
-            if (tabs[currentTabIndex].tabContent != null)
-            {
-                tabs[currentTabIndex].tabContent.SetActive(true);
+                // Make sure button is active
+                tab.tabButton.gameObject.SetActive(true);
                 
-                // Ensure the content's parent is also active
-                if (tabs[currentTabIndex].tabContent.transform.parent != null)
-                    tabs[currentTabIndex].tabContent.transform.parent.gameObject.SetActive(true);
+                // Clear existing listeners
+                tab.tabButton.onClick.RemoveAllListeners();
+                
+                // Add click handler
+                int index = i; // Capture for lambda
+                tab.tabButton.onClick.AddListener(() => SelectTab(index));
+                
+                // Set initial inactive color
+                if (tab.tabText != null)
+                {
+                    tab.tabText.color = inactiveTabColor;
+                }
+                
+                // Hide content initially
+                if (tab.tabContent != null)
+                {
+                    tab.tabContent.SetActive(false);
+                }
             }
         }
         
@@ -146,53 +124,13 @@ public class TabController : MonoBehaviour
             backButton.onClick.RemoveAllListeners();
             backButton.onClick.AddListener(BackToMainMenu);
         }
-        else
-        {
-            // Try to find back button if not assigned
-            Button[] allButtons = GetComponentsInChildren<Button>(true);
-            foreach (Button btn in allButtons)
-            {
-                if (btn != null && btn.name.ToLower().Contains("back"))
-                {
-                    backButton = btn;
-                    backButton.onClick.RemoveAllListeners();
-                    backButton.onClick.AddListener(BackToMainMenu);
-                    Debug.Log("TabController: Found back button: " + backButton.name);
-                    break;
-                }
-            }
-            
-            if (backButton == null)
-            {
-                Debug.LogWarning("TabController: No back button found");
-            }
-        }
-    }
-
-    void Start()
-    {
-        // Set up tab button click listeners
-        for (int i = 0; i < tabs.Count; i++)
-        {
-            int tabIndex = i; // Capture the index for the lambda
-            tabs[i].tabButton.onClick.AddListener(() => SelectTab(tabIndex));
-        }
-        
-        // Select the default tab - now handled in OnEnable
-        if (!gameObject.activeInHierarchy)
-        {
-            // Only select tab in Start if the object isn't already active
-            // (otherwise OnEnable will handle it)
-            SelectTab(defaultTabIndex);
-        }
     }
     
-    void Update()
+    private void Update()
     {
         // Handle gamepad navigation between tabs
         if (Gamepad.current != null && !processingInput)
         {
-            // Check for left/right navigation between tabs
             if (Gamepad.current.dpad.left.wasPressedThisFrame)
             {
                 processingInput = true;
@@ -214,166 +152,148 @@ public class TabController : MonoBehaviour
         processingInput = false;
     }
     
+    /// <summary>
+    /// Select a specific tab by index
+    /// </summary>
     public void SelectTab(int tabIndex)
     {
-        // Validate input
-        if (tabIndex < 0 || tabIndex >= tabs.Count)
-        {
-            Debug.LogWarning("TabController: Invalid tab index: " + tabIndex);
-            return;
-        }
-        
-        // Skip if it's the same tab
+        // Skip if already on this tab
         if (tabIndex == currentTabIndex)
             return;
             
-        // Validate tab data
-        if (tabs[tabIndex].tabContent == null)
+        // Validate index
+        if (tabIndex < 0 || tabIndex >= tabs.Count)
         {
-            Debug.LogError("Tab container not found for index " + tabIndex + "! Please assign it in the Inspector.");
+            Debug.LogWarning($"TabController: Invalid tab index: {tabIndex}");
             return;
         }
-            
-        // Deactivate current tab if one is active
+        
+        // Hide current tab if one is active
         if (currentTabIndex >= 0 && currentTabIndex < tabs.Count)
         {
             TabData currentTab = tabs[currentTabIndex];
             
-            // Skip if missing references
-            if (currentTab == null)
+            if (currentTab.tabContent != null)
             {
-                Debug.LogError("Current tab data is null!");
+                currentTab.tabContent.SetActive(false);
             }
-            else
+            
+            if (currentTab.tabText != null)
             {
-                // Hide the content if it exists
-                if (currentTab.tabContent != null)
-                {
-                    currentTab.tabContent.SetActive(false);
-                }
-                else
-                {
-                    Debug.LogWarning("Current tab content is null!");
-                }
-                
-                // Reset button color if text exists
-                if (currentTab.tabText != null)
-                {
-                    currentTab.tabText.color = inactiveTabColor;
-                }
+                currentTab.tabText.color = inactiveTabColor;
             }
         }
         
-        // Activate the new tab
-        currentTabIndex = tabIndex;
-        TabData newTab = tabs[currentTabIndex];
+        // Show new tab
+        TabData newTab = tabs[tabIndex];
         
-        // Show the content
         if (newTab.tabContent != null)
         {
+            // Make sure parent is active
+            if (newTab.tabContent.transform.parent != null)
+            {
+                newTab.tabContent.transform.parent.gameObject.SetActive(true);
+            }
+            
+            // Activate tab content
             newTab.tabContent.SetActive(true);
-        }
-        else
-        {
-            Debug.LogError("New tab content is null!");
-            return;
+            
+            // If tab content has TabContent component, call its initialization
+            TabContent tabContent = newTab.tabContent.GetComponent<TabContent>();
+            if (tabContent != null)
+            {
+                // TabContent.OnEnable will handle initialization
+            }
         }
         
-        // Set button color
         if (newTab.tabText != null)
         {
             newTab.tabText.color = activeTabColor;
         }
         
-        // Focus on the tab button for better gamepad navigation
-        if (EventSystem.current != null && newTab.tabButton != null)
+        // Update current tab index
+        currentTabIndex = tabIndex;
+        
+        // Update button navigation for selected UI elements in the tab
+        UpdateSelectedUIElement();
+    }
+    
+    private void UpdateSelectedUIElement()
+    {
+        // Clear current selection
+        EventSystem.current?.SetSelectedGameObject(null);
+        
+        // Find selectable element in current tab
+        if (currentTabIndex >= 0 && currentTabIndex < tabs.Count)
         {
-            EventSystem.current.SetSelectedGameObject(newTab.tabButton.gameObject);
+            TabData currentTab = tabs[currentTabIndex];
+            
+            if (currentTab.tabContent != null)
+            {
+                // Try to find a suitable UI element to select
+                Selectable firstSelectable = currentTab.tabContent.GetComponentInChildren<Selectable>();
+                if (firstSelectable != null && firstSelectable.gameObject.activeSelf && firstSelectable.interactable)
+                {
+                    EventSystem.current?.SetSelectedGameObject(firstSelectable.gameObject);
+                }
+            }
         }
     }
     
+    /// <summary>
+    /// Switch to the next tab
+    /// </summary>
     public void NextTab()
     {
         int nextTab = (currentTabIndex + 1) % tabs.Count;
         SelectTab(nextTab);
     }
     
+    /// <summary>
+    /// Switch to the previous tab
+    /// </summary>
     public void PreviousTab()
     {
         int prevTab = (currentTabIndex - 1 + tabs.Count) % tabs.Count;
         SelectTab(prevTab);
     }
-
+    
+    /// <summary>
+    /// Exit the settings menu
+    /// </summary>
     public void BackToMainMenu()
     {
-        // Log diagnostic information
-        Debug.Log("TabController.BackToMainMenu called");
+        // Save current tab settings before leaving
+        SaveCurrentTabSettings();
         
-        // Find the MenuManager
-        MenuManager menuManager = FindObjectOfType<MenuManager>();
-        if (menuManager != null)
+        // Use the MenuManager's method for returning from settings
+        // This ensures consistent navigation handling whether opened from pause or main menu
+        if (MenuManager.Instance != null)
         {
-            // Trigger the back button functionality 
-            menuManager.ButtonClickAudio();
-            
-            Debug.Log("Found MenuManager, gameIsPaused = " + menuManager.gameIsPaused);
-            
-            // Directly handle closing this menu first
-            GameObject optionsMenu = transform.parent.gameObject;
-            optionsMenu.SetActive(false);
-            
-            // Then handle pause menu activation directly
-            if (menuManager.gameIsPaused)
-            {
-                Debug.Log("Game is paused, activating pause menu directly");
-                Transform pauseMenuUI = menuManager.transform.Find("PauseMenuUI");
-                if (pauseMenuUI != null)
-                {
-                    pauseMenuUI.gameObject.SetActive(true);
-                    
-                    // Enable all children
-                    foreach (Transform child in pauseMenuUI)
-                    {
-                        child.gameObject.SetActive(true);
-                    }
-                    
-                    // Find Resume button for focus
-                    Button resumeButton = null;
-                    Button[] buttons = pauseMenuUI.GetComponentsInChildren<Button>(true);
-                    foreach (Button btn in buttons)
-                    {
-                        if (btn.name.Contains("Resume"))
-                        {
-                            resumeButton = btn;
-                            break;
-                        }
-                    }
-                    
-                    if (resumeButton != null && EventSystem.current != null)
-                    {
-                        EventSystem.current.SetSelectedGameObject(null);
-                        EventSystem.current.SetSelectedGameObject(resumeButton.gameObject);
-                    }
-                }
-                else
-                {
-                    Debug.LogError("Could not find PauseMenuUI!");
-                }
-            }
-            else
-            {
-                Debug.Log("Game is not paused, activating main menu");
-                // Find and activate main menu
-                Transform mainMenuPanel = menuManager.transform.Find("MainMenuPanel");
-                if (mainMenuPanel != null)
-                {
-                    mainMenuPanel.gameObject.SetActive(true);
-                }
-            }
+            MenuManager.Instance.ReturnFromSettingsMenu();
         }
         else
         {
-            Debug.LogError("MenuManager not found!");
+            Debug.LogWarning("MenuManager.Instance is null! Cannot navigate back properly.");
+            gameObject.SetActive(false);
+        }
+    }
+
+    // Save settings for the current active tab
+    private void SaveCurrentTabSettings()
+    {
+        if (currentTabIndex >= 0 && currentTabIndex < tabs.Count)
+        {
+            TabData currentTab = tabs[currentTabIndex];
+            
+            if (currentTab.tabContent != null)
+            {
+                TabContent tabContent = currentTab.tabContent.GetComponent<TabContent>();
+                if (tabContent != null)
+                {
+                    tabContent.ApplySettings();
+                }
+            }
         }
     }
 } 
