@@ -9,10 +9,10 @@ Event	ID	Name			Wwise Object Path	Notes
 	3144723463	LobbyMusicOn			\Default Work Unit\LobbyMusicOn	
 
 In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
-	544735074	music-7_face	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\5E\{5E281AEA-CD2E-DC8B-88DE-129F05B505DD}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-7_face\music-7_face		993415
-	559573216	music-6_wanna-go-fast	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\DA\{DA90F041-69A8-2C44-B6A8-3F61B6AE9088}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-6_wanna-go-fast\music-6_wanna-go-fast		1310155
-	715616568	music-5_jungle	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\50\{504DE342-C1F2-7544-74EB-82B956E3F3FC}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-5_jungle\music-5_jungle		1291184
+	194223354	music-x_level-music	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\3B\{3B27C688-07AB-F5FF-54F1-081BC0A8764E}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-x_level-music\music-x_level-music		2398594
+	439221375	music-8_ex-jungle	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\66\{66735921-2F44-FDBA-C528-DCDCFB3E7ED3}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-8_ex-jungle\music-8_ex-jungle		2290288
+	503539476	music-10_face	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\8E\{8E0602D7-91E4-D78B-F29F-A99FC9767953}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-10_face\music-10_face		1666800
 	739132226	ost-menu_v3	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\99\{99E69DE6-7BE4-33F1-E529-277BA651D0AF}.wem		\Interactive Music Hierarchy\Music\menu\0_menu\ost-menu_v3\ost-menu_v3		1959146
-	810530870	v0_lobby	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\60\{60FE43C8-786B-FEB6-AC01-FCA292771D08}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-4_fake-lobby\v0_lobby		2341516
 	818300421	v0_1-lobby	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\A9\{A9883252-BEA1-1E56-3E94-26A529976E7F}.wem		\Interactive Music Hierarchy\Music\lobby\lobby\v0_1-lobby\v0_1-lobby		1804980
+	857885140	music-9_ex_wanna-go-fast	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\C7\{C756FE84-8EE2-B194-9565-101470512A97}.wem		\Interactive Music Hierarchy\Music\level\level-playlist\music-9_ex_wanna-go-fast\music-9_ex_wanna-go-fast		1631736
 
