@@ -2,94 +2,128 @@ using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 
+/// <summary>
+/// KillBall - A sphere that grows over time and eliminates players that touch it.
+/// This implementation is network-aware and handles multiplayer synchronization.
+/// </summary>
 public class KillBall : NetworkBehaviour
 {
-    [SerializeField] private float blowupForce = 2;
-    [SerializeField] public Vector3 pendingSize = new Vector3(20, 20, 20);
-    [SerializeField] public Vector3 initialSize;
-    [SerializeField] public Vector3 targetSize;
-    [SerializeField] private float duration = 60;
+    [Header("Ball Properties")]
+    [SerializeField] private Vector3 initialSize = new Vector3(20, 20, 20);
+    [SerializeField] private Vector3 targetSize = new Vector3(80, 80, 80);
+    [SerializeField] private Vector3 pendingSize = new Vector3(20, 20, 20);
+    [SerializeField] private float duration = 60f;
+    [SerializeField] private float blowupForce = 2f;
+
+    [Header("Effects")]
     [SerializeField] private GameObject killBallPulseEffect;
-    
-    // Dictionary to track last kill time for each player to prevent duplicate kills
+
+    // Track player eliminations to prevent multiple hits
     private Dictionary<ulong, float> lastKillTime = new Dictionary<ulong, float>();
-    private const float KillCooldown = 0.5f; // Minimum seconds between killing the same player
-    
+    private const float KillCooldown = 0.5f;
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        transform.localScale = initialSize;
+        Debug.Log($"KillBall: OnNetworkSpawn - IsServer: {IsServer}, Scale: {transform.localScale}");
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+    }
+
     private void Update()
     {
-
-        if (GameManager.Instance.state == GameState.Pending || !ConnectionManager.Instance.isConnected)
+        // Handle offline mode
+        if (!ConnectionManager.Instance.isConnected)
         {
-            // Ensure we always reset to the initial size in Pending state
             transform.localScale = pendingSize;
             return;
         }
 
-        if (!IsServer) return;
-        float scaleLerp = Mathf.Clamp01(GameManager.Instance.gameTime / duration);
-        transform.localScale = Vector3.Lerp(initialSize, targetSize, scaleLerp);
+        // Server-side logic
+        if (IsServer)
+        {
+            // Server-side game state handling
+            if (GameManager.Instance.state == GameState.Pending)
+            {
+                // Reset to initial size in Pending state
+                if (transform.localScale != pendingSize)
+                {
+                    transform.localScale = pendingSize;
+                }
+                return;
+            }
+
+            // Calculate new scale based on game time
+            float scaleLerp = Mathf.Clamp01(GameManager.Instance.gameTime / duration);
+            Vector3 newScale = Vector3.Lerp(initialSize, targetSize, scaleLerp);
+
+            // Update local transform immediately
+            transform.localScale = newScale;
+        }
     }
 
-    private void OnTriggerEnter(Collider col)
+    private void OnTriggerEnter(Collider other)
     {
-        // Only the server should process trigger collisions for consistency
+        // Only server should process collisions
         if (!IsServer) return;
 
-        if (!col.gameObject.CompareTag("Player")) return;
+        if (!other.CompareTag("Player")) return;
 
-        Debug.Log("Is Player Tag");
-        
-        // Get the Player component from the colliding object's root
-        Player playerComponent = col.transform.root.GetComponent<Player>();
+        // Try to get player component from root
+        Player playerComponent = other.transform.root.GetComponent<Player>();
         if (playerComponent == null) return;
-        
-        Debug.Log("Has Player Object");
 
-        // Get the NetworkObject from the colliding player
+        // Get NetworkObject for player identification
         NetworkObject playerNetObj = playerComponent.transform.root.GetComponent<NetworkObject>();
         if (playerNetObj == null) return;
 
+        // Get client ID
         ulong clientId = playerNetObj.OwnerClientId;
-        
-        // Check for duplicate kills (cooldown)
+
+        // Check for cooldown to prevent multiple hits
         if (lastKillTime.TryGetValue(clientId, out float lastTime))
         {
             if (Time.time - lastTime < KillCooldown)
             {
-                Debug.Log($"Ignoring duplicate kill for player {clientId} (cooldown active)");
                 return;
             }
         }
-        
+
         // Update last kill time
         lastKillTime[clientId] = Time.time;
-        
-        Debug.Log($"Server detected player {clientId} hit the kill ball");
 
-        // Process the collision on the server
+        // Process player collision
         ProcessPlayerCollision(clientId);
     }
-    
+
     private void ProcessPlayerCollision(ulong clientId)
     {
         if (!NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId)) return;
 
         var client = NetworkManager.Singleton.ConnectedClients[clientId];
-        Debug.Log($"{clientId} - Add blow up force to {client.PlayerObject.name}");
 
-        // Play the kill ball pulse effect
+        // Play pulse effect
         if (killBallPulseEffect != null)
         {
             PlayKillBallEffectClientRpc();
         }
 
-        // Get the rigidbody
+        // Get player rigidbody
         Rigidbody rb = client.PlayerObject.GetComponentInChildren<Rigidbody>();
         if (rb == null) return;
 
-        // Launch the car in a random angle with a lot of force
-        rb.AddForce(new Vector3(Random.Range(-.6f, -.6f), 1, Random.Range(-.6f, .6f))
-            * blowupForce * 10000, ForceMode.Impulse);
+        // Launch the car with random force
+        Vector3 forceDirection = new Vector3(
+            Random.Range(-0.6f, 0.6f),
+            1,
+            Random.Range(-0.6f, 0.6f)
+        ).normalized;
+
+        rb.AddForce(forceDirection * blowupForce * 10000, ForceMode.Impulse);
 
         // Add random rotational force
         Vector3 randomTorque = new Vector3(
@@ -97,37 +131,23 @@ public class KillBall : NetworkBehaviour
             Random.Range(-1f, 1f),
             Random.Range(-1f, 1f)
         ).normalized * 1000f;
+
         rb.AddTorque(randomTorque, ForceMode.Impulse);
 
-        // Set player to dead
+        // Wait for 1 second before killing player
         if (GameManager.Instance.state == GameState.Playing)
-        {
             GameManager.Instance.PlayerDied(clientId);
-        }
 
-        // Get the NetworkHogController instead of HogController
-        HogVisualEffects hogController = client.PlayerObject.GetComponent<HogVisualEffects>();
-        if (hogController != null)
-        {
-            // Call the explosion effect on all clients
-            hogController.CreateExplosion();
-        }
-        else
-        {
-            Debug.LogWarning($"Couldn't find NetworkHogController for player {clientId}");
-        }
+        // Play visual effects on the player
+        client.PlayerObject.GetComponentInChildren<HogVisualEffects>().CreateExplosion();
     }
 
     [ClientRpc]
     private void PlayKillBallEffectClientRpc()
     {
-        if (killBallPulseEffect != null)
-        {
-            Instantiate(killBallPulseEffect, transform.position, Quaternion.identity);
-        }
-        else
-        {
-            Debug.LogWarning("KillBallPulse effect prefab is not assigned!");
-        }
+        GameObject pulse = Instantiate(killBallPulseEffect, transform.position, Quaternion.identity);
+
+        // Scale pulse to match ball size
+        pulse.transform.localScale = transform.localScale * 1.2f;
     }
 }

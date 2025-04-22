@@ -290,9 +290,6 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
         
         // Now normalize all other buttons to ensure consistency
         NormalizeAllButtonColors();
-        
-        // Debug log to confirm the method is being called
-        Debug.Log("Button highlighted: " + gameObject.name);
     }
     
     public void UnhighlightButton()
@@ -355,7 +352,6 @@ public class MenuButtonHighlight : MonoBehaviour, IPointerEnterHandler, IPointer
             if (!ColorEquals(buttonText.color, sharedNormalColor, 0.01f))
             {
                 buttonText.color = sharedNormalColor; // Ensure exact color match
-                Debug.Log("Fixed color on " + gameObject.name + " - was " + buttonText.color + " now " + sharedNormalColor);
             }
         }
         
