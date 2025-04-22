@@ -19,7 +19,13 @@ public class HogController : NetworkBehaviour
     [SerializeField, Range(0f, 1f)] private float rearSteeringAmount = .35f;
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
-    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .4f;
+    [SerializeField, Range(0.1f, 1f)]
+    private float steeringSpeed = .4f;
+
+    [Header("Bumper Collision")]
+    [SerializeField] private float bumperForceMultiplier = 2.5f; // Extra force applied by bumper
+    [SerializeField] private float minBumperCollisionPlayerSpeed = 10f; // Minimum threshold for enhanced collisions
+    [SerializeField] private float bumperImpulseMultiplier = 1.5f; // Multiplier for impulse-based force
 
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
@@ -67,6 +73,8 @@ public class HogController : NetworkBehaviour
     private float jumpCooldownRemaining = 0f;
     private float lerpedThrottleInput;
     private Texture2D debugBackgroundTexture;
+    private const float bumperCollisionDebounce = 0.2f; // Prevent too frequent bumper collisions
+    private bool bumperCollisionOnCooldown = false;
 
     public override void OnNetworkSpawn()
     {
@@ -520,60 +528,25 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    private float previousDirection = 0f; // Add this as a class variable
-
     private void CalculateSteeringAxis(float steeringInput)
     {
-        // Calculate the current direction of steering
-        float currentDirection = Mathf.Sign(steeringInput);
+        // Calculate the step based on steering speed and deltaTime
+        float step = steeringSpeed * Time.fixedDeltaTime;
 
-        // Calculate the direction of movement needed
-        float moveDirection = Mathf.Sign(steeringInput - steeringAxis);
+        // Calculate the direction of movement
+        float direction = Mathf.Sign(steeringInput - steeringAxis);
 
-        // Detect direction change (left to right or right to left)
-        bool isDirectionChange = (previousDirection != 0f &&
-                                 currentDirection != 0f &&
-                                 currentDirection != previousDirection);
-
-        // Base step calculation
-        float baseStep = steeringSpeed * Time.fixedDeltaTime;
-
-        // Calculate the distance from current to target
+        // Calculate the distance from the current value to the target
         float distance = Mathf.Abs(steeringInput - steeringAxis);
 
-        // Apply different responsiveness based on the scenario
-        float responseFactor;
+        // Apply exponential curve - the further from center, the faster it moves
+        float exponentialStep = step * (1.0f + distance * 2.0f);
 
-        if (isDirectionChange)
-        {
-            // When changing direction (left to right or right to left), be more responsive
-            responseFactor = 4.0f + distance * 3.0f;
-        }
-        else if (Mathf.Abs(steeringInput) < 0.1f && Mathf.Abs(steeringAxis) > 0.1f)
-        {
-            // When returning to center from a significant turn, be moderately responsive
-            responseFactor = 2.0f + distance * 2.0f;
-        }
-        else
-        {
-            // For all other adjustments, maintain smoother response
-            responseFactor = 1.0f + distance * 1.5f;
-        }
-
-        // Calculate the step with the appropriate response factor
-        float adaptiveStep = baseStep * responseFactor;
-
-        // Prevent overshooting
-        adaptiveStep = Mathf.Min(adaptiveStep, distance);
+        // Ensure we don't overshoot the target
+        exponentialStep = Mathf.Min(exponentialStep, distance);
 
         // Apply the calculated step in the correct direction
-        steeringAxis += moveDirection * adaptiveStep;
-
-        // Store the current direction for next frame's comparison
-        if (Mathf.Abs(steeringInput) > 0.1f)
-        {
-            previousDirection = currentDirection;
-        }
+        steeringAxis += direction * exponentialStep;
     }
 
     private void ApplySteering()
@@ -671,6 +644,12 @@ public class HogController : NetworkBehaviour
         SyncJumpCooldownClientRpc(0, false);
     }
 
+    private IEnumerator BumperCollisionCooldown()
+    {
+        yield return new WaitForSeconds(bumperCollisionDebounce);
+        bumperCollisionOnCooldown = false;
+    }
+
     #endregion
 
     private void OnCollisionEnter(Collision collision)
@@ -684,20 +663,45 @@ public class HogController : NetworkBehaviour
 
         if (myPlayer == null || otherPlayer == null) return;
 
-        Debug.Log($"[COLLISION] Player {myPlayer.clientId} collided with Player {otherPlayer.clientId}");
+        // Get collision details
+        ContactPoint contact = collision.GetContact(0);
+        Collider hitCollider = contact.thisCollider;
+        float impactMagnitude = collision.impulse.magnitude;
 
+        // Default impact sound based on speed
         var impactSound = SoundManager.SoundEffectType.HogImpactLow;
         var playerSpeed = rb.linearVelocity.magnitude;
 
-        if (playerSpeed < 12f && playerSpeed > 5f)
+        // Check conditions for a bumper collision 
+        bool isFastEnough = playerSpeed >= minBumperCollisionPlayerSpeed;
+        bool isBumperCollider = hitCollider.CompareTag("PlayerBumper");
+
+        // Log collision details for debugging
+        Debug.Log($"[COLLISION] Player {ConnectionManager.Instance.GetClientUsername(myPlayer.clientId)} collided with Player {ConnectionManager.Instance.GetClientUsername(otherPlayer.clientId)} " +
+                  $"(Speed: {playerSpeed:F1}, isBumperCollider: {isBumperCollider}, Fast Enough: {isFastEnough})");
+
+        // Apply enhanced collision if conditions are met
+        if (isFastEnough && isBumperCollider && !bumperCollisionOnCooldown)
         {
-            impactSound = SoundManager.SoundEffectType.HogImpactMed;
-        }
-        else if (playerSpeed >= 12f)
-        {
+            ProcessBumperCollision(collision, contact, playerSpeed);
+
+            // Always use high impact sound for enhanced collisions
             impactSound = SoundManager.SoundEffectType.HogImpactHigh;
         }
+        else
+        {
+            // Normal collision sound determination based on speed
+            if (playerSpeed < 12f && playerSpeed > 5f)
+            {
+                impactSound = SoundManager.SoundEffectType.HogImpactMed;
+            }
+            else if (playerSpeed >= 12f)
+            {
+                impactSound = SoundManager.SoundEffectType.HogImpactHigh;
+            }
+        }
 
+        // Play the impact sound
         SoundManager.Instance.PlayNetworkedSound(gameObject, impactSound);
 
         // Get the colliding player's name from ConnectionManager
@@ -711,6 +715,7 @@ public class HogController : NetworkBehaviour
             }
         }
     }
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -735,6 +740,60 @@ public class HogController : NetworkBehaviour
                 collisionTracker.RecordCollision(myPlayer.clientId, otherPlayer.clientId, collidingPlayerData.username);
             }
         }
+    }
+
+    private void ProcessBumperCollision(Collision collision, ContactPoint contact, float playerSpeed)
+    {
+        bumperCollisionOnCooldown = true;
+
+        // Calculate collision force based on impulse
+        Vector3 impulseForce = collision.impulse;
+        float impulseMagnitude = impulseForce.magnitude;
+
+        // Get direction vectors
+        Vector3 hitPoint = contact.point;
+        Vector3 hitNormal = contact.normal;
+
+        // Get the other rigidbody
+        Rigidbody otherRb = collision.rigidbody;
+        if (otherRb == null) return;
+
+        // Calculate force direction - prioritize our forward direction for high-speed impacts
+        Vector3 forceDir;
+
+        // For higher speeds, use more of our forward direction to simulate ramming
+        // This creates a more directional impact instead of just bouncing off
+        float speedFactor = Mathf.Clamp01((playerSpeed - 5f) / 15f); // 0 at speed 5, 1 at speed 20
+
+        // Blend between the contact normal and our forward direction based on speed
+        forceDir = Vector3.Lerp(-hitNormal, transform.forward.normalized, speedFactor);
+        forceDir.Normalize();
+
+        // Calculate enhanced force magnitude with speed bonus
+        // Higher speeds get more force multiplier
+        float speedBonus = Mathf.Clamp01(playerSpeed / 20f); // Up to 100% bonus at speed 20
+        float enhancedForceMagnitude = impulseMagnitude * bumperForceMultiplier * (1f + speedBonus);
+
+        // Apply force to the other vehicle (scale by impulse multiplier)
+        otherRb.AddForceAtPosition(
+            forceDir * enhancedForceMagnitude * bumperImpulseMultiplier,
+            hitPoint,
+            ForceMode.Impulse
+        );
+
+        // Apply a smaller opposite force to our vehicle for physics realism
+        // Reduce this kickback at higher speeds to simulate a more solid impact
+        float kickbackReduction = Mathf.Clamp01(speedFactor * 0.7f); // Reduce kickback up to 70% at high speeds
+        rb.AddForceAtPosition(
+            -forceDir * (enhancedForceMagnitude * 0.3f * (1f - kickbackReduction)),
+            hitPoint,
+            ForceMode.Impulse
+        );
+
+        Debug.Log($"[BUMPER COLLISION] Speed: {playerSpeed:F1}, Force applied: {enhancedForceMagnitude:F1}, " +
+                  $"Direction: {forceDir}, Speed bonus: {speedBonus:P0}");
+
+        StartCoroutine(BumperCollisionCooldown());
     }
 
     // Utility method to create a solid color texture

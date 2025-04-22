@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 7522181110088903595}
   - component: {fileID: 701980476227806279}
   - component: {fileID: 9219601071739233625}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Body
-  m_TagString: Player
+  m_TagString: PlayerBody
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -101,7 +101,7 @@ MeshCollider:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_LayerOverridePriority: 0
+  m_LayerOverridePriority: 10
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
@@ -118,7 +118,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6018523294074852569}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: FRMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -150,7 +150,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7734228441085981954}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: FLMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -183,7 +183,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7809612766333105819}
   - component: {fileID: 362347677443509517}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: LeftTireSkid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -321,7 +321,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8551842992465795262}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Colliders
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -357,7 +357,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2526841483404855482}
   - component: {fileID: 2553562073284689455}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RightTireSkid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -496,7 +496,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8994045424437793236}
   - component: {fileID: 6832065672850586991}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RearRightWheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -568,7 +568,7 @@ GameObject:
   - component: {fileID: 7649806188918868965}
   - component: {fileID: 5723285196365765762}
   - component: {fileID: 2820018075979898604}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RL
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -652,7 +652,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6060384585544935324}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RLMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -686,7 +686,7 @@ GameObject:
   - component: {fileID: 3860023934518583117}
   - component: {fileID: 6138714427622281252}
   - component: {fileID: 6498465622018132530}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: LeftJumpSmoke
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5482,9 +5482,9 @@ GameObject:
   - component: {fileID: 3120187301465190269}
   - component: {fileID: 7405183568773331293}
   - component: {fileID: 6251583506931057773}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Bumpers
-  m_TagString: Player
+  m_TagString: PlayerBumper
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5590,7 +5590,7 @@ GameObject:
   - component: {fileID: 4025172274468553503}
   - component: {fileID: 3678560601214998898}
   - component: {fileID: 7505519493020409115}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Windshield
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5676,7 +5676,7 @@ GameObject:
   - component: {fileID: 6982579473066868302}
   - component: {fileID: 726239328357988392}
   - component: {fileID: 2077668940201031422}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RightTireSmoke_PS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10471,7 +10471,7 @@ GameObject:
   - component: {fileID: 1245402639191902785}
   - component: {fileID: 1328172396741687671}
   - component: {fileID: 2495695663609195005}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RR
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10555,7 +10555,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1498580116071784513}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Wheels
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10588,9 +10588,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2513074227899650122}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Model
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10628,7 +10628,7 @@ GameObject:
   - component: {fileID: 1101890024012144598}
   - component: {fileID: 415916591952155772}
   - component: {fileID: 1109904001067980623}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RL
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10714,7 +10714,7 @@ GameObject:
   - component: {fileID: 4296687844997697592}
   - component: {fileID: 458102318861975023}
   - component: {fileID: 6846373815372823347}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Suspension
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10800,7 +10800,7 @@ GameObject:
   - component: {fileID: 5359273813639346749}
   - component: {fileID: 962007269087046139}
   - component: {fileID: 5932910653615919216}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Head Lights
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10886,7 +10886,7 @@ GameObject:
   - component: {fileID: 3399118048327941986}
   - component: {fileID: 599344049314903395}
   - component: {fileID: 2228922393621413926}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Seats
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10972,7 +10972,7 @@ GameObject:
   - component: {fileID: 5790777908165993432}
   - component: {fileID: 9028079709192940240}
   - component: {fileID: 629543789580729746}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RR
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11063,7 +11063,7 @@ GameObject:
   - component: {fileID: 893255368324058694}
   - component: {fileID: 8146151752332165518}
   - component: {fileID: 2716087862352259210}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: ServerAuthoritativePlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11206,11 +11206,14 @@ MonoBehaviour:
   torqueResponseSpeed: 3
   coastDampener: 20
   coastBrake: 100
-  rearSteeringAmount: 0.3
-  centerOfMass: {x: 0, y: 0.1, z: 0}
+  rearSteeringAmount: 0.4
+  centerOfMass: {x: 0, y: 0.1125, z: 0}
   maxSteeringAngle: 45
   steeringSpeed: 0.95
-  jumpForce: 6
+  bumperForceMultiplier: 1.25
+  minBumperCollisionPlayerSpeed: 7
+  bumperImpulseMultiplier: 1.25
+  jumpForce: 7
   jumpCooldown: 15
   canJump: 1
   driftThreshold: 0.5
@@ -11280,7 +11283,7 @@ MonoBehaviour:
   SyncRotAngleZ: 1
   SyncScaleX: 0
   SyncScaleY: 0
-  SyncScaleZ: 1
+  SyncScaleZ: 0
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01
@@ -11317,7 +11320,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3707604260707810283}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RRMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11350,7 +11353,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6547566562786020341}
   - component: {fileID: 7945259627787905534}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RearLeftWheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11422,7 +11425,7 @@ GameObject:
   - component: {fileID: 805097866457946276}
   - component: {fileID: 1626974902313389262}
   - component: {fileID: 6906638998894907252}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: LeftTireSmoke_PS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16215,7 +16218,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1452508388861175705}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Mesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16251,7 +16254,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3907938134206226615}
   - component: {fileID: 4296994293568657065}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: FrontRightWheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16323,7 +16326,7 @@ GameObject:
   - component: {fileID: 4044855748654297551}
   - component: {fileID: 7082956007007520895}
   - component: {fileID: 1718532802686771525}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Tail Lights
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16409,7 +16412,7 @@ GameObject:
   - component: {fileID: 8814684486626846411}
   - component: {fileID: 4833982520535320663}
   - component: {fileID: 8114381944568008645}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: PlayerNameplate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16543,7 +16546,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3983448297723184092}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Effects
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16582,7 +16585,7 @@ GameObject:
   - component: {fileID: 8099528245842952564}
   - component: {fileID: 6080697285567330973}
   - component: {fileID: 1599139024570357291}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: RightJumpSmoke
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21376,7 +21379,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5175821132257396233}
   - component: {fileID: 7947942277690021792}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: FrontLeftWheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21504,6 +21507,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
       propertyPath: m_Name
       value: PlayerIndicator
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
       propertyPath: m_IsActive

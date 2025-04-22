@@ -71,7 +71,7 @@ public class KillBall : NetworkBehaviour
         // Only server should process collisions
         if (!IsServer) return;
 
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("PlayerBody")) return;
 
         // Try to get player component from root
         Player playerComponent = other.transform.root.GetComponent<Player>();

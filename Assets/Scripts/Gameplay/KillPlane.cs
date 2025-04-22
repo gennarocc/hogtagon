@@ -11,7 +11,7 @@ public class KillPlane : MonoBehaviour
     void OnTriggerEnter(Collider collider)
     {
         // Check if this is a player tagged object
-        if (!collider.gameObject.CompareTag("Player")) return;
+        if (!collider.gameObject.CompareTag("PlayerBody")) return;
         
         Player player = collider.transform.root.GetComponent<Player>();
         

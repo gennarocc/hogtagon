@@ -173,17 +173,22 @@ public class Player : NetworkBehaviour
             {
                 // Player just died, switch to spectator mode
                 Debug.Log("Entering Spectator Mode"); 
-                SetSpectatorCamera();
+                StartCoroutine(SetSpectatorCameraDelay());
             }
             else
             {
                 // Player became alive, switch back to own camera
                 if (previousValue.state == PlayerState.Dead) Debug.Log("Exiting Spectator Mode"); 
-                SetSpectatorCamera();
                 playerCamera.LookAt = transform;
                 playerCamera.Follow = transform;
             }
         }
+    }
+
+    private IEnumerator SetSpectatorCameraDelay()
+    {
+        yield return new WaitForSeconds(1f);
+        SetSpectatorCamera();
     }
 
     private void SetSpectatorCamera()
