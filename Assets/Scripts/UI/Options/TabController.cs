@@ -264,24 +264,6 @@ public class TabController : MonoBehaviour
     public void BackToMainMenu()
     {
         // Save current tab settings before leaving
-        SaveCurrentTabSettings();
-        
-        // Use the MenuManager's method for returning from settings
-        // This ensures consistent navigation handling whether opened from pause or main menu
-        if (MenuManager.Instance != null)
-        {
-            MenuManager.Instance.ReturnFromSettingsMenu();
-        }
-        else
-        {
-            Debug.LogWarning("MenuManager.Instance is null! Cannot navigate back properly.");
-            gameObject.SetActive(false);
-        }
-    }
-
-    // Save settings for the current active tab
-    private void SaveCurrentTabSettings()
-    {
         if (currentTabIndex >= 0 && currentTabIndex < tabs.Count)
         {
             TabData currentTab = tabs[currentTabIndex];
@@ -294,6 +276,18 @@ public class TabController : MonoBehaviour
                     tabContent.ApplySettings();
                 }
             }
+        }
+        
+        // Use the MenuManager's method for returning from settings
+        // This ensures consistent navigation handling whether opened from pause or main menu
+        if (MenuManager.Instance != null)
+        {
+            MenuManager.Instance.ReturnFromSettingsMenu();
+        }
+        else
+        {
+            Debug.LogWarning("MenuManager.Instance is null! Cannot navigate back properly.");
+            gameObject.SetActive(false);
         }
     }
 } 

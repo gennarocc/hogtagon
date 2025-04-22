@@ -42,7 +42,7 @@ public class PlayMenuPanel : MonoBehaviour
             
         // Find MenuManager if not assigned
         if (menuManager == null)
-            menuManager = FindObjectOfType<MenuManager>();
+            menuManager = FindFirstObjectByType<MenuManager>();
             
         // Find PlayMenuCameraController if not assigned
         if (cameraController == null)

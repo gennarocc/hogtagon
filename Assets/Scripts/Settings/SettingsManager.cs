@@ -2,7 +2,6 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Hogtagon.UI;
 
 namespace Hogtagon.Settings
 {

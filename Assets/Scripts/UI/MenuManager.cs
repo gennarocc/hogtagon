@@ -1488,6 +1488,14 @@ public class MenuManager : NetworkBehaviour
     /// </summary>
     public void ReturnFromSettingsMenu()
     {
+        // First, ensure settings panels are deactivated
+        if (settingsMenuUI != null)
+            settingsMenuUI.SetActive(false);
+        
+        if (newOptionsMenuUI != null)
+            newOptionsMenuUI.SetActive(false);
+            
+        // Now show the appropriate menu based on where we came from
         if (settingsOpenedFromPauseMenu)
         {
             Debug.Log("[MenuManager] Returning to pause menu from settings");

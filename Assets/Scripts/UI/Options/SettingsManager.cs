@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.Audio;
+using System.IO;
+using Newtonsoft.Json;
 
 /// <summary>
 /// Central manager for all game settings. Handles loading, saving, and applying settings.
@@ -71,8 +73,8 @@ public class SettingsManager : MonoBehaviour
         // Set up button listeners
         SetupButtonListeners();
         
-        // Load saved settings
-        LoadAllSettings();
+        // Load settings from JSON file
+        LoadSettingsFromFile();
         
         // Update UI to reflect current settings
         UpdateUI();
@@ -180,23 +182,77 @@ public class SettingsManager : MonoBehaviour
     
     private void SaveAllSettings()
     {
-        // Save video settings
-        PlayerPrefs.SetInt("ResolutionIndex", resolutionDropdown.value);
-        PlayerPrefs.SetInt("Fullscreen", fullscreenToggle.isOn ? 1 : 0);
-        PlayerPrefs.SetFloat("FOV", fovSlider.value);
+        // Save with null checks to prevent NullReferenceException
         
-        // Save audio settings
-        PlayerPrefs.SetFloat("MasterVolume", masterVolumeSlider.value);
-        PlayerPrefs.SetFloat("MusicVolume", musicVolumeSlider.value);
-        PlayerPrefs.SetFloat("SFXVolume", sfxVolumeSlider.value);
+        try {
+            // Save video settings (with null checks)
+            if (resolutionDropdown != null)
+                PlayerPrefs.SetInt("ResolutionIndex", resolutionDropdown.value);
+            
+            if (fullscreenToggle != null)
+                PlayerPrefs.SetInt("Fullscreen", fullscreenToggle.isOn ? 1 : 0);
+            
+            if (fovSlider != null)
+                PlayerPrefs.SetFloat("FOV", fovSlider.value);
+            
+            // Save audio settings (with null checks)
+            if (masterVolumeSlider != null)
+                PlayerPrefs.SetFloat("MasterVolume", masterVolumeSlider.value);
+            
+            if (musicVolumeSlider != null)
+                PlayerPrefs.SetFloat("MusicVolume", musicVolumeSlider.value);
+            
+            if (sfxVolumeSlider != null)
+                PlayerPrefs.SetFloat("SFXVolume", sfxVolumeSlider.value);
+            
+            // Save gameplay settings
+            if (usernameInput != null)
+                PlayerPrefs.SetString("Username", usernameInput.text);
+            
+            // Save controls settings
+            if (sensitivitySlider != null)
+                PlayerPrefs.SetFloat("Sensitivity", sensitivitySlider.value);
+            
+            // Save the PlayerPrefs
+            PlayerPrefs.Save();
+            
+            Debug.Log("Settings saved to PlayerPrefs successfully");
+        }
+        catch (System.Exception e) {
+            Debug.LogError($"Error saving settings: {e.Message}\n{e.StackTrace}");
+        }
+    }
+    
+    // Helper functions to get current resolution from dropdown
+    private int GetCurrentResolutionWidth()
+    {
+        if (resolutionDropdown.value >= 0 && resolutionDropdown.value < resolutions.Length)
+        {
+            return resolutions[resolutionDropdown.value].width;
+        }
+        return Screen.currentResolution.width;
+    }
+
+    private int GetCurrentResolutionHeight()
+    {
+        if (resolutionDropdown.value >= 0 && resolutionDropdown.value < resolutions.Length)
+        {
+            return resolutions[resolutionDropdown.value].height;
+        }
+        return Screen.currentResolution.height;
+    }
+
+    // Call this from Awake or Start to load settings from JSON file
+    private void LoadSettingsFromFile()
+    {
+        // Load settings from JSON file
+        SettingsData settingsData = SettingsFileManager.LoadSettings();
         
-        // Save gameplay settings - username is saved on change
+        // Apply loaded settings to the game
+        SettingsFileManager.ApplySettings(settingsData);
         
-        // Save controls settings
-        PlayerPrefs.SetFloat("Sensitivity", sensitivitySlider.value);
-        
-        // Save the PlayerPrefs
-        PlayerPrefs.Save();
+        // Update UI to match loaded settings
+        UpdateUI();
     }
     
     #endregion
@@ -444,61 +500,19 @@ public class SettingsManager : MonoBehaviour
         // Save all settings when exiting
         SaveAllSettings();
         
-        // First deactivate this menu
-        gameObject.SetActive(false);
-        
-        // Let MenuManager handle the transition back
+        // Let MenuManager handle the transition back FIRST before deactivating this menu
+        // This ensures the proper menu will be shown
         if (MenuManager.Instance != null)
         {
-            // MenuManager already tracks where settings were opened from with settingsOpenedFromPauseMenu
-            // We'll let it handle the return navigation
-            
-            // If settings were opened from pause menu, activate pause menu
-            if (MenuManager.Instance.settingsOpenedFromPauseMenu)
-            {
-                Debug.Log("Returning to pause menu");
-                
-                // Use public pauseMenuUI if available
-                if (MenuManager.Instance.pauseMenuUI != null)
-                {
-                    MenuManager.Instance.pauseMenuUI.SetActive(true);
-                }
-                else
-                {
-                    // Otherwise use ShowPauseMenu if it exists
-                    var showPauseMethod = typeof(MenuManager).GetMethod("ShowPauseMenu", 
-                        System.Reflection.BindingFlags.Instance | 
-                        System.Reflection.BindingFlags.Public);
-                        
-                    if (showPauseMethod != null)
-                    {
-                        showPauseMethod.Invoke(MenuManager.Instance, null);
-                    }
-                    else
-                    {
-                        // Last resort fallback
-                        GameObject pauseMenu = GameObject.Find("PauseMenuUI");
-                        if (pauseMenu != null)
-                        {
-                            pauseMenu.SetActive(true);
-                        }
-                        else
-                        {
-                            Debug.LogWarning("Could not find pause menu!");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // We were opened from main menu, use MenuManager's ShowMainMenu method
-                Debug.Log("Returning to main menu");
-                MenuManager.Instance.ShowMainMenu();
-            }
+            // Use the public ReturnFromSettingsMenu method
+            MenuManager.Instance.ReturnFromSettingsMenu();
         }
         else
         {
             Debug.LogWarning("MenuManager.Instance is null! Cannot navigate back properly.");
+            
+            // If MenuManager is not available, just deactivate this menu as a fallback
+            gameObject.SetActive(false);
         }
     }
     
@@ -575,4 +589,149 @@ public class SettingsManager : MonoBehaviour
     }
     
     #endregion
+
+    /// <summary>
+    /// Called when the Apply button is clicked.
+    /// Saves all current settings.
+    /// </summary>
+    public void ApplySettings()
+    {
+        // Save video settings
+        if (resolutionDropdown != null && resolutionDropdown.value >= 0 && resolutionDropdown.value < resolutions.Length)
+        {
+            Resolution resolution = resolutions[resolutionDropdown.value];
+            Screen.SetResolution(resolution.width, resolution.height, fullscreenToggle.isOn);
+        }
+        
+        // Save to PlayerPrefs
+        SaveAllSettings();
+        
+        // Save to JSON file (if you want to use this feature)
+        SaveToJsonFile();
+        
+        // Play confirmation sound
+        PlayUIConfirmSound();
+    }
+    
+    /// <summary>
+    /// Saves settings to JSON file
+    /// </summary>
+    private void SaveToJsonFile()
+    {
+        try
+        {
+            // Get the file path
+            string filePath = Path.Combine(Application.persistentDataPath, "settings.json");
+            
+            // First try reading the existing file if it exists
+            string json = "{}";
+            if (File.Exists(filePath))
+            {
+                json = File.ReadAllText(filePath);
+            }
+            
+            // Create a temporary file to help with manual JSON manipulation
+            // This avoids issues with JSON parsing classes
+            string tempFile = Path.Combine(Application.persistentDataPath, "temp_settings.json");
+            
+            // Update the values we care about by doing simple string replacements
+            // Note: This approach is less robust but avoids compatibility issues
+            
+            // Audio Settings - this is what we're trying to fix
+            if (masterVolumeSlider != null)
+            {
+                float masterVol = masterVolumeSlider.value;
+                // Replace any existing masterVolume value or add it if it doesn't exist
+                if (json.Contains("\"masterVolume\":"))
+                {
+                    json = System.Text.RegularExpressions.Regex.Replace(
+                        json, 
+                        "\"masterVolume\":\\s*[0-9.-]+", 
+                        $"\"masterVolume\": {masterVol}");
+                }
+                else
+                {
+                    // Add it before the last closing brace
+                    json = json.TrimEnd();
+                    if (json.EndsWith("}"))
+                    {
+                        json = json.Substring(0, json.Length - 1).TrimEnd();
+                        // Add comma if there are other properties
+                        if (!json.EndsWith("{") && !json.EndsWith(","))
+                        {
+                            json += ",";
+                        }
+                        json += $"\n    \"masterVolume\": {masterVol}\n}}";
+                    }
+                    else
+                    {
+                        json = $"{{\n    \"masterVolume\": {masterVol}\n}}";
+                    }
+                }
+            }
+            
+            // Do the same for music and sfx volume
+            if (musicVolumeSlider != null)
+            {
+                float musicVol = musicVolumeSlider.value;
+                if (json.Contains("\"musicVolume\":"))
+                {
+                    json = System.Text.RegularExpressions.Regex.Replace(
+                        json, 
+                        "\"musicVolume\":\\s*[0-9.-]+", 
+                        $"\"musicVolume\": {musicVol}");
+                }
+                else
+                {
+                    json = json.TrimEnd();
+                    if (json.EndsWith("}"))
+                    {
+                        json = json.Substring(0, json.Length - 1).TrimEnd();
+                        if (!json.EndsWith("{") && !json.EndsWith(","))
+                        {
+                            json += ",";
+                        }
+                        json += $"\n    \"musicVolume\": {musicVol}\n}}";
+                    }
+                }
+            }
+            
+            if (sfxVolumeSlider != null)
+            {
+                float sfxVol = sfxVolumeSlider.value;
+                if (json.Contains("\"sfxVolume\":"))
+                {
+                    json = System.Text.RegularExpressions.Regex.Replace(
+                        json, 
+                        "\"sfxVolume\":\\s*[0-9.-]+", 
+                        $"\"sfxVolume\": {sfxVol}");
+                }
+                else
+                {
+                    json = json.TrimEnd();
+                    if (json.EndsWith("}"))
+                    {
+                        json = json.Substring(0, json.Length - 1).TrimEnd();
+                        if (!json.EndsWith("{") && !json.EndsWith(","))
+                        {
+                            json += ",";
+                        }
+                        json += $"\n    \"sfxVolume\": {sfxVol}\n}}";
+                    }
+                }
+            }
+            
+            // Save the updated JSON
+            File.WriteAllText(filePath, json);
+            
+            // Log the exact file path
+            Debug.Log("Settings file location: " + filePath);
+            Debug.Log("Settings saved to JSON file successfully");
+            Debug.Log("Updated JSON: " + json);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Failed to save settings to JSON: " + e.Message);
+        }
+    }
 } 
