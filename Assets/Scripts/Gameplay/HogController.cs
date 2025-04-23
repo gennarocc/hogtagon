@@ -711,8 +711,7 @@ public class HogController : NetworkBehaviour
         bool isBumperCollider = hitCollider.CompareTag("PlayerBumper");
 
         // Log collision details for debugging
-        Debug.Log($"[COLLISION] Player {ConnectionManager.Instance.GetClientUsername(myPlayer.clientId)} collided with Player {ConnectionManager.Instance.GetClientUsername(otherPlayer.clientId)} " +
-                  $"(Speed: {playerSpeed:F1}, isBumperCollider: {isBumperCollider}, Fast Enough: {isFastEnough})");
+
 
         // Apply enhanced collision if conditions are met
         if (isFastEnough && isBumperCollider && !bumperCollisionOnCooldown)
@@ -723,6 +722,9 @@ public class HogController : NetworkBehaviour
         }
         else
         {
+            Debug.Log($"[HOG] Player {ConnectionManager.Instance.GetClientUsername(myPlayer.clientId)} collided with Player {ConnectionManager.Instance.GetClientUsername(otherPlayer.clientId)} " +
+                      $"(Speed: {playerSpeed:F1}, isBumperCollider: {isBumperCollider}, Fast Enough: {isFastEnough})");
+
             // Normal collision sound determination based on speed
             if (playerSpeed < 12f && playerSpeed > 5f)
             {
@@ -760,7 +762,7 @@ public class HogController : NetworkBehaviour
 
         if (myPlayer == null || otherPlayer == null) return;
 
-        Debug.Log($"[TRIGGER] Player {myPlayer.clientId} triggered with Player {otherPlayer.clientId}");
+        Debug.Log($"[HOG] Player {myPlayer.clientId} triggered with Player {otherPlayer.clientId}");
 
         // Get the colliding player's name from ConnectionManager
         if (ConnectionManager.Instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
@@ -828,7 +830,7 @@ public class HogController : NetworkBehaviour
             ForceMode.Impulse
         );
 
-        Debug.Log($"[BUMPER COLLISION] Speed: {playerSpeed:F1}, Force applied: {enhancedForceMagnitude:F1}, " +
+        Debug.Log($"[HOG] Speed: {playerSpeed:F1}, Force applied: {enhancedForceMagnitude:F1}, " +
                   $"Direction: {forceDir}, Speed bonus: {speedBonus:P0}");
 
         StartCoroutine(BumperCollisionCooldown());

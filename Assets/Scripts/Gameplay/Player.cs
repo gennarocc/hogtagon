@@ -145,11 +145,13 @@ public class Player : NetworkBehaviour
         if (!IsServer) return;
         ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
         // Server-side respawn logic
-        Debug.Log("Respawning Player - " + playerData.username);
+        Debug.Log("[PLAYER] Respawning Player - " + playerData.username);
         rb.position = playerData.spawnPoint;
         rb.rotation = Quaternion.LookRotation(SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
+
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
 
         // Set player state to alive and update clients
         if (playerData.state != PlayerState.Alive)
@@ -170,13 +172,13 @@ public class Player : NetworkBehaviour
             if (newValue.state != PlayerState.Alive)
             {
                 // Player just died, switch to spectator mode
-                Debug.Log("Entering Spectator Mode"); 
+                Debug.Log("[PLAYER] Entering Spectator Mode"); 
                 StartCoroutine(SetSpectatorCameraDelay());
             }
             else
             {
                 // Player became alive, switch back to own camera
-                if (previousValue.state == PlayerState.Dead) Debug.Log("Exiting Spectator Mode"); 
+                if (previousValue.state == PlayerState.Dead) Debug.Log("[PLAYER] Exiting Spectator Mode"); 
                 playerCamera.LookAt = transform;
                 playerCamera.Follow = transform;
             }
@@ -187,6 +189,7 @@ public class Player : NetworkBehaviour
     {
         yield return new WaitForSeconds(1f);
         SetSpectatorCamera();
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOff);
     }
 
     private void SetSpectatorCamera()
