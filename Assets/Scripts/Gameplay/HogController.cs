@@ -63,11 +63,20 @@ public class HogController : NetworkBehaviour
     private bool jumpInputReceived = false;
 
     // Network variables
-    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<bool> isJumping = new NetworkVariable<bool>(false);
     private NetworkVariable<bool> jumpReady = new NetworkVariable<bool>(true);
     private NetworkVariable<float> netSteeringAxis = new NetworkVariable<float>(0f);
     private NetworkVariable<float> netWheelRotationSpeed = new NetworkVariable<float>(0f);
+    private NetworkVariable<bool> rearLeftWheelGrounded = new NetworkVariable<bool>(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server);
+
+    private NetworkVariable<bool> rearRightWheelGrounded = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
     // Physics and control variables
     private float currentTorque;
@@ -125,11 +134,7 @@ public class HogController : NetworkBehaviour
 
             CalculateEngineAudio(input);
         }
-        // NON-OWNER CLIENTS: apply network synchronized wheel visuals
-        else if (!IsServer)
-        {
-            AnimateWheelsFromNetwork();
-        }
+        AnimateWheelsFromNetwork();
     }
 
     #endregion
@@ -196,9 +201,9 @@ public class HogController : NetworkBehaviour
     {
         if (visualEffects != null)
         {
-            // Check if rear wheels are grounded
-            bool rearLeftGrounded = wheelColliders[2].isGrounded;
-            bool rearRightGrounded = wheelColliders[3].isGrounded;
+            // Use the networked wheel grounded values instead of direct wheel collider access
+            bool rearLeftGrounded = rearLeftWheelGrounded.Value;
+            bool rearRightGrounded = rearRightWheelGrounded.Value;
 
             // Update drift effects based on new value
             visualEffects.UpdateDriftEffects(newValue, rearLeftGrounded, rearRightGrounded, canMove);
@@ -265,6 +270,10 @@ public class HogController : NetworkBehaviour
 
         // Check drift condition on server
         CheckServerDriftCondition();
+
+        // Update wheel grounded network variables
+        rearLeftWheelGrounded.Value = wheelColliders[2].isGrounded;
+        rearRightWheelGrounded.Value = wheelColliders[3].isGrounded;
 
         // Process jump input
         if (input.jumpInput && canJump && jumpReady.Value)
