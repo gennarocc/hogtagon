@@ -66,6 +66,8 @@ public class Player : NetworkBehaviour
             playerCamera.gameObject.SetActive(true);
             playerCamera.LookAt = transform;
             playerCamera.Follow = transform;
+
+            SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
         }
     }
 

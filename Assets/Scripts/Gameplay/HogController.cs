@@ -54,6 +54,10 @@ public class HogController : NetworkBehaviour
     [SerializeField] private Color labelTextColor = Color.gray;
     [SerializeField] private Color valueTextColor = Color.white;
 
+    #endregion
+
+    #region Fields and Properties
+
     // Input reference
     private InputManager inputManager;
     private bool jumpInputReceived = false;
@@ -76,100 +80,9 @@ public class HogController : NetworkBehaviour
     private const float bumperCollisionDebounce = 0.2f; // Prevent too frequent bumper collisions
     private bool bumperCollisionOnCooldown = false;
 
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
+    #endregion
 
-
-        // Get reference to the InputManager
-        inputManager = InputManager.Instance;
-        if (IsOwner)
-        {
-            // Subscribe to the jump event
-            inputManager.JumpPressed += OnJumpPressed;
-            inputManager.HornPressed += OnHornPressed;
-        }
-
-        if (IsServer || IsOwner)
-        {
-            // Full physics setup on server and owning client
-            rb.centerOfMass = centerOfMass;
-        }
-        else
-        {
-            rb.isKinematic = true;
-            DisableWheelColliderPhysics();
-        }
-
-        visualEffects.Initialize(transform, centerOfMass, OwnerClientId);
-
-        // Create texture for debug UI background
-        debugBackgroundTexture = MakeTexture(2, 2, debugBackgroundColor);
-
-        // Subscribe to network variable changes to trigger effects
-        isDrifting.OnValueChanged += OnDriftingChanged;
-        isJumping.OnValueChanged += OnJumpingChanged;
-
-    }
-
-    private void Start()
-    {
-        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
-    }
-
-    private void OnJumpPressed()
-    {
-        if (canJump && !jumpOnCooldown)
-        {
-            jumpInputReceived = true;
-        }
-    }
-
-    private void OnHornPressed()
-    {
-        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        base.OnNetworkDespawn();
-
-        // Unsubscribe from network variable changes
-        isDrifting.OnValueChanged -= OnDriftingChanged;
-        isJumping.OnValueChanged -= OnJumpingChanged;
-
-        // Unsubscribe from input events
-        if (IsOwner && inputManager != null)
-        {
-            inputManager.JumpPressed -= OnJumpPressed;
-        }
-
-        if (debugBackgroundTexture != null)
-            Destroy(debugBackgroundTexture);
-
-        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOff);
-    }
-
-    private void OnDriftingChanged(bool previousValue, bool newValue)
-    {
-        if (visualEffects != null)
-        {
-            // Check if rear wheels are grounded
-            bool rearLeftGrounded = wheelColliders[2].isGrounded;
-            bool rearRightGrounded = wheelColliders[3].isGrounded;
-
-            // Update drift effects based on new value
-            visualEffects.UpdateDriftEffects(newValue, rearLeftGrounded, rearRightGrounded, canMove);
-        }
-    }
-
-    private void OnJumpingChanged(bool previousValue, bool newValue)
-    {
-        if (newValue && visualEffects != null)
-        {
-            visualEffects.PlayJumpEffects();
-        }
-    }
+    #region Lifecycle Methods
 
     private void Update()
     {
@@ -219,136 +132,102 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    private void CalculateEngineAudio(ClientInput input)
-    {
-        // Interpolate the throttle input so get smoother engine transitions.
-        float netInput = Math.Sign(input.throttleInput - input.brakeInput);
-        var lerp = Mathf.Lerp(lerpedThrottleInput, netInput, Time.deltaTime * 3); // Lerp speed is 3
-        lerpedThrottleInput = lerp;
+    #endregion
 
-        // Wwise expects a value between 1-100 so we multiply by 5 (car speed is around 1-23)
-        rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5 * lerpedThrottleInput);
+    #region Network Setup and Events
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+
+        // Get reference to the InputManager
+        inputManager = InputManager.Instance;
+        if (IsOwner)
+        {
+            // Subscribe to the jump event
+            inputManager.JumpPressed += OnJumpPressed;
+            inputManager.HornPressed += OnHornPressed;
+        }
+
+        if (IsServer || IsOwner)
+        {
+            // Full physics setup on server and owning client
+            rb.centerOfMass = centerOfMass;
+        }
+        else
+        {
+            rb.isKinematic = true;
+            DisableWheelColliderPhysics();
+        }
+
+        visualEffects.Initialize(transform, centerOfMass, OwnerClientId);
+
+        // Create texture for debug UI background
+        debugBackgroundTexture = MakeTexture(2, 2, debugBackgroundColor);
+
+        // Subscribe to network variable changes to trigger effects
+        isDrifting.OnValueChanged += OnDriftingChanged;
+        isJumping.OnValueChanged += OnJumpingChanged;
+
     }
 
-    private void CheckDriftCondition()
+    public override void OnNetworkDespawn()
     {
-        if (!IsServer && IsOwner)
+        base.OnNetworkDespawn();
+
+        // Unsubscribe from network variable changes
+        isDrifting.OnValueChanged -= OnDriftingChanged;
+        isJumping.OnValueChanged -= OnJumpingChanged;
+
+        // Unsubscribe from input events
+        if (IsOwner && inputManager != null)
         {
-            // Transform world velocity to local space
-            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
-            localVelocityX = Mathf.Abs(localVelocity.x);
+            inputManager.JumpPressed -= OnJumpPressed;
+        }
 
-            // Check drift conditions - sideways velocity and speed
-            bool isDriftingNow = localVelocityX > driftThreshold &&
-                                 rb.linearVelocity.magnitude > driftMinSpeed &&
-                                 (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
+        if (debugBackgroundTexture != null)
+            Destroy(debugBackgroundTexture);
 
-            // Only send RPC if state changes to reduce network traffic
-            if (isDriftingNow != isDrifting.Value)
-            {
-                UpdateDriftingServerRpc(isDriftingNow);
-            }
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOff);
+    }
+
+    private void OnDriftingChanged(bool previousValue, bool newValue)
+    {
+        if (visualEffects != null)
+        {
+            // Check if rear wheels are grounded
+            bool rearLeftGrounded = wheelColliders[2].isGrounded;
+            bool rearRightGrounded = wheelColliders[3].isGrounded;
+
+            // Update drift effects based on new value
+            visualEffects.UpdateDriftEffects(newValue, rearLeftGrounded, rearRightGrounded, canMove);
         }
     }
 
-    [ServerRpc]
-    private void UpdateDriftingServerRpc(bool isDriftingNow)
+    private void OnJumpingChanged(bool previousValue, bool newValue)
     {
-        isDrifting.Value = isDriftingNow;
+        if (newValue && visualEffects != null)
+        {
+            visualEffects.PlayJumpEffects();
+        }
     }
 
-    private void OnGUI()
+    #endregion
+
+    #region Input Handling
+
+    private void OnJumpPressed()
     {
-        if (!showDebugUI || !IsOwner) return;
-
-        // Setup styles
-        GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
-        boxStyle.normal.background = debugBackgroundTexture;
-
-        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.normal.textColor = labelTextColor;
-        labelStyle.fontSize = 12;
-
-        GUIStyle valueStyle = new GUIStyle(GUI.skin.label);
-        valueStyle.normal.textColor = valueTextColor;
-        valueStyle.fontSize = 12;
-        valueStyle.fontStyle = FontStyle.Bold;
-
-        GUIStyle headerStyle = new GUIStyle(labelStyle);
-        headerStyle.fontSize = 14;
-        headerStyle.fontStyle = FontStyle.Bold;
-        headerStyle.normal.textColor = valueTextColor;
-
-        // Calculate sizes
-        int padding = 10;
-        int width = 240;
-        int startY = 10;
-        int lineHeight = 20;
-        int totalLines = 10; // Adjusted for new debug lines
-
-        // Draw background box
-        GUI.Box(new Rect(10, startY, width, totalLines * lineHeight + padding * 2), "", boxStyle);
-
-        // Start drawing content
-        int yPos = startY + padding;
-
-        // Header
-        GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "HOG CONTROLLER DEBUG", headerStyle);
-        yPos += lineHeight;
-
-        // Count grounded wheels
-        int groundedWheelCount = 0;
-        for (int i = 0; i < wheelColliders.Length; i++)
+        if (canJump && !jumpOnCooldown)
         {
-            if (wheelColliders[i].isGrounded)
-                groundedWheelCount++;
+            jumpInputReceived = true;
         }
+    }
 
-        // Get speed in different units
-        float speed = rb.linearVelocity.magnitude;
-
-        // Vehicle info - using both label and value styles for color differentiation
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Speed:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{netWheelRotationSpeed.Value:F1} m/s ({netWheelRotationSpeed.Value * 3.6f:F1} km/h)", valueStyle);
-        yPos += lineHeight;
-
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Torque:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{currentTorque:F0} Nm", valueStyle);
-        yPos += lineHeight;
-
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Steering:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{netSteeringAxis.Value:F2} ({netSteeringAxis.Value * maxSteeringAngle:F0}°)", valueStyle);
-        yPos += lineHeight;
-
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Can Move:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            canMove ? "Yes" : "No", valueStyle);
-        yPos += lineHeight;
-
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Wheels:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{groundedWheelCount}/{wheelColliders.Length} grounded", valueStyle);
-        yPos += lineHeight;
-
-        // Add drift info
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Drifting:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            isDrifting.Value ? "Yes" : "No", valueStyle);
-        yPos += lineHeight;
-
-        // Network info
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Ping:", labelStyle);
-        float ping = 0;
-        if (NetworkManager.Singleton?.NetworkConfig?.NetworkTransport is Unity.Netcode.Transports.UTP.UnityTransport transport)
-        {
-            ping = transport.GetCurrentRtt(0);
-        }
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{ping:F0} ms", valueStyle);
-        yPos += lineHeight;
+    private void OnHornPressed()
+    {
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
     }
 
     private ClientInput CollectInput()
@@ -367,6 +246,10 @@ public class HogController : NetworkBehaviour
 
         return input;
     }
+
+    #endregion
+
+    #region Network RPCs
 
     [ServerRpc]
     private void SendInputServerRpc(ClientInput input)
@@ -398,31 +281,11 @@ public class HogController : NetworkBehaviour
         netWheelRotationSpeed.Value = rb.linearVelocity.magnitude;
     }
 
-    private void ProcessJump()
+    [ServerRpc]
+    private void UpdateDriftingServerRpc(bool isDriftingNow)
     {
-        // Set network state
-        isJumping.Value = true;
-        jumpReady.Value = false;
-
-        // Store current horizontal velocity
-        Vector3 currentVelocity = rb.linearVelocity;
-        Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
-
-        // Start with a position boost for immediate feedback
-        float upwardVelocity = jumpForce * 1.2f; // Faster rise
-
-        // Combine horizontal momentum with new vertical impulse
-        // Multiply horizontal speed to maintain or enhance momentum
-        Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
-        rb.linearVelocity = newVelocity;
-
-        // Add a bit more forward boost in the car's facing direction
-        rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
-
-        // Notify all clients about the jump and cooldown
-        SyncJumpCooldownClientRpc(jumpCooldown, false);
+        isDrifting.Value = isDriftingNow;
     }
-
 
     [ClientRpc]
     private void SyncJumpCooldownClientRpc(float cooldownDuration, bool isOnCooldown)
@@ -435,20 +298,9 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    private void CheckServerDriftCondition()
-    {
-        if (IsServer)
-        {
-            // Transform world velocity to local space
-            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
-            float localVelocityX = Mathf.Abs(localVelocity.x);
+    #endregion
 
-            // Check drift conditions - sideways velocity and speed
-            isDrifting.Value = localVelocityX > driftThreshold &&
-                               rb.linearVelocity.magnitude > driftMinSpeed &&
-                               (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
-        }
-    }
+    #region Physics and Movement
 
     private void ApplyMotorTorque(float throttleInput, float brakeInput)
     {
@@ -662,7 +514,70 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    // JumpServerRPC replaced with the ProcessJump method called from SendInputServerRpc
+    #endregion
+
+    #region Jump and Drift Mechanics
+
+    private void CheckDriftCondition()
+    {
+        if (!IsServer && IsOwner)
+        {
+            // Transform world velocity to local space
+            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
+            localVelocityX = Mathf.Abs(localVelocity.x);
+
+            // Check drift conditions - sideways velocity and speed
+            bool isDriftingNow = localVelocityX > driftThreshold &&
+                                 rb.linearVelocity.magnitude > driftMinSpeed &&
+                                 (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
+
+            // Only send RPC if state changes to reduce network traffic
+            if (isDriftingNow != isDrifting.Value)
+            {
+                UpdateDriftingServerRpc(isDriftingNow);
+            }
+        }
+    }
+
+    private void CheckServerDriftCondition()
+    {
+        if (IsServer)
+        {
+            // Transform world velocity to local space
+            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
+            float localVelocityX = Mathf.Abs(localVelocity.x);
+
+            // Check drift conditions - sideways velocity and speed
+            isDrifting.Value = localVelocityX > driftThreshold &&
+                               rb.linearVelocity.magnitude > driftMinSpeed &&
+                               (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
+        }
+    }
+
+    private void ProcessJump()
+    {
+        // Set network state
+        isJumping.Value = true;
+        jumpReady.Value = false;
+
+        // Store current horizontal velocity
+        Vector3 currentVelocity = rb.linearVelocity;
+        Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+
+        // Start with a position boost for immediate feedback
+        float upwardVelocity = jumpForce * 1.2f; // Faster rise
+
+        // Combine horizontal momentum with new vertical impulse
+        // Multiply horizontal speed to maintain or enhance momentum
+        Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
+        rb.linearVelocity = newVelocity;
+
+        // Add a bit more forward boost in the car's facing direction
+        rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+
+        // Notify all clients about the jump and cooldown
+        SyncJumpCooldownClientRpc(jumpCooldown, false);
+    }
 
     private IEnumerator JumpCooldownServer()
     {
@@ -684,6 +599,8 @@ public class HogController : NetworkBehaviour
     }
 
     #endregion
+
+    #region Collision Handling
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -836,6 +753,119 @@ public class HogController : NetworkBehaviour
         StartCoroutine(BumperCollisionCooldown());
     }
 
+    #endregion
+
+    #region Audio and Visual Effects
+
+    private void CalculateEngineAudio(ClientInput input)
+    {
+        // Interpolate the throttle input so get smoother engine transitions.
+        float netInput = Math.Sign(input.throttleInput - input.brakeInput);
+        var lerp = Mathf.Lerp(lerpedThrottleInput, netInput, Time.deltaTime * 3); // Lerp speed is 3
+        lerpedThrottleInput = lerp;
+
+        // Wwise expects a value between 1-100 so we multiply by 5 (car speed is around 1-23)
+        rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5 * lerpedThrottleInput);
+    }
+
+    #endregion
+
+    #region Debug and Utilities
+
+    private void OnGUI()
+    {
+        if (!showDebugUI || !IsOwner) return;
+
+        // Setup styles
+        GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
+        boxStyle.normal.background = debugBackgroundTexture;
+
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.normal.textColor = labelTextColor;
+        labelStyle.fontSize = 12;
+
+        GUIStyle valueStyle = new GUIStyle(GUI.skin.label);
+        valueStyle.normal.textColor = valueTextColor;
+        valueStyle.fontSize = 12;
+        valueStyle.fontStyle = FontStyle.Bold;
+
+        GUIStyle headerStyle = new GUIStyle(labelStyle);
+        headerStyle.fontSize = 14;
+        headerStyle.fontStyle = FontStyle.Bold;
+        headerStyle.normal.textColor = valueTextColor;
+
+        // Calculate sizes
+        int padding = 10;
+        int width = 240;
+        int startY = 10;
+        int lineHeight = 20;
+        int totalLines = 10; // Adjusted for new debug lines
+
+        // Draw background box
+        GUI.Box(new Rect(10, startY, width, totalLines * lineHeight + padding * 2), "", boxStyle);
+
+        // Start drawing content
+        int yPos = startY + padding;
+
+        // Header
+        GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "HOG CONTROLLER DEBUG", headerStyle);
+        yPos += lineHeight;
+
+        // Count grounded wheels
+        int groundedWheelCount = 0;
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            if (wheelColliders[i].isGrounded)
+                groundedWheelCount++;
+        }
+
+        // Get speed in different units
+        float speed = rb.linearVelocity.magnitude;
+
+        // Vehicle info - using both label and value styles for color differentiation
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Speed:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{netWheelRotationSpeed.Value:F1} m/s ({netWheelRotationSpeed.Value * 3.6f:F1} km/h)", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Torque:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{currentTorque:F0} Nm", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Steering:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{netSteeringAxis.Value:F2} ({netSteeringAxis.Value * maxSteeringAngle:F0}°)", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Can Move:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            canMove ? "Yes" : "No", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Wheels:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{groundedWheelCount}/{wheelColliders.Length} grounded", valueStyle);
+        yPos += lineHeight;
+
+        // Add drift info
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Drifting:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            isDrifting.Value ? "Yes" : "No", valueStyle);
+        yPos += lineHeight;
+
+        // Network info
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Ping:", labelStyle);
+        float ping = 0;
+        if (NetworkManager.Singleton?.NetworkConfig?.NetworkTransport is Unity.Netcode.Transports.UTP.UnityTransport transport)
+        {
+            ping = transport.GetCurrentRtt(0);
+        }
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{ping:F0} ms", valueStyle);
+        yPos += lineHeight;
+    }
+
     // Utility method to create a solid color texture
     private Texture2D MakeTexture(int width, int height, Color color)
     {
@@ -850,4 +880,6 @@ public class HogController : NetworkBehaviour
         texture.Apply();
         return texture;
     }
+
+    #endregion
 }
