@@ -144,6 +144,13 @@
 				</Event>
 				<Event Name="LevelMusicOn" ID="{4154EC31-4EF5-4574-923D-FE49514754DD}">
 					<ChildrenList>
+						<Action Name="" ID="{7A4CA9A3-8B75-4DB2-A0D6-3FCD9ADDCE9C}" ShortID="208378018">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="3"/>
+								<Property Name="Scope" Type="int16" Value="1"/>
+							</PropertyList>
+							<ReferenceList/>
+						</Action>
 						<Action Name="" ID="{3B175947-D5F6-4614-8F3B-A1FB37B1E212}" ShortID="529088533">
 							<ReferenceList>
 								<Reference Name="Target">
@@ -358,6 +365,16 @@
 				</Event>
 				<Event Name="RoundWin" ID="{D4EC6709-3142-43E2-9F80-34259A033005}">
 					<ChildrenList>
+						<Action Name="" ID="{63C2D62D-FBAA-4240-8871-B670F47D25BE}" ShortID="314144394">
+							<PropertyList>
+								<Property Name="ActionType" Type="int16" Value="2"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="player-elimination" ID="{63794D57-4AFC-4E29-B0AF-72AD7930823A}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
 						<Action Name="" ID="{A6E5A38E-33FE-4CBD-81BA-F6468B71B1E5}" ShortID="543173238">
 							<ReferenceList>
 								<Reference Name="Target">
