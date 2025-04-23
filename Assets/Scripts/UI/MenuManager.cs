@@ -1071,14 +1071,12 @@ public class MenuManager : NetworkBehaviour
 
         Debug.Log("[MenuManager] OpenLobbySettingsMenu called");
 
-        // CRITICAL: Disable camera input first to prevent camera movement
         DisableCameraInput();
 
         // Make sure cursor is visible and unlocked for menu interaction
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // CRITICAL: Hide pause menu if it's active
         if (pauseMenuUI != null && pauseMenuUI.activeSelf)
         {
             Debug.Log("[MenuManager] Hiding pause menu before showing lobby settings");

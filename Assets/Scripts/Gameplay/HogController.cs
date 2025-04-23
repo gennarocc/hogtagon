@@ -310,7 +310,7 @@ public class HogController : NetworkBehaviour
         // Vehicle info - using both label and value styles for color differentiation
         GUI.Label(new Rect(20, yPos, 85, lineHeight), "Speed:", labelStyle);
         GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{speed:F1} m/s ({speed * 3.6f:F1} km/h)", valueStyle);
+            $"{netWheelRotationSpeed.Value:F1} m/s ({netWheelRotationSpeed.Value * 3.6f:F1} km/h)", valueStyle);
         yPos += lineHeight;
 
         GUI.Label(new Rect(20, yPos, 85, lineHeight), "Torque:", labelStyle);
@@ -320,7 +320,7 @@ public class HogController : NetworkBehaviour
 
         GUI.Label(new Rect(20, yPos, 85, lineHeight), "Steering:", labelStyle);
         GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{steeringAxis:F2} ({steeringAxis * maxSteeringAngle:F0}°)", valueStyle);
+            $"{netSteeringAxis.Value:F2} ({netSteeringAxis.Value * maxSteeringAngle:F0}°)", valueStyle);
         yPos += lineHeight;
 
         GUI.Label(new Rect(20, yPos, 85, lineHeight), "Can Move:", labelStyle);
@@ -337,17 +337,6 @@ public class HogController : NetworkBehaviour
         GUI.Label(new Rect(20, yPos, 85, lineHeight), "Drifting:", labelStyle);
         GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
             isDrifting.Value ? "Yes" : "No", valueStyle);
-        yPos += lineHeight;
-
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Side Speed:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{localVelocityX:F2} m/s", valueStyle);
-        yPos += lineHeight;
-
-        // Add jump info
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Jump Ready:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            jumpOnCooldown ? $"No ({jumpCooldownRemaining:F1}s)" : (jumpInputReceived ? "Queued" : "Yes"), valueStyle);
         yPos += lineHeight;
 
         // Network info
@@ -615,10 +604,10 @@ public class HogController : NetworkBehaviour
     private void AnimateWheelsLocal()
     {
         // Pre-calculate common values
-        float frontSteeringAngle = steeringAxis * maxSteeringAngle;
+        float frontSteeringAngle = netSteeringAxis.Value * maxSteeringAngle;
         float rearSteeringAngle = -frontSteeringAngle * rearSteeringAmount;
 
-        float wheelSpeed = rb.linearVelocity.magnitude;
+        float wheelSpeed = netWheelRotationSpeed.Value;
         float wheelCircumference = 2f * Mathf.PI * .6f;
         float rotationAmount = wheelSpeed * wheelCircumference * 360f * Time.fixedDeltaTime;
 
