@@ -11259,6 +11259,9 @@ MonoBehaviour:
   - {fileID: 6060384585544935324}
   - {fileID: 3707604260707810283}
   visualEffects: {fileID: 893255368324058694}
+  tailLights: {fileID: 1718532802686771525}
+  tailLightsOff: {fileID: 2100000, guid: a52b21ade0180a640a7c772223d83549, type: 2}
+  tailLightsOn: {fileID: 2100000, guid: 9ef7e0d9a0f1f8c43b5aa5338b5510b7, type: 2}
   rpm:
     idInternal: 0
     valueGuidInternal: 
@@ -16408,7 +16411,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2609459074376590147, guid: 7734de1fe5e0d5a4b89c4d8c26031607, type: 3}
+  - {fileID: 2100000, guid: a52b21ade0180a640a7c772223d83549, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

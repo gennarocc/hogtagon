@@ -55,6 +55,9 @@ public class HogController : NetworkBehaviour
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
     [SerializeField] private Transform[] wheelTransforms = new Transform[4]; // FL, FR, RL, RR
     [SerializeField] private HogVisualEffects visualEffects; // Reference to the visual effects component
+    [SerializeField] private MeshRenderer tailLights;
+    [SerializeField] private Material tailLightsOff;
+    [SerializeField] private Material tailLightsOn;
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.RTPC rpm;
@@ -79,15 +82,9 @@ public class HogController : NetworkBehaviour
     private NetworkVariable<bool> jumpReady = new NetworkVariable<bool>(true);
     private NetworkVariable<float> netSteeringAxis = new NetworkVariable<float>(0f);
     private NetworkVariable<float> netWheelRotationSpeed = new NetworkVariable<float>(0f);
-    private NetworkVariable<bool> rearLeftWheelGrounded = new NetworkVariable<bool>(
-    false,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server);
-
-    private NetworkVariable<bool> rearRightWheelGrounded = new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server);
+    private NetworkVariable<float> netBrakeInput = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<bool> rearLeftWheelGrounded = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<bool> rearRightWheelGrounded = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     // Physics and control variables
     private float currentTorque;
@@ -123,7 +120,6 @@ public class HogController : NetworkBehaviour
         {
             showDebugUI = !showDebugUI;
         }
-
     }
 
     private void FixedUpdate()
@@ -145,8 +141,19 @@ public class HogController : NetworkBehaviour
             CheckDriftCondition();
 
             CalculateEngineAudio(input);
+
+            // Set BrakeLight Emmision
+            if (input.brakeInput > 0) tailLights.material = tailLightsOn;
+            else tailLights.material = tailLightsOff;
         }
         AnimateWheelsFromNetwork();
+
+        // Set BrakeLight
+        if (!IsOwner)
+        {
+            if (netBrakeInput.Value > 0) tailLights.material = tailLightsOn;
+            else tailLights.material = tailLightsOff;
+        }
     }
 
     #endregion
@@ -309,6 +316,7 @@ public class HogController : NetworkBehaviour
         // Update network variables for non-owner clients
         netSteeringAxis.Value = steeringAxis;
         netWheelRotationSpeed.Value = rb.linearVelocity.magnitude;
+        netBrakeInput.Value = input.brakeInput;
     }
 
     [ServerRpc]
