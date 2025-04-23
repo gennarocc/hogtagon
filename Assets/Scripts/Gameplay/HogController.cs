@@ -19,13 +19,13 @@ public class HogController : NetworkBehaviour
     [SerializeField, Range(0f, 1f)] private float rearSteeringAmount = .35f;
     [SerializeField] private Vector3 centerOfMass;
     [SerializeField, Range(0f, 100f)] private float maxSteeringAngle = 60f;
-    [SerializeField, Range(0.1f, 1f)]
-    private float steeringSpeed = .4f;
+    [SerializeField, Range(0.1f, 1f)] private float steeringSpeed = .4f;
 
     [Header("Bumper Collision")]
     [SerializeField] private float bumperForceMultiplier = 2.5f; // Extra force applied by bumper
-    [SerializeField] private float minBumperCollisionPlayerSpeed = 10f; // Minimum threshold for enhanced collisions
     [SerializeField] private float bumperImpulseMultiplier = 1.5f; // Multiplier for impulse-based force
+    [SerializeField] private float baseKickbackReduction = 0.5f; // Stabilization force for bumper collision
+    [SerializeField] private float minBumperCollisionPlayerSpeed = 10f; // Minimum threshold for enhanced collisions
 
     [Header("Rocket Jump")]
     [SerializeField] private float jumpForce = 7f; // How much upward force to apply
@@ -484,18 +484,42 @@ public class HogController : NetworkBehaviour
         // Handle direction changes by applying brakes when appropriate
         float brakeTorque = 0;
         float currentSpeed = rb.linearVelocity.magnitude;
+        float directionFactor = Vector3.Dot(rb.linearVelocity.normalized, transform.forward);
 
-        if (currentSpeed > 0.5f)  // Only if moving at a reasonable speed
+        // Enhanced directional braking system
+        bool isMovingForward = directionFactor > 0.05f;
+        bool isMovingBackward = directionFactor < -0.05f;
+        bool isPressingReverse = netInput < -0.01f;
+        bool isPressingForward = netInput > 0.01f;
+
+        // Detect counter-directional input (enhanced braking scenarios)
+        bool isCounterDirectional = (isMovingForward && isPressingReverse) ||
+                                   (isMovingBackward && isPressingForward);
+
+        if (currentSpeed > 0.2f && isCounterDirectional)  // Lower threshold for responsiveness
         {
-            float directionFactor = Vector3.Dot(rb.linearVelocity.normalized, transform.forward);
+            // Apply stronger brake force when input is opposite to movement direction
+            float counterDirectionalMultiplier = 1.5f; // Adjust this value for braking strength
+            brakeTorque = Mathf.Abs(netInput) * maxBrakeTorque * counterDirectionalMultiplier;
 
-            // Going forward but trying to reverse, or going backward but trying to go forward
-            if ((directionFactor > 0.1f && netInput < -0.01f) ||
-                (directionFactor < -0.1f && netInput > 0.01f))
+            // Apply braking force proportional to speed for better feel at different speeds
+            brakeTorque *= Mathf.Clamp(currentSpeed / 10f, 0.5f, 1.2f);
+
+            // Apply additional braking to rear wheels for more controllable stops
+            for (int i = 2; i < 4 && i < wheelColliders.Length; i++) // Rear wheels (2,3)
             {
-                brakeTorque = Mathf.Abs(netInput) * maxBrakeTorque;
-                targetTorque = 0;  // Don't apply motor torque while braking to change direction
+                wheelColliders[i].brakeTorque = brakeTorque * 1.2f; // Slightly more brake on rear
             }
+
+            // Apply normal braking to front wheels
+            for (int i = 0; i < 2 && i < wheelColliders.Length; i++) // Front wheels (0,1)
+            {
+                wheelColliders[i].brakeTorque = brakeTorque;
+                wheelColliders[i].motorTorque = 0;
+            }
+
+            // Skip the rest of normal torque application
+            return;
         }
 
         // Handle coasting (no input)
@@ -556,7 +580,7 @@ public class HogController : NetworkBehaviour
         else if (noInput)
         {
             // Decrease speed when returning to center with no input
-            multiplier = 0.6f; // Can be adjusted for desired return-to-center speed
+            multiplier = 0.9f; // Can be adjusted for desired return-to-center speed
         }
 
         // Apply exponential curve with our condition-specific multiplier
@@ -686,14 +710,15 @@ public class HogController : NetworkBehaviour
         // Get collision details
         ContactPoint contact = collision.GetContact(0);
         Collider hitCollider = contact.thisCollider;
-        float impactMagnitude = collision.impulse.magnitude;
 
         // Default impact sound based on speed
         var impactSound = SoundManager.SoundEffectType.HogImpactLow;
         var playerSpeed = rb.linearVelocity.magnitude;
+        var otherPlayerSpeed = otherPlayer.GetComponent<Rigidbody>().linearVelocity.magnitude;
+        var speedDifferential = playerSpeed - otherPlayerSpeed;
 
         // Check conditions for a bumper collision 
-        bool isFastEnough = playerSpeed >= minBumperCollisionPlayerSpeed;
+        bool isFastEnough = speedDifferential >= minBumperCollisionPlayerSpeed;
         bool isBumperCollider = hitCollider.CompareTag("PlayerBumper");
 
         // Log collision details for debugging
@@ -703,8 +728,7 @@ public class HogController : NetworkBehaviour
         // Apply enhanced collision if conditions are met
         if (isFastEnough && isBumperCollider && !bumperCollisionOnCooldown)
         {
-            ProcessBumperCollision(collision, contact, playerSpeed);
-
+            ProcessBumperCollision(collision, contact, speedDifferential);
             // Always use high impact sound for enhanced collisions
             impactSound = SoundManager.SoundEffectType.HogImpactHigh;
         }
@@ -735,7 +759,6 @@ public class HogController : NetworkBehaviour
             }
         }
     }
-
 
     private void OnTriggerEnter(Collider other)
     {
@@ -801,9 +824,15 @@ public class HogController : NetworkBehaviour
             ForceMode.Impulse
         );
 
-        // Apply a smaller opposite force to our vehicle for physics realism
-        // Reduce this kickback at higher speeds to simulate a more solid impact
-        float kickbackReduction = Mathf.Clamp01(speedFactor * 0.7f); // Reduce kickback up to 70% at high speeds
+        // Set a base minimum kickback reduction even at low speeds
+
+        // Add a smaller speed-dependent component (less variance by speed)
+        float speedKickbackComponent = Mathf.Clamp01(speedFactor * 0.4f);
+
+        // Combine for a more consistent kickback reduction that ranges from 50-90%
+        float kickbackReduction = baseKickbackReduction + speedKickbackComponent;
+
+        // Apply the kickback reduction to your force calculation
         rb.AddForceAtPosition(
             -forceDir * (enhancedForceMagnitude * 0.3f * (1f - kickbackReduction)),
             hitPoint,

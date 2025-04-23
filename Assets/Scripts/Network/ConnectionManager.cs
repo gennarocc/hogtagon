@@ -338,6 +338,20 @@ public class ConnectionManager : NetworkBehaviour
         return -1; // No available textures
     }
 
+    [ServerRpc]
+    public void UpdateClientUsernameServerRpc(ulong clientId, string username)
+    {
+        if (!CheckUsernameAvailability(username)) return;
+
+        if (TryGetPlayerData(clientId, out PlayerData player))
+        {
+
+            Debug.Log("Chaning client name from " + player.username + " to " + username);
+            player.username = username;
+            UpdatePlayerDataClientRpc(clientId, player);
+        }
+    }
+
     public void UpdateLobbyLeaderBasedOnScore()
     {
         if (!IsServer)

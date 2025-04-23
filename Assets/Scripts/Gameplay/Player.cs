@@ -142,14 +142,12 @@ public class Player : NetworkBehaviour
 
     public void Respawn()
     {
-        // Get updated playerData from connectionManager
-        ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
-
         if (!IsServer) return;
+        ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
         // Server-side respawn logic
         Debug.Log("Respawning Player - " + playerData.username);
         rb.position = playerData.spawnPoint;
-        rb.transform.LookAt(SpawnPointManager.Instance.transform);
+        rb.rotation = Quaternion.LookRotation(SpawnPointManager.Instance.transform.position - playerData.spawnPoint);
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
