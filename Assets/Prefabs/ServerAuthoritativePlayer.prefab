@@ -544,7 +544,7 @@ WheelCollider:
     m_Stiffness: 1.8
   m_SidewaysFriction:
     m_ExtremumSlip: 0.2
-    m_ExtremumValue: 2
+    m_ExtremumValue: 1.9
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 1.5
     m_Stiffness: 1.8
@@ -11185,8 +11185,8 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 0
-      inSlope: 0
-      outSlope: 0
+      inSlope: 2
+      outSlope: 2
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
@@ -11205,14 +11205,14 @@ MonoBehaviour:
     m_RotationOrder: 4
   torqueResponseSpeed: 3
   coastDampener: 20
-  coastBrake: 100
-  rearSteeringAmount: 0.4
+  coastBrake: 75
+  rearSteeringAmount: 0.35
   centerOfMass: {x: 0, y: 0.1125, z: 0}
-  maxSteeringAngle: 45
+  maxSteeringAngle: 40
   steeringSpeed: 0.95
-  bumperForceMultiplier: 1.25
+  bumperForceMultiplier: 1.2
   minBumperCollisionPlayerSpeed: 7
-  bumperImpulseMultiplier: 1.25
+  bumperImpulseMultiplier: 1.2
   jumpForce: 7
   jumpCooldown: 15
   canJump: 1
@@ -11401,7 +11401,7 @@ WheelCollider:
     m_Stiffness: 1.8
   m_SidewaysFriction:
     m_ExtremumSlip: 0.2
-    m_ExtremumValue: 2
+    m_ExtremumValue: 1.9
     m_AsymptoteSlip: 0.8
     m_AsymptoteValue: 1.5
     m_Stiffness: 1.8
@@ -16412,7 +16412,7 @@ GameObject:
   - component: {fileID: 8814684486626846411}
   - component: {fileID: 4833982520535320663}
   - component: {fileID: 8114381944568008645}
-  m_Layer: 3
+  m_Layer: 0
   m_Name: PlayerNameplate
   m_TagString: Untagged
   m_Icon: {fileID: 0}

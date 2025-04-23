@@ -530,8 +530,14 @@ public class HogController : NetworkBehaviour
 
     private void CalculateSteeringAxis(float steeringInput)
     {
-        // Calculate the step based on steering speed and deltaTime
+        // Calculate the base step based on steering speed and deltaTime
         float step = steeringSpeed * Time.fixedDeltaTime;
+
+        // Detect if steering input is in opposite direction from current axis
+        bool oppositeDirection = (steeringInput * steeringAxis < 0) && (Mathf.Abs(steeringInput) > 0.01f);
+
+        // Check if there's no input (values close to zero)
+        bool noInput = Mathf.Abs(steeringInput) < 0.01f;
 
         // Calculate the direction of movement
         float direction = Mathf.Sign(steeringInput - steeringAxis);
@@ -539,8 +545,22 @@ public class HogController : NetworkBehaviour
         // Calculate the distance from the current value to the target
         float distance = Mathf.Abs(steeringInput - steeringAxis);
 
-        // Apply exponential curve - the further from center, the faster it moves
-        float exponentialStep = step * (1.0f + distance * 2.0f);
+        // Apply different multipliers based on conditions
+        float multiplier = 1.0f;
+
+        if (oppositeDirection)
+        {
+            // Increase turn speed when steering in the opposite direction
+            multiplier = 3.0f; // Can be adjusted for desired responsiveness
+        }
+        else if (noInput)
+        {
+            // Decrease speed when returning to center with no input
+            multiplier = 0.6f; // Can be adjusted for desired return-to-center speed
+        }
+
+        // Apply exponential curve with our condition-specific multiplier
+        float exponentialStep = step * (1.0f + distance * 2.0f) * multiplier;
 
         // Ensure we don't overshoot the target
         exponentialStep = Mathf.Min(exponentialStep, distance);

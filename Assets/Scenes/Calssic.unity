@@ -12110,7 +12110,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 63
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -18145,7 +18145,7 @@ GameObject:
   - component: {fileID: 1854235296}
   - component: {fileID: 1854235295}
   - component: {fileID: 1854235294}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: WorldspaceCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -19089,6 +19089,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 632638948611881034, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 767749828239015098, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 881789066059560109, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
