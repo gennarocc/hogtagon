@@ -11211,13 +11211,42 @@ MonoBehaviour:
   maxSteeringAngle: 40
   steeringSpeed: 0.95
   bumperForceMultiplier: 1.3
-  minBumperCollisionPlayerSpeed: 4
   bumperImpulseMultiplier: 1.125
+  baseKickbackReduction: 0.5
+  minBumperCollisionPlayerSpeed: 4
   jumpForce: 8
   jumpCooldown: 15
   canJump: 1
   driftThreshold: 0.5
   driftMinSpeed: 12
+  useCameraBasedSteering: 0
+  cameraSteeringSensitivity: 0.98
+  cameraSteeringCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  steeringDeadzone: 0.1
+  invertCameraSteering: 0
   rb: {fileID: 3010862004317786802}
   wheelColliders:
   - {fileID: 7947942277690021792}

@@ -3,6 +3,7 @@ using Unity.Netcode;
 using System;
 using System.Collections;
 using Hogtagon.Core.Infrastructure;
+using Cinemachine;
 
 public class HogController : NetworkBehaviour
 {
@@ -38,6 +39,16 @@ public class HogController : NetworkBehaviour
     [Header("Drift Settings")]
     [SerializeField] private float driftThreshold = 0.3f; // Minimum sideways velocity for drift
     [SerializeField] private float driftMinSpeed = 5f; // Minimum speed required for drift
+
+    [Header("Camera Control Scheme")]
+    [SerializeField] private bool useCameraBasedSteering = false;
+    [SerializeField, Range(0f, 1f)] private float cameraSteeringSensitivity = 0.8f; // How sensitive the steering is
+    [SerializeField] private AnimationCurve cameraSteeringCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField, Range(0f, 0.3f)] private float steeringDeadzone = 0.1f; // Add deadzone parameter
+    [SerializeField] private bool invertCameraSteering = false;
+    private CinemachineFreeLook playerCamera;
+    private float debugAngle = 0f;
+    private float debugNormalizedValue = 0f;
 
     [Header("References")]
     [SerializeField] private Rigidbody rb;
@@ -112,6 +123,7 @@ public class HogController : NetworkBehaviour
         {
             showDebugUI = !showDebugUI;
         }
+
     }
 
     private void FixedUpdate()
@@ -153,6 +165,12 @@ public class HogController : NetworkBehaviour
             // Subscribe to the jump event
             inputManager.JumpPressed += OnJumpPressed;
             inputManager.HornPressed += OnHornPressed;
+
+            playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
+            if (playerCamera == null)
+            {
+                Debug.LogWarning("[HogController] PlayerCamera not found!");
+            }
         }
 
         if (IsServer || IsOwner)
@@ -167,7 +185,6 @@ public class HogController : NetworkBehaviour
         }
 
         visualEffects.Initialize(transform, centerOfMass, OwnerClientId);
-
         // Create texture for debug UI background
         debugBackgroundTexture = MakeTexture(2, 2, debugBackgroundColor);
 
@@ -237,12 +254,17 @@ public class HogController : NetworkBehaviour
 
     private ClientInput CollectInput()
     {
+        // Get steering input based on control scheme
+        float steerValue = useCameraBasedSteering
+            ? CalculateCameraBasedSteering()
+            : inputManager.SteerInput;
+
         ClientInput input = new ClientInput
         {
             clientId = NetworkManager.Singleton.LocalClientId,
             throttleInput = inputManager.ThrottleInput,
             brakeInput = inputManager.BrakeInput,
-            steerInput = inputManager.SteerInput,
+            steerInput = steerValue,
             jumpInput = jumpInputReceived
         };
 
@@ -251,7 +273,6 @@ public class HogController : NetworkBehaviour
 
         return input;
     }
-
     #endregion
 
     #region Network RPCs
@@ -442,6 +463,71 @@ public class HogController : NetworkBehaviour
         // Apply the calculated step in the correct direction
         steeringAxis += direction * exponentialStep;
     }
+
+    private float CalculateCameraBasedSteering()
+    {
+        if (playerCamera == null)
+            return 0f;
+
+        // Get the vector from camera to vehicle (in world space)
+        Vector3 cameraVector = transform.position - playerCamera.transform.position;
+
+        // Flatten to XZ plane (ignore Y component)
+        cameraVector.y = 0;
+
+        // Get car's forward direction (flattened)
+        Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z).normalized;
+
+        // Calculate the angle between vectors
+        float angle = Vector3.Angle(carDirection, cameraVector);
+
+        // Determine the sign (left/right) using dot product with car's right vector
+        float sign = Mathf.Sign(Vector3.Dot(cameraVector, transform.right));
+
+        // Get the signed angle
+        float signedAngle = angle * sign;
+
+        // Store for debugging
+        debugAngle = signedAngle;
+
+        // Normalize to -1 to 1 range based on max steering angle
+        float normalizedValue = Mathf.Clamp(signedAngle / maxSteeringAngle, -1f, 1f);
+
+        // Apply deadzone
+        if (Mathf.Abs(normalizedValue) < steeringDeadzone)
+        {
+            return 0f; // Return zero steering if within deadzone
+        }
+        else
+        {
+            // Remap the value to still use the full -1 to 1 range
+            // This creates a smooth transition at the edge of the deadzone
+            float remappedValue = Mathf.Sign(normalizedValue) *
+                (Mathf.Abs(normalizedValue) - steeringDeadzone) / (1f - steeringDeadzone);
+            normalizedValue = remappedValue;
+        }
+
+        // Apply sensitivity
+        if (cameraSteeringSensitivity != 1.0f)
+        {
+            float absValue = Mathf.Abs(normalizedValue);
+            float signedPower = Mathf.Pow(absValue, 2.0f - cameraSteeringSensitivity) * Mathf.Sign(normalizedValue);
+            normalizedValue = signedPower;
+        }
+
+        // Apply steering curve for better control
+        float steeringValue = Mathf.Sign(normalizedValue) * cameraSteeringCurve.Evaluate(Mathf.Abs(normalizedValue));
+
+        // Store for debugging
+        debugNormalizedValue = steeringValue;
+
+        // Apply inversion if needed
+        if (invertCameraSteering)
+            steeringValue = -steeringValue;
+
+        return steeringValue;
+    }
+
 
     private void ApplySteering()
     {
@@ -873,6 +959,26 @@ public class HogController : NetworkBehaviour
         GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
             $"{ping:F0} ms", valueStyle);
         yPos += lineHeight;
+
+        // Add camera control information
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Control:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            useCameraBasedSteering ? "Camera-based" : "Input Manager", valueStyle);
+        yPos += lineHeight;
+
+        if (useCameraBasedSteering)
+        {
+            // Show angle-based steering info
+            GUI.Label(new Rect(20, yPos, 85, lineHeight), "Cam Angle:", labelStyle);
+            GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+                $"{debugAngle:F1}°", valueStyle);
+            yPos += lineHeight;
+
+            GUI.Label(new Rect(20, yPos, 85, lineHeight), "Steer Value:", labelStyle);
+            GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+                $"{debugNormalizedValue:F2}", valueStyle);
+            yPos += lineHeight;
+        }
     }
 
     // Utility method to create a solid color texture
