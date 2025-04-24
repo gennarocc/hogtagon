@@ -380,7 +380,6 @@ public class MenuManager : NetworkBehaviour
         // Double-check pause menu is actually active
         if (!pauseMenuUI.activeSelf)
         {
-            Debug.LogWarning("[MenuManager] Pause menu failed to activate - forcing activation");
             pauseMenuUI.SetActive(true);
         }
 
@@ -422,10 +421,7 @@ public class MenuManager : NetworkBehaviour
         }
 
         // Play sound effect if available
-        if (PauseOn != null)
-        {
-            PauseOn.Post(gameObject);
-        }
+        PauseOn.Post(gameObject);
 
         inputManager.SwitchToUIMode();
         if (inputManager.IsInGameplayMode())
@@ -1411,7 +1407,6 @@ public class MenuManager : NetworkBehaviour
                     HandleButtonSelection(defaultPauseMenuButton);
             }
 
-            // Ensure we're paused
             gameIsPaused = true;
 
             // Ensure cursor is visible in pause menu
@@ -1423,8 +1418,6 @@ public class MenuManager : NetworkBehaviour
         // Normal pause toggle logic
         if (gameIsPaused)
         {
-            // Important: Make this match the Resume button's code path
-            // Call Resume directly without any additional code - same path as Resume button
             Resume();
         }
         else

@@ -169,7 +169,6 @@ public class HogController : NetworkBehaviour
         inputManager = InputManager.Instance;
         if (IsOwner)
         {
-            // Subscribe to the jump event
             inputManager.JumpPressed += OnJumpPressed;
             inputManager.HornPressed += OnHornPressed;
 
@@ -178,6 +177,7 @@ public class HogController : NetworkBehaviour
             {
                 Debug.LogWarning("[HogController] PlayerCamera not found!");
             }
+
         }
 
         if (IsServer || IsOwner)
