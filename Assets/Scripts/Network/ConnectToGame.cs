@@ -131,6 +131,7 @@ public class ConnectToGame : MonoBehaviour
             Debug.Log(message: "Joining Relay with " + joinCode);
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
+            ConnectionManager.Instance.joinCode = joinCode;
             NetworkManager.Singleton.StartClient();
         }
         catch (RelayServiceException e)
