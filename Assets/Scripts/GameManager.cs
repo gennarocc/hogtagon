@@ -59,7 +59,7 @@ public class GameManager : NetworkBehaviour
 
     public void TransitionToState(GameState newState)
     {
-        Debug.Log($"GameManager TransitionToState: {state} -> {newState}");
+        Debug.Log($"[GAME] TransitionToState: {state} -> {newState}");
 
         switch (newState)
         {
@@ -80,7 +80,7 @@ public class GameManager : NetworkBehaviour
 
     private void SetGameState(GameState newState)
     {
-        Debug.Log($"GameManager SetGameState: {state} -> {newState}");
+        Debug.Log($"[GAME] SetGameState: {state} -> {newState}");
 
         // Update state
         state = newState;
@@ -93,7 +93,7 @@ public class GameManager : NetworkBehaviour
     }
     private void OnGameEndEnter()
     {
-        Debug.Log("GameManager OnWinnerEnter");
+        Debug.Log("[GAME] OnWinnerEnter");
         SetGameState(GameState.GameEnd);
 
         // Pause kill feed and keep last message
@@ -156,7 +156,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnBetweenRoundEnter()
     {
-        Debug.Log("GameManager OnWinnerEnter");
+        Debug.Log("[GAME] OnWinnerEnter");
         SetGameState(GameState.BetweenRound);
 
         // Pause kill feed and keep last message
@@ -181,6 +181,8 @@ public class GameManager : NetworkBehaviour
             }
         }
 
+        ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
+
         StartCoroutine(BetweenRoundTimer());
     }
 
@@ -189,7 +191,7 @@ public class GameManager : NetworkBehaviour
         // Lock game mode settings when game starts
         LockGameModeSettings();
 
-        Debug.Log("GameManager OnPlayingEnter");
+        Debug.Log("[GAME] OnPlayingEnter");
 
         // Clear processed deaths for new round
         processedDeaths.Clear();
@@ -220,10 +222,10 @@ public class GameManager : NetworkBehaviour
 
     public IEnumerator RoundCountdown()
     {
-        Debug.Log("GameManager RoundCountdown started");
+        Debug.Log("[GAME] RoundCountdown started");
         yield return new WaitForSeconds(3f);
 
-        Debug.Log("GameManager RoundCountdown finished - Transitioning to Playing");
+        Debug.Log("[GAME] RoundCountdown finished - Transitioning to Playing");
 
         // Unlock player movement
         UnlockPlayerMovement();
@@ -245,7 +247,7 @@ public class GameManager : NetworkBehaviour
 
     public IEnumerator BetweenRoundTimer()
     {
-        Debug.Log("GameManager BetweenRoundTimer started");
+        Debug.Log("[GAME] BetweenRoundTimer started");
 
         float showWinnerDuration = 2.0f;     // How long to show just the winner text
         float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
@@ -260,14 +262,14 @@ public class GameManager : NetworkBehaviour
         // Hide scoreboard when starting new round
         menuManager.HideScoreboardClientRpc();
 
-        Debug.Log("GameManager BetweenRoundTimer finished - Starting new round");
+        Debug.Log("[GAME] BetweenRoundTimer finished - Starting new round");
         // Transition to next round
         TransitionToState(GameState.Playing);
     }
 
     private void OnPendingEnter()
     {
-        Debug.Log("GameManager OnPendingEnter");
+        Debug.Log("[GAME] OnPendingEnter");
 
         // Stop level music and play lobby music using NetworkSoundManager
         if (IsServer)
@@ -296,7 +298,7 @@ public class GameManager : NetworkBehaviour
     {
         if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            Debug.Log("[GameManager] Ensuring lobby settings are visible for host");
+            Debug.Log("[GAME] Ensuring lobby settings are visible for host");
             menuManager.OpenLobbySettingsMenu();
         }
     }
@@ -334,17 +336,17 @@ public class GameManager : NetworkBehaviour
         // Only the server should process deaths
         if (!IsServer)
         {
-            Debug.LogWarning($"[GameManager] Non-server tried to process death for client {clientId}");
+            Debug.LogWarning($"[GAME] Non-server tried to process death for client {clientId}");
             return;
         }
 
-        Debug.Log($"[GameManager] PlayerDied called for client: {clientId}");
+        Debug.Log($"[GAME] PlayerDied called for client: {clientId}");
 
         // Always skip processing if the player is already in the processed deaths list
         // regardless of game state
         if (processedDeaths.Contains(clientId))
         {
-            Debug.Log($"[GameManager] Skipping duplicate death processing for client {clientId} (already in processedDeaths)");
+            Debug.Log($"[GAME] Skipping duplicate death processing for client {clientId} (already in processedDeaths)");
             return;
         }
 
@@ -352,7 +354,7 @@ public class GameManager : NetworkBehaviour
         if (state == GameState.Playing)
         {
             processedDeaths.Add(clientId);
-            Debug.Log($"[GameManager] Added client {clientId} to processedDeaths");
+            Debug.Log($"[GAME] Added client {clientId} to processedDeaths");
         }
 
         if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData player))
@@ -360,11 +362,11 @@ public class GameManager : NetworkBehaviour
             // Set player state to dead (but always allow pending state deaths)
             if (player.state == PlayerState.Dead && state != GameState.Pending)
             {
-                Debug.Log($"[GameManager] Player {player.username} is already marked as dead");
+                Debug.Log($"[GAME] Player {player.username} is already marked as dead");
                 return;
             }
 
-            Debug.Log($"[GameManager] Processing death for {player.username} (ID: {clientId})");
+            Debug.Log($"[GAME] Processing death for {player.username} (ID: {clientId})");
 
             // Update player state (only in Playing state)
             if (state == GameState.Playing)
@@ -390,20 +392,20 @@ public class GameManager : NetworkBehaviour
                     if (lastCollision != null)
                     {
                         // Player was killed by another player
-                        Debug.Log($"[GameManager] Player {player.username} was killed by {lastCollision.collidingPlayerName}");
+                        Debug.Log($"[GAME] Player {player.username} was killed by {lastCollision.collidingPlayerName}");
                         killFeed.AddKillMessage(lastCollision.collidingPlayerName, player.username);
                     }
                     else
                     {
                         // Player killed themselves
-                        Debug.Log($"[GameManager] Player {player.username} killed themselves (no collision record found)");
+                        Debug.Log($"[GAME] Player {player.username} killed themselves (no collision record found)");
                         killFeed.AddSuicideMessage(player.username);
                     }
                 }
             }
             else
             {
-                Debug.Log($"[GameManager] Not showing kill feed message in state: {state}");
+                Debug.Log($"[GAME] Not showing kill feed message in state: {state}");
             }
         }
 
@@ -438,7 +440,7 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void BroadcastGameStateClientRpc(GameState newState)
     {
-        Debug.Log($"GameManager BroadcastGameStateClientRpc: {state} -> {newState}");
+        Debug.Log($"[GAME] BroadcastGameStateClientRpc: {state} -> {newState}");
         state = newState;
         if (state == GameState.BetweenRound) SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOff);
     }
@@ -450,7 +452,7 @@ public class GameManager : NetworkBehaviour
         if (!gameModeLocked)
         {
             gameMode = mode;
-            Debug.Log("Game mode set to: " + gameMode);
+            Debug.Log("[GAME] Game mode set to: " + gameMode);
 
             // TODO: Notify clients of game mode change
             if (IsServer)
@@ -467,7 +469,7 @@ public class GameManager : NetworkBehaviour
         if (!gameModeLocked && gameMode == MenuManager.GameMode.TeamBattle)
         {
             teamCount = Mathf.Clamp(count, 2, 4); // Limit between 2-4 teams
-            Debug.Log("Team count set to: " + teamCount);
+            Debug.Log("[GAME] Team count set to: " + teamCount);
 
             // TODO: Notify clients of team count change
             if (IsServer)
@@ -492,14 +494,14 @@ public class GameManager : NetworkBehaviour
     {
         // Update local team count
         teamCount = count;
-        Debug.Log("Client received team count update: " + teamCount);
+        Debug.Log("[GAME] Client received team count update: " + teamCount);
     }
 
     // Lock game mode settings when game starts
     private void LockGameModeSettings()
     {
         gameModeLocked = true;
-        Debug.Log("[GameManager] Game mode settings locked");
+        Debug.Log("[GAME] Game mode settings locked");
     }
 
     // Method to set rounds to win from MenuManager
@@ -510,12 +512,12 @@ public class GameManager : NetworkBehaviour
         // Only allow changes before the game starts
         if (state != GameState.Pending)
         {
-            Debug.LogWarning("Cannot change round count after game has started");
+            Debug.LogWarning("[GAME] Cannot change round count after game has started");
             return;
         }
 
         roundsToWin = count;
-        Debug.Log($"Round count set to {count}");
+        Debug.Log($"[GAME] Round count set to {count}");
     }
 
     // Method to get current rounds to win setting
@@ -527,6 +529,6 @@ public class GameManager : NetworkBehaviour
     private void UnlockGameModeSettings()
     {
         gameModeLocked = false;
-        Debug.Log("[GameManager] Game mode settings unlocked");
+        Debug.Log("[GAME] Game mode settings unlocked");
     }
 }

@@ -3,6 +3,7 @@ using Unity.Netcode;
 using System;
 using System.Collections;
 using Hogtagon.Core.Infrastructure;
+using Cinemachine;
 
 public class HogController : NetworkBehaviour
 {
@@ -39,11 +40,24 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float driftThreshold = 0.3f; // Minimum sideways velocity for drift
     [SerializeField] private float driftMinSpeed = 5f; // Minimum speed required for drift
 
+    [Header("Camera Control Scheme")]
+    [SerializeField] private bool useCameraBasedSteering = false;
+    [SerializeField, Range(0f, 1f)] private float cameraSteeringSensitivity = 0.8f; // How sensitive the steering is
+    [SerializeField] private AnimationCurve cameraSteeringCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField, Range(0f, 0.3f)] private float steeringDeadzone = 0.1f; // Add deadzone parameter
+    [SerializeField] private bool invertCameraSteering = false;
+    private CinemachineFreeLook playerCamera;
+    private float debugAngle = 0f;
+    private float debugNormalizedValue = 0f;
+
     [Header("References")]
     [SerializeField] private Rigidbody rb;
     [SerializeField] private WheelCollider[] wheelColliders = new WheelCollider[4]; // FL, FR, RL, RR
     [SerializeField] private Transform[] wheelTransforms = new Transform[4]; // FL, FR, RL, RR
     [SerializeField] private HogVisualEffects visualEffects; // Reference to the visual effects component
+    [SerializeField] private MeshRenderer tailLights;
+    [SerializeField] private Material tailLightsOff;
+    [SerializeField] private Material tailLightsOn;
 
     [Header("Wwise")]
     [SerializeField] private AK.Wwise.RTPC rpm;
@@ -54,16 +68,23 @@ public class HogController : NetworkBehaviour
     [SerializeField] private Color labelTextColor = Color.gray;
     [SerializeField] private Color valueTextColor = Color.white;
 
+    #endregion
+
+    #region Fields and Properties
+
     // Input reference
     private InputManager inputManager;
     private bool jumpInputReceived = false;
 
     // Network variables
-    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false);
+    private NetworkVariable<bool> isDrifting = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<bool> isJumping = new NetworkVariable<bool>(false);
     private NetworkVariable<bool> jumpReady = new NetworkVariable<bool>(true);
     private NetworkVariable<float> netSteeringAxis = new NetworkVariable<float>(0f);
     private NetworkVariable<float> netWheelRotationSpeed = new NetworkVariable<float>(0f);
+    private NetworkVariable<float> netBrakeInput = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<bool> rearLeftWheelGrounded = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<bool> rearRightWheelGrounded = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     // Physics and control variables
     private float currentTorque;
@@ -76,100 +97,9 @@ public class HogController : NetworkBehaviour
     private const float bumperCollisionDebounce = 0.2f; // Prevent too frequent bumper collisions
     private bool bumperCollisionOnCooldown = false;
 
-    public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
+    #endregion
 
-
-        // Get reference to the InputManager
-        inputManager = InputManager.Instance;
-        if (IsOwner)
-        {
-            // Subscribe to the jump event
-            inputManager.JumpPressed += OnJumpPressed;
-            inputManager.HornPressed += OnHornPressed;
-        }
-
-        if (IsServer || IsOwner)
-        {
-            // Full physics setup on server and owning client
-            rb.centerOfMass = centerOfMass;
-        }
-        else
-        {
-            rb.isKinematic = true;
-            DisableWheelColliderPhysics();
-        }
-
-        visualEffects.Initialize(transform, centerOfMass, OwnerClientId);
-
-        // Create texture for debug UI background
-        debugBackgroundTexture = MakeTexture(2, 2, debugBackgroundColor);
-
-        // Subscribe to network variable changes to trigger effects
-        isDrifting.OnValueChanged += OnDriftingChanged;
-        isJumping.OnValueChanged += OnJumpingChanged;
-
-    }
-
-    private void Start()
-    {
-        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
-    }
-
-    private void OnJumpPressed()
-    {
-        if (canJump && !jumpOnCooldown)
-        {
-            jumpInputReceived = true;
-        }
-    }
-
-    private void OnHornPressed()
-    {
-        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        base.OnNetworkDespawn();
-
-        // Unsubscribe from network variable changes
-        isDrifting.OnValueChanged -= OnDriftingChanged;
-        isJumping.OnValueChanged -= OnJumpingChanged;
-
-        // Unsubscribe from input events
-        if (IsOwner && inputManager != null)
-        {
-            inputManager.JumpPressed -= OnJumpPressed;
-        }
-
-        if (debugBackgroundTexture != null)
-            Destroy(debugBackgroundTexture);
-
-        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOff);
-    }
-
-    private void OnDriftingChanged(bool previousValue, bool newValue)
-    {
-        if (visualEffects != null)
-        {
-            // Check if rear wheels are grounded
-            bool rearLeftGrounded = wheelColliders[2].isGrounded;
-            bool rearRightGrounded = wheelColliders[3].isGrounded;
-
-            // Update drift effects based on new value
-            visualEffects.UpdateDriftEffects(newValue, rearLeftGrounded, rearRightGrounded, canMove);
-        }
-    }
-
-    private void OnJumpingChanged(bool previousValue, bool newValue)
-    {
-        if (newValue && visualEffects != null)
-        {
-            visualEffects.PlayJumpEffects();
-        }
-    }
+    #region Lifecycle Methods
 
     private void Update()
     {
@@ -211,165 +141,137 @@ public class HogController : NetworkBehaviour
             CheckDriftCondition();
 
             CalculateEngineAudio(input);
+
+            // Set BrakeLight Emmision
+            if (input.brakeInput > 0) tailLights.material = tailLightsOn;
+            else tailLights.material = tailLightsOff;
         }
-        // NON-OWNER CLIENTS: apply network synchronized wheel visuals
-        else if (!IsServer)
+        AnimateWheelsFromNetwork();
+
+        // Set BrakeLight
+        if (!IsOwner)
         {
-            AnimateWheelsFromNetwork();
+            if (netBrakeInput.Value > 0) tailLights.material = tailLightsOn;
+            else tailLights.material = tailLightsOff;
         }
     }
 
-    private void CalculateEngineAudio(ClientInput input)
-    {
-        // Interpolate the throttle input so get smoother engine transitions.
-        float netInput = Math.Sign(input.throttleInput - input.brakeInput);
-        var lerp = Mathf.Lerp(lerpedThrottleInput, netInput, Time.deltaTime * 3); // Lerp speed is 3
-        lerpedThrottleInput = lerp;
+    #endregion
 
-        // Wwise expects a value between 1-100 so we multiply by 5 (car speed is around 1-23)
-        rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5 * lerpedThrottleInput);
-    }
+    #region Network Setup and Events
 
-    private void CheckDriftCondition()
+    public override void OnNetworkSpawn()
     {
-        if (!IsServer && IsOwner)
+        base.OnNetworkSpawn();
+
+
+        // Get reference to the InputManager
+        inputManager = InputManager.Instance;
+        if (IsOwner)
         {
-            // Transform world velocity to local space
-            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
-            localVelocityX = Mathf.Abs(localVelocity.x);
+            // Subscribe to the jump event
+            inputManager.JumpPressed += OnJumpPressed;
+            inputManager.HornPressed += OnHornPressed;
 
-            // Check drift conditions - sideways velocity and speed
-            bool isDriftingNow = localVelocityX > driftThreshold &&
-                                 rb.linearVelocity.magnitude > driftMinSpeed &&
-                                 (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
-
-            // Only send RPC if state changes to reduce network traffic
-            if (isDriftingNow != isDrifting.Value)
+            playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
+            if (playerCamera == null)
             {
-                UpdateDriftingServerRpc(isDriftingNow);
+                Debug.LogWarning("[HogController] PlayerCamera not found!");
             }
         }
-    }
 
-    [ServerRpc]
-    private void UpdateDriftingServerRpc(bool isDriftingNow)
-    {
-        isDrifting.Value = isDriftingNow;
-    }
-
-    private void OnGUI()
-    {
-        if (!showDebugUI || !IsOwner) return;
-
-        // Setup styles
-        GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
-        boxStyle.normal.background = debugBackgroundTexture;
-
-        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.normal.textColor = labelTextColor;
-        labelStyle.fontSize = 12;
-
-        GUIStyle valueStyle = new GUIStyle(GUI.skin.label);
-        valueStyle.normal.textColor = valueTextColor;
-        valueStyle.fontSize = 12;
-        valueStyle.fontStyle = FontStyle.Bold;
-
-        GUIStyle headerStyle = new GUIStyle(labelStyle);
-        headerStyle.fontSize = 14;
-        headerStyle.fontStyle = FontStyle.Bold;
-        headerStyle.normal.textColor = valueTextColor;
-
-        // Calculate sizes
-        int padding = 10;
-        int width = 240;
-        int startY = 10;
-        int lineHeight = 20;
-        int totalLines = 10; // Adjusted for new debug lines
-
-        // Draw background box
-        GUI.Box(new Rect(10, startY, width, totalLines * lineHeight + padding * 2), "", boxStyle);
-
-        // Start drawing content
-        int yPos = startY + padding;
-
-        // Header
-        GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "HOG CONTROLLER DEBUG", headerStyle);
-        yPos += lineHeight;
-
-        // Count grounded wheels
-        int groundedWheelCount = 0;
-        for (int i = 0; i < wheelColliders.Length; i++)
+        if (IsServer || IsOwner)
         {
-            if (wheelColliders[i].isGrounded)
-                groundedWheelCount++;
+            // Full physics setup on server and owning client
+            rb.centerOfMass = centerOfMass;
+        }
+        else
+        {
+            rb.isKinematic = true;
+            DisableWheelColliderPhysics();
         }
 
-        // Get speed in different units
-        float speed = rb.linearVelocity.magnitude;
+        visualEffects.Initialize(transform, centerOfMass, OwnerClientId);
+        // Create texture for debug UI background
+        debugBackgroundTexture = MakeTexture(2, 2, debugBackgroundColor);
 
-        // Vehicle info - using both label and value styles for color differentiation
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Speed:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{speed:F1} m/s ({speed * 3.6f:F1} km/h)", valueStyle);
-        yPos += lineHeight;
+        // Subscribe to network variable changes to trigger effects
+        isDrifting.OnValueChanged += OnDriftingChanged;
+        isJumping.OnValueChanged += OnJumpingChanged;
 
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Torque:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{currentTorque:F0} Nm", valueStyle);
-        yPos += lineHeight;
+    }
 
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Steering:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{steeringAxis:F2} ({steeringAxis * maxSteeringAngle:F0}°)", valueStyle);
-        yPos += lineHeight;
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
 
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Can Move:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            canMove ? "Yes" : "No", valueStyle);
-        yPos += lineHeight;
+        // Unsubscribe from network variable changes
+        isDrifting.OnValueChanged -= OnDriftingChanged;
+        isJumping.OnValueChanged -= OnJumpingChanged;
 
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Wheels:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{groundedWheelCount}/{wheelColliders.Length} grounded", valueStyle);
-        yPos += lineHeight;
-
-        // Add drift info
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Drifting:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            isDrifting.Value ? "Yes" : "No", valueStyle);
-        yPos += lineHeight;
-
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Side Speed:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{localVelocityX:F2} m/s", valueStyle);
-        yPos += lineHeight;
-
-        // Add jump info
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Jump Ready:", labelStyle);
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            jumpOnCooldown ? $"No ({jumpCooldownRemaining:F1}s)" : (jumpInputReceived ? "Queued" : "Yes"), valueStyle);
-        yPos += lineHeight;
-
-        // Network info
-        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Ping:", labelStyle);
-        float ping = 0;
-        if (NetworkManager.Singleton?.NetworkConfig?.NetworkTransport is Unity.Netcode.Transports.UTP.UnityTransport transport)
+        // Unsubscribe from input events
+        if (IsOwner && inputManager != null)
         {
-            ping = transport.GetCurrentRtt(0);
+            inputManager.JumpPressed -= OnJumpPressed;
         }
-        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
-            $"{ping:F0} ms", valueStyle);
-        yPos += lineHeight;
+
+        if (debugBackgroundTexture != null)
+            Destroy(debugBackgroundTexture);
+
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOff);
+    }
+
+    private void OnDriftingChanged(bool previousValue, bool newValue)
+    {
+        if (visualEffects != null)
+        {
+            // Use the networked wheel grounded values instead of direct wheel collider access
+            bool rearLeftGrounded = rearLeftWheelGrounded.Value;
+            bool rearRightGrounded = rearRightWheelGrounded.Value;
+
+            // Update drift effects based on new value
+            visualEffects.UpdateDriftEffects(newValue, rearLeftGrounded, rearRightGrounded, canMove);
+        }
+    }
+
+    private void OnJumpingChanged(bool previousValue, bool newValue)
+    {
+        if (newValue && visualEffects != null)
+        {
+            visualEffects.PlayJumpEffects();
+        }
+    }
+
+    #endregion
+
+    #region Input Handling
+
+    private void OnJumpPressed()
+    {
+        if (canJump && !jumpOnCooldown)
+        {
+            jumpInputReceived = true;
+        }
+    }
+
+    private void OnHornPressed()
+    {
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
     }
 
     private ClientInput CollectInput()
     {
+        // Get steering input based on control scheme
+        float steerValue = useCameraBasedSteering
+            ? CalculateCameraBasedSteering()
+            : inputManager.SteerInput;
+
         ClientInput input = new ClientInput
         {
             clientId = NetworkManager.Singleton.LocalClientId,
             throttleInput = inputManager.ThrottleInput,
             brakeInput = inputManager.BrakeInput,
-            steerInput = inputManager.SteerInput,
+            steerInput = steerValue,
             jumpInput = jumpInputReceived
         };
 
@@ -378,6 +280,9 @@ public class HogController : NetworkBehaviour
 
         return input;
     }
+    #endregion
+
+    #region Network RPCs
 
     [ServerRpc]
     private void SendInputServerRpc(ClientInput input)
@@ -394,6 +299,10 @@ public class HogController : NetworkBehaviour
         // Check drift condition on server
         CheckServerDriftCondition();
 
+        // Update wheel grounded network variables
+        rearLeftWheelGrounded.Value = wheelColliders[2].isGrounded;
+        rearRightWheelGrounded.Value = wheelColliders[3].isGrounded;
+
         // Process jump input
         if (input.jumpInput && canJump && jumpReady.Value)
         {
@@ -407,33 +316,14 @@ public class HogController : NetworkBehaviour
         // Update network variables for non-owner clients
         netSteeringAxis.Value = steeringAxis;
         netWheelRotationSpeed.Value = rb.linearVelocity.magnitude;
+        netBrakeInput.Value = input.brakeInput;
     }
 
-    private void ProcessJump()
+    [ServerRpc]
+    private void UpdateDriftingServerRpc(bool isDriftingNow)
     {
-        // Set network state
-        isJumping.Value = true;
-        jumpReady.Value = false;
-
-        // Store current horizontal velocity
-        Vector3 currentVelocity = rb.linearVelocity;
-        Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
-
-        // Start with a position boost for immediate feedback
-        float upwardVelocity = jumpForce * 1.2f; // Faster rise
-
-        // Combine horizontal momentum with new vertical impulse
-        // Multiply horizontal speed to maintain or enhance momentum
-        Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
-        rb.linearVelocity = newVelocity;
-
-        // Add a bit more forward boost in the car's facing direction
-        rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
-
-        // Notify all clients about the jump and cooldown
-        SyncJumpCooldownClientRpc(jumpCooldown, false);
+        isDrifting.Value = isDriftingNow;
     }
-
 
     [ClientRpc]
     private void SyncJumpCooldownClientRpc(float cooldownDuration, bool isOnCooldown)
@@ -446,20 +336,9 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    private void CheckServerDriftCondition()
-    {
-        if (IsServer)
-        {
-            // Transform world velocity to local space
-            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
-            float localVelocityX = Mathf.Abs(localVelocity.x);
+    #endregion
 
-            // Check drift conditions - sideways velocity and speed
-            isDrifting.Value = localVelocityX > driftThreshold &&
-                               rb.linearVelocity.magnitude > driftMinSpeed &&
-                               (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
-        }
-    }
+    #region Physics and Movement
 
     private void ApplyMotorTorque(float throttleInput, float brakeInput)
     {
@@ -593,6 +472,71 @@ public class HogController : NetworkBehaviour
         steeringAxis += direction * exponentialStep;
     }
 
+    private float CalculateCameraBasedSteering()
+    {
+        if (playerCamera == null)
+            return 0f;
+
+        // Get the vector from camera to vehicle (in world space)
+        Vector3 cameraVector = transform.position - playerCamera.transform.position;
+
+        // Flatten to XZ plane (ignore Y component)
+        cameraVector.y = 0;
+
+        // Get car's forward direction (flattened)
+        Vector3 carDirection = new Vector3(transform.forward.x, 0, transform.forward.z).normalized;
+
+        // Calculate the angle between vectors
+        float angle = Vector3.Angle(carDirection, cameraVector);
+
+        // Determine the sign (left/right) using dot product with car's right vector
+        float sign = Mathf.Sign(Vector3.Dot(cameraVector, transform.right));
+
+        // Get the signed angle
+        float signedAngle = angle * sign;
+
+        // Store for debugging
+        debugAngle = signedAngle;
+
+        // Normalize to -1 to 1 range based on max steering angle
+        float normalizedValue = Mathf.Clamp(signedAngle / maxSteeringAngle, -1f, 1f);
+
+        // Apply deadzone
+        if (Mathf.Abs(normalizedValue) < steeringDeadzone)
+        {
+            return 0f; // Return zero steering if within deadzone
+        }
+        else
+        {
+            // Remap the value to still use the full -1 to 1 range
+            // This creates a smooth transition at the edge of the deadzone
+            float remappedValue = Mathf.Sign(normalizedValue) *
+                (Mathf.Abs(normalizedValue) - steeringDeadzone) / (1f - steeringDeadzone);
+            normalizedValue = remappedValue;
+        }
+
+        // Apply sensitivity
+        if (cameraSteeringSensitivity != 1.0f)
+        {
+            float absValue = Mathf.Abs(normalizedValue);
+            float signedPower = Mathf.Pow(absValue, 2.0f - cameraSteeringSensitivity) * Mathf.Sign(normalizedValue);
+            normalizedValue = signedPower;
+        }
+
+        // Apply steering curve for better control
+        float steeringValue = Mathf.Sign(normalizedValue) * cameraSteeringCurve.Evaluate(Mathf.Abs(normalizedValue));
+
+        // Store for debugging
+        debugNormalizedValue = steeringValue;
+
+        // Apply inversion if needed
+        if (invertCameraSteering)
+            steeringValue = -steeringValue;
+
+        return steeringValue;
+    }
+
+
     private void ApplySteering()
     {
         // Apply steering to wheel colliders for physics
@@ -615,10 +559,10 @@ public class HogController : NetworkBehaviour
     private void AnimateWheelsLocal()
     {
         // Pre-calculate common values
-        float frontSteeringAngle = steeringAxis * maxSteeringAngle;
+        float frontSteeringAngle = netSteeringAxis.Value * maxSteeringAngle;
         float rearSteeringAngle = -frontSteeringAngle * rearSteeringAmount;
 
-        float wheelSpeed = rb.linearVelocity.magnitude;
+        float wheelSpeed = netWheelRotationSpeed.Value;
         float wheelCircumference = 2f * Mathf.PI * .6f;
         float rotationAmount = wheelSpeed * wheelCircumference * 360f * Time.fixedDeltaTime;
 
@@ -673,7 +617,70 @@ public class HogController : NetworkBehaviour
         }
     }
 
-    // JumpServerRPC replaced with the ProcessJump method called from SendInputServerRpc
+    #endregion
+
+    #region Jump and Drift Mechanics
+
+    private void CheckDriftCondition()
+    {
+        if (!IsServer && IsOwner)
+        {
+            // Transform world velocity to local space
+            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
+            localVelocityX = Mathf.Abs(localVelocity.x);
+
+            // Check drift conditions - sideways velocity and speed
+            bool isDriftingNow = localVelocityX > driftThreshold &&
+                                 rb.linearVelocity.magnitude > driftMinSpeed &&
+                                 (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
+
+            // Only send RPC if state changes to reduce network traffic
+            if (isDriftingNow != isDrifting.Value)
+            {
+                UpdateDriftingServerRpc(isDriftingNow);
+            }
+        }
+    }
+
+    private void CheckServerDriftCondition()
+    {
+        if (IsServer)
+        {
+            // Transform world velocity to local space
+            Vector3 localVelocity = transform.InverseTransformDirection(rb.linearVelocity);
+            float localVelocityX = Mathf.Abs(localVelocity.x);
+
+            // Check drift conditions - sideways velocity and speed
+            isDrifting.Value = localVelocityX > driftThreshold &&
+                               rb.linearVelocity.magnitude > driftMinSpeed &&
+                               (wheelColliders[2].isGrounded || wheelColliders[3].isGrounded);
+        }
+    }
+
+    private void ProcessJump()
+    {
+        // Set network state
+        isJumping.Value = true;
+        jumpReady.Value = false;
+
+        // Store current horizontal velocity
+        Vector3 currentVelocity = rb.linearVelocity;
+        Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+
+        // Start with a position boost for immediate feedback
+        float upwardVelocity = jumpForce * 1.2f; // Faster rise
+
+        // Combine horizontal momentum with new vertical impulse
+        // Multiply horizontal speed to maintain or enhance momentum
+        Vector3 newVelocity = horizontalVelocity * 1.1f + Vector3.up * upwardVelocity;
+        rb.linearVelocity = newVelocity;
+
+        // Add a bit more forward boost in the car's facing direction
+        rb.AddForce(transform.forward * (jumpForce * 5f), ForceMode.Impulse);
+
+        // Notify all clients about the jump and cooldown
+        SyncJumpCooldownClientRpc(jumpCooldown, false);
+    }
 
     private IEnumerator JumpCooldownServer()
     {
@@ -695,6 +702,8 @@ public class HogController : NetworkBehaviour
     }
 
     #endregion
+
+    #region Collision Handling
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -722,8 +731,7 @@ public class HogController : NetworkBehaviour
         bool isBumperCollider = hitCollider.CompareTag("PlayerBumper");
 
         // Log collision details for debugging
-        Debug.Log($"[COLLISION] Player {ConnectionManager.Instance.GetClientUsername(myPlayer.clientId)} collided with Player {ConnectionManager.Instance.GetClientUsername(otherPlayer.clientId)} " +
-                  $"(Speed: {playerSpeed:F1}, isBumperCollider: {isBumperCollider}, Fast Enough: {isFastEnough})");
+
 
         // Apply enhanced collision if conditions are met
         if (isFastEnough && isBumperCollider && !bumperCollisionOnCooldown)
@@ -734,6 +742,9 @@ public class HogController : NetworkBehaviour
         }
         else
         {
+            Debug.Log($"[HOG] Player {ConnectionManager.Instance.GetClientUsername(myPlayer.clientId)} collided with Player {ConnectionManager.Instance.GetClientUsername(otherPlayer.clientId)} " +
+                      $"(Speed: {playerSpeed:F1}, isBumperCollider: {isBumperCollider}, Fast Enough: {isFastEnough})");
+
             // Normal collision sound determination based on speed
             if (playerSpeed < 12f && playerSpeed > 5f)
             {
@@ -771,7 +782,7 @@ public class HogController : NetworkBehaviour
 
         if (myPlayer == null || otherPlayer == null) return;
 
-        Debug.Log($"[TRIGGER] Player {myPlayer.clientId} triggered with Player {otherPlayer.clientId}");
+        Debug.Log($"[HOG] Player {myPlayer.clientId} triggered with Player {otherPlayer.clientId}");
 
         // Get the colliding player's name from ConnectionManager
         if (ConnectionManager.Instance.TryGetPlayerData(otherPlayer.clientId, out PlayerData collidingPlayerData))
@@ -839,10 +850,143 @@ public class HogController : NetworkBehaviour
             ForceMode.Impulse
         );
 
-        Debug.Log($"[BUMPER COLLISION] Speed: {playerSpeed:F1}, Force applied: {enhancedForceMagnitude:F1}, " +
+        Debug.Log($"[HOG] Speed: {playerSpeed:F1}, Force applied: {enhancedForceMagnitude:F1}, " +
                   $"Direction: {forceDir}, Speed bonus: {speedBonus:P0}");
 
         StartCoroutine(BumperCollisionCooldown());
+    }
+
+    #endregion
+
+    #region Audio and Visual Effects
+
+    private void CalculateEngineAudio(ClientInput input)
+    {
+        // Interpolate the throttle input so get smoother engine transitions.
+        float netInput = Math.Sign(input.throttleInput - input.brakeInput);
+        var lerp = Mathf.Lerp(lerpedThrottleInput, netInput, Time.deltaTime * 3); // Lerp speed is 3
+        lerpedThrottleInput = lerp;
+
+        // Wwise expects a value between 1-100 so we multiply by 5 (car speed is around 1-23)
+        rpm.SetGlobalValue(rb.linearVelocity.magnitude * 5 * lerpedThrottleInput);
+    }
+
+    #endregion
+
+    #region Debug and Utilities
+
+    private void OnGUI()
+    {
+        if (!showDebugUI || !IsOwner) return;
+
+        // Setup styles
+        GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
+        boxStyle.normal.background = debugBackgroundTexture;
+
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.normal.textColor = labelTextColor;
+        labelStyle.fontSize = 12;
+
+        GUIStyle valueStyle = new GUIStyle(GUI.skin.label);
+        valueStyle.normal.textColor = valueTextColor;
+        valueStyle.fontSize = 12;
+        valueStyle.fontStyle = FontStyle.Bold;
+
+        GUIStyle headerStyle = new GUIStyle(labelStyle);
+        headerStyle.fontSize = 14;
+        headerStyle.fontStyle = FontStyle.Bold;
+        headerStyle.normal.textColor = valueTextColor;
+
+        // Calculate sizes
+        int padding = 10;
+        int width = 240;
+        int startY = 10;
+        int lineHeight = 20;
+        int totalLines = 10; // Adjusted for new debug lines
+
+        // Draw background box
+        GUI.Box(new Rect(10, startY, width, totalLines * lineHeight + padding * 2), "", boxStyle);
+
+        // Start drawing content
+        int yPos = startY + padding;
+
+        // Header
+        GUI.Label(new Rect(20, yPos, width - 20, lineHeight), "HOG CONTROLLER DEBUG", headerStyle);
+        yPos += lineHeight;
+
+        // Count grounded wheels
+        int groundedWheelCount = 0;
+        for (int i = 0; i < wheelColliders.Length; i++)
+        {
+            if (wheelColliders[i].isGrounded)
+                groundedWheelCount++;
+        }
+
+        // Get speed in different units
+        float speed = rb.linearVelocity.magnitude;
+
+        // Vehicle info - using both label and value styles for color differentiation
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Speed:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{netWheelRotationSpeed.Value:F1} m/s ({netWheelRotationSpeed.Value * 3.6f:F1} km/h)", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Torque:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{currentTorque:F0} Nm", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Steering:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{netSteeringAxis.Value:F2} ({netSteeringAxis.Value * maxSteeringAngle:F0}°)", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Can Move:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            canMove ? "Yes" : "No", valueStyle);
+        yPos += lineHeight;
+
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Wheels:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{groundedWheelCount}/{wheelColliders.Length} grounded", valueStyle);
+        yPos += lineHeight;
+
+        // Add drift info
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Drifting:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            isDrifting.Value ? "Yes" : "No", valueStyle);
+        yPos += lineHeight;
+
+        // Network info
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Ping:", labelStyle);
+        float ping = 0;
+        if (NetworkManager.Singleton?.NetworkConfig?.NetworkTransport is Unity.Netcode.Transports.UTP.UnityTransport transport)
+        {
+            ping = transport.GetCurrentRtt(0);
+        }
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            $"{ping:F0} ms", valueStyle);
+        yPos += lineHeight;
+
+        // Add camera control information
+        GUI.Label(new Rect(20, yPos, 85, lineHeight), "Control:", labelStyle);
+        GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+            useCameraBasedSteering ? "Camera-based" : "Input Manager", valueStyle);
+        yPos += lineHeight;
+
+        if (useCameraBasedSteering)
+        {
+            // Show angle-based steering info
+            GUI.Label(new Rect(20, yPos, 85, lineHeight), "Cam Angle:", labelStyle);
+            GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+                $"{debugAngle:F1}°", valueStyle);
+            yPos += lineHeight;
+
+            GUI.Label(new Rect(20, yPos, 85, lineHeight), "Steer Value:", labelStyle);
+            GUI.Label(new Rect(105, yPos, width - 105, lineHeight),
+                $"{debugNormalizedValue:F2}", valueStyle);
+            yPos += lineHeight;
+        }
     }
 
     // Utility method to create a solid color texture
@@ -859,4 +1003,6 @@ public class HogController : NetworkBehaviour
         texture.Apply();
         return texture;
     }
+
+    #endregion
 }

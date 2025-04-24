@@ -86,7 +86,7 @@ public class SoundManager : NetworkBehaviour
     {
         if (soundObject == null)
         {
-            Debug.LogError("Sound object is null!");
+            Debug.LogError("[AUDIO] Sound object is null!");
             return;
         }
 
@@ -94,7 +94,7 @@ public class SoundManager : NetworkBehaviour
         NetworkObject networkObject = soundObject.GetComponent<NetworkObject>();
         if (networkObject == null || !networkObject.IsSpawned)
         {
-            Debug.LogError($"NetworkObject missing or not spawned on {soundObject.name}!");
+            Debug.LogError($"[AUDIO] NetworkObject missing or not spawned on {soundObject.name}!");
             return;
         }
 
@@ -103,7 +103,7 @@ public class SoundManager : NetworkBehaviour
 
         // Request server to broadcast the sound
         // This matches your server-authoritative model
-        Debug.Log("Playing Network sound");
+        Debug.Log("[AUDIO] Playing Network sound - " + effectType);
         PlaySoundServerRpc((byte)effectType, networkObject.NetworkObjectId);
     }
 
@@ -113,7 +113,7 @@ public class SoundManager : NetworkBehaviour
         // Only the server can broadcast to all clients
         if (!IsServer)
         {
-            Debug.LogWarning("BroadcastGlobalSound can only be called from the server");
+            Debug.LogWarning("[AUDIO] BroadcastGlobalSound can only be called from the server");
             return;
         }
 
@@ -137,7 +137,7 @@ public class SoundManager : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning($"Sound effect {effectType} not found in sound effect map");
+            Debug.LogWarning($"[AUDIO] Sound effect {effectType} not found in sound effect map");
         }
     }
 
@@ -151,7 +151,7 @@ public class SoundManager : NetworkBehaviour
         // Get the client ID that sent the RPC
         ulong senderClientId = serverRpcParams.Receive.SenderClientId;
 
-        Debug.Log("Playing server sound");
+        Debug.Log("[AUDIO] Playing server sound - " + effectType);
         // Validate the request (server-authoritative)
 
         // Create client RPC params that exclude the sender
@@ -180,35 +180,8 @@ public class SoundManager : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning($"Network object with ID {networkObjectId} not found for sound effect {(SoundEffectType)effectType}");
+            Debug.LogWarning($"[AUDIO] Network object with ID {networkObjectId} not found for sound effect {(SoundEffectType)effectType}");
         }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void PlayGlobalSoundServerRpc(byte effectType, ServerRpcParams serverRpcParams = default)
-    {
-        // Get the client ID that sent the RPC
-        ulong senderClientId = serverRpcParams.Receive.SenderClientId;
-        // Create client RPC params that exclude the sender
-        ClientRpcParams clientRpcParams = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = NetworkManager.Singleton.ConnectedClientsIds
-                    .Where(id => id != senderClientId)
-                    .ToArray()
-            }
-        };
-
-        // Send the ClientRPC with the filtered client list
-        PlayGlobalSoundClientRpc(effectType, clientRpcParams);
-    }
-
-    [ClientRpc]
-    private void PlayGlobalSoundClientRpc(byte effectType, ClientRpcParams clientRpcParams = default)
-    {
-        // Play the global sound
-        PlayLocalSound(globalSoundSource, (SoundEffectType)effectType);
     }
 
     [ClientRpc]

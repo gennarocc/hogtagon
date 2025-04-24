@@ -134,6 +134,10 @@ public class ConnectionManager : NetworkBehaviour
             // Tell MenuManager to update cursor state
             if (menuManager != null)
                 menuManager.HandleConnectionStateChange(false);
+
+            clientDataDictionary.Clear();
+
+            Debug.Log("Disconnected from Server");
         }
     }
 

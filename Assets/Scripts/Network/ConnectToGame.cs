@@ -8,8 +8,6 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
-using UnityEditor;
-using System.Collections;
 
 public class ConnectToGame : MonoBehaviour
 {
