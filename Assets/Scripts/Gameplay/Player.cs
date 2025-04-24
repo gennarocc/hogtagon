@@ -107,8 +107,6 @@ public class Player : NetworkBehaviour
         }
 
         // Update player leader indicator
-        ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
-        playerIndicator.SetActive(playerData.isLobbyLeader);
     }
 
     private void HandleSpectatorInput()
@@ -185,6 +183,8 @@ public class Player : NetworkBehaviour
                 playerCamera.Follow = transform;
             }
         }
+
+        playerIndicator.SetActive(newValue.isLobbyLeader);
     }
 
     private IEnumerator SetSpectatorCameraDelay()
