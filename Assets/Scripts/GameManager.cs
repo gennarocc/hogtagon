@@ -59,7 +59,7 @@ public class GameManager : NetworkBehaviour
 
     public void TransitionToState(GameState newState)
     {
-        Debug.Log($"GameManager TransitionToState: {state} -> {newState}");
+        Debug.Log($"[GAME] TransitionToState: {state} -> {newState}");
 
         switch (newState)
         {
@@ -80,7 +80,7 @@ public class GameManager : NetworkBehaviour
 
     private void SetGameState(GameState newState)
     {
-        Debug.Log($"GameManager SetGameState: {state} -> {newState}");
+        Debug.Log($"[GAME] SetGameState: {state} -> {newState}");
 
         // Update state
         state = newState;
@@ -93,7 +93,7 @@ public class GameManager : NetworkBehaviour
     }
     private void OnGameEndEnter()
     {
-        Debug.Log("GameManager OnWinnerEnter");
+        Debug.Log("[GAME] OnWinnerEnter");
         SetGameState(GameState.GameEnd);
 
         // Pause kill feed and keep last message
@@ -156,7 +156,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnBetweenRoundEnter()
     {
-        Debug.Log("GameManager OnWinnerEnter");
+        Debug.Log("[GAME] OnWinnerEnter");
         SetGameState(GameState.BetweenRound);
 
         // Pause kill feed and keep last message
@@ -191,7 +191,7 @@ public class GameManager : NetworkBehaviour
         // Lock game mode settings when game starts
         LockGameModeSettings();
 
-        Debug.Log("GameManager OnPlayingEnter");
+        Debug.Log("[GAME] OnPlayingEnter");
 
         // Clear processed deaths for new round
         processedDeaths.Clear();
@@ -222,10 +222,10 @@ public class GameManager : NetworkBehaviour
 
     public IEnumerator RoundCountdown()
     {
-        Debug.Log("GameManager RoundCountdown started");
+        Debug.Log("[GAME] RoundCountdown started");
         yield return new WaitForSeconds(3f);
 
-        Debug.Log("GameManager RoundCountdown finished - Transitioning to Playing");
+        Debug.Log("[GAME] RoundCountdown finished - Transitioning to Playing");
 
         // Unlock player movement
         UnlockPlayerMovement();
@@ -247,7 +247,7 @@ public class GameManager : NetworkBehaviour
 
     public IEnumerator BetweenRoundTimer()
     {
-        Debug.Log("GameManager BetweenRoundTimer started");
+        Debug.Log("[GAME] BetweenRoundTimer started");
 
         float showWinnerDuration = 2.0f;     // How long to show just the winner text
         float showScoreboardDuration = 3.0f;  // How long to show the scoreboard
@@ -262,14 +262,14 @@ public class GameManager : NetworkBehaviour
         // Hide scoreboard when starting new round
         menuManager.HideScoreboardClientRpc();
 
-        Debug.Log("GameManager BetweenRoundTimer finished - Starting new round");
+        Debug.Log("[GAME] BetweenRoundTimer finished - Starting new round");
         // Transition to next round
         TransitionToState(GameState.Playing);
     }
 
     private void OnPendingEnter()
     {
-        Debug.Log("GameManager OnPendingEnter");
+        Debug.Log("[GAME] OnPendingEnter");
 
         // Stop level music and play lobby music using NetworkSoundManager
         if (IsServer)

@@ -69,8 +69,6 @@ public class MenuManager : NetworkBehaviour
     private int countdownTime;
     [SerializeField] private float rotationSpeed = 0.01f;
 
-
-
     // Reference to Input Manager
     private InputManager inputManager;
 
@@ -355,18 +353,10 @@ public class MenuManager : NetworkBehaviour
 
     void Pause()
     {
-        if (pauseMenuUI == null)
-        {
-            Debug.LogError("pauseMenuUI reference is null!");
-            return;
-        }
-
         Debug.Log("[MenuManager] Pause called");
 
-        // Update cursor state - make sure it's visible and unlocked
-        // Do this FIRST before any UI changes
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Only pause the game if your in the game
+        if (!ConnectionManager.Instance.isConnected) return;
 
         // Hide all menus except pause menu
         HideAllMenusExcept(pauseMenuUI);
@@ -434,13 +424,9 @@ public class MenuManager : NetworkBehaviour
             PauseOn.Post(gameObject);
         }
 
-        // Switch to UI input mode - This directly disables the Player action map
-        if (inputManager != null)
-        {
-            inputManager.SwitchToUIMode();
-            if (inputManager.IsInGameplayMode())
-                inputManager.ForceEnableCurrentActionMap();
-        }
+        inputManager.SwitchToUIMode();
+        if (inputManager.IsInGameplayMode())
+            inputManager.ForceEnableCurrentActionMap();
 
         // Double-check cursor state after input mode switch
         Cursor.visible = true;
@@ -500,18 +486,18 @@ public class MenuManager : NetworkBehaviour
         {
             pauseMenuUI.SetActive(false);
         }
-        
+
         // Show settings menu with new SettingsManager
         if (newOptionsMenuUI != null)
         {
             // Hide all other menus and show the new options menu
             HideAllMenusExcept(newOptionsMenuUI);
             newOptionsMenuUI.SetActive(true);
-            
+
             // Ensure cursor is visible for UI interaction
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            
+
             // Switch to UI input mode
             if (inputManager != null)
             {
@@ -519,10 +505,10 @@ public class MenuManager : NetworkBehaviour
                 if (inputManager.IsInUIMode())
                     inputManager.ForceEnableCurrentActionMap();
             }
-            
+
             // Enable controller selection for navigation
             controllerSelectionEnabled = true;
-            
+
             // Find and select the default button
             if (defaultSettingsMenuButton != null)
             {
@@ -534,7 +520,7 @@ public class MenuManager : NetworkBehaviour
             // Fallback to old settings menu
             HideAllMenusExcept(settingsMenuUI);
             settingsMenuUI.SetActive(true);
-            
+
             if (defaultSettingsMenuButton != null)
             {
                 HandleButtonSelection(defaultSettingsMenuButton);
@@ -1043,7 +1029,7 @@ public class MenuManager : NetworkBehaviour
     public void OnOptionsClicked()
     {
         Debug.Log("[MenuManager] OnOptionsClicked called");
-        
+
         // Reset menu state flags - we're opening from main menu
         settingsOpenedFromPauseMenu = false;
         gameIsPaused = false;
@@ -1333,7 +1319,7 @@ public class MenuManager : NetworkBehaviour
             EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
         }
     }
-    
+
     /// <summary>
     /// Public method to show the pause menu that other scripts can call
     /// </summary>
@@ -1341,7 +1327,7 @@ public class MenuManager : NetworkBehaviour
     {
         // Directly use the ReturnToPauseMenu method to ensure consistent behavior
         ReturnToPauseMenu();
-        
+
         // Make sure we're marked as paused
         gameIsPaused = true;
     }
@@ -1384,6 +1370,7 @@ public class MenuManager : NetworkBehaviour
             return;
         }
 
+        if (!ConnectionManager.Instance.isConnected) return;
         // Apply cooldown to prevent rapid toggling
         if (Time.unscaledTime - lastMenuToggleTime < menuToggleCooldown)
         {
@@ -1489,10 +1476,10 @@ public class MenuManager : NetworkBehaviour
         // First, ensure settings panels are deactivated
         if (settingsMenuUI != null)
             settingsMenuUI.SetActive(false);
-        
+
         if (newOptionsMenuUI != null)
             newOptionsMenuUI.SetActive(false);
-            
+
         // Now show the appropriate menu based on where we came from
         if (settingsOpenedFromPauseMenu)
         {

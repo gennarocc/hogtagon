@@ -26,7 +26,6 @@ public class InputManager : MonoBehaviour
     private float _steerInput; // Added for steering
     private Vector2 _lookInput;
     private bool _isHonking;
-    private bool _isJumping;
 
     // Current action map
     private enum InputState { Gameplay, UI }
@@ -208,17 +207,11 @@ public class InputManager : MonoBehaviour
             // Check if enough time has passed since last toggle
             if (Time.unscaledTime - lastMenuToggleTime > menuToggleCooldown)
             {
-                Debug.Log("Escape key pressed in Update method");
-                
                 // Always invoke MenuToggled when escape is pressed, regardless of current mode
                 MenuToggled?.Invoke();
                 
                 // Record the time of this toggle
                 lastMenuToggleTime = Time.unscaledTime;
-            }
-            else
-            {
-                Debug.Log("Ignoring escape key press - cooldown active");
             }
         }
 

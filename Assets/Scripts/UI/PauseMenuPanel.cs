@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using Unity.Netcode;
-using System.Collections;
 
 /// <summary>
 /// Controls the PauseMenuPanel UI, handling button styling and functionality
@@ -36,13 +35,6 @@ public class PauseMenuPanel : MonoBehaviour
 
     public static bool CanOpenPauseMenu()
     {
-        // Check if the player is in a valid state to open the pause menu
-        if (MenuManager.Instance == null)
-        {
-            Debug.LogWarning("Cannot open pause menu: MenuManager.Instance is null");
-            return false;
-        }
-        
         // Temporarily DISABLE the check for other active menus to help diagnose the issue
         // bool noOtherMenusActive = !MenuManager.Instance.IsAnyMenuActive();
         bool noOtherMenusActive = true; // Force to true to bypass this check
