@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine.UI;
+using System.Linq;
 
 public class Settings : MonoBehaviour
 {
@@ -85,49 +86,42 @@ public class Settings : MonoBehaviour
     private void LoadResolutions()
     {
         // Get all possible resolutions
-        resolutions = Screen.resolutions;
+        Resolution[] allResolutions = Screen.resolutions;
+        
+        // Filter to only include 60Hz, 120Hz, and 144Hz (with small margin for rounding)
+        resolutions = allResolutions.Where(res => {
+            float rate = (float)res.refreshRateRatio.value;
+            return (rate >= 59.5f && rate <= 60.5f) || 
+                   (rate >= 119.5f && rate <= 120.5f) || 
+                   (rate >= 143.5f && rate <= 144.5f);
+        }).ToArray();
+        
         filteredResolutions = new List<Resolution>();
 
         // Clear existing options
         resolutionDropdown.ClearOptions();
 
-        // With refreshRate being obsolete, we'll just filter by unique resolution sizes
-        // and use the highest refresh rate available for each resolution
+        // Create options with resolution dimensions and refresh rate
         List<string> options = new List<string>();
-        HashSet<string> addedResolutions = new HashSet<string>();
-        Dictionary<string, Resolution> bestResolutions = new Dictionary<string, Resolution>();
-
-        // Find the highest refresh rate for each resolution size
+        
+        // Log all available resolutions for debugging
+        Debug.Log($"[Settings] Available resolutions count (filtered): {resolutions.Length}");
         for (int i = 0; i < resolutions.Length; i++)
         {
-            string resKey = $"{resolutions[i].width} x {resolutions[i].height}";
-            
-            if (!bestResolutions.ContainsKey(resKey))
-            {
-                bestResolutions[resKey] = resolutions[i];
-            }
-            // Note: We're not comparing refresh rates since it's obsolete
-            // In newer Unity versions, you might want to consider Screen.resolutions[i].refreshRateRatio instead
-        }
-
-        // Add the unique resolutions to our filtered list
-        foreach (var resolution in bestResolutions.Values)
-        {
-            string option = $"{resolution.width} x {resolution.height}";
+            string option = $"{resolutions[i].width} x {resolutions[i].height} @ {Mathf.RoundToInt((float)resolutions[i].refreshRateRatio.value)}Hz";
             options.Add(option);
-            filteredResolutions.Add(resolution);
+            filteredResolutions.Add(resolutions[i]);
+            Debug.Log($"  [{i}] {option} - Raw refreshRate: {resolutions[i].refreshRateRatio.value}");
         }
         
-        // Sort options by resolution (ascending)
-        filteredResolutions.Sort((a, b) => (a.width * a.height).CompareTo(b.width * b.height));
-        options.Sort((a, b) => 
-        {
-            int aWidth = int.Parse(a.Split('x')[0].Trim());
-            int bWidth = int.Parse(b.Split('x')[0].Trim());
-            int aHeight = int.Parse(a.Split('x')[1].Trim());
-            int bHeight = int.Parse(b.Split('x')[1].Trim());
-            return (aWidth * aHeight).CompareTo(bWidth * bHeight);
-        });
+        // Sort options by resolution (ascending) and then by refresh rate (ascending)
+        var sortedList = filteredResolutions.Select((res, index) => new { Resolution = res, Option = options[index] })
+            .OrderBy(item => item.Resolution.width * item.Resolution.height)
+            .ThenBy(item => (float)item.Resolution.refreshRateRatio.value)
+            .ToList();
+            
+        filteredResolutions = sortedList.Select(item => item.Resolution).ToList();
+        options = sortedList.Select(item => item.Option).ToList();
 
         // Add options to dropdown
         resolutionDropdown.AddOptions(options);
@@ -141,6 +135,7 @@ public class Settings : MonoBehaviour
         // Find current resolution in our filtered list
         int currentWidth = Screen.width;
         int currentHeight = Screen.height;
+        float currentRefreshRate = (float)Screen.currentResolution.refreshRateRatio.value;
         
         // Default to first option if no match is found
         int bestMatchIndex = 0;
@@ -148,7 +143,8 @@ public class Settings : MonoBehaviour
         for (int i = 0; i < filteredResolutions.Count; i++)
         {
             if (filteredResolutions[i].width == currentWidth &&
-                filteredResolutions[i].height == currentHeight)
+                filteredResolutions[i].height == currentHeight &&
+                Mathf.Approximately((float)filteredResolutions[i].refreshRateRatio.value, currentRefreshRate))
             {
                 bestMatchIndex = i;
                 break;

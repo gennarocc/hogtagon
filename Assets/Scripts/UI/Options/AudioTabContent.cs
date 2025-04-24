@@ -171,6 +171,12 @@ public class AudioTabContent : TabContent
         // Audio settings are applied in real-time, so we just need to save
         // to make sure everything is saved, but everything is already working
         PlayerPrefs.Save();
+        
+        // Call the main SettingsManager ApplySettings to ensure JSON saving happens
+        if (settingsManager != null)
+        {
+            settingsManager.ApplySettings();
+        }
     }
     
     public override void ResetToDefaults()

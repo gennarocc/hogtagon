@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Handles saving and loading settings to/from a JSON file
@@ -77,23 +78,47 @@ public static class SettingsFileManager
         // Apply resolution and fullscreen
         Screen.SetResolution(settings.resolutionWidth, settings.resolutionHeight, settings.fullscreen);
         
-        // Apply FOV if main camera exists
-        if (Camera.main != null)
-        {
-            Camera.main.fieldOfView = settings.fieldOfView;
-        }
-        
         // Store values in PlayerPrefs for compatibility with existing code
         PlayerPrefs.SetFloat("MasterVolume", settings.masterVolume);
         PlayerPrefs.SetFloat("MusicVolume", settings.musicVolume);
         PlayerPrefs.SetFloat("SFXVolume", settings.sfxVolume);
         PlayerPrefs.SetString("Username", settings.username);
         PlayerPrefs.SetFloat("Sensitivity", settings.sensitivity);
-        PlayerPrefs.SetFloat("FOV", settings.fieldOfView);
         PlayerPrefs.SetInt("Fullscreen", settings.fullscreen ? 1 : 0);
+        PlayerPrefs.SetFloat("refreshRate", settings.refreshRate);
+        if (settings.resolutionIndex >= 0)
+        {
+            PlayerPrefs.SetInt("ResolutionIndex", settings.resolutionIndex);
+        }
         PlayerPrefs.Save();
         
         // Log success
         Debug.Log("Settings applied successfully");
+    }
+    
+    /// <summary>
+    /// Creates a SettingsData object from the current game state and PlayerPrefs
+    /// </summary>
+    /// <returns>A SettingsData object with the current settings</returns>
+    public static SettingsData CreateFromCurrentSettings()
+    {
+        SettingsData data = new SettingsData
+        {
+            // Use actual game window resolution, not monitor resolution
+            resolutionWidth = Screen.width,
+            resolutionHeight = Screen.height,
+            resolutionIndex = PlayerPrefs.GetInt("ResolutionIndex", -1),
+            fullscreen = Screen.fullScreen,
+            refreshRate = PlayerPrefs.GetFloat("refreshRate", 60f),
+            masterVolume = PlayerPrefs.GetFloat("MasterVolume", 0.8f),
+            musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f),
+            sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 0.8f),
+            username = PlayerPrefs.GetString("Username", "Player"),
+            sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f)
+        };
+        
+        Debug.Log($"CreateFromCurrentSettings: Using resolution {data.resolutionWidth}x{data.resolutionHeight} @ {data.refreshRate}Hz");
+        
+        return data;
     }
 } 
