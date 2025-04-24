@@ -4,6 +4,7 @@ using Cinemachine;
 using TMPro;
 using System.Collections.Generic;
 using System.Collections;
+using UnityEngine.InputSystem;
 
 public class Player : NetworkBehaviour
 {
@@ -116,7 +117,7 @@ public class Player : NetworkBehaviour
 
         if (playerData.state != PlayerState.Alive && GameManager.Instance.state != GameState.Playing)
         {
-            if (Input.GetKeyDown(KeyCode.Mouse0))
+            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
             {
                 CycleSpectatorTarget();
             }

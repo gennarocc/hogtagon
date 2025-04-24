@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 using System.Collections;
+using UnityEngine.EventSystems;
 
 [DefaultExecutionOrder(-100)] // Ensure this script runs before others
 public class InputManager : MonoBehaviour
@@ -183,19 +184,64 @@ public class InputManager : MonoBehaviour
     {
         if (_currentInputState == InputState.UI)
             return;
-
+        
         // Disable gameplay action map and enable UI action map
         playerActions.Disable();
         uiActions.Enable();
-
+        
+        // Update state
         _currentInputState = InputState.UI;
-
+        
         // Reset input values when switching to UI
         _throttleInput = 0f;
         _brakeInput = 0f;
         _steerInput = 0f; // Reset steering input
         _lookInput = Vector2.zero;
         _isHonking = false;
+        
+        // Ensure the cursor is visible for UI interactions
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        
+        // For UI mode, explicitly ensure UI navigation works
+        EnsureUINavigationWorks();
+    }
+
+    // New method to ensure UI navigation works with the new Input System
+    private void EnsureUINavigationWorks()
+    {
+        // Find the EventSystem in the scene
+        EventSystem eventSystem = EventSystem.current;
+        if (eventSystem == null)
+        {
+            Debug.LogWarning("[InputManager] No EventSystem found in scene!");
+            return;
+        }
+        
+        // Check if the GamepadUINavigationFix component is present
+        GamepadUINavigationFix navigationFix = eventSystem.GetComponent<GamepadUINavigationFix>();
+        if (navigationFix == null)
+        {
+            // If not present and we're allowed to add components, add it
+            Debug.Log("[InputManager] Adding GamepadUINavigationFix to EventSystem");
+            navigationFix = eventSystem.gameObject.AddComponent<GamepadUINavigationFix>();
+        }
+        
+        // Check if using a gamepad currently
+        if (Gamepad.current != null && Gamepad.current.enabled)
+        {
+            _usingGamepad = true;
+            
+            // Refresh the current selection - this helps with navigation issues
+            if (eventSystem.currentSelectedGameObject != null)
+            {
+                GameObject currentSelection = eventSystem.currentSelectedGameObject;
+                eventSystem.SetSelectedGameObject(null);
+                eventSystem.SetSelectedGameObject(currentSelection);
+            }
+            
+            Debug.Log("[InputManager] UI Navigation should now work with gamepad left stick");
+        }
     }
 
     // Update to check for Escape key during gameplay and handle device detection

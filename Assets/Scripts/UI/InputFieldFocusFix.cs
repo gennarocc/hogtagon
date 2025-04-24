@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Add this component to TMP_InputField objects to improve focus retention
@@ -24,8 +25,8 @@ public class InputFieldFocusFix : MonoBehaviour, IPointerClickHandler, IPointerE
 
     private void Update()
     {
-        // Check if we clicked inside the field
-        if (pointerInsideField && Input.GetMouseButtonDown(0))
+        // Check if we clicked inside the field using the new Input System
+        if (pointerInsideField && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             // Register that we've clicked inside
             wasFocused = true;
