@@ -7,6 +7,7 @@ using Cinemachine;
 using UnityEngine.EventSystems;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -264,25 +265,49 @@ public class MenuManager : NetworkBehaviour
         // Check for controller input to enable selection
         if (inputManager != null && inputManager.IsUsingGamepad)
         {
-            // Check if controller navigation input was detected
-            if (Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0 ||
-                Input.GetButton("Submit") || Input.GetButton("Cancel"))
+            // Using the new input system, check for gamepad navigation inputs
+            Gamepad gamepad = Gamepad.current;
+            if (gamepad != null)
             {
-                // Enable controller selection and select appropriate button
-                controllerSelectionEnabled = true;
-
-                // Determine which menu is active and select its default button
-                if (mainMenuPanel.activeSelf && defaultMainMenuButton != null)
-                    eventSystem.SetSelectedGameObject(defaultMainMenuButton.gameObject);
-                else if (playMenuPanel.activeSelf && defaultPlayMenuButton != null)
-                    eventSystem.SetSelectedGameObject(defaultPlayMenuButton.gameObject);
-                else if (pauseMenuUI.activeSelf && defaultPauseMenuButton != null)
-                    eventSystem.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
-                else if (settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
-                    eventSystem.SetSelectedGameObject(defaultSettingsMenuButton.gameObject);
+                // Check if any navigation input is happening on the gamepad
+                // This is key for UI navigation - detect both dpad AND leftStick
+                if (gamepad.dpad.IsActuated() || 
+                    gamepad.leftStick.IsActuated() || 
+                    gamepad.buttonSouth.wasPressedThisFrame ||
+                    gamepad.buttonEast.wasPressedThisFrame)
+                {
+                    // Only proceed if not already in controller selection mode
+                    if (!controllerSelectionEnabled)
+                    {
+                        // Enable controller selection
+                        controllerSelectionEnabled = true;
+                        Debug.Log("[MenuManager] Controller navigation activated. Using left stick: " + gamepad.leftStick.ReadValue());
+                        
+                        // Force selection of a default button depending on active menu
+                        GameObject buttonToSelect = null;
+                        
+                        if (mainMenuPanel != null && mainMenuPanel.activeSelf && defaultMainMenuButton != null)
+                            buttonToSelect = defaultMainMenuButton.gameObject;
+                        else if (playMenuPanel != null && playMenuPanel.activeSelf && defaultPlayMenuButton != null)
+                            buttonToSelect = defaultPlayMenuButton.gameObject;
+                        else if (pauseMenuUI != null && pauseMenuUI.activeSelf && defaultPauseMenuButton != null)
+                            buttonToSelect = defaultPauseMenuButton.gameObject;
+                        else if (settingsMenuUI != null && settingsMenuUI.activeSelf && defaultSettingsMenuButton != null)
+                            buttonToSelect = defaultSettingsMenuButton.gameObject;
+                        else if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf && defaultSettingsMenuButton != null)
+                            buttonToSelect = defaultSettingsMenuButton.gameObject;
+                        
+                        // Set selected game object
+                        if (buttonToSelect != null && eventSystem != null)
+                        {
+                            eventSystem.SetSelectedGameObject(null);
+                            eventSystem.SetSelectedGameObject(buttonToSelect);
+                        }
+                    }
+                }
             }
         }
-        else if (Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
+        else if (Mouse.current != null && (Mouse.current.delta.ReadValue().x != 0 || Mouse.current.delta.ReadValue().y != 0))
         {
             // If mouse moved, reset controller selection and clear highlighting
             controllerSelectionEnabled = false;
@@ -1469,26 +1494,21 @@ public class MenuManager : NetworkBehaviour
     /// </summary>
     public void ReturnFromSettingsMenu()
     {
+        // Log current resolution and settings
+        Resolution currentResolution = Screen.currentResolution;
+        bool isFullScreen = Screen.fullScreen;
+        Debug.Log($"[MenuManager] ReturnFromSettingsMenu: Current resolution: {Screen.width}x{Screen.height}, fullscreen: {isFullScreen}");
 
-        // Log resolution at start
-        Debug.Log($"[MenuManager] ReturnFromSettingsMenu start: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
+        // Disable settings UI panels
+        if (settingsMenuUI != null && settingsMenuUI.activeSelf)
+        {
+            settingsMenuUI.SetActive(false);
+        }
+        if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
+        {
+            newOptionsMenuUI.SetActive(false);
+        }
 
-        // Get the saved resolution values from PlayerPrefs
-        int savedWidth = PlayerPrefs.GetInt("screenWidth", Screen.width);
-        int savedHeight = PlayerPrefs.GetInt("screenHeight", Screen.height);
-        bool savedFullscreen = PlayerPrefs.GetInt("fullscreen", Screen.fullScreen ? 1 : 0) == 1;
-        
-        // Disable settings panels
-        settingsMenuUI.SetActive(false);
-        newOptionsMenuUI.SetActive(false);
-        
-        // Log after disabling panels
-        Debug.Log($"[MenuManager] After disabling panels: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
-        
-        // DO NOT try to apply the resolution here since SettingsManager already did it
-        // Just log the expected resolution for debugging purposes
-        Debug.Log($"[MenuManager] Expected resolution from PlayerPrefs: {savedWidth}x{savedHeight}, fullscreen: {savedFullscreen}");
-        
         // Check if settings were opened from pause menu
         if (settingsOpenedFromPauseMenu)
         {
@@ -1505,12 +1525,28 @@ public class MenuManager : NetworkBehaviour
             {
                 HandleButtonSelection(defaultPauseMenuButton);
             }
+            
+            // Make sure the Resume button will actually work by ensuring the EventSystem is properly set up
+            if (pauseMenuUI != null)
+            {
+                Button resumeButton = pauseMenuUI.GetComponentsInChildren<Button>()
+                    .FirstOrDefault(b => b.name.Contains("Resume"));
+                    
+                if (resumeButton != null)
+                {
+                    // Ensure the Resume button's onClick listeners are properly set up
+                    if (resumeButton.onClick.GetPersistentEventCount() == 0)
+                    {
+                        resumeButton.onClick.AddListener(Resume);
+                    }
+                }
+            }
         }
         else
         {
             // Return to main menu
             Debug.Log($"[MenuManager] Settings were opened from main menu. Returning to main menu.");
-            mainMenuPanel.SetActive(true);
+            ShowMainMenu();
             
             // Handle button selection for controller navigation
             if (defaultMainMenuButton != null)
@@ -1518,16 +1554,17 @@ public class MenuManager : NetworkBehaviour
                 HandleButtonSelection(defaultMainMenuButton);
             }
         }
-        
+
         // Enable main camera if it was disabled
-        var mainCamera = Camera.main;
-        if (mainCamera != null && !mainCamera.enabled)
+        if (Camera.main != null && !Camera.main.enabled)
         {
-            mainCamera.enabled = true;
+            Camera.main.enabled = true;
         }
 
-        // Final log
-        Debug.Log($"[MenuManager] ReturnFromSettingsMenu end: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
+        // Log final resolution and settings
+        Resolution finalResolution = Screen.currentResolution;
+        bool finalIsFullScreen = Screen.fullScreen;
+        Debug.Log($"[MenuManager] ReturnFromSettingsMenu: Final resolution: {Screen.width}x{Screen.height}, fullscreen: {finalIsFullScreen}");
     }
 }
 

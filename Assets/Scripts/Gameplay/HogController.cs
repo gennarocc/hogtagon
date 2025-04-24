@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using Hogtagon.Core.Infrastructure;
 using Cinemachine;
+using UnityEngine.InputSystem;
 
 public class HogController : NetworkBehaviour
 {
@@ -116,7 +117,7 @@ public class HogController : NetworkBehaviour
         }
 
         // Toggle debug UI with F1
-        if (Input.GetKeyDown(KeyCode.F1))
+        if (Keyboard.current != null && Keyboard.current.f1Key.wasPressedThisFrame)
         {
             showDebugUI = !showDebugUI;
         }
