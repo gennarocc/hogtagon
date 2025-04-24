@@ -6,6 +6,7 @@ using UnityEngine.Audio;
 using System.IO;
 using Newtonsoft.Json;
 using Unity.Netcode;
+using System.Linq;
 
 /// <summary>
 /// Central manager for all game settings. Handles loading, saving, and applying settings.
@@ -28,8 +29,6 @@ public class SettingsManager : MonoBehaviour
     [Header("Video Settings")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;
     [SerializeField] private Toggle fullscreenToggle;
-    [SerializeField] private Slider fovSlider;
-    [SerializeField] private TextMeshProUGUI fovValueText;
 
     [Header("Audio Settings")]
     [SerializeField] private Slider masterVolumeSlider;
@@ -60,7 +59,6 @@ public class SettingsManager : MonoBehaviour
     private const float DEFAULT_MUSIC_VOLUME = 0.8f;
     private const float DEFAULT_SFX_VOLUME = 0.8f;
     private const float DEFAULT_SENSITIVITY = 1.0f;
-    private const float DEFAULT_FOV = 90.0f;
     private const string DEFAULT_USERNAME = "Player";
 
     private void Awake()
@@ -104,9 +102,6 @@ public class SettingsManager : MonoBehaviour
         if (fullscreenToggle != null)
             fullscreenToggle.onValueChanged.AddListener(OnFullscreenToggled);
 
-        if (fovSlider != null)
-            fovSlider.onValueChanged.AddListener(OnFOVChanged);
-
         // Audio settings
         if (masterVolumeSlider != null)
             masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
@@ -133,7 +128,6 @@ public class SettingsManager : MonoBehaviour
         // Load video settings
         int resIndex = PlayerPrefs.GetInt("ResolutionIndex", -1);
         bool fullscreen = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
-        float fov = PlayerPrefs.GetFloat("FOV", DEFAULT_FOV);
 
         // Load audio settings
         float masterVolume = PlayerPrefs.GetFloat("MasterVolume", DEFAULT_MASTER_VOLUME);
@@ -147,10 +141,10 @@ public class SettingsManager : MonoBehaviour
         float sensitivity = PlayerPrefs.GetFloat("Sensitivity", DEFAULT_SENSITIVITY);
 
         // Apply the settings to the actual game systems
-        ApplyLoadedSettings(resIndex, fullscreen, fov, masterVolume, musicVolume, sfxVolume, username, sensitivity);
+        ApplyLoadedSettings(resIndex, fullscreen, masterVolume, musicVolume, sfxVolume, username, sensitivity);
     }
 
-    private void ApplyLoadedSettings(int resolutionIndex, bool fullscreen, float fov,
+    private void ApplyLoadedSettings(int resolutionIndex, bool fullscreen,
                                     float masterVolume, float musicVolume, float sfxVolume,
                                     string username, float sensitivity)
     {
@@ -165,9 +159,6 @@ public class SettingsManager : MonoBehaviour
             // Use current resolution
             Screen.fullScreen = fullscreen;
         }
-
-        // Apply FOV
-        Camera.main.fieldOfView = fov;
 
         // Apply audio settings
         SetMasterVolume(masterVolume);
@@ -193,9 +184,6 @@ public class SettingsManager : MonoBehaviour
 
             if (fullscreenToggle != null)
                 PlayerPrefs.SetInt("Fullscreen", fullscreenToggle.isOn ? 1 : 0);
-
-            if (fovSlider != null)
-                PlayerPrefs.SetFloat("FOV", fovSlider.value);
 
             // Save audio settings (with null checks)
             if (masterVolumeSlider != null)
@@ -248,14 +236,26 @@ public class SettingsManager : MonoBehaviour
     // Call this from Awake or Start to load settings from JSON file
     private void LoadSettingsFromFile()
     {
-        // Load settings from JSON file
-        SettingsData settingsData = SettingsFileManager.LoadSettings();
+        try
+        {
+            // Load settings from JSON file
+            SettingsData settingsData = SettingsFileManager.LoadSettings();
 
-        // Apply loaded settings to the game
-        SettingsFileManager.ApplySettings(settingsData);
+            // Apply loaded settings to the game
+            SettingsFileManager.ApplySettings(settingsData);
 
-        // Update UI to match loaded settings
-        UpdateUI();
+            // Update UI to match loaded settings
+            UpdateUI();
+            
+            Debug.Log("Settings loaded successfully from file");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error loading settings from file: {e.Message}");
+            
+            // Fall back to PlayerPrefs if JSON loading fails
+            LoadAllSettings();
+        }
     }
 
     #endregion
@@ -276,12 +276,6 @@ public class SettingsManager : MonoBehaviour
 
         if (fullscreenToggle != null)
             fullscreenToggle.isOn = Screen.fullScreen;
-
-        if (fovSlider != null)
-        {
-            fovSlider.value = PlayerPrefs.GetFloat("FOV", DEFAULT_FOV);
-            UpdateFOVText(fovSlider.value);
-        }
 
         // Update audio settings UI
         if (masterVolumeSlider != null)
@@ -314,12 +308,6 @@ public class SettingsManager : MonoBehaviour
         }
     }
 
-    private void UpdateFOVText(float value)
-    {
-        if (fovValueText != null)
-            fovValueText.text = value.ToString("F0") + "°";
-    }
-
     private void UpdateVolumeText(TextMeshProUGUI text, float value)
     {
         if (text != null)
@@ -337,28 +325,90 @@ public class SettingsManager : MonoBehaviour
         if (resolutionDropdown != null)
         {
             // Get all available resolutions
-            resolutions = Screen.resolutions;
+            Resolution[] allResolutions = Screen.resolutions;
+            
+            // Filter to only include 60Hz, 120Hz, and 144Hz (with small margin for rounding)
+            resolutions = allResolutions.Where(res => {
+                float rate = (float)res.refreshRateRatio.value;
+                return (rate >= 59.5f && rate <= 60.5f) || 
+                       (rate >= 119.5f && rate <= 120.5f) || 
+                       (rate >= 143.5f && rate <= 144.5f);
+            }).ToArray();
+            
             resolutionDropdown.ClearOptions();
 
             List<string> options = new List<string>();
-            int currentResolutionIndex = 0;
-
+            
+            // To help with debugging, log all available resolutions 
+            Debug.Log($"[SettingsManager] Available resolutions ({resolutions.Length}, filtered to 60/120/144Hz):");
             for (int i = 0; i < resolutions.Length; i++)
             {
-                string option = resolutions[i].width + " x " + resolutions[i].height;
+                string option = $"{resolutions[i].width} x {resolutions[i].height} @ {Mathf.RoundToInt((float)resolutions[i].refreshRateRatio.value)}Hz";
                 options.Add(option);
-
-                if (resolutions[i].width == Screen.currentResolution.width &&
-                    resolutions[i].height == Screen.currentResolution.height)
-                {
-                    currentResolutionIndex = i;
-                }
+                Debug.Log($"  [{i}] {option} (Raw: {resolutions[i].refreshRateRatio.value})");
             }
 
             resolutionDropdown.AddOptions(options);
-            resolutionDropdown.value = currentResolutionIndex;
+            
+            // Get the saved resolution values
+            int savedWidth = PlayerPrefs.GetInt("screenWidth", Screen.width);
+            int savedHeight = PlayerPrefs.GetInt("screenHeight", Screen.height);
+            float savedRefreshRate = PlayerPrefs.GetFloat("refreshRate", (float)Screen.currentResolution.refreshRateRatio.value);
+            
+            // Find the index that matches our saved resolution and refresh rate
+            int savedIndex = FindClosestResolutionIndex(savedWidth, savedHeight, savedRefreshRate);
+            Debug.Log($"[SettingsManager] Found index {savedIndex} for saved resolution {savedWidth}x{savedHeight}@{savedRefreshRate}Hz");
+            
+            // Set the dropdown value and refresh
+            resolutionDropdown.value = savedIndex;
             resolutionDropdown.RefreshShownValue();
         }
+    }
+
+    // Updated method to find the correct resolution index including refresh rate
+    private int FindClosestResolutionIndex(int width, int height, float refreshRate)
+    {
+        if (resolutions == null || resolutions.Length == 0)
+            return 0;
+        
+        // First try exact match including refresh rate
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            if (resolutions[i].width == width && 
+                resolutions[i].height == height && 
+                Mathf.Approximately((float)resolutions[i].refreshRateRatio.value, refreshRate))
+                return i;
+        }
+        
+        // If no exact match, try matching just resolution without refresh rate
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            if (resolutions[i].width == width && resolutions[i].height == height)
+                return i;
+        }
+        
+        // If still no match, find closest
+        int closestIndex = 0;
+        float closestDiff = float.MaxValue;
+        
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            float aspectRatio = (float)resolutions[i].width / resolutions[i].height;
+            float targetRatio = (float)width / height;
+            float aspectDiff = Mathf.Abs(aspectRatio - targetRatio);
+            
+            float areaDiff = Mathf.Abs(resolutions[i].width * resolutions[i].height - width * height);
+            float refreshDiff = Mathf.Abs((float)resolutions[i].refreshRateRatio.value - refreshRate);
+            float combinedDiff = areaDiff + aspectDiff * 1000 + refreshDiff * 10; // Weight factors
+            
+            if (combinedDiff < closestDiff)
+            {
+                closestDiff = combinedDiff;
+                closestIndex = i;
+            }
+        }
+        
+        return closestIndex;
     }
 
     #endregion
@@ -370,34 +420,74 @@ public class SettingsManager : MonoBehaviour
     public void OnResolutionChanged(int index)
     {
         PlayUIClickSound();
-        // Resolution is applied when settings are saved
+        // Resolution will be applied when video settings are saved
     }
 
     public void OnFullscreenToggled(bool isFullscreen)
     {
         PlayUIClickSound();
-        // Fullscreen is applied when settings are saved
-    }
-
-    public void OnFOVChanged(float value)
-    {
-        PlayUIClickSound();
-        UpdateFOVText(value);
-        Camera.main.fieldOfView = value;
+        // Fullscreen will be applied when video settings are saved
     }
 
     public void ApplyVideoSettings()
     {
         PlayUIConfirmSound();
 
-        // Get the selected resolution from the dropdown
-        Resolution resolution = resolutions[resolutionDropdown.value];
-
-        // Apply screen resolution and fullscreen setting
-        Screen.SetResolution(resolution.width, resolution.height, fullscreenToggle.isOn);
-
-        // Save the settings
-        SaveAllSettings();
+        try
+        {
+            // Store current resolution in case we need to revert
+            Resolution currentResolution = Screen.currentResolution;
+            bool currentFullscreen = Screen.fullScreen;
+            
+            // Safety check - ensure dropdown value is valid
+            if (resolutionDropdown != null && resolutionDropdown.value >= 0 && resolutionDropdown.value < resolutions.Length)
+            {
+                Resolution resolution = resolutions[resolutionDropdown.value];
+                
+                // Apply screen resolution and fullscreen setting
+                Screen.SetResolution(resolution.width, resolution.height, fullscreenToggle.isOn);
+                
+                // Save resolution including refresh rate
+                PlayerPrefs.SetInt("screenWidth", resolution.width);
+                PlayerPrefs.SetInt("screenHeight", resolution.height);
+                PlayerPrefs.SetFloat("refreshRate", (float)resolution.refreshRateRatio.value);
+                
+                // Save the settings (to PlayerPrefs only, JSON saving happens in ApplySettings)
+                SaveAllSettings();
+            }
+            else
+            {
+                Debug.LogWarning("Invalid resolution dropdown value. Using current resolution.");
+                
+                // If dropdown has invalid value, save current resolution to settings
+                if (resolutionDropdown != null)
+                {
+                    // Try to find current resolution in the list
+                    for (int i = 0; i < resolutions.Length; i++)
+                    {
+                        if (resolutions[i].width == currentResolution.width && 
+                            resolutions[i].height == currentResolution.height)
+                        {
+                            resolutionDropdown.value = i;
+                            break;
+                        }
+                    }
+                }
+                
+                // Apply fullscreen toggle if available
+                if (fullscreenToggle != null)
+                {
+                    Screen.fullScreen = fullscreenToggle.isOn;
+                }
+                
+                // Save settings with corrected values (to PlayerPrefs only)
+                SaveAllSettings();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error applying video settings: {e.Message}");
+        }
     }
 
     // Audio Settings
@@ -462,7 +552,6 @@ public class SettingsManager : MonoBehaviour
             PlayerPrefs.SetString("Username", username);
             PlayerPrefs.Save();
         }
-
     }
 
     // Controls Settings
@@ -499,25 +588,79 @@ public class SettingsManager : MonoBehaviour
 
     public void OnBackButtonClicked()
     {
-        PlayUICancelSound();
+        // Log current resolution before applying changes
+        Debug.Log($"[SettingsManager] OnBackButtonClicked: Current resolution is {Screen.width}x{Screen.height} @ {(float)Screen.currentResolution.refreshRateRatio.value}Hz, fullscreen: {Screen.fullScreen}");
 
-        // Save all settings when exiting
-        SaveAllSettings();
-
-        // Let MenuManager handle the transition back FIRST before deactivating this menu
-        // This ensures the proper menu will be shown
-        if (MenuManager.Instance != null)
+        // Get the selected resolution index
+        int selectedResIndex = resolutionDropdown.value;
+        
+        // Make sure we have valid resolutions
+        if (resolutions != null && resolutions.Length > 0 && selectedResIndex < resolutions.Length)
         {
-            // Use the public ReturnFromSettingsMenu method
-            MenuManager.Instance.ReturnFromSettingsMenu();
+            Resolution selectedResolution = resolutions[selectedResIndex];
+            bool isFullscreen = fullscreenToggle.isOn;
+            
+            // Log the resolution we're about to apply
+            Debug.Log($"[SettingsManager] Selected dropdown index {selectedResIndex} = {selectedResolution.width}x{selectedResolution.height} @ {(float)selectedResolution.refreshRateRatio.value}Hz");
+            
+            // Apply the resolution immediately - force try twice to ensure it takes effect
+            Debug.Log($"[SettingsManager] Applying resolution {selectedResolution.width}x{selectedResolution.height} @ {(float)selectedResolution.refreshRateRatio.value}Hz, fullscreen: {isFullscreen}");
+            
+            // First attempt
+            Screen.SetResolution(selectedResolution.width, selectedResolution.height, isFullscreen);
+            // Force fullscreen state separately
+            Screen.fullScreen = isFullscreen;
+            
+            // Wait a frame to allow the resolution to change
+            System.Threading.Thread.Sleep(100);
+            
+            // Second attempt to make sure it sticks
+            Screen.SetResolution(selectedResolution.width, selectedResolution.height, isFullscreen);
+            Screen.fullScreen = isFullscreen;
+            
+            // Save width, height, refresh rate and fullscreen to PlayerPrefs
+            PlayerPrefs.SetInt("screenWidth", selectedResolution.width);
+            PlayerPrefs.SetInt("screenHeight", selectedResolution.height);
+            PlayerPrefs.SetFloat("refreshRate", (float)selectedResolution.refreshRateRatio.value);
+            PlayerPrefs.SetInt("fullscreen", isFullscreen ? 1 : 0);
+            PlayerPrefs.SetInt("resolutionIndex", selectedResIndex);
+            PlayerPrefs.Save();
+            Debug.Log($"[SettingsManager] Saved to PlayerPrefs: {selectedResolution.width}x{selectedResolution.height} @ {(float)selectedResolution.refreshRateRatio.value}Hz, fullscreen: {isFullscreen}, index: {selectedResIndex}");
+            
+            // Create a new SettingsData using the selected values
+            SettingsData data = new SettingsData {
+                resolutionWidth = selectedResolution.width,
+                resolutionHeight = selectedResolution.height,
+                refreshRate = (float)selectedResolution.refreshRateRatio.value,
+                resolutionIndex = selectedResIndex,
+                fullscreen = isFullscreen,
+                
+                // Get other values from PlayerPrefs
+                masterVolume = PlayerPrefs.GetFloat("MasterVolume", 0.8f),
+                musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f),
+                sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 0.8f),
+                username = PlayerPrefs.GetString("Username", "Player"),
+                sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f)
+            };
+            
+            // Save directly to JSON
+            Debug.Log($"[SettingsManager] Saving resolution to JSON: {selectedResolution.width}x{selectedResolution.height} (index: {selectedResIndex})");
+            SettingsFileManager.SaveSettings(data);
+            Debug.Log("[SettingsManager] Settings saved to JSON file successfully");
+            
+            // Wait to ensure the resolution is applied
+            System.Threading.Thread.Sleep(200);
         }
         else
         {
-            Debug.LogWarning("MenuManager.Instance is null! Cannot navigate back properly.");
-
-            // If MenuManager is not available, just deactivate this menu as a fallback
-            gameObject.SetActive(false);
+            Debug.LogError($"[SettingsManager] Invalid resolution index: {selectedResIndex}, resolutions array length: {(resolutions != null ? resolutions.Length : 0)}");
         }
+
+        // Double-check what resolution we ended up with before returning to menu
+        Debug.Log($"[SettingsManager] Before returning to menu: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
+        
+        // Return to the previous menu
+        MenuManager.Instance.ReturnFromSettingsMenu();
     }
 
     public void ResetToDefaults()
@@ -525,10 +668,10 @@ public class SettingsManager : MonoBehaviour
         PlayUIConfirmSound();
 
         // Reset to default values
-        if (fovSlider != null)
+        if (resolutionDropdown != null)
         {
-            fovSlider.value = DEFAULT_FOV;
-            OnFOVChanged(DEFAULT_FOV);
+            resolutionDropdown.value = 0; // Assuming default resolution is the first option
+            OnResolutionChanged(0);
         }
 
         if (masterVolumeSlider != null)
@@ -607,8 +750,8 @@ public class SettingsManager : MonoBehaviour
             Screen.SetResolution(resolution.width, resolution.height, fullscreenToggle.isOn);
         }
 
-
-        if (ConnectionManager.Instance.isConnected)
+        // Handle network username updates
+        if (ConnectionManager.Instance != null && ConnectionManager.Instance.isConnected)
         {
             ConnectionManager.Instance.UpdateClientUsernameServerRpc(NetworkManager.Singleton.LocalClientId, usernameInput.text);
         }
@@ -616,7 +759,7 @@ public class SettingsManager : MonoBehaviour
         // Save to PlayerPrefs
         SaveAllSettings();
 
-        // Save to JSON file (if you want to use this feature)
+        // Save ALL settings to JSON file
         SaveToJsonFile();
 
         // Play confirmation sound
@@ -630,114 +773,38 @@ public class SettingsManager : MonoBehaviour
     {
         try
         {
-            // Get the file path
-            string filePath = Path.Combine(Application.persistentDataPath, "settings.json");
-
-            // First try reading the existing file if it exists
-            string json = "{}";
-            if (File.Exists(filePath))
+            // Create settings data from current UI state
+            SettingsData data = new SettingsData
             {
-                json = File.ReadAllText(filePath);
-            }
-
-            // Create a temporary file to help with manual JSON manipulation
-            // This avoids issues with JSON parsing classes
-            string tempFile = Path.Combine(Application.persistentDataPath, "temp_settings.json");
-
-            // Update the values we care about by doing simple string replacements
-            // Note: This approach is less robust but avoids compatibility issues
-
-            // Audio Settings - this is what we're trying to fix
-            if (masterVolumeSlider != null)
+                // Video settings - use actual screen dimensions rather than dropdown-derived ones
+                resolutionWidth = Screen.width,
+                resolutionHeight = Screen.height,
+                refreshRate = (float)Screen.currentResolution.refreshRateRatio.value,
+                resolutionIndex = resolutionDropdown != null ? resolutionDropdown.value : -1,
+                fullscreen = fullscreenToggle != null ? fullscreenToggle.isOn : Screen.fullScreen,
+                
+                // Audio settings
+                masterVolume = masterVolumeSlider != null ? masterVolumeSlider.value : DEFAULT_MASTER_VOLUME,
+                musicVolume = musicVolumeSlider != null ? musicVolumeSlider.value : DEFAULT_MUSIC_VOLUME,
+                sfxVolume = sfxVolumeSlider != null ? sfxVolumeSlider.value : DEFAULT_SFX_VOLUME,
+                
+                // Gameplay settings
+                username = usernameInput != null ? usernameInput.text : DEFAULT_USERNAME,
+                
+                // Controls settings
+                sensitivity = sensitivitySlider != null ? sensitivitySlider.value : DEFAULT_SENSITIVITY
+            };
+            
+            // For debugging - log the actual dimensions we're saving
+            Debug.Log($"Saving resolution to JSON: {data.resolutionWidth}x{data.resolutionHeight} @ {data.refreshRate}Hz (index: {data.resolutionIndex})");
+            
+            // Save using SettingsFileManager
+            bool success = SettingsFileManager.SaveSettings(data);
+            
+            if (success)
             {
-                float masterVol = masterVolumeSlider.value;
-                // Replace any existing masterVolume value or add it if it doesn't exist
-                if (json.Contains("\"masterVolume\":"))
-                {
-                    json = System.Text.RegularExpressions.Regex.Replace(
-                        json,
-                        "\"masterVolume\":\\s*[0-9.-]+",
-                        $"\"masterVolume\": {masterVol}");
-                }
-                else
-                {
-                    // Add it before the last closing brace
-                    json = json.TrimEnd();
-                    if (json.EndsWith("}"))
-                    {
-                        json = json.Substring(0, json.Length - 1).TrimEnd();
-                        // Add comma if there are other properties
-                        if (!json.EndsWith("{") && !json.EndsWith(","))
-                        {
-                            json += ",";
-                        }
-                        json += $"\n    \"masterVolume\": {masterVol}\n}}";
-                    }
-                    else
-                    {
-                        json = $"{{\n    \"masterVolume\": {masterVol}\n}}";
-                    }
-                }
+                Debug.Log("Settings saved to JSON file successfully");
             }
-
-            // Do the same for music and sfx volume
-            if (musicVolumeSlider != null)
-            {
-                float musicVol = musicVolumeSlider.value;
-                if (json.Contains("\"musicVolume\":"))
-                {
-                    json = System.Text.RegularExpressions.Regex.Replace(
-                        json,
-                        "\"musicVolume\":\\s*[0-9.-]+",
-                        $"\"musicVolume\": {musicVol}");
-                }
-                else
-                {
-                    json = json.TrimEnd();
-                    if (json.EndsWith("}"))
-                    {
-                        json = json.Substring(0, json.Length - 1).TrimEnd();
-                        if (!json.EndsWith("{") && !json.EndsWith(","))
-                        {
-                            json += ",";
-                        }
-                        json += $"\n    \"musicVolume\": {musicVol}\n}}";
-                    }
-                }
-            }
-
-            if (sfxVolumeSlider != null)
-            {
-                float sfxVol = sfxVolumeSlider.value;
-                if (json.Contains("\"sfxVolume\":"))
-                {
-                    json = System.Text.RegularExpressions.Regex.Replace(
-                        json,
-                        "\"sfxVolume\":\\s*[0-9.-]+",
-                        $"\"sfxVolume\": {sfxVol}");
-                }
-                else
-                {
-                    json = json.TrimEnd();
-                    if (json.EndsWith("}"))
-                    {
-                        json = json.Substring(0, json.Length - 1).TrimEnd();
-                        if (!json.EndsWith("{") && !json.EndsWith(","))
-                        {
-                            json += ",";
-                        }
-                        json += $"\n    \"sfxVolume\": {sfxVol}\n}}";
-                    }
-                }
-            }
-
-            // Save the updated JSON
-            File.WriteAllText(filePath, json);
-
-            // Log the exact file path
-            Debug.Log("Settings file location: " + filePath);
-            Debug.Log("Settings saved to JSON file successfully");
-            Debug.Log("Updated JSON: " + json);
         }
         catch (System.Exception e)
         {

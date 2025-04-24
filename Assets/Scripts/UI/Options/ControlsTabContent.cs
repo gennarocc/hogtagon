@@ -78,6 +78,12 @@ public class ControlsTabContent : TabContent
     {
         // Settings are applied in real-time, so just save
         PlayerPrefs.Save();
+        
+        // Call the main SettingsManager ApplySettings to ensure JSON saving happens
+        if (settingsManager != null)
+        {
+            settingsManager.ApplySettings();
+        }
     }
     
     public override void ResetToDefaults()

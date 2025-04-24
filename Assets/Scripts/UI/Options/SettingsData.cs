@@ -1,14 +1,18 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// Data class for storing all game settings
+/// </summary>
 [Serializable]
 public class SettingsData
 {
     // Video settings
     public int resolutionWidth = 1920;
     public int resolutionHeight = 1080;
+    public int resolutionIndex = -1;
     public bool fullscreen = true;
-    public float fieldOfView = 90f;
+    public float refreshRate = 60f; // Stores the display refresh rate in Hz
     
     // Audio settings
     public float masterVolume = 0.8f;
@@ -28,8 +32,9 @@ public class SettingsData
         {
             resolutionWidth = 1920,
             resolutionHeight = 1080,
+            resolutionIndex = -1,
             fullscreen = true,
-            fieldOfView = 90f,
+            refreshRate = 60f,
             masterVolume = 0.8f,
             musicVolume = 0.8f,
             sfxVolume = 0.8f,

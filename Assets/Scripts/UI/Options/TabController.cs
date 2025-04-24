@@ -31,6 +31,9 @@ public class TabController : MonoBehaviour
     
     private void OnEnable()
     {
+        // Reset the current tab index to force reselection
+        currentTabIndex = -1;
+        
         // Auto-discover tabs if none are assigned
         if (tabs == null || tabs.Count == 0)
         {
@@ -277,6 +280,9 @@ public class TabController : MonoBehaviour
                 }
             }
         }
+        
+        // Reset the currentTabIndex to ensure proper reinitialization when reopened
+        currentTabIndex = -1;
         
         // Use the MenuManager's method for returning from settings
         // This ensures consistent navigation handling whether opened from pause or main menu

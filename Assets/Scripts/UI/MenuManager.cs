@@ -328,6 +328,9 @@ public class MenuManager : NetworkBehaviour
 
         // Reset pause state
         gameIsPaused = false;
+        
+        // Reset time scale to normal
+        Time.timeScale = 1f;
 
         // Lock cursor when resuming - do this BEFORE switching input modes
         Cursor.visible = false;
@@ -1473,24 +1476,65 @@ public class MenuManager : NetworkBehaviour
     /// </summary>
     public void ReturnFromSettingsMenu()
     {
-        // First, ensure settings panels are deactivated
-        if (settingsMenuUI != null)
-            settingsMenuUI.SetActive(false);
 
-        if (newOptionsMenuUI != null)
-            newOptionsMenuUI.SetActive(false);
+        // Log resolution at start
+        Debug.Log($"[MenuManager] ReturnFromSettingsMenu start: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
 
-        // Now show the appropriate menu based on where we came from
+        // Get the saved resolution values from PlayerPrefs
+        int savedWidth = PlayerPrefs.GetInt("screenWidth", Screen.width);
+        int savedHeight = PlayerPrefs.GetInt("screenHeight", Screen.height);
+        bool savedFullscreen = PlayerPrefs.GetInt("fullscreen", Screen.fullScreen ? 1 : 0) == 1;
+        
+        // Disable settings panels
+        settingsMenuUI.SetActive(false);
+        newOptionsMenuUI.SetActive(false);
+        
+        // Log after disabling panels
+        Debug.Log($"[MenuManager] After disabling panels: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
+        
+        // DO NOT try to apply the resolution here since SettingsManager already did it
+        // Just log the expected resolution for debugging purposes
+        Debug.Log($"[MenuManager] Expected resolution from PlayerPrefs: {savedWidth}x{savedHeight}, fullscreen: {savedFullscreen}");
+        
+        // Check if settings were opened from pause menu
         if (settingsOpenedFromPauseMenu)
         {
-            Debug.Log("[MenuManager] Returning to pause menu from settings");
-            ShowPauseMenu();
+            // Return to pause menu
+            Debug.Log($"[MenuManager] Settings were opened from pause menu. Returning to pause menu.");
+            pauseMenuUI.SetActive(true);
+            
+            // Ensure we're still paused
+            gameIsPaused = true;
+            Time.timeScale = 0f;
+            
+            // Handle button selection for controller navigation
+            if (defaultPauseMenuButton != null)
+            {
+                HandleButtonSelection(defaultPauseMenuButton);
+            }
         }
         else
         {
-            Debug.Log("[MenuManager] Returning to main menu from settings");
-            ShowMainMenu();
+            // Return to main menu
+            Debug.Log($"[MenuManager] Settings were opened from main menu. Returning to main menu.");
+            mainMenuPanel.SetActive(true);
+            
+            // Handle button selection for controller navigation
+            if (defaultMainMenuButton != null)
+            {
+                HandleButtonSelection(defaultMainMenuButton);
+            }
         }
+        
+        // Enable main camera if it was disabled
+        var mainCamera = Camera.main;
+        if (mainCamera != null && !mainCamera.enabled)
+        {
+            mainCamera.enabled = true;
+        }
+
+        // Final log
+        Debug.Log($"[MenuManager] ReturnFromSettingsMenu end: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
     }
 }
 

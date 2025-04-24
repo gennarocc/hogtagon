@@ -76,6 +76,7 @@ public class GameplayTabContent : TabContent
         if (warningMessageText != null)
         {
             warningMessageText.text = "";
+            warningMessageText.enabled = false;
         }
         
         // Validate username
@@ -89,12 +90,38 @@ public class GameplayTabContent : TabContent
             if (warningMessageText != null)
             {
                 warningMessageText.text = "Username cannot be empty";
+                warningMessageText.enabled = true;
             }
             return;
         }
         
         // Trim whitespace
         username = username.Trim();
+        
+        // Check for invalid characters (special symbols, etc.)
+        if (ContainsInvalidCharacters(username))
+        {
+            // Show warning message
+            if (warningMessageText != null)
+            {
+                warningMessageText.text = "Username contains invalid characters";
+                warningMessageText.enabled = true;
+            }
+            
+            // Don't save invalid username
+            return;
+        }
+        
+        // Check for minimum length
+        if (username.Length < 3)
+        {
+            if (warningMessageText != null)
+            {
+                warningMessageText.text = "Username must be at least 3 characters";
+                warningMessageText.enabled = true;
+            }
+            return;
+        }
         
         // Save the username
         PlayerPrefs.SetString("Username", username);
@@ -124,6 +151,7 @@ public class GameplayTabContent : TabContent
                     if (warningMessageText != null)
                     {
                         warningMessageText.text = warningMsg;
+                        warningMessageText.enabled = true;
                     }
                 }
             }
@@ -132,13 +160,25 @@ public class GameplayTabContent : TabContent
                 string infoMsg = "Not connected as client, username will be used when connecting";
                 Debug.Log(infoMsg);
                 
-                // Show info in UI
-                if (warningMessageText != null)
-                {
-                    warningMessageText.text = infoMsg;
-                }
+                // Optional: Show info in UI
+                // if (warningMessageText != null)
+                // {
+                //     warningMessageText.text = infoMsg;
+                //     warningMessageText.enabled = true;
+                // }
             }
         }
+    }
+    
+    // Helper method to check for invalid characters
+    private bool ContainsInvalidCharacters(string username)
+    {
+        // Define what characters are allowed
+        // This example allows only alphanumeric and some basic characters
+        System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9_\-. ]+$");
+        
+        // Return true if the username contains invalid characters
+        return !regex.IsMatch(username);
     }
     
     public override void ApplySettings()
@@ -149,8 +189,16 @@ public class GameplayTabContent : TabContent
             SaveUsername(usernameInput.text);
         }
         
-        // No other gameplay settings to apply currently
-        PlayerPrefs.Save();
+        // Call the main SettingsManager ApplySettings to ensure JSON saving happens
+        if (settingsManager != null)
+        {
+            settingsManager.ApplySettings();
+        }
+        else
+        {
+            // No other gameplay settings to apply currently
+            PlayerPrefs.Save();
+        }
     }
     
     public override void ResetToDefaults()
