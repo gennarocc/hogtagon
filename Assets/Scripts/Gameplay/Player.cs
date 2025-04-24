@@ -95,8 +95,8 @@ public class Player : NetworkBehaviour
         // Update Nameplate position
         if (!IsOwner && localPlayerCameraTransform != null)
         {
-            var smoothingSpeed = 5f;
-            Vector3 targetPosition = rb.position + new Vector3(0, 4f, 0);
+            var smoothingSpeed = 15f;
+            Vector3 targetPosition = rb.position + new Vector3(0, 3.5f, 0);
             nameplate.transform.position = Vector3.Lerp(nameplate.transform.position, targetPosition, smoothingSpeed * Time.deltaTime);
             Quaternion targetRotation = Quaternion.LookRotation(nameplate.transform.position - localPlayerCameraTransform.transform.position);
             nameplate.transform.rotation = Quaternion.Slerp(nameplate.transform.rotation, targetRotation, smoothingSpeed * Time.deltaTime);

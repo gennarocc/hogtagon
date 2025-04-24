@@ -358,11 +358,10 @@ public class ConnectionManager : NetworkBehaviour
 
     public void UpdateLobbyLeaderBasedOnScore()
     {
-        if (!IsServer)
-            return;
+        if (!IsServer) return;
 
-        // STEP 1: First, find the highest scoring player (without modifying anything)
-        ulong highestScoringClientId = 0;
+        // STEP 1: Firs the highest scoring player (without modifying anything)
+        ulong highestScoringClientId = 1000; // 1000 is a nonexistent player default value
         int highestScore = -1;
         bool foundAnyPlayer = false;
 
@@ -384,8 +383,7 @@ public class ConnectionManager : NetworkBehaviour
             }
         }
 
-        if (!foundAnyPlayer)
-            return;
+        if (!foundAnyPlayer) return;
 
         // STEP 2: Then update all player statuses (in a separate loop)
         foreach (ulong clientId in clientIds)
