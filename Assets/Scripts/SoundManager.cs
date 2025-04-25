@@ -131,6 +131,13 @@ public class SoundManager : NetworkBehaviour
     // Play a sound locally on a specific GameObject
     public void PlayLocalSound(GameObject soundObject, SoundEffectType effectType)
     {
+        if (!Application.isFocused)
+        {
+           Debug.Log($"[AUDIO] Skipping audio event {effectType}. App is not in focus."); 
+           return;
+        }
+
+
         if (soundEffectMap.TryGetValue(effectType, out AK.Wwise.Event audioEvent))
         {
                 audioEvent.Post(soundObject);
