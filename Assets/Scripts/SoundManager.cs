@@ -9,6 +9,10 @@ public class SoundManager : NetworkBehaviour
     // Singleton instance
     public static SoundManager Instance { get; private set; }
 
+    [SerializeField] public AK.Wwise.RTPC MasterVolume;
+    [SerializeField] public AK.Wwise.RTPC MusicVolume;
+    [SerializeField] public AK.Wwise.RTPC SfxVolume;
+
     // Define sound effect types
     public enum SoundEffectType
     {
@@ -133,19 +137,34 @@ public class SoundManager : NetworkBehaviour
     {
         if (!Application.isFocused)
         {
-           Debug.Log($"[AUDIO] Skipping audio event {effectType}. App is not in focus."); 
-           return;
+            Debug.Log($"[AUDIO] Skipping audio event {effectType}. App is not in focus.");
+            return;
         }
 
 
         if (soundEffectMap.TryGetValue(effectType, out AK.Wwise.Event audioEvent))
         {
-                audioEvent.Post(soundObject);
+            audioEvent.Post(soundObject);
         }
         else
         {
             Debug.LogWarning($"[AUDIO] Sound effect {effectType} not found in sound effect map");
         }
+    }
+
+    public void SetMasterVolume(float vol)
+    {
+        MasterVolume.SetGlobalValue(vol);
+    }
+
+    public void SetMusicVolume(float vol)
+    {
+        MusicVolume.SetGlobalValue(vol);
+    }
+
+    public void SetSfxVolume(float vol)
+    {
+        SfxVolume.SetGlobalValue(vol);
     }
 
     #endregion

@@ -11312,6 +11312,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  MasterVolume:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 6c68db4f9a756e847954490e04e5d673, type: 2}
+  MusicVolume:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: 61ed68fcb39605a42b6f453c02938b91, type: 2}
+  SfxVolume:
+    idInternal: 0
+    valueGuidInternal: 
+    WwiseObjectReference: {fileID: 11400000, guid: ae48f36e54c88224895036ce6bbf495b, type: 2}
   soundEffects:
   - type: 0
     audioEvent:
@@ -19573,7 +19585,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4960379966799485974, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1014
+      value: 1014.4182
       objectReference: {fileID: 0}
     - target: {fileID: 4960379966799485974, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_SizeDelta.y
@@ -19581,7 +19593,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4960379966799485974, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 507
+      value: 507.2091
       objectReference: {fileID: 0}
     - target: {fileID: 4960379966799485974, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -19637,7 +19649,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5861025080116626681, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1014
+      value: 1014.4182
       objectReference: {fileID: 0}
     - target: {fileID: 5861025080116626681, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_SizeDelta.y
@@ -19645,7 +19657,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5861025080116626681, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 507
+      value: 507.2091
       objectReference: {fileID: 0}
     - target: {fileID: 5861025080116626681, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -19669,7 +19681,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6076530363175385180, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 789.3333
+      value: 789.6121
       objectReference: {fileID: 0}
     - target: {fileID: 6076530363175385180, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -19690,6 +19702,10 @@ PrefabInstance:
     - target: {fileID: 6113734396913933679, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6306853515311162792, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6319945042591179815, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchorMax.y
@@ -19873,7 +19889,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7605640168112513637, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 504.66666
+      value: 504.80606
       objectReference: {fileID: 0}
     - target: {fileID: 7605640168112513637, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -19949,7 +19965,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8938780366354004618, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 667
+      value: 667.2091
       objectReference: {fileID: 0}
     - target: {fileID: 8938780366354004618, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_AnchoredPosition.y

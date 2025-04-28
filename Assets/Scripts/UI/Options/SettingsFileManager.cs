@@ -8,7 +8,7 @@ using UnityEngine.Audio;
 public static class SettingsFileManager
 {
     private const string SETTINGS_FILENAME = "settings.json";
-    
+
     /// <summary>
     /// Gets the full path to the settings file
     /// </summary>
@@ -19,7 +19,7 @@ public static class SettingsFileManager
             return Path.Combine(Application.persistentDataPath, SETTINGS_FILENAME);
         }
     }
-    
+
     /// <summary>
     /// Saves settings to a JSON file
     /// </summary>
@@ -40,7 +40,7 @@ public static class SettingsFileManager
             return false;
         }
     }
-    
+
     /// <summary>
     /// Loads settings from a JSON file
     /// </summary>
@@ -68,7 +68,7 @@ public static class SettingsFileManager
             return SettingsData.GetDefaults();
         }
     }
-    
+
     /// <summary>
     /// Applies loaded settings to the game
     /// </summary>
@@ -77,7 +77,7 @@ public static class SettingsFileManager
     {
         // Apply resolution and fullscreen
         Screen.SetResolution(settings.resolutionWidth, settings.resolutionHeight, settings.fullscreen);
-        
+
         // Store values in PlayerPrefs for compatibility with existing code
         PlayerPrefs.SetFloat("MasterVolume", settings.masterVolume);
         PlayerPrefs.SetFloat("MusicVolume", settings.musicVolume);
@@ -90,12 +90,18 @@ public static class SettingsFileManager
         {
             PlayerPrefs.SetInt("ResolutionIndex", settings.resolutionIndex);
         }
+
+        SoundManager.Instance.SetMasterVolume(settings.masterVolume);
+        SoundManager.Instance.SetMusicVolume(settings.musicVolume);
+        SoundManager.Instance.SetSfxVolume(settings.sfxVolume);
+
         PlayerPrefs.Save();
-        
+
+
         // Log success
         Debug.Log("Settings applied successfully");
     }
-    
+
     /// <summary>
     /// Creates a SettingsData object from the current game state and PlayerPrefs
     /// </summary>
@@ -116,9 +122,9 @@ public static class SettingsFileManager
             username = PlayerPrefs.GetString("Username", "Player"),
             sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f)
         };
-        
+
         Debug.Log($"CreateFromCurrentSettings: Using resolution {data.resolutionWidth}x{data.resolutionHeight} @ {data.refreshRate}Hz");
-        
+
         return data;
     }
-} 
+}
