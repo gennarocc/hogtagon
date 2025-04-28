@@ -1097,6 +1097,11 @@
 												</ModifierInfo>
 											</ModifierList>
 										</Property>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-6</Value>
+											</ValueList>
+										</Property>
 									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
@@ -2286,6 +2291,7 @@
 							</ReferenceList>
 							<ChildrenList>
 								<AudioFileSource Name="30secs-remaining" ID="{41360FDF-E43B-413F-A281-5568BC02CD89}">
+									<Comment>needs to be something a little more general "Running Out Of Time" or something like this</Comment>
 									<PropertyList>
 										<Property Name="FadeInDuration" Type="Real64" Value="0.0705424312479418"/>
 										<Property Name="FadeOutDuration" Type="Real64" Value="0.0573157253889525"/>
