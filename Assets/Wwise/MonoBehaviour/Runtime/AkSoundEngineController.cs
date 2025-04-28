@@ -207,7 +207,10 @@ public class AkSoundEngineController
 
 	public void OnApplicationFocus(bool focus)
 	{
+		 ActivateAudio(true, true);
 	}
+
+
 #elif UNITY_WEBGL
 	// On WebGL, allow background audio when browser is un-focused in development builds to make the Wwise Profiler usable.
 	public void OnApplicationPause(bool pauseStatus) 
@@ -233,7 +236,8 @@ public class AkSoundEngineController
 	public void OnApplicationFocus(bool focus)
 	{
 #if !UNITY_ANDROID
-		ActivateAudio(focus,AkWwiseInitializationSettings.Instance.RenderDuringFocusLoss);
+		// ActivateAudio(focus,AkWwiseInitializationSettings.Instance.RenderDuringFocusLoss);
+		 ActivateAudio(true, true);
 #endif
 	}
 #endif
