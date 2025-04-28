@@ -11410,6 +11410,11 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 11400000, guid: 52a10dee51af69a4686fefc7af7536d3, type: 2}
+  - type: 6
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
   globalSoundSource: {fileID: 662722771}
 --- !u!1 &705507993
 GameObject:
@@ -20221,6 +20226,7 @@ MonoBehaviour:
   sfxVolumeText: {fileID: 0}
   audioMixer: {fileID: 0}
   usernameInput: {fileID: 8139383635423295497}
+  cameraSteeringToggle: {fileID: 0}
   sensitivitySlider: {fileID: 8139383635423295494}
   sensitivityValueText: {fileID: 0}
   uiClick:

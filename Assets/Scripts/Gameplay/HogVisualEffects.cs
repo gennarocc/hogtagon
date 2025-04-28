@@ -9,6 +9,7 @@ public class HogVisualEffects : MonoBehaviour
     [SerializeField] public TrailRenderer rearLeftWheelTireSkid;
     [SerializeField] public TrailRenderer rearRightWheelTireSkid;
     [SerializeField] public GameObject explosionPrefab;
+    [SerializeField] public GameObject sparksPrefab;
     [SerializeField] public ParticleSystem[] jumpParticleSystems = new ParticleSystem[2]; // RL, RR
 
     private bool driftingSoundOn = false;
@@ -107,17 +108,26 @@ public class HogVisualEffects : MonoBehaviour
         Debug.Log("Exploding car for player - " + ConnectionManager.Instance.GetClientUsername(ownerClientId));
 
         // Cleanup explosion after delay
-        StartCoroutine(CleanupExplosion());
+        StartCoroutine(CleanupEffect(currentExplosionInstance, 2f));
     }
 
-    private IEnumerator CleanupExplosion()
+    public void CreateCrashSparks(Vector3 hitNormal, Vector3 hitPosition)
     {
-        yield return new WaitForSeconds(3f);
+        // Instantiate the sparks at the exact hit position with rotation facing away from the surface
+        Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, hitNormal);
+        GameObject sparkEffect = Instantiate(sparksPrefab, hitPosition, rotation);
 
-        if (currentExplosionInstance != null)
+        // Don't parent to the vehicle - this keeps the effect at the collision point
+        StartCoroutine(CleanupEffect(sparkEffect, .5f));
+    }
+
+    private IEnumerator CleanupEffect(GameObject effect, float duration)
+    {
+        yield return new WaitForSeconds(duration);
+
+        if (effect != null)
         {
-            Destroy(currentExplosionInstance);
-            currentExplosionInstance = null;
+            Destroy(effect);
         }
     }
 }

@@ -257,6 +257,7 @@ public class HogController : NetworkBehaviour
 
     private void OnHornPressed()
     {
+        if (GetComponent<Player>().isSpectating) return; // Can not honk if dead
         SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
     }
 
@@ -853,6 +854,8 @@ public class HogController : NetworkBehaviour
 
         Debug.Log($"[HOG] Speed: {playerSpeed:F1}, Force applied: {enhancedForceMagnitude:F1}, " +
                   $"Direction: {forceDir}, Speed bonus: {speedBonus:P0}");
+
+        visualEffects.CreateCrashSparks(hitNormal, hitPoint);
 
         StartCoroutine(BumperCollisionCooldown());
     }
