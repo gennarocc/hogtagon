@@ -42,7 +42,7 @@ public class HogController : NetworkBehaviour
     [SerializeField] private float driftMinSpeed = 5f; // Minimum speed required for drift
 
     [Header("Camera Control Scheme")]
-    [SerializeField] private bool useCameraBasedSteering = false;
+    [SerializeField] public bool useCameraBasedSteering = false;
     [SerializeField, Range(0f, 1f)] private float cameraSteeringSensitivity = 0.8f; // How sensitive the steering is
     [SerializeField] private AnimationCurve cameraSteeringCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField, Range(0f, 0.3f)] private float steeringDeadzone = 0.1f; // Add deadzone parameter

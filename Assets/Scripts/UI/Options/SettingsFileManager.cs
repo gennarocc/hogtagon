@@ -90,6 +90,7 @@ public static class SettingsFileManager
         {
             PlayerPrefs.SetInt("ResolutionIndex", settings.resolutionIndex);
         }
+        PlayerPrefs.SetInt("CameraSteering", settings.cameraSteering ? 1 : 0);
 
         SoundManager.Instance.SetMasterVolume(settings.masterVolume);
         SoundManager.Instance.SetMusicVolume(settings.musicVolume);
@@ -120,7 +121,8 @@ public static class SettingsFileManager
             musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f),
             sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 0.8f),
             username = PlayerPrefs.GetString("Username", "Player"),
-            sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f)
+            sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f),
+            cameraSteering = false,
         };
 
         Debug.Log($"CreateFromCurrentSettings: Using resolution {data.resolutionWidth}x{data.resolutionHeight} @ {data.refreshRate}Hz");

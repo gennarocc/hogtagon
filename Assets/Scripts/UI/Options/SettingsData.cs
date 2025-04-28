@@ -24,6 +24,8 @@ public class SettingsData
     
     // Controls settings
     public float sensitivity = 1.0f;
+
+    public bool cameraSteering = false;
     
     // Create a default settings object
     public static SettingsData GetDefaults()
@@ -39,7 +41,8 @@ public class SettingsData
             musicVolume = 0.8f,
             sfxVolume = 0.8f,
             username = "Player",
-            sensitivity = 1.0f
+            sensitivity = 1.0f,
+            cameraSteering = false,
         };
     }
 } 

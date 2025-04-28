@@ -41,6 +41,7 @@ public class SettingsManager : MonoBehaviour
 
     [Header("Gameplay Settings")]
     [SerializeField] private TMP_InputField usernameInput;
+    [SerializeField] private Toggle cameraSteeringToggle;
 
     [Header("Controls Settings")]
     [SerializeField] private Slider sensitivitySlider;
@@ -119,6 +120,9 @@ public class SettingsManager : MonoBehaviour
         // Controls settings
         if (sensitivitySlider != null)
             sensitivitySlider.onValueChanged.AddListener(OnSensitivityChanged);
+
+        if (cameraSteeringToggle != null)
+            cameraSteeringToggle.onValueChanged.AddListener(OnCameraSteeringToggled);
     }
 
     #region Settings Loading/Saving
@@ -246,13 +250,13 @@ public class SettingsManager : MonoBehaviour
 
             // Update UI to match loaded settings
             UpdateUI();
-            
+
             Debug.Log("Settings loaded successfully from file");
         }
         catch (System.Exception e)
         {
             Debug.LogError($"Error loading settings from file: {e.Message}");
-            
+
             // Fall back to PlayerPrefs if JSON loading fails
             LoadAllSettings();
         }
@@ -326,19 +330,20 @@ public class SettingsManager : MonoBehaviour
         {
             // Get all available resolutions
             Resolution[] allResolutions = Screen.resolutions;
-            
+
             // Filter to only include 60Hz, 120Hz, and 144Hz (with small margin for rounding)
-            resolutions = allResolutions.Where(res => {
+            resolutions = allResolutions.Where(res =>
+            {
                 float rate = (float)res.refreshRateRatio.value;
-                return (rate >= 59.5f && rate <= 60.5f) || 
-                       (rate >= 119.5f && rate <= 120.5f) || 
+                return (rate >= 59.5f && rate <= 60.5f) ||
+                       (rate >= 119.5f && rate <= 120.5f) ||
                        (rate >= 143.5f && rate <= 144.5f);
             }).ToArray();
-            
+
             resolutionDropdown.ClearOptions();
 
             List<string> options = new List<string>();
-            
+
             // To help with debugging, log all available resolutions 
             Debug.Log($"[SettingsManager] Available resolutions ({resolutions.Length}, filtered to 60/120/144Hz):");
             for (int i = 0; i < resolutions.Length; i++)
@@ -349,16 +354,16 @@ public class SettingsManager : MonoBehaviour
             }
 
             resolutionDropdown.AddOptions(options);
-            
+
             // Get the saved resolution values
             int savedWidth = PlayerPrefs.GetInt("screenWidth", Screen.width);
             int savedHeight = PlayerPrefs.GetInt("screenHeight", Screen.height);
             float savedRefreshRate = PlayerPrefs.GetFloat("refreshRate", (float)Screen.currentResolution.refreshRateRatio.value);
-            
+
             // Find the index that matches our saved resolution and refresh rate
             int savedIndex = FindClosestResolutionIndex(savedWidth, savedHeight, savedRefreshRate);
             Debug.Log($"[SettingsManager] Found index {savedIndex} for saved resolution {savedWidth}x{savedHeight}@{savedRefreshRate}Hz");
-            
+
             // Set the dropdown value and refresh
             resolutionDropdown.value = savedIndex;
             resolutionDropdown.RefreshShownValue();
@@ -370,44 +375,44 @@ public class SettingsManager : MonoBehaviour
     {
         if (resolutions == null || resolutions.Length == 0)
             return 0;
-        
+
         // First try exact match including refresh rate
         for (int i = 0; i < resolutions.Length; i++)
         {
-            if (resolutions[i].width == width && 
-                resolutions[i].height == height && 
+            if (resolutions[i].width == width &&
+                resolutions[i].height == height &&
                 Mathf.Approximately((float)resolutions[i].refreshRateRatio.value, refreshRate))
                 return i;
         }
-        
+
         // If no exact match, try matching just resolution without refresh rate
         for (int i = 0; i < resolutions.Length; i++)
         {
             if (resolutions[i].width == width && resolutions[i].height == height)
                 return i;
         }
-        
+
         // If still no match, find closest
         int closestIndex = 0;
         float closestDiff = float.MaxValue;
-        
+
         for (int i = 0; i < resolutions.Length; i++)
         {
             float aspectRatio = (float)resolutions[i].width / resolutions[i].height;
             float targetRatio = (float)width / height;
             float aspectDiff = Mathf.Abs(aspectRatio - targetRatio);
-            
+
             float areaDiff = Mathf.Abs(resolutions[i].width * resolutions[i].height - width * height);
             float refreshDiff = Mathf.Abs((float)resolutions[i].refreshRateRatio.value - refreshRate);
             float combinedDiff = areaDiff + aspectDiff * 1000 + refreshDiff * 10; // Weight factors
-            
+
             if (combinedDiff < closestDiff)
             {
                 closestDiff = combinedDiff;
                 closestIndex = i;
             }
         }
-        
+
         return closestIndex;
     }
 
@@ -429,6 +434,8 @@ public class SettingsManager : MonoBehaviour
         // Fullscreen will be applied when video settings are saved
     }
 
+
+
     public void ApplyVideoSettings()
     {
         PlayUIConfirmSound();
@@ -438,34 +445,34 @@ public class SettingsManager : MonoBehaviour
             // Store current resolution in case we need to revert
             Resolution currentResolution = Screen.currentResolution;
             bool currentFullscreen = Screen.fullScreen;
-            
+
             // Safety check - ensure dropdown value is valid
             if (resolutionDropdown != null && resolutionDropdown.value >= 0 && resolutionDropdown.value < resolutions.Length)
             {
                 Resolution resolution = resolutions[resolutionDropdown.value];
-                
+
                 // Apply screen resolution and fullscreen setting
                 Screen.SetResolution(resolution.width, resolution.height, fullscreenToggle.isOn);
-                
+
                 // Save resolution including refresh rate
                 PlayerPrefs.SetInt("screenWidth", resolution.width);
                 PlayerPrefs.SetInt("screenHeight", resolution.height);
                 PlayerPrefs.SetFloat("refreshRate", (float)resolution.refreshRateRatio.value);
-                
+
                 // Save the settings (to PlayerPrefs only, JSON saving happens in ApplySettings)
                 SaveAllSettings();
             }
             else
             {
                 Debug.LogWarning("Invalid resolution dropdown value. Using current resolution.");
-                
+
                 // If dropdown has invalid value, save current resolution to settings
                 if (resolutionDropdown != null)
                 {
                     // Try to find current resolution in the list
                     for (int i = 0; i < resolutions.Length; i++)
                     {
-                        if (resolutions[i].width == currentResolution.width && 
+                        if (resolutions[i].width == currentResolution.width &&
                             resolutions[i].height == currentResolution.height)
                         {
                             resolutionDropdown.value = i;
@@ -473,13 +480,13 @@ public class SettingsManager : MonoBehaviour
                         }
                     }
                 }
-                
+
                 // Apply fullscreen toggle if available
                 if (fullscreenToggle != null)
                 {
                     Screen.fullScreen = fullscreenToggle.isOn;
                 }
-                
+
                 // Save settings with corrected values (to PlayerPrefs only)
                 SaveAllSettings();
             }
@@ -556,6 +563,14 @@ public class SettingsManager : MonoBehaviour
 
     // Controls Settings
 
+    public void OnCameraSteeringToggled(bool isCameraSteering)
+    {
+        PlayUIClickSound();
+        Player player = ConnectionManager.Instance.GetPlayer(NetworkManager.Singleton.LocalClientId);
+        player.gameObject.GetComponent<HogController>().useCameraBasedSteering = isCameraSteering;
+        Debug.Log("[CONTROLS] Camera Steering changes to " + isCameraSteering);
+    }
+
     public void OnSensitivityChanged(float sensitivity)
     {
         PlayUIClickSound();
@@ -593,31 +608,31 @@ public class SettingsManager : MonoBehaviour
 
         // Get the selected resolution index
         int selectedResIndex = resolutionDropdown.value;
-        
+
         // Make sure we have valid resolutions
         if (resolutions != null && resolutions.Length > 0 && selectedResIndex < resolutions.Length)
         {
             Resolution selectedResolution = resolutions[selectedResIndex];
             bool isFullscreen = fullscreenToggle.isOn;
-            
+
             // Log the resolution we're about to apply
             Debug.Log($"[SettingsManager] Selected dropdown index {selectedResIndex} = {selectedResolution.width}x{selectedResolution.height} @ {(float)selectedResolution.refreshRateRatio.value}Hz");
-            
+
             // Apply the resolution immediately - force try twice to ensure it takes effect
             Debug.Log($"[SettingsManager] Applying resolution {selectedResolution.width}x{selectedResolution.height} @ {(float)selectedResolution.refreshRateRatio.value}Hz, fullscreen: {isFullscreen}");
-            
+
             // First attempt
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, isFullscreen);
             // Force fullscreen state separately
             Screen.fullScreen = isFullscreen;
-            
+
             // Wait a frame to allow the resolution to change
             System.Threading.Thread.Sleep(100);
-            
+
             // Second attempt to make sure it sticks
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, isFullscreen);
             Screen.fullScreen = isFullscreen;
-            
+
             // Save width, height, refresh rate and fullscreen to PlayerPrefs
             PlayerPrefs.SetInt("screenWidth", selectedResolution.width);
             PlayerPrefs.SetInt("screenHeight", selectedResolution.height);
@@ -626,15 +641,16 @@ public class SettingsManager : MonoBehaviour
             PlayerPrefs.SetInt("resolutionIndex", selectedResIndex);
             PlayerPrefs.Save();
             Debug.Log($"[SettingsManager] Saved to PlayerPrefs: {selectedResolution.width}x{selectedResolution.height} @ {(float)selectedResolution.refreshRateRatio.value}Hz, fullscreen: {isFullscreen}, index: {selectedResIndex}");
-            
+
             // Create a new SettingsData using the selected values
-            SettingsData data = new SettingsData {
+            SettingsData data = new SettingsData
+            {
                 resolutionWidth = selectedResolution.width,
                 resolutionHeight = selectedResolution.height,
                 refreshRate = (float)selectedResolution.refreshRateRatio.value,
                 resolutionIndex = selectedResIndex,
                 fullscreen = isFullscreen,
-                
+
                 // Get other values from PlayerPrefs
                 masterVolume = PlayerPrefs.GetFloat("MasterVolume", 0.8f),
                 musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f),
@@ -642,12 +658,12 @@ public class SettingsManager : MonoBehaviour
                 username = PlayerPrefs.GetString("Username", "Player"),
                 sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f)
             };
-            
+
             // Save directly to JSON
             Debug.Log($"[SettingsManager] Saving resolution to JSON: {selectedResolution.width}x{selectedResolution.height} (index: {selectedResIndex})");
             SettingsFileManager.SaveSettings(data);
             Debug.Log("[SettingsManager] Settings saved to JSON file successfully");
-            
+
             // Wait to ensure the resolution is applied
             System.Threading.Thread.Sleep(200);
         }
@@ -658,7 +674,7 @@ public class SettingsManager : MonoBehaviour
 
         // Double-check what resolution we ended up with before returning to menu
         Debug.Log($"[SettingsManager] Before returning to menu: Resolution is {Screen.width}x{Screen.height}, fullscreen: {Screen.fullScreen}");
-        
+
         // Return to the previous menu
         MenuManager.Instance.ReturnFromSettingsMenu();
     }
@@ -782,25 +798,25 @@ public class SettingsManager : MonoBehaviour
                 refreshRate = (float)Screen.currentResolution.refreshRateRatio.value,
                 resolutionIndex = resolutionDropdown != null ? resolutionDropdown.value : -1,
                 fullscreen = fullscreenToggle != null ? fullscreenToggle.isOn : Screen.fullScreen,
-                
+
                 // Audio settings
                 masterVolume = masterVolumeSlider != null ? masterVolumeSlider.value : DEFAULT_MASTER_VOLUME,
                 musicVolume = musicVolumeSlider != null ? musicVolumeSlider.value : DEFAULT_MUSIC_VOLUME,
                 sfxVolume = sfxVolumeSlider != null ? sfxVolumeSlider.value : DEFAULT_SFX_VOLUME,
-                
+
                 // Gameplay settings
                 username = usernameInput != null ? usernameInput.text : DEFAULT_USERNAME,
-                
+
                 // Controls settings
                 sensitivity = sensitivitySlider != null ? sensitivitySlider.value : DEFAULT_SENSITIVITY
             };
-            
+
             // For debugging - log the actual dimensions we're saving
             Debug.Log($"Saving resolution to JSON: {data.resolutionWidth}x{data.resolutionHeight} @ {data.refreshRate}Hz (index: {data.resolutionIndex})");
-            
+
             // Save using SettingsFileManager
             bool success = SettingsFileManager.SaveSettings(data);
-            
+
             if (success)
             {
                 Debug.Log("Settings saved to JSON file successfully");
