@@ -5939,6 +5939,7 @@ GameObject:
   - component: {fileID: 423498032}
   - component: {fileID: 423498033}
   - component: {fileID: 423498035}
+  - component: {fileID: 423498036}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -6020,6 +6021,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   collisionMemoryDuration: 10
+--- !u!114 &423498036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423498031}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 291d173d3cce44a46b370efed242174f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  screenshotSubdirectory: Screenshots
 --- !u!1 &456806249
 GameObject:
   m_ObjectHideFlags: 0
@@ -18446,7 +18460,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.9550781, y: 27.934937}
+  m_AnchoredPosition: {x: -0.9550781, y: 27.935059}
   m_SizeDelta: {x: 30.110107, y: 135.13005}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1809264714
