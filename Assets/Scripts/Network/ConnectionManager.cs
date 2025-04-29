@@ -160,7 +160,7 @@ public class ConnectionManager : NetworkBehaviour
     public bool CheckUsernameAvailability(string username)
     {
         // Check length. 
-        if (username.Length > 10) return false;
+        if (username.Length > 16) return false;
 
         // Only alpha numeric characters.
         var regex = new Regex("^[a-zA-Z0-9]*$");
