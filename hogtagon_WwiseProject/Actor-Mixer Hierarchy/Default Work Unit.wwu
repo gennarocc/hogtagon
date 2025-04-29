@@ -2275,6 +2275,11 @@
 						<Sound Name="30secs-remaining" ID="{99F508C4-8B02-431A-836B-CBA6BA25931A}" ShortID="353613340">
 							<PropertyList>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+								<Property Name="Inclusion" Type="bool">
+									<ValueList>
+										<Value>False</Value>
+									</ValueList>
+								</Property>
 								<Property Name="Volume" Type="Real64">
 									<ValueList>
 										<Value>1</Value>
@@ -2403,6 +2408,175 @@
 								<ActiveSource Name="winner" ID="{E7B970F2-0192-4898-B767-88F42E342B8F}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
+						<RandomSequenceContainer Name="out-of-time" ID="{E159DE64-82B4-47E7-8C36-E0C1D6DF2A15}" ShortID="105289663">
+							<PropertyList>
+								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<Sound Name="final-moments-1" ID="{AFC145B9-3ECF-4FD8-8244-E7FF326FA4A1}" ShortID="248312423">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="final-moments-1" ID="{1E42E035-7C51-43A0-95EE-C03C8872119D}">
+											<Language>SFX</Language>
+											<AudioFile>final-moments-1.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="669803493"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="final-moments-1" ID="{1E42E035-7C51-43A0-95EE-C03C8872119D}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="final-moments-2" ID="{101A1646-903B-4EF8-83B4-4F377E3EF927}" ShortID="645044334">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="final-moments-2" ID="{86763C22-BD7D-43D5-A5EB-5EB41B9F0760}">
+											<Language>SFX</Language>
+											<AudioFile>final-moments-2.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="986065534"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="final-moments-2" ID="{86763C22-BD7D-43D5-A5EB-5EB41B9F0760}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="last-chance" ID="{5506F98E-F7CF-42C3-9E44-51B93777D96D}" ShortID="216570129">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="last-chance" ID="{24BC61B7-CD62-45C9-8D7A-2C85C9F33DAA}">
+											<Language>SFX</Language>
+											<AudioFile>last-chance.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="404555391"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="last-chance" ID="{24BC61B7-CD62-45C9-8D7A-2C85C9F33DAA}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="running-out-of-time-1" ID="{E29C23A9-997C-4709-97E6-E8BF7221ED90}" ShortID="760888837">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="running-out-of-time-1" ID="{A490FC52-E4CE-4EBB-A8E6-C12A96FC7379}">
+											<Language>SFX</Language>
+											<AudioFile>running-out-of-time-1.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="343010491"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="running-out-of-time-1" ID="{A490FC52-E4CE-4EBB-A8E6-C12A96FC7379}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="running-out-of-time-2" ID="{60767B43-10E7-425A-843B-FCFA222AC223}" ShortID="295749825">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="running-out-of-time-2" ID="{0B60603E-C46C-494A-8F6B-69B285E1CE54}">
+											<Language>SFX</Language>
+											<AudioFile>running-out-of-time-2.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="671294554"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="running-out-of-time-2" ID="{0B60603E-C46C-494A-8F6B-69B285E1CE54}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="the-end-approaches" ID="{C56AD7F6-40EB-4A04-90F8-1E10E4AB3DC7}" ShortID="582815924">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="the-end-approaches" ID="{19187E45-68F6-429E-8BEC-DFEA22AEFF8B}">
+											<Language>SFX</Language>
+											<AudioFile>the-end-approaches.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="476288891"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="the-end-approaches" ID="{19187E45-68F6-429E-8BEC-DFEA22AEFF8B}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="times-running-short" ID="{0C70ED47-B6C3-4CBF-8332-DC32A8B72B3B}" ShortID="218334108">
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="times-running-short" ID="{F9C46AB3-62D2-4798-9280-31B228D87E61}">
+											<Language>SFX</Language>
+											<AudioFile>times-running-short.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="364911026"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="times-running-short" ID="{F9C46AB3-62D2-4798-9280-31B228D87E61}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+							</ChildrenList>
+						</RandomSequenceContainer>
 					</ChildrenList>
 				</Folder>
 			</ChildrenList>

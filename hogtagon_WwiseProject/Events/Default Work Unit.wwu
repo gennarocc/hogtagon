@@ -352,12 +352,12 @@
 						</Action>
 					</ChildrenList>
 				</Event>
-				<Event Name="Round30Sec" ID="{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}">
+				<Event Name="RoundOutOfTime" ID="{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}">
 					<ChildrenList>
 						<Action Name="" ID="{8409DEC8-CA21-4DED-BBBC-1F462E78F345}" ShortID="535017419">
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="30secs-remaining" ID="{99F508C4-8B02-431A-836B-CBA6BA25931A}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+									<ObjectRef Name="out-of-time" ID="{E159DE64-82B4-47E7-8C36-E0C1D6DF2A15}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
