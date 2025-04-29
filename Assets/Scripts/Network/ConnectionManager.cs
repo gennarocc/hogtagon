@@ -65,7 +65,8 @@ public class ConnectionManager : NetworkBehaviour
             colorIndex = GetAvailableTextureIndex(),
             state = GameManager.Instance.state == GameState.Playing ? PlayerState.Dead : PlayerState.Alive,
             spawnPoint = sp,
-            isLobbyLeader = false
+            isLobbyLeader = false,
+            team = 0,
         };
 
         pendingPlayerData.Add(clientId, player);
@@ -198,7 +199,7 @@ public class ConnectionManager : NetworkBehaviour
         PlayerData playerData = pendingPlayerData[clientId];
         clientDataDictionary.Add(clientId, playerData);
 
-        GetPlayer(clientId).SetPlayerData(playerData); 
+        GetPlayer(clientId).SetPlayerData(playerData);
 
         // Notify all clients about the new player for the client dictionary
         UpdatePlayerDataClientRpc(clientId, playerData);
@@ -416,26 +417,6 @@ public class ConnectionManager : NetworkBehaviour
         }
     }
 
-    private void HandleConnectionFailed()
-    {
-        // Show error message
-        if (menuManager != null)
-        {
-            menuManager.DisplayConnectionError("Failed to connect to the game.");
-            menuManager.ShowMainMenu();
-        }
-    }
-
-    private void HandleDisconnected()
-    {
-        // Show error message
-        if (menuManager != null)
-        {
-            menuManager.DisplayConnectionError("Disconnected from the game.");
-            menuManager.ShowMainMenu();
-        }
-    }
-
     // Get player's username with color tag based on their car color
     public string GetPlayerColoredName(ulong clientId)
     {
@@ -546,6 +527,7 @@ public class ConnectionManager : NetworkBehaviour
         int safeIndex = colorIndex % fallbackColors.Length;
         return fallbackColors[safeIndex];
     }
+
 }
 
 public struct PlayerData : INetworkSerializable
@@ -556,6 +538,7 @@ public struct PlayerData : INetworkSerializable
     public PlayerState state;
     public Vector3 spawnPoint;
     public bool isLobbyLeader;
+    public int team;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
@@ -566,6 +549,7 @@ public struct PlayerData : INetworkSerializable
         serializer.SerializeValue(ref state);
         serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref isLobbyLeader);
+        serializer.SerializeValue(ref team);
     }
 }
 
@@ -578,6 +562,8 @@ public struct ClientData : INetworkSerializable
     public Vector3 spawnPoint;
     public PlayerState state;
     public bool isLobbyLeader;
+    public int team;
+
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
@@ -588,6 +574,7 @@ public struct ClientData : INetworkSerializable
         serializer.SerializeValue(ref state);
         serializer.SerializeValue(ref spawnPoint);
         serializer.SerializeValue(ref isLobbyLeader);
+        serializer.SerializeValue(ref team);
     }
 }
 

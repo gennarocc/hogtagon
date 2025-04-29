@@ -156,6 +156,14 @@ public class Player : NetworkBehaviour
 
         SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
 
+        GetComponent<HogController>().ResetJump();
+
+        // Apply team color directly for the host player
+        if (GameManager.Instance.gameMode == GameMode.TeamBattle)
+        {
+            SetTeamColor(GameManager.Instance.GetTeamColor(playerData.team));
+        }
+
         // Set player state to alive and update clients
         if (playerData.state != PlayerState.Alive)
         {
@@ -175,19 +183,21 @@ public class Player : NetworkBehaviour
             if (newValue.state != PlayerState.Alive)
             {
                 // Player just died, switch to spectator mode
-                Debug.Log("[PLAYER] Entering Spectator Mode"); 
+                Debug.Log("[PLAYER] Entering Spectator Mode");
                 StartCoroutine(SetSpectatorCameraDelay());
             }
             else
             {
                 // Player became alive, switch back to own camera
-                if (previousValue.state == PlayerState.Dead) Debug.Log("[PLAYER] Exiting Spectator Mode"); 
+                if (previousValue.state == PlayerState.Dead) Debug.Log("[PLAYER] Exiting Spectator Mode");
                 playerCamera.LookAt = transform;
                 playerCamera.Follow = transform;
             }
         }
 
-        playerIndicator.SetActive(newValue.isLobbyLeader);
+        SetTeamColor(GameManager.Instance.GetTeamColor(newValue.team));
+
+        playerIndicator.SetActive(newValue.isLobbyLeader && GameManager.Instance.gameMode == GameMode.FreeForAll);
     }
 
     private IEnumerator SetSpectatorCameraDelay()
@@ -219,6 +229,20 @@ public class Player : NetworkBehaviour
             playerCamera.LookAt = transform;
             playerCamera.Follow = transform;
         }
+    }
+
+    private void SetTeamColor(Color32 teamColor)
+    {
+        if (body == null) return;
+        // Convert Color32 back to Color
+        Color color = teamColor;
+        // Create a new material with the team color
+        Material teamMaterial = new Material(body.GetComponent<Renderer>().material);
+        teamMaterial.color = color;
+
+        // Apply the team material
+        body.GetComponent<Renderer>().material = teamMaterial;
+        Debug.Log($"Client: Player {clientId} (username: {networkPlayerData.Value.username}) set to team color {color}");
     }
 
     private void ApplyPlayerData(PlayerData playerData)

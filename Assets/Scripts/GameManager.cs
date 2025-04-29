@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Hogtagon.Core.Infrastructure;
@@ -12,17 +13,24 @@ public class GameManager : NetworkBehaviour
     [SerializeField] public GameState state { get; private set; } = GameState.Pending;
 
     [Header("Game Mode Settings")]
-    [SerializeField] private MenuManager.GameMode gameMode = MenuManager.GameMode.FreeForAll;
+    [SerializeField] public GameMode gameMode = GameMode.FreeForAll;
     [SerializeField] private int teamCount = 2;
     [SerializeField] private int roundsToWin = 5;  // Default to 5 rounds
     [SerializeField] private bool gameModeLocked = false; // Will be locked after game starts
+    [SerializeField] private Material[] teamMaterials; // Materials for each team
 
     [Header("References")]
     [SerializeField] public MenuManager menuManager;
 
     public static GameManager Instance;
     private ulong roundWinnerClientId;
+    private int winningTeamNumber = 0;
     private bool gameMusicPlaying;
+    private bool timeWarningHasPlayed = false;
+
+    // TeamHelper integrated properties
+    private Dictionary<int, List<ulong>> teamPlayers = new Dictionary<int, List<ulong>>();
+    private int winningTeam = 0;
 
     // Event for game state changes
     public event Action<GameState> OnGameStateChanged;
@@ -55,6 +63,12 @@ public class GameManager : NetworkBehaviour
     {
         if (state == GameState.Playing)
             gameTime += Time.deltaTime;
+
+        if (gameTime > 40f && !timeWarningHasPlayed)
+        {
+            timeWarningHasPlayed = true;
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundTimeWarning);
+        }
     }
 
     public void TransitionToState(GameState newState)
@@ -65,6 +79,9 @@ public class GameManager : NetworkBehaviour
         {
             case GameState.Pending:
                 OnPendingEnter();
+                break;
+            case GameState.Start:
+                OnStartEnter();
                 break;
             case GameState.Playing:
                 OnPlayingEnter();
@@ -91,23 +108,167 @@ public class GameManager : NetworkBehaviour
         // Notify subscribers
         OnGameStateChanged?.Invoke(newState);
     }
+
+    private void OnPendingEnter()
+    {
+        Debug.Log("[GAME] OnPendingEnter");
+
+        // Stop level music and play lobby music using NetworkSoundManager
+        if (IsServer)
+        {
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOff);
+        }
+
+        SetGameState(GameState.Pending);
+
+        // Only show lobby settings if we're the server AND connected to the network
+        // AND not in the process of disconnecting
+        if (IsServer && ConnectionManager.Instance.isConnected)
+        {
+            // Show the lobby settings menu for the host
+            ShowLobbySettings();
+        }
+    }
+
+    private void OnStartEnter()
+    {
+        SetGameState(GameState.Start);
+        if (!IsServer) return;
+        // If we are playing a team battle assign teams.
+        if (gameMode == GameMode.TeamBattle)
+        {
+            List<ulong> players = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
+            InitializeTeams(teamCount);
+            AssignPlayersToTeams(players);
+
+            for (int teamNumber = 1; teamNumber <= teamCount; teamNumber++)
+            {
+                foreach (ulong clientId in GetTeamPlayers(teamNumber))
+                {
+                    if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+                    {
+                        playerData.team = teamNumber;
+                        ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
+                        Debug.Log($"[GAME] Player {clientId} assigned to team {teamNumber}");
+                    }
+                }
+            }
+        }
+
+        TransitionToState(GameState.Playing);
+    }
+
+    private void OnBetweenRoundEnter()
+    {
+        SetGameState(GameState.BetweenRound);
+
+        // Pause kill feed and keep last message
+        killFeed.ClearAllMessagesExceptLast();
+
+        if (gameMode == GameMode.TeamBattle && winningTeamNumber > 0)
+        {
+            // Display team round winner
+            string teamName = GetTeamName(winningTeamNumber);
+
+            // Display team win message
+            menuManager.DisplayTeamWinnerClientRpc(winningTeamNumber, false);
+
+            Debug.Log("[GAME] Battle Mode Round Winner - " + teamName);
+
+            // Award points to all team members
+            if (IsServer)
+            {
+                foreach (ulong clientId in GetTeamPlayers(winningTeamNumber))
+                {
+                    if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+                    {
+                        playerData.score++;
+                        ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
+
+                        // Check if game is over
+                        if (playerData.score >= roundsToWin)
+                        {
+                            TransitionToState(GameState.GameEnd);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (gameMode == GameMode.FreeForAll && ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
+        {
+            // Display individual winner
+            menuManager.DisplayGameWinnerClientRpc(roundWinnerClientId, false);
+
+            if (IsServer)
+            {
+                winner.score++;
+                ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, winner);
+
+                // Check if game is over
+                if (winner.score >= roundsToWin)
+                {
+                    TransitionToState(GameState.GameEnd);
+                    return;
+                }
+            }
+        }
+
+        ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
+
+        StartCoroutine(BetweenRoundTimer());
+    }
+
+    private void OnPlayingEnter()
+    {
+        // Lock game mode settings when game starts
+        gameModeLocked = true;
+        timeWarningHasPlayed = false;
+        Debug.Log("[GAME] OnPlayingEnter");
+
+        // Clear processed deaths for new round
+        processedDeaths.Clear();
+
+        if (!gameMusicPlaying && IsServer)
+        {
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOn);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOff);
+            gameMusicPlaying = true;
+        }
+
+        if (NetworkManager.Singleton.ConnectedClients.Count > 1)
+        {
+            // Reset kill feed for new round
+            killFeed.ResetForNewRound();
+            LockPlayerMovement();
+            gameTime = 0f;
+            RespawnAllPlayers();
+            menuManager.StartCountdownClientRpc();
+            StartCoroutine(RoundCountdown());
+        }
+        else
+        {
+            Debug.LogWarning("Not enough players to start game");
+            TransitionToState(GameState.Pending);
+        }
+    }
+
     private void OnGameEndEnter()
     {
-        Debug.Log("[GAME] OnWinnerEnter");
+        Debug.Log("[GAME] OnEndingEnter");
         SetGameState(GameState.GameEnd);
 
         // Pause kill feed and keep last message
-        killFeed.PauseAndKeepLastMessage();
+        killFeed.ClearAllMessagesExceptLast();
 
-        // Get the winning player's data
-        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
-        {
-            // Display winner celebration message
-            menuManager.DisplayGameWinnerClientRpc(roundWinnerClientId, winner);
+        // Display winner celebration message
+        if (gameMode == GameMode.FreeForAll) menuManager.DisplayGameWinnerClientRpc(roundWinnerClientId, true);
+        if (gameMode == GameMode.TeamBattle) menuManager.DisplayTeamWinnerClientRpc(winningTeam, true);
 
-            // Show scoreboard after a delay
-            StartCoroutine(ShowFinalScoreboard());
-        }
+        // Show scoreboard after a delay
+        StartCoroutine(ShowFinalScoreboard());
     }
 
     private IEnumerator ShowFinalScoreboard()
@@ -145,79 +306,17 @@ public class GameManager : NetworkBehaviour
         }
 
         // Unlock game mode settings for new game
-        UnlockGameModeSettings();
+        gameModeLocked = false;
+        Debug.Log("[GAME] Game mode settings unlocked");
 
         // Respawn all players at their spawn points
         RespawnAllPlayers();
 
         // Clear any remaining processed deaths
         processedDeaths.Clear();
-    }
 
-    private void OnBetweenRoundEnter()
-    {
-        Debug.Log("[GAME] OnWinnerEnter");
-        SetGameState(GameState.BetweenRound);
-
-        // Pause kill feed and keep last message
-        killFeed.PauseAndKeepLastMessage();
-
-        // Get the winning player's data
-        if (ConnectionManager.Instance.TryGetPlayerData(roundWinnerClientId, out PlayerData winner))
-        {
-            // Display winner celebration message
-            menuManager.DisplayGameWinnerClientRpc(roundWinnerClientId, winner);
-            if (IsServer)
-            {
-                winner.score++;
-                ConnectionManager.Instance.UpdatePlayerDataClientRpc(roundWinnerClientId, winner);
-            }
-
-            // Check if game is over.
-            if (winner.score >= roundsToWin)
-            {
-                TransitionToState(GameState.GameEnd);
-                return;
-            }
-        }
-
-        ConnectionManager.Instance.UpdateLobbyLeaderBasedOnScore();
-
-        StartCoroutine(BetweenRoundTimer());
-    }
-
-    private void OnPlayingEnter()
-    {
-        // Lock game mode settings when game starts
-        LockGameModeSettings();
-
-        Debug.Log("[GAME] OnPlayingEnter");
-
-        // Clear processed deaths for new round
-        processedDeaths.Clear();
-
-        if (!gameMusicPlaying && IsServer)
-        {
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOn);
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOff);
-            gameMusicPlaying = true;
-        }
-
-        if (NetworkManager.Singleton.ConnectedClients.Count > 1)
-        {
-            // Reset kill feed for new round
-            killFeed.ResetForNewRound();
-            LockPlayerMovement();
-            gameTime = 0f;
-            RespawnAllPlayers();
-            menuManager.StartCountdownClientRpc();
-            StartCoroutine(RoundCountdown());
-        }
-        else
-        {
-            Debug.LogWarning("Not enough players to start game");
-            TransitionToState(GameState.Pending);
-        }
+        // Reset team tracking
+        ResetTeams();
     }
 
     public IEnumerator RoundCountdown()
@@ -267,95 +366,70 @@ public class GameManager : NetworkBehaviour
         TransitionToState(GameState.Playing);
     }
 
-    private void OnPendingEnter()
-    {
-        Debug.Log("[GAME] OnPendingEnter");
-
-        // Stop level music and play lobby music using NetworkSoundManager
-        if (IsServer)
-        {
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
-            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOff);
-        }
-
-        SetGameState(GameState.Pending);
-
-        // Only show lobby settings if we're the server AND connected to the network
-        // AND not in the process of disconnecting
-        if (IsServer &&
-            NetworkManager.Singleton != null &&
-            NetworkManager.Singleton.IsListening &&
-            NetworkManager.Singleton.ConnectedClientsList.Count > 0 &&
-            ConnectionManager.Instance.isConnected)
-        {
-            // Show the lobby settings menu for the host
-            EnsureLobbySettingsVisibleForHost();
-        }
-    }
-
-    // Method to ensure the lobby settings are visible for the host
-    private void EnsureLobbySettingsVisibleForHost()
-    {
-        if (menuManager != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            Debug.Log("[GAME] Ensuring lobby settings are visible for host");
-            menuManager.OpenLobbySettingsMenu();
-        }
-    }
-
-    // Public method that other systems can call to ensure lobby settings are shown
     public void ShowLobbySettings()
     {
-        if (IsServer && state == GameState.Pending)
-        {
-            EnsureLobbySettingsVisibleForHost();
-        }
+        if (IsServer && state == GameState.Pending) menuManager.OpenLobbySettingsMenu();
     }
 
     public void CheckGameStatus()
     {
         if (state != GameState.Playing) return;
 
-        List<ulong> alive = ConnectionManager.Instance.GetAliveClients();
-        if (alive.Count == 1)
-        {
-            roundWinnerClientId = alive[0];
-            TransitionToState(GameState.BetweenRound);
+        List<ulong> alivePlayers = ConnectionManager.Instance.GetAliveClients();
+        bool roundOver = false;
 
-            if (IsServer)
+        if (gameMode == GameMode.TeamBattle)
+        {
+            // Team Battle mode
+            if (alivePlayers.Count == 0)
             {
-                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundWin);
-                SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOn);
+                // Everyone died - pick first player we find as representative of winning team
+                foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+                {
+                    if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+                    {
+                        winningTeamNumber = playerData.team;
+                        roundWinnerClientId = clientId;
+                        roundOver = true;
+                        break;
+                    }
+                }
             }
+            else if (CheckForWinningTeam(alivePlayers, out int teamWinnerNumber, out List<ulong> winningTeamPlayers))
+            {
+                // One team remains
+                winningTeamNumber = teamWinnerNumber;
+                roundWinnerClientId = winningTeamPlayers.Count > 0 ? winningTeamPlayers[0] : 0;
+                roundOver = true;
+            }
+        }
+
+        if (gameMode == GameMode.FreeForAll)
+        {
+            // Free-for-all mode
+            if (alivePlayers.Count == 1)
+            {
+                roundWinnerClientId = alivePlayers[0];
+                roundOver = true;
+            }
+        }
+
+        // If round is over, trigger state change and sounds
+        if (roundOver)
+        {
+            TransitionToState(GameState.BetweenRound);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.RoundWin);
+            SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.MidRoundOn);
         }
     }
 
     // Method to handle player killed events
     public void PlayerDied(ulong clientId)
     {
-        // Only the server should process deaths
-        if (!IsServer)
-        {
-            Debug.LogWarning($"[GAME] Non-server tried to process death for client {clientId}");
-            return;
-        }
+        if (processedDeaths.Contains(clientId)) return;
+        if (state == GameState.Playing) processedDeaths.Add(clientId);
 
         Debug.Log($"[GAME] PlayerDied called for client: {clientId}");
-
-        // Always skip processing if the player is already in the processed deaths list
-        // regardless of game state
-        if (processedDeaths.Contains(clientId))
-        {
-            Debug.Log($"[GAME] Skipping duplicate death processing for client {clientId} (already in processedDeaths)");
-            return;
-        }
-
-        // In Playing state, add to processedDeaths to prevent duplicates
-        if (state == GameState.Playing)
-        {
-            processedDeaths.Add(clientId);
-            Debug.Log($"[GAME] Added client {clientId} to processedDeaths");
-        }
 
         if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData player))
         {
@@ -377,9 +451,7 @@ public class GameManager : NetworkBehaviour
                 SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.PlayerEliminated);
             }
 
-
             // Create kill feed message
-            // Allow killfeed in both Playing and Pending states
             if (state == GameState.Playing || state == GameState.Pending)
             {
                 killFeed = ServiceLocator.GetService<KillFeed>();
@@ -410,10 +482,7 @@ public class GameManager : NetworkBehaviour
         }
 
         // Only check game status for Playing state
-        if (state == GameState.Playing)
-        {
-            CheckGameStatus();
-        }
+        if (state == GameState.Playing) CheckGameStatus();
     }
 
     private void RespawnAllPlayers()
@@ -446,7 +515,7 @@ public class GameManager : NetworkBehaviour
     }
 
     // Method to set game mode (called from MenuManager)
-    public void SetGameMode(MenuManager.GameMode mode)
+    public void SetGameMode(GameMode mode)
     {
         // Only allow changing game mode before game starts
         if (!gameModeLocked)
@@ -466,7 +535,7 @@ public class GameManager : NetworkBehaviour
     public void SetTeamCount(int count)
     {
         // Only allow changing team count if in team battle mode and before game starts
-        if (!gameModeLocked && gameMode == MenuManager.GameMode.TeamBattle)
+        if (!gameModeLocked && gameMode == GameMode.TeamBattle)
         {
             teamCount = Mathf.Clamp(count, 2, 4); // Limit between 2-4 teams
             Debug.Log("[GAME] Team count set to: " + teamCount);
@@ -481,7 +550,7 @@ public class GameManager : NetworkBehaviour
 
     // Client RPC to sync game mode with clients
     [ClientRpc]
-    private void UpdateGameModeClientRpc(MenuManager.GameMode mode)
+    private void UpdateGameModeClientRpc(GameMode mode)
     {
         // Update local game mode
         gameMode = mode;
@@ -495,13 +564,6 @@ public class GameManager : NetworkBehaviour
         // Update local team count
         teamCount = count;
         Debug.Log("[GAME] Client received team count update: " + teamCount);
-    }
-
-    // Lock game mode settings when game starts
-    private void LockGameModeSettings()
-    {
-        gameModeLocked = true;
-        Debug.Log("[GAME] Game mode settings locked");
     }
 
     // Method to set rounds to win from MenuManager
@@ -520,15 +582,190 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"[GAME] Round count set to {count}");
     }
 
-    // Method to get current rounds to win setting
-    public int GetRoundCount()
+    #region Team Management Functions
+
+    // Former TeamHelper.Initialize method
+    public void InitializeTeams(int count)
     {
-        return roundsToWin;
+        teamCount = Mathf.Clamp(count, 2, 4);
+        teamPlayers.Clear();
+
+        for (int i = 1; i <= teamCount; i++)
+        {
+            teamPlayers[i] = new List<ulong>();
+        }
     }
 
-    private void UnlockGameModeSettings()
+    // Former TeamHelper.AssignPlayersToTeams method
+    public void AssignPlayersToTeams(List<ulong> players)
     {
-        gameModeLocked = false;
-        Debug.Log("[GAME] Game mode settings unlocked");
+        foreach (var team in teamPlayers.Keys.ToList())
+        {
+            teamPlayers[team].Clear();
+        }
+
+        // Shuffle players
+        for (int i = 0; i < players.Count; i++)
+        {
+            int r = UnityEngine.Random.Range(i, players.Count);
+            ulong temp = players[i];
+            players[i] = players[r];
+            players[r] = temp;
+        }
+
+        // Assign players to teams evenly
+        for (int i = 0; i < players.Count; i++)
+        {
+            int teamNumber = (i % teamCount) + 1;
+            teamPlayers[teamNumber].Add(players[i]);
+        }
     }
+
+    // Former TeamHelper.CheckForWinningTeam method
+    public bool CheckForWinningTeam(List<ulong> alivePlayers, out int winningTeamNumber, out List<ulong> winningTeamPlayers)
+    {
+        Dictionary<int, int> aliveCountByTeam = new Dictionary<int, int>();
+        winningTeamNumber = 0;
+        winningTeamPlayers = new List<ulong>();
+
+        for (int i = 1; i <= teamCount; i++)
+        {
+            aliveCountByTeam[i] = 0;
+        }
+
+        foreach (ulong clientId in alivePlayers)
+        {
+            if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+            {
+                int teamNumber = playerData.team;
+                if (teamNumber > 0 && teamNumber <= teamCount)
+                {
+                    aliveCountByTeam[teamNumber]++;
+                }
+            }
+        }
+
+        List<int> teamsWithAlivePlayers = aliveCountByTeam
+            .Where(kv => kv.Value > 0)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        if (teamsWithAlivePlayers.Count == 1)
+        {
+            winningTeamNumber = teamsWithAlivePlayers[0];
+            winningTeamPlayers = teamPlayers[winningTeamNumber];
+            this.winningTeam = winningTeamNumber;
+            return true;
+        }
+
+        return false;
+    }
+
+    // Former TeamHelper.GetTeamPlayers method
+    public List<ulong> GetTeamPlayers(int teamNumber)
+    {
+        if (teamPlayers.TryGetValue(teamNumber, out List<ulong> players))
+        {
+            return players;
+        }
+        return new List<ulong>();
+    }
+
+    // Former TeamHelper.GetTeamName method
+    public string GetTeamName(int teamNumber)
+    {
+        switch (teamNumber)
+        {
+            case 1: return "RED";
+            case 2: return "BLUE";
+            case 3: return "GREEN";
+            case 4: return "YELLOW";
+            default: return "UNKNOWN";
+        }
+    }
+
+    // Former TeamHelper.GetTeamColor method
+    public Color GetTeamColor(int teamNumber)
+    {
+        switch (teamNumber)
+        {
+            case 1: return new Color(1.0f, 0.2f, 0.2f); // Red
+            case 2: return new Color(0.2f, 0.4f, 1.0f); // Blue
+            case 3: return new Color(0.2f, 0.8f, 0.2f); // Green
+            case 4: return new Color(1.0f, 0.8f, 0.2f); // Yellow
+            default: return Color.white;
+        }
+    }
+
+    // Former TeamHelper.Reset method
+    public void ResetTeams()
+    {
+        // Clear team assignments but maintain the structure
+        foreach (var team in teamPlayers.Keys.ToList())
+        {
+            teamPlayers[team].Clear();
+        }
+        winningTeam = 0;
+    }
+
+    // Former TeamHelper.ResetWinningTeam method
+    public void ResetWinningTeam()
+    {
+        winningTeam = 0;
+    }
+
+    // Former TeamHelper.RebuildTeamAssignments method
+    public void RebuildTeamAssignments()
+    {
+        // Clear team assignments
+        foreach (var team in teamPlayers.Keys.ToList())
+        {
+            teamPlayers[team].Clear();
+        }
+
+        // Fetch all player data and rebuild team assignments
+        if (NetworkManager.Singleton != null)
+        {
+            foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+            {
+                if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+                {
+                    int team = playerData.team;
+                    if (team > 0 && team <= teamCount)
+                    {
+                        if (!teamPlayers.ContainsKey(team))
+                        {
+                            teamPlayers[team] = new List<ulong>();
+                        }
+                        teamPlayers[team].Add(clientId);
+                    }
+                }
+            }
+        }
+    }
+
+    // Former TeamHelper.AddPlayerToTeam method
+    public void AddPlayerToTeam(ulong clientId, int teamNumber)
+    {
+        if (teamNumber > 0 && teamNumber <= teamCount)
+        {
+            if (!teamPlayers.ContainsKey(teamNumber))
+            {
+                teamPlayers[teamNumber] = new List<ulong>();
+            }
+
+            if (!teamPlayers[teamNumber].Contains(clientId))
+            {
+                teamPlayers[teamNumber].Add(clientId);
+            }
+        }
+    }
+
+    // Former TeamHelper.GetWinningTeam method
+    public int GetWinningTeam()
+    {
+        return winningTeam;
+    }
+
+    #endregion
 }

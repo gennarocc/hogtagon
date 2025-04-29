@@ -102,7 +102,7 @@ public class MenuManager : NetworkBehaviour
     public bool menuMusicPlaying = false;
 
     // Game Mode enum
-    public enum GameMode { FreeForAll, TeamBattle }
+
 
     // Public properties for game mode settings
     public GameMode selectedGameMode => _selectedGameMode;
@@ -271,8 +271,8 @@ public class MenuManager : NetworkBehaviour
             {
                 // Check if any navigation input is happening on the gamepad
                 // This is key for UI navigation - detect both dpad AND leftStick
-                if (gamepad.dpad.IsActuated() || 
-                    gamepad.leftStick.IsActuated() || 
+                if (gamepad.dpad.IsActuated() ||
+                    gamepad.leftStick.IsActuated() ||
                     gamepad.buttonSouth.wasPressedThisFrame ||
                     gamepad.buttonEast.wasPressedThisFrame)
                 {
@@ -282,10 +282,10 @@ public class MenuManager : NetworkBehaviour
                         // Enable controller selection
                         controllerSelectionEnabled = true;
                         Debug.Log("[MenuManager] Controller navigation activated. Using left stick: " + gamepad.leftStick.ReadValue());
-                        
+
                         // Force selection of a default button depending on active menu
                         GameObject buttonToSelect = null;
-                        
+
                         if (mainMenuPanel != null && mainMenuPanel.activeSelf && defaultMainMenuButton != null)
                             buttonToSelect = defaultMainMenuButton.gameObject;
                         else if (playMenuPanel != null && playMenuPanel.activeSelf && defaultPlayMenuButton != null)
@@ -296,7 +296,7 @@ public class MenuManager : NetworkBehaviour
                             buttonToSelect = defaultSettingsMenuButton.gameObject;
                         else if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf && defaultSettingsMenuButton != null)
                             buttonToSelect = defaultSettingsMenuButton.gameObject;
-                        
+
                         // Set selected game object
                         if (buttonToSelect != null && eventSystem != null)
                         {
@@ -353,7 +353,7 @@ public class MenuManager : NetworkBehaviour
 
         // Reset pause state
         gameIsPaused = false;
-        
+
         // Reset time scale to normal
         Time.timeScale = 1f;
 
@@ -487,11 +487,8 @@ public class MenuManager : NetworkBehaviour
         }
 
         // Start the game - use TransitionToState instead of StartGame
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.TransitionToState(GameState.Playing);
-            ButtonConfirmAudio();
-        }
+        GameManager.Instance.TransitionToState(GameState.Start);
+        ButtonConfirmAudio();
     }
 
     public void Settings()
@@ -581,55 +578,68 @@ public class MenuManager : NetworkBehaviour
         countdownText.text = "";
         tempUI.SetActive(false);
     }
-
     [ClientRpc]
-    public void DisplayWinnerClientRpc(string player)
+    public void DisplayGameWinnerClientRpc(ulong winnerClientId, bool isGameWin = false)
     {
         tempUI.SetActive(true);
 
-        // Find client ID for the player name
-        ulong? winnerClientId = null;
-        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        // Get colored text for individual player winner
+        string coloredPlayerName = ConnectionManager.Instance.GetPlayerColoredName(winnerClientId);
+
+        if (isGameWin)
         {
-            if (ConnectionManager.Instance.GetClientUsername(clientId) == player)
-            {
-                winnerClientId = clientId;
-                break;
-            }
+            // Final game winner message
+            winnerText.text = $"{coloredPlayerName} IS THE BIG WINNER!";
         }
+        else
+        {
+            // Round winner - select a random message
+            string[] roundWinMessages = new string[]
+            {
+            "TAKES THIS ROUND",
+            "CLAIMS THIS ONE",
+            "WINS THE ROUND",
+            "TAKES THIS ONE",
+            "PREVAILS THIS ROUND"
+            };
 
-        // Get colored text if client ID was found
-        string coloredPlayerName = winnerClientId.HasValue
-            ? ConnectionManager.Instance.GetPlayerColoredName(winnerClientId.Value)
-            : player;
-
-        winnerText.text = coloredPlayerName + " won the round";
-        StartCoroutine(BetweenRoundTime());
+            int randomIndex = UnityEngine.Random.Range(0, roundWinMessages.Length);
+            winnerText.text = $"{coloredPlayerName} {roundWinMessages[randomIndex]}";
+        }
     }
 
     [ClientRpc]
-    public void DisplayGameWinnerClientRpc(ulong roundWinnerClientId, PlayerData winner)
+    public void DisplayTeamWinnerClientRpc(int teamNumber, bool isGameWin = false)
     {
         tempUI.SetActive(true);
 
-        // Get colored text if client ID was found
-        string coloredPlayerName = ConnectionManager.Instance.GetPlayerColoredName(roundWinnerClientId);
+        // Get team name and color
+        string teamName = GameManager.Instance.GetTeamName(teamNumber);
+        Color teamColor = GameManager.Instance.GetTeamColor(teamNumber);
 
-        winnerText.text = $"{coloredPlayerName} IS THE BIG WINNER!";
+        // Apply team color to text
+        string coloredTeamName = $"<color=#{ColorUtility.ToHtmlStringRGB(teamColor)}>{teamName} TEAM</color>";
 
-        // Make sure cursor is visible for UI interaction
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        if (isGameWin)
+        {
+            // Final game winner message
+            winnerText.text = $"{coloredTeamName} IS THE BIG WINNER!";
+        }
+        else
+        {
+            // Round winner - select a random message
+            string[] roundWinMessages = new string[]
+            {
+            "TAKES THIS ROUND",
+            "CLAIMS THIS ONE",
+            "WINS THE ROUND",
+            "TAKES THIS ONE",
+            "PREVAILS THIS ROUND"
+            };
 
-        // Play celebration sound if available
-        ButtonConfirmAudio();
-    }
-
-    public IEnumerator BetweenRoundTime()
-    {
-        yield return new WaitForSeconds(5f);
-        winnerText.text = "";
-        tempUI.SetActive(false);
+            int randomIndex = UnityEngine.Random.Range(0, roundWinMessages.Length);
+            winnerText.text = $"{coloredTeamName} {roundWinMessages[randomIndex]}";
+        }
     }
 
     [ClientRpc]
@@ -1515,23 +1525,23 @@ public class MenuManager : NetworkBehaviour
             // Return to pause menu
             Debug.Log($"[MenuManager] Settings were opened from pause menu. Returning to pause menu.");
             pauseMenuUI.SetActive(true);
-            
+
             // Ensure we're still paused
             gameIsPaused = true;
             Time.timeScale = 0f;
-            
+
             // Handle button selection for controller navigation
             if (defaultPauseMenuButton != null)
             {
                 HandleButtonSelection(defaultPauseMenuButton);
             }
-            
+
             // Make sure the Resume button will actually work by ensuring the EventSystem is properly set up
             if (pauseMenuUI != null)
             {
                 Button resumeButton = pauseMenuUI.GetComponentsInChildren<Button>()
                     .FirstOrDefault(b => b.name.Contains("Resume"));
-                    
+
                 if (resumeButton != null)
                 {
                     // Ensure the Resume button's onClick listeners are properly set up
@@ -1547,7 +1557,7 @@ public class MenuManager : NetworkBehaviour
             // Return to main menu
             Debug.Log($"[MenuManager] Settings were opened from main menu. Returning to main menu.");
             ShowMainMenu();
-            
+
             // Handle button selection for controller navigation
             if (defaultMainMenuButton != null)
             {

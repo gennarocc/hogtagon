@@ -223,7 +223,7 @@ public class LobbySettingsPanel : MonoBehaviour
         // SETUP TEAM COUNT SLIDER - Only available to host in team battle mode
         if (teamCountSlider != null)
         {
-            bool isTeamMode = menuManager != null && menuManager.selectedGameMode == MenuManager.GameMode.TeamBattle;
+            bool isTeamMode = menuManager != null && menuManager.selectedGameMode == GameMode.TeamBattle;
             teamCountSlider.interactable = isHost && isTeamMode;
             
             teamCountSlider.onValueChanged.RemoveAllListeners();
@@ -291,7 +291,7 @@ public class LobbySettingsPanel : MonoBehaviour
             // Show/hide team settings based on game mode
             if (teamSettingsPanel != null)
             {
-                teamSettingsPanel.SetActive(menuManager.selectedGameMode == MenuManager.GameMode.TeamBattle);
+                teamSettingsPanel.SetActive(menuManager.selectedGameMode == GameMode.TeamBattle);
             }
             
             // Set team count slider

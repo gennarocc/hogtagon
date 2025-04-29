@@ -39,6 +39,7 @@ public class SoundManager : NetworkBehaviour
         RoundStart = 107,
         Round30Sec = 108,
         RoundWin = 109,
+        RoundTimeWarning = 110,
     }
 
     [Serializable]

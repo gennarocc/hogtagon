@@ -697,6 +697,17 @@ public class HogController : NetworkBehaviour
         SyncJumpCooldownClientRpc(0, false);
     }
 
+    public void ResetJump()
+    {
+        if (!IsServer) return;
+        // Reset network variables
+        jumpReady.Value = true;
+        isJumping.Value = false;
+
+        // Notify all clients to reset their cooldowns
+        SyncJumpCooldownClientRpc(0, false);
+    }
+
     private IEnumerator BumperCollisionCooldown()
     {
         yield return new WaitForSeconds(bumperCollisionDebounce);

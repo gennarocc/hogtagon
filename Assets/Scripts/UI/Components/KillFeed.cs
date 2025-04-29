@@ -115,11 +115,6 @@ public class KillFeed : NetworkBehaviour
         ClearAllMessages();
     }
 
-    public void PauseAndKeepLastMessage()
-    {
-        ClearAllMessagesExceptLast();
-    }
-
     private void ClearAllMessages()
     {
         foreach (var message in activeMessages)
@@ -132,7 +127,7 @@ public class KillFeed : NetworkBehaviour
         activeMessages.Clear();
     }
 
-    private void ClearAllMessagesExceptLast()
+    public void ClearAllMessagesExceptLast()
     {
         if (activeMessages.Count <= 0) return;
         
