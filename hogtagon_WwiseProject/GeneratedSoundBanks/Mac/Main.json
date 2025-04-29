@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{FD136A50-5856-452E-DC67-2D2D41727C03}",
+    "Hash": "{E046E262-808B-4B7E-3949-A8E0B601E0A4}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -128,12 +128,28 @@
       "CachePath": "A5/{A5299357-3C97-B076-3741-351EA299A92C}.wem"
      },
      {
+      "Id": "343010491",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "running-out-of-time-1.wav",
+      "CachePath": "0C/{0CB985CD-7D6F-8210-9C20-C5252FC57704}.wem"
+     },
+     {
       "Id": "344684111",
       "Language": "SFX",
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "gear-shift-5.wav",
       "CachePath": "0B/{0B80E2AA-0A21-5D7F-B7E6-F147B4980D12}.wem"
+     },
+     {
+      "Id": "364911026",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "times-running-short.wav",
+      "CachePath": "B1/{B151BDDC-3AC7-0B92-FD78-FBA45D905696}.wem"
      },
      {
       "Id": "373189264",
@@ -158,6 +174,14 @@
       "Location": "Memory",
       "ShortName": "impact-2b.wav",
       "CachePath": "D9/{D917E1B5-9772-D241-CFB5-D3243BEFF32C}.wem"
+     },
+     {
+      "Id": "404555391",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "last-chance.wav",
+      "CachePath": "75/{757B1BE4-4F17-58BE-7D6E-CFC22368B409}.wem"
      },
      {
       "Id": "406044240",
@@ -200,6 +224,14 @@
       "CachePath": "C0/{C0A4DEA0-932D-0D66-6B06-171C2651F82D}.wem"
      },
      {
+      "Id": "476288891",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "the-end-approaches.wav",
+      "CachePath": "1B/{1BE42540-1F48-633A-9E06-3684DB1057F7}.wem"
+     },
+     {
       "Id": "526038726",
       "Language": "SFX",
       "Streaming": "false",
@@ -224,14 +256,6 @@
       "CachePath": "4D/{4D6FCE07-2FDC-F570-F5B2-EEC3AD0A4339}.wem"
      },
      {
-      "Id": "599918648",
-      "Language": "SFX",
-      "Streaming": "false",
-      "Location": "Memory",
-      "ShortName": "30secs-remaining.wav",
-      "CachePath": "98/{9819B0D8-9217-76D2-571F-AC32D5E9CB3B}.wem"
-     },
-     {
       "Id": "603757496",
       "Language": "SFX",
       "Streaming": "false",
@@ -246,6 +270,22 @@
       "Location": "Memory",
       "ShortName": "impact-3b.wav",
       "CachePath": "41/{41C16F17-8FBA-2E87-5A1B-2BF3F1D8E963}.wem"
+     },
+     {
+      "Id": "669803493",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "final-moments-1.wav",
+      "CachePath": "94/{94CEFDA5-0546-5C0F-6CB4-21CE5457EC50}.wem"
+     },
+     {
+      "Id": "671294554",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "running-out-of-time-2.wav",
+      "CachePath": "C6/{C67741B4-42B1-2BC8-093B-10F1BE1B2AE0}.wem"
      },
      {
       "Id": "708298719",
@@ -326,6 +366,14 @@
       "Location": "Memory",
       "ShortName": "hog-jump-cooling3.wav",
       "CachePath": "92/{92EFB117-F2AA-43DA-FCFF-7DBB29E8C3F1}.wem"
+     },
+     {
+      "Id": "986065534",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "final-moments-2.wav",
+      "CachePath": "8E/{8E119F33-D8C8-9909-A7E9-E8EEA3E0AF8B}.wem"
      },
      {
       "Id": "1032222109",
@@ -595,16 +643,34 @@
       ]
      },
      {
-      "Id": "2325690181",
-      "Name": "Round30Sec",
-      "ObjectPath": "\\Events\\Default Work Unit\\Round30Sec",
+      "Id": "3045288105",
+      "Name": "RoundOutOfTime",
+      "ObjectPath": "\\Events\\Default Work Unit\\RoundOutOfTime",
       "GUID": "{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}",
       "DurationType": "OneShot",
-      "DurationMin": "3.974625",
-      "DurationMax": "3.974625",
+      "DurationMin": "5.3333335",
+      "DurationMax": "5.565292",
       "MediaRefs": [
        {
-        "Id": "599918648"
+        "Id": "343010491"
+       },
+       {
+        "Id": "364911026"
+       },
+       {
+        "Id": "404555391"
+       },
+       {
+        "Id": "476288891"
+       },
+       {
+        "Id": "669803493"
+       },
+       {
+        "Id": "671294554"
+       },
+       {
+        "Id": "986065534"
        }
       ]
      },
@@ -715,6 +781,6 @@
     ]
    }
   ],
-  "FileHash": "{D309B637-C85B-D85F-63C7-4E99F2B4038E}"
+  "FileHash": "{985FDCF9-10AA-A834-08A2-85B02A1C3FC0}"
  }
 }

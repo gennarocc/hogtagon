@@ -20,7 +20,7 @@
 						<ObjectRef Name="RoundStart" ID="{238C69E0-53F9-48F9-BFE3-4B71C69ECA52}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogCooldownComplete" ID="{39E68715-53EB-4A53-BD06-79D34D813E12}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="PauseOff" ID="{141FE736-21DB-4AEA-AE49-07A0FC668D73}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
-						<ObjectRef Name="Round30Sec" ID="{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="RoundOutOfTime" ID="{BC6B022F-C6B1-4B2D-BE5E-2108B7B12C1F}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="HogJump" ID="{CD25EB60-CA7B-4CCA-BBDD-C141744312F7}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="uiConfirm" ID="{35F72BE4-E30A-4D8A-98CC-897D16A1EC27}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>
 						<ObjectRef Name="EngineOn" ID="{6DC496AD-3332-4DA5-8F13-711E68963147}" WorkUnitID="{F4A8ED3B-72A3-49C1-9282-9D9DEB57C1FF}" Origin="Manual" Filter="7"/>

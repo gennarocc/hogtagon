@@ -34,7 +34,7 @@ namespace AK
         static const AkUniqueID PAUSEOFF = 3921005316U;
         static const AkUniqueID PAUSEON = 80751710U;
         static const AkUniqueID PLAYERELIMINATION = 3181948357U;
-        static const AkUniqueID ROUND30SEC = 2325690181U;
+        static const AkUniqueID ROUNDOUTOFTIME = 3045288105U;
         static const AkUniqueID ROUNDSTART = 211290109U;
         static const AkUniqueID ROUNDWIN = 3391830779U;
         static const AkUniqueID TIRESCREECHOFF = 3010988261U;
