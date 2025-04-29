@@ -196,7 +196,7 @@ public class Player : NetworkBehaviour
         }
 
         SetTeamColor(GameManager.Instance.GetTeamColor(newValue.team));
-
+        if (GameManager.Instance.gameMode == GameMode.FreeForAll) body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[newValue.colorIndex];
         playerIndicator.SetActive(newValue.isLobbyLeader && GameManager.Instance.gameMode == GameMode.FreeForAll);
     }
 
@@ -247,10 +247,7 @@ public class Player : NetworkBehaviour
 
     private void ApplyPlayerData(PlayerData playerData)
     {
-        if (body != null && ConnectionManager.Instance != null)
-        {
-            body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[playerData.colorIndex];
-        }
+        body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[playerData.colorIndex];
 
         // Only display floating username for non-local players
         if (!IsOwner)

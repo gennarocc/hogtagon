@@ -5991,6 +5991,7 @@ MonoBehaviour:
   teamCount: 2
   roundsToWin: 5
   gameModeLocked: 0
+  teamMaterials: []
   menuManager: {fileID: 1935665467}
 --- !u!4 &423498034
 Transform:
@@ -11722,6 +11723,11 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 11400000, guid: 7120ca6c9b4e0774caafb020e53c395f, type: 2}
+  - type: 110
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 62e1de02e52d08445834ca671a134a44, type: 2}
   globalSoundSource: {fileID: 662722771}
 --- !u!1 &705507993
 GameObject:
