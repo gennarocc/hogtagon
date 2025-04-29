@@ -5,131 +5,75 @@ using UnityEngine.InputSystem;
 
 public class CameraManager : MonoBehaviour
 {
-    [System.Serializable]
-    public class CameraPreset
-    {
-        public string name;
-        public CinemachineVirtualCamera camera;
-        public KeyCode hotkey = KeyCode.None;
-        [Tooltip("Priority when this camera is active")]
-        public int activePriority = 15;
-        [Tooltip("Priority when this camera is inactive")]
-        public int inactivePriority = 0;
-    }
-
-    [Header("Camera Presets")]
-    [SerializeField] private List<CameraPreset> cameraPresets = new List<CameraPreset>();
+    [SerializeField] private List<CinemachineFreeLook> cameras = new List<CinemachineFreeLook>();
     
-    [Header("Screenshot Settings")]
-    [Tooltip("Subdirectory name for screenshots within the persistent data path")]
-    [SerializeField] private string screenshotSubdirectory = "Screenshots";
+    [Header("Camera Settings")]
+    [SerializeField] private int activePriority = 15;
+    [SerializeField] private int inactivePriority = 0;
     
-    private string screenshotDirectory;
+    private int currentCameraIndex = 0;
     private DefaultControls controls;
-    private CameraPreset currentActivePreset;
-
+    
     private void Awake()
     {
         controls = new DefaultControls();
         
-        // Set all cameras to inactive priority initially
-        foreach (var preset in cameraPresets)
+        // Initialize all cameras to inactive priority
+        foreach (var camera in cameras)
         {
-            if (preset.camera != null)
+            if (camera != null)
             {
-                preset.camera.Priority = preset.inactivePriority;
+                camera.Priority = inactivePriority;
             }
         }
-
-        // Set up screenshot directory
-        screenshotDirectory = System.IO.Path.Combine(Application.persistentDataPath, screenshotSubdirectory);
-        try
+        
+        // Activate the first camera if available
+        if (cameras.Count > 0 && cameras[0] != null)
         {
-            if (!System.IO.Directory.Exists(screenshotDirectory))
-            {
-                System.IO.Directory.CreateDirectory(screenshotDirectory);
-                Debug.Log($"Created screenshot directory: {screenshotDirectory}");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Failed to initialize screenshot directory: {e.Message}");
+            cameras[0].Priority = activePriority;
         }
     }
-
+    
     private void OnEnable()
     {
+        controls.Gameplay.SwapCam.performed += OnSwitchCamera;
         controls.Gameplay.Enable();
-        controls.Gameplay.Screenshot.performed += OnScreenshotPerformed;
     }
-
+    
     private void OnDisable()
     {
-        controls.Gameplay.Screenshot.performed -= OnScreenshotPerformed;
+        controls.Gameplay.SwapCam.performed -= OnSwitchCamera;
         controls.Gameplay.Disable();
     }
-
-    private void Update()
+    
+    private void OnSwitchCamera(InputAction.CallbackContext context)
     {
-        // Check for camera hotkeys
-        foreach (var preset in cameraPresets)
+        if (cameras.Count == 0) return;
+        
+        // Set current camera to inactive
+        if (cameras[currentCameraIndex] != null)
         {
-            if (preset.hotkey != KeyCode.None && Input.GetKeyDown(preset.hotkey))
-            {
-                SwitchToCamera(preset);
-            }
+            cameras[currentCameraIndex].Priority = inactivePriority;
+        }
+        
+        // Move to next camera
+        currentCameraIndex = (currentCameraIndex + 1) % cameras.Count;
+        
+        // Set new camera to active
+        if (cameras[currentCameraIndex] != null)
+        {
+            cameras[currentCameraIndex].Priority = activePriority;
+            Debug.Log($"Switched to camera {currentCameraIndex}");
         }
     }
-
-    public void SwitchToCamera(CameraPreset newPreset)
+    
+    // Helper method to add cameras at runtime if needed
+    public void AddCamera(CinemachineFreeLook camera)
     {
-        // Deactivate current camera
-        if (currentActivePreset != null && currentActivePreset.camera != null)
+        if (camera != null)
         {
-            currentActivePreset.camera.Priority = currentActivePreset.inactivePriority;
+            camera.Priority = inactivePriority;
+            cameras.Add(camera);
         }
-
-        // Activate new camera
-        if (newPreset != null && newPreset.camera != null)
-        {
-            newPreset.camera.Priority = newPreset.activePriority;
-            currentActivePreset = newPreset;
-            Debug.Log($"Switched to camera: {newPreset.name}");
-        }
-    }
-
-    private void OnScreenshotPerformed(InputAction.CallbackContext context)
-    {
-        CaptureScreenshot();
-    }
-
-    private void CaptureScreenshot()
-    {
-        try
-        {
-            string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd-HHmmss");
-            string cameraName = currentActivePreset != null ? currentActivePreset.name : "default";
-            string filename = System.IO.Path.Combine(screenshotDirectory, $"HogtagonScreenshot_{cameraName}_{timestamp}.png");
-            
-            ScreenCapture.CaptureScreenshot(filename);
-            Debug.Log($"Screenshot captured from camera '{cameraName}' and saved to: {filename}");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Failed to capture screenshot: {e.Message}");
-        }
-    }
-
-    // Helper method to add cameras at runtime (useful for debugging/testing)
-    public void AddCamera(string name, CinemachineVirtualCamera camera, KeyCode hotkey)
-    {
-        var preset = new CameraPreset
-        {
-            name = name,
-            camera = camera,
-            hotkey = hotkey
-        };
-        cameraPresets.Add(preset);
-        Debug.Log($"Added camera preset: {name} with hotkey: {hotkey}");
     }
 } 

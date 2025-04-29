@@ -107,6 +107,15 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SwapCam"",
+                    ""type"": ""Button"",
+                    ""id"": ""7f9985fb-7e0a-4765-b2a6-30df30013f86"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -373,6 +382,17 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""action"": ""Screenshot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2468878d-c992-4b17-af87-daac2ca3f5b4"",
+                    ""path"": ""<Keyboard>/f8"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwapCam"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -489,6 +509,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         m_Gameplay_ShowScoreboard = m_Gameplay.FindAction("ShowScoreboard", throwIfNotFound: true);
         m_Gameplay_PauseMenu = m_Gameplay.FindAction("PauseMenu", throwIfNotFound: true);
         m_Gameplay_Screenshot = m_Gameplay.FindAction("Screenshot", throwIfNotFound: true);
+        m_Gameplay_SwapCam = m_Gameplay.FindAction("SwapCam", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_OpenMenu = m_UI.FindAction("OpenMenu", throwIfNotFound: true);
@@ -571,6 +592,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_ShowScoreboard;
     private readonly InputAction m_Gameplay_PauseMenu;
     private readonly InputAction m_Gameplay_Screenshot;
+    private readonly InputAction m_Gameplay_SwapCam;
     public struct GameplayActions
     {
         private @DefaultControls m_Wrapper;
@@ -584,6 +606,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         public InputAction @ShowScoreboard => m_Wrapper.m_Gameplay_ShowScoreboard;
         public InputAction @PauseMenu => m_Wrapper.m_Gameplay_PauseMenu;
         public InputAction @Screenshot => m_Wrapper.m_Gameplay_Screenshot;
+        public InputAction @SwapCam => m_Wrapper.m_Gameplay_SwapCam;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -620,6 +643,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @Screenshot.started += instance.OnScreenshot;
             @Screenshot.performed += instance.OnScreenshot;
             @Screenshot.canceled += instance.OnScreenshot;
+            @SwapCam.started += instance.OnSwapCam;
+            @SwapCam.performed += instance.OnSwapCam;
+            @SwapCam.canceled += instance.OnSwapCam;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -651,6 +677,9 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @Screenshot.started -= instance.OnScreenshot;
             @Screenshot.performed -= instance.OnScreenshot;
             @Screenshot.canceled -= instance.OnScreenshot;
+            @SwapCam.started -= instance.OnSwapCam;
+            @SwapCam.performed -= instance.OnSwapCam;
+            @SwapCam.canceled -= instance.OnSwapCam;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -749,6 +778,7 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         void OnShowScoreboard(InputAction.CallbackContext context);
         void OnPauseMenu(InputAction.CallbackContext context);
         void OnScreenshot(InputAction.CallbackContext context);
+        void OnSwapCam(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
