@@ -133,14 +133,18 @@ public class GameManager : NetworkBehaviour
 
     private void OnStartEnter()
     {
-        SetGameState(GameState.Start);
         if (!IsServer) return;
+
+        SetGameState(GameState.Start);
+        // Get all players and player objects just once
+        List<ulong> clientIds = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
+        Player[] playerObjects = FindObjectsByType<Player>(FindObjectsSortMode.None);
+
         // If we are playing a team battle assign teams.
         if (gameMode == GameMode.TeamBattle)
         {
-            List<ulong> players = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
             InitializeTeams(teamCount);
-            AssignPlayersToTeams(players);
+            AssignPlayersToTeams(clientIds);
 
             for (int teamNumber = 1; teamNumber <= teamCount; teamNumber++)
             {
@@ -506,7 +510,7 @@ public class GameManager : NetworkBehaviour
             player.canMove = true;
     }
 
-    [ClientRpc (Delivery = RpcDelivery.Reliable)]
+    [ClientRpc(Delivery = RpcDelivery.Reliable)]
     private void BroadcastGameStateClientRpc(GameState newState)
     {
         Debug.Log($"[GAME] BroadcastGameStateClientRpc: {state} -> {newState}");
@@ -549,16 +553,17 @@ public class GameManager : NetworkBehaviour
     }
 
     // Client RPC to sync game mode with clients
-    [ClientRpc (Delivery = RpcDelivery.Reliable)]
+    [ClientRpc(Delivery = RpcDelivery.Reliable)]
     private void UpdateGameModeClientRpc(GameMode mode)
     {
         // Update local game mode
         gameMode = mode;
-        Debug.Log("Client received game mode update: " + gameMode);
+
+        Debug.Log("[GAME] Client received game mode update: " + gameMode);
     }
 
     // Client RPC to sync team count with clients
-    [ClientRpc (Delivery = RpcDelivery.Reliable)]
+    [ClientRpc(Delivery = RpcDelivery.Reliable)]
     private void UpdateTeamCountClientRpc(int count)
     {
         // Update local team count

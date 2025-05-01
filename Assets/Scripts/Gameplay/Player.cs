@@ -104,12 +104,10 @@ public class Player : NetworkBehaviour
         }
 
         // Handle spectator input
-        if (IsOwner)
+        if (IsOwner && isSpectating)
         {
             HandleSpectatorInput();
         }
-
-        // Update player leader indicator
     }
 
     private void HandleSpectatorInput()
@@ -158,18 +156,19 @@ public class Player : NetworkBehaviour
 
         GetComponent<HogController>().ResetJump();
 
-        // Apply team color directly for the host player
-        if (GameManager.Instance.gameMode == GameMode.TeamBattle)
-        {
-            SetTeamColor(GameManager.Instance.GetTeamColor(playerData.team));
-        }
-
         // Set player state to alive and update clients
         if (playerData.state != PlayerState.Alive)
         {
             playerData.state = PlayerState.Alive;
             ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
         }
+
+    }
+
+    private void SetPlayerTexture(PlayerData playerData)
+    {
+        body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[playerData.colorIndex];
+        Debug.Log($"[PLAYER] Client: Setting FFA color for player {playerData.username} (color: {playerData.colorIndex})");
     }
 
     private void OnPlayerDataChanged(PlayerData previousValue, PlayerData newValue)
@@ -194,9 +193,6 @@ public class Player : NetworkBehaviour
                 playerCamera.Follow = transform;
             }
         }
-
-        SetTeamColor(GameManager.Instance.GetTeamColor(newValue.team));
-        if (GameManager.Instance.gameMode == GameMode.FreeForAll) body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[newValue.colorIndex];
         playerIndicator.SetActive(newValue.isLobbyLeader && GameManager.Instance.gameMode == GameMode.FreeForAll);
     }
 
@@ -242,7 +238,6 @@ public class Player : NetworkBehaviour
 
         // Apply the team material
         body.GetComponent<Renderer>().material = teamMaterial;
-        Debug.Log($"Client: Player {clientId} (username: {networkPlayerData.Value.username}) set to team color {color}");
     }
 
     private void ApplyPlayerData(PlayerData playerData)
@@ -277,6 +272,12 @@ public class Player : NetworkBehaviour
         if (IsServer)
         {
             networkPlayerData.Value = playerData;
+        }
+
+        SetTeamColor(GameManager.Instance.GetTeamColor(playerData.team));
+        if (GameManager.Instance.gameMode == GameMode.FreeForAll)
+        {
+            SetPlayerTexture(playerData);
         }
     }
 }

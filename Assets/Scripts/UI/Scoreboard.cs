@@ -312,23 +312,14 @@ public class Scoreboard : MonoBehaviour
         TextMeshProUGUI nameText = entryObject.transform.Find("NameText")?.GetComponent<TextMeshProUGUI>();
         if (nameText != null)
         {
-            if (technoFont != null)
-                nameText.font = technoFont;
+            nameText.font = technoFont;
             nameText.fontSize = nameFontSize;
 
             // Add team name prefix to player name
             string teamPrefix = $"[{GetTeamName(teamNumber)}] ";
 
-            // Convert playerId string back to ulong for the ConnectionManager method
-            if (ulong.TryParse(playerData.playerId, out ulong clientId))
-            {
-                string playerName = connectionManager.GetPlayerColoredName(clientId);
-                nameText.text = teamPrefix + playerName;
-            }
-            else
-            {
-                nameText.text = teamPrefix + playerData.playerName;
-            }
+            string playerName = playerData.playerName;
+            nameText.text = teamPrefix + playerName;
 
             // Color the text based on team color
             nameText.color = teamColor;
