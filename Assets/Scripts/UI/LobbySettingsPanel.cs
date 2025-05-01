@@ -224,7 +224,6 @@ public class LobbySettingsPanel : MonoBehaviour
         if (teamCountSlider != null)
         {
             bool isTeamMode = menuManager != null && menuManager.selectedGameMode == GameMode.TeamBattle;
-            teamCountSlider.interactable = isHost && isTeamMode;
             
             teamCountSlider.onValueChanged.RemoveAllListeners();
             teamCountSlider.onValueChanged.AddListener(OnTeamCountChanged);

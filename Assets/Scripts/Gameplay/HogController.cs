@@ -288,8 +288,8 @@ public class HogController : NetworkBehaviour
 
     private void OnHornPressed()
     {
-        if (GetComponent<Player>().isSpectating) return; // Can not honk if dead
-        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
+        if (!GetComponent<Player>().isSpectating) // Can not honk while dead 
+            SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
     }
 
     private ClientInput CollectInput()

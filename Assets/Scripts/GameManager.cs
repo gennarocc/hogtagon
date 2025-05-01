@@ -506,7 +506,7 @@ public class GameManager : NetworkBehaviour
             player.canMove = true;
     }
 
-    [ClientRpc]
+    [ClientRpc (Delivery = RpcDelivery.Reliable)]
     private void BroadcastGameStateClientRpc(GameState newState)
     {
         Debug.Log($"[GAME] BroadcastGameStateClientRpc: {state} -> {newState}");
@@ -549,7 +549,7 @@ public class GameManager : NetworkBehaviour
     }
 
     // Client RPC to sync game mode with clients
-    [ClientRpc]
+    [ClientRpc (Delivery = RpcDelivery.Reliable)]
     private void UpdateGameModeClientRpc(GameMode mode)
     {
         // Update local game mode
@@ -558,7 +558,7 @@ public class GameManager : NetworkBehaviour
     }
 
     // Client RPC to sync team count with clients
-    [ClientRpc]
+    [ClientRpc (Delivery = RpcDelivery.Reliable)]
     private void UpdateTeamCountClientRpc(int count)
     {
         // Update local team count
