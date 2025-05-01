@@ -923,7 +923,7 @@ public class HogController : NetworkBehaviour
             {
                 // Get current RTT from NetworkManager
                 float currentPing = NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetCurrentRtt(
-                    NetworkManager.ServerClientId) * 1000f; // Convert to milliseconds
+                    NetworkManager.ServerClientId);
 
                 // Add to our samples
                 pingSamples.Enqueue(currentPing);
