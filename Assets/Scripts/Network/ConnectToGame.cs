@@ -8,6 +8,7 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
 public class ConnectToGame : MonoBehaviour
 {
@@ -82,14 +83,14 @@ public class ConnectToGame : MonoBehaviour
         catch (RelayServiceException e)
         {
             Debug.LogError($"Relay service error: {e.Message}");
-            
+
             // Check for specific error types
             bool isNetworkError = e.Message.Contains("network") || e.Message.Contains("connection") || e.Message.Contains("timeout");
             bool isAuthError = e.Message.Contains("auth") || e.Message.Contains("token") || e.Message.Contains("unauthorized");
             bool isRateLimitError = e.Message.Contains("rate") || e.Message.Contains("limit") || e.Message.Contains("too many");
-            
+
             string userMessage = "Failed to create lobby. ";
-            
+
             if (isNetworkError)
             {
                 userMessage += "Please check your internet connection and try again.";
@@ -106,21 +107,19 @@ public class ConnectToGame : MonoBehaviour
             {
                 userMessage += e.Message;
             }
-            
+
             connectionPending.SetActive(false);
             menuManager.DisplayConnectionError(userMessage);
-            
-            // Don't automatically go back to main menu, let the user decide
-            // menuManager.MainMenu();
+
+            menuManager.OnPlayClicked();
         }
         catch (System.Exception e)
         {
             Debug.LogError($"Unexpected error creating lobby: {e.Message}");
             connectionPending.SetActive(false);
             menuManager.DisplayConnectionError("Unexpected error creating lobby. Please try again.");
-            
-            // Don't automatically go back to main menu, let the user decide
-            // menuManager.MainMenu();
+
+            menuManager.OnPlayClicked();
         }
     }
 
@@ -137,14 +136,14 @@ public class ConnectToGame : MonoBehaviour
         catch (RelayServiceException e)
         {
             Debug.LogError($"Relay join error: {e.Message}");
-            
+
             // Check for specific error types
             bool isInvalidCode = e.Message.Contains("not found") || e.Message.Contains("invalid") || e.Message.Contains("allocation");
             bool isNetworkError = e.Message.Contains("network") || e.Message.Contains("connection") || e.Message.Contains("timeout");
             bool isFullLobby = e.Message.Contains("full") || e.Message.Contains("capacity") || e.Message.Contains("maximum");
-            
+
             string userMessage = "Failed to join lobby. ";
-            
+
             if (isInvalidCode)
             {
                 userMessage += "Invalid or expired join code. Please check the code and try again.";
@@ -161,7 +160,7 @@ public class ConnectToGame : MonoBehaviour
             {
                 userMessage += "No lobby found with that code.";
             }
-            
+
             connectionPending.SetActive(false);
             menuManager.DisplayConnectionError(userMessage);
         }
@@ -177,13 +176,13 @@ public class ConnectToGame : MonoBehaviour
     {
         // Get username from PlayerPrefs
         string username = PlayerPrefs.GetString("Username", "Player");
-        
+
         // Configure connection with username as payload;
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
-        
+
         // Store the join code for potential retry
         lastJoinCode = joinCodeInput.text;
-        
+
         JoinRelay(lastJoinCode);
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
@@ -195,23 +194,23 @@ public class ConnectToGame : MonoBehaviour
     {
         // Get username from PlayerPrefs
         string username = PlayerPrefs.GetString("Username", "Player");
-        
+
         // Configure connection with username as payload
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
-        
+
         // Clear last join code since we're hosting
         lastJoinCode = "";
-        
+
         CreateRelay();
         connectionPending.SetActive(true);
         MenuMusicOff.Post(gameObject);
         menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
-        
+
         // Use Invoke instead of a coroutine to open lobby settings after a delay
         Invoke("OpenLobbySettingsAfterDelay", 1.5f);
     }
-    
+
     // Simple method to open the lobby settings after a delay
     private void OpenLobbySettingsAfterDelay()
     {

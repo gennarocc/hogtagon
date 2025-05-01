@@ -119,7 +119,7 @@ public class MenuManager : NetworkBehaviour
     private bool _prevLobbyMenuActiveState = false;
 
     [Header("Connection Error UI")]
-    [SerializeField] private GameObject connectionRefusedUI;
+    [SerializeField] private TextMeshProUGUI connectionRefusedUI;
 
     private void Awake()
     {
@@ -733,15 +733,8 @@ public class MenuManager : NetworkBehaviour
     public void DisplayConnectionError(string error)
     {
         // Update the error text
-        connectionRefusedReasonText.text = error;
+        connectionRefusedUI.text = error;
 
-        // Make sure the error panel is visible
-        if (connectionRefusedUI != null)
-        {
-            connectionRefusedUI.SetActive(true);
-        }
-
-        // Ensure the cursor is visible for button interaction
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
 
@@ -1048,12 +1041,9 @@ public class MenuManager : NetworkBehaviour
         playMenuPanel.SetActive(true);
 
         // Lower the priority of the menu camera
-        if (menuCamera != null && menuCamera.GetComponent<CinemachineVirtualCamera>() != null)
-            menuCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
+        menuCamera.GetComponent<CinemachineVirtualCamera>().Priority = 0;
 
-        // Make sure we're in UI mode for the play menu
-        if (inputManager != null)
-            inputManager.SwitchToUIMode();
+        inputManager.SwitchToUIMode();
 
         // Handle button selection based on input
         HandleButtonSelection(defaultPlayMenuButton);
@@ -1070,12 +1060,6 @@ public class MenuManager : NetworkBehaviour
 
         // Call the main Settings method to handle the menu transition
         Settings();
-    }
-
-    private void SetupTabController(TabController tabController)
-    {
-        // This method is no longer needed since the SettingsManager handles tab setup
-        // Keep the method for backwards compatibility but don't perform any actions
     }
 
     // Method to open Lobby Settings Menu (called when host creates lobby or from pause menu)
