@@ -110,9 +110,10 @@ public class HogController : NetworkBehaviour
         if (jumpOnCooldown)
         {
             jumpCooldownRemaining -= Time.deltaTime;
-            if (jumpCooldownRemaining <= 0)
+            if (jumpCooldownRemaining <= 0 && jumpOnCooldown)
             {
                 jumpOnCooldown = false;
+                SoundManager.Instance.PlayLocalSound(gameObject, SoundManager.SoundEffectType.HogJumpReady);
             }
         }
 

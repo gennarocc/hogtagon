@@ -27,6 +27,7 @@ public class SoundManager : NetworkBehaviour
         EngineOn = 7,
         EngineOff = 8,
         HogJump = 10,
+        HogJumpReady = 11,
 
         // Game state sounds
         LevelMusicOn = 100,

@@ -12280,6 +12280,11 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 11400000, guid: 62e1de02e52d08445834ca671a134a44, type: 2}
+  - type: 11
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 19ff6c38c3fe4ce44a85b93f8f84b805, type: 2}
   globalSoundSource: {fileID: 662722771}
 --- !u!1 &705507993
 GameObject:
