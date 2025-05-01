@@ -5,6 +5,7 @@ using System.Collections;
 using Hogtagon.Core.Infrastructure;
 using Cinemachine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 public class HogController : NetworkBehaviour
 {
@@ -47,7 +48,11 @@ public class HogController : NetworkBehaviour
     [SerializeField] private AnimationCurve cameraSteeringCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField, Range(0f, 0.3f)] private float steeringDeadzone = 0.1f; // Add deadzone parameter
     [SerializeField] private bool invertCameraSteering = false;
-    private CinemachineFreeLook playerCamera;
+    [Header("Ping Monitoring")]
+    [SerializeField] private float pingCheckInterval = 0.5f; // How often to check ping
+    [SerializeField] private int maxPingSamples = 4; // 4 samples over 2 seconds (with 0.5s interval)
+    [SerializeField] private float warningThreshold = 100f; // Yellow warning (ms)
+    [SerializeField] private float criticalThreshold = 150f; // Red warning (ms)
 
     [Header("References")]
     [SerializeField] private Rigidbody rb;
@@ -87,6 +92,18 @@ public class HogController : NetworkBehaviour
     private NetworkVariable<bool> rearLeftWheelGrounded = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<bool> rearRightWheelGrounded = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    private Queue<float> pingSamples = new Queue<float>();
+    private float averagePing = 0f;
+    private bool shouldDisplayPing = false;
+    private GUIStyle pingStyle;
+
+    // Unity GUI positioning and styling
+    private int fontSize = 20;
+    private int padding = 10;
+    private Color warningColor = Color.yellow;
+    private Color criticalColor = Color.red;
+
+
     // Physics and control variables
     private float currentTorque;
     private float steeringAxis;
@@ -97,10 +114,20 @@ public class HogController : NetworkBehaviour
     private Texture2D debugBackgroundTexture;
     private const float bumperCollisionDebounce = 0.2f; // Prevent too frequent bumper collisions
     private bool bumperCollisionOnCooldown = false;
+    private CinemachineFreeLook playerCamera;
 
     #endregion
 
     #region Lifecycle Methods
+
+    private void Start()
+    {
+        // Initialize GUI style
+        pingStyle = new GUIStyle();
+        pingStyle.fontSize = fontSize;
+        pingStyle.fontStyle = FontStyle.Bold;
+        pingStyle.normal.textColor = warningColor;
+    }
 
     private void Update()
     {
@@ -143,7 +170,7 @@ public class HogController : NetworkBehaviour
             CheckDriftCondition();
 
             CalculateEngineAudio(Math.Sign(input.throttleInput - input.brakeInput), netVelocity.Value);
-            
+
 
             // Set BrakeLight Emmision
             if (input.brakeInput > 0) tailLights.material = tailLightsOn;
@@ -184,6 +211,7 @@ public class HogController : NetworkBehaviour
                 Debug.LogWarning("[HogController] PlayerCamera not found!");
             }
 
+            StartCoroutine(PingMonitorRoutine());
         }
 
         if (IsServer || IsOwner)
@@ -885,4 +913,63 @@ public class HogController : NetworkBehaviour
     }
 
     #endregion
+
+
+    private IEnumerator PingMonitorRoutine()
+    {
+        while (true)
+        {
+            if (NetworkManager.Singleton.IsConnectedClient)
+            {
+                // Get current RTT from NetworkManager
+                float currentPing = NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetCurrentRtt(
+                    NetworkManager.ServerClientId) * 1000f; // Convert to milliseconds
+
+                // Add to our samples
+                pingSamples.Enqueue(currentPing);
+
+                // Keep only the most recent samples for our window
+                if (pingSamples.Count > maxPingSamples)
+                {
+                    pingSamples.Dequeue();
+                }
+
+                // Calculate the average
+                float sum = 0f;
+                foreach (float ping in pingSamples)
+                {
+                    sum += ping;
+                }
+                averagePing = sum / pingSamples.Count;
+
+                // Determine if we should show the warning based on thresholds
+                shouldDisplayPing = averagePing >= warningThreshold;
+
+                // Update the text color based on ping value
+                if (averagePing >= criticalThreshold)
+                {
+                    pingStyle.normal.textColor = criticalColor;
+                }
+                else
+                {
+                    pingStyle.normal.textColor = warningColor;
+                }
+            }
+
+            yield return new WaitForSeconds(pingCheckInterval);
+        }
+    }
+
+    private void OnGUI()
+    {
+        if (IsOwner && shouldDisplayPing && NetworkManager.Singleton.IsConnectedClient)
+        {
+            // Display in bottom left corner
+            GUI.Label(
+                new Rect(padding, Screen.height - fontSize - padding, 200, fontSize),
+                $"High Latency: {averagePing:0}ms",
+                pingStyle
+            );
+        }
+    }
 }
