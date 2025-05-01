@@ -1078,7 +1078,7 @@
 										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 										<Property Name="Lowpass" Type="int16">
 											<ValueList>
-												<Value>20</Value>
+												<Value>35</Value>
 											</ValueList>
 										</Property>
 										<Property Name="Pitch" Type="int32">
@@ -1090,8 +1090,8 @@
 													<Modifier Name="" ID="{4C050AC2-5F6B-4E58-B5C5-57CA14589780}">
 														<PropertyList>
 															<Property Name="Enabled" Type="bool" Value="True"/>
-															<Property Name="Max" Type="Real64" Value="100"/>
-															<Property Name="Min" Type="Real64" Value="-100"/>
+															<Property Name="Max" Type="Real64" Value="215"/>
+															<Property Name="Min" Type="Real64" Value="-215"/>
 														</PropertyList>
 													</Modifier>
 												</ModifierInfo>
@@ -1099,7 +1099,7 @@
 										</Property>
 										<Property Name="Volume" Type="Real64">
 											<ValueList>
-												<Value>-6</Value>
+												<Value>-9</Value>
 											</ValueList>
 										</Property>
 									</PropertyList>
@@ -2346,6 +2346,11 @@
 						<Sound Name="round-start" ID="{83DBBBF9-BCF6-417C-BFDE-9D9FE95E472C}" ShortID="1017140127">
 							<PropertyList>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-0.5</Value>
+									</ValueList>
+								</Property>
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
@@ -2378,7 +2383,7 @@
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
 								<Property Name="Volume" Type="Real64">
 									<ValueList>
-										<Value>3</Value>
+										<Value>4</Value>
 									</ValueList>
 								</Property>
 							</PropertyList>
@@ -2411,6 +2416,11 @@
 						<RandomSequenceContainer Name="out-of-time" ID="{E159DE64-82B4-47E7-8C36-E0C1D6DF2A15}" ShortID="105289663">
 							<PropertyList>
 								<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>1.5</Value>
+									</ValueList>
+								</Property>
 							</PropertyList>
 							<ReferenceList>
 								<Reference Name="Conversion">
@@ -2444,6 +2454,13 @@
 									</ActiveSourceList>
 								</Sound>
 								<Sound Name="final-moments-2" ID="{101A1646-903B-4EF8-83B4-4F377E3EF927}" ShortID="645044334">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-1</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
 											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -2532,6 +2549,13 @@
 									</ActiveSourceList>
 								</Sound>
 								<Sound Name="the-end-approaches" ID="{C56AD7F6-40EB-4A04-90F8-1E10E4AB3DC7}" ShortID="582815924">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-1</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
 											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
@@ -2554,6 +2578,13 @@
 									</ActiveSourceList>
 								</Sound>
 								<Sound Name="times-running-short" ID="{0C70ED47-B6C3-4CBF-8332-DC32A8B72B3B}" ShortID="218334108">
+									<PropertyList>
+										<Property Name="Volume" Type="Real64">
+											<ValueList>
+												<Value>-1</Value>
+											</ValueList>
+										</Property>
+									</PropertyList>
 									<ReferenceList>
 										<Reference Name="Conversion">
 											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>

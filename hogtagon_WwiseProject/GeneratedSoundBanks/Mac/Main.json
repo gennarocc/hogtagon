@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{E046E262-808B-4B7E-3949-A8E0B601E0A4}",
+    "Hash": "{8B50A30F-4A98-7A5A-DA37-A6AB2840E4BD}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -717,8 +717,8 @@
       "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOn",
       "GUID": "{4CAAFB66-290F-4689-9D6B-46BA7DB49BBB}",
       "DurationType": "OneShot",
-      "DurationMin": "0.5082519",
-      "DurationMax": "0.5708961",
+      "DurationMin": "0.47558734",
+      "DurationMax": "0.61010665",
       "MediaRefs": [
        {
         "Id": "553553016"
@@ -781,6 +781,6 @@
     ]
    }
   ],
-  "FileHash": "{985FDCF9-10AA-A834-08A2-85B02A1C3FC0}"
+  "FileHash": "{048AA2EB-ADE5-DFD1-6654-9BA261239591}"
  }
 }
