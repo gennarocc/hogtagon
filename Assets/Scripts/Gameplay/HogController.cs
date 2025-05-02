@@ -197,7 +197,6 @@ public class HogController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-
         // Get reference to the InputManager
         inputManager = InputManager.Instance;
         if (IsOwner)
@@ -231,7 +230,9 @@ public class HogController : NetworkBehaviour
         isDrifting.OnValueChanged += OnDriftingChanged;
         isJumping.OnValueChanged += OnJumpingChanged;
 
+        StartCoroutine(PlayEngineAfterDelay());
     }
+
 
     public override void OnNetworkDespawn()
     {
@@ -971,5 +972,10 @@ public class HogController : NetworkBehaviour
                 pingStyle
             );
         }
+    }
+    public IEnumerator PlayEngineAfterDelay()
+    {
+        yield return new WaitForSeconds(1f);
+        SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.EngineOn);
     }
 }
