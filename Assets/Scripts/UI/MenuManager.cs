@@ -108,7 +108,7 @@ public class MenuManager : NetworkBehaviour
     private int _roundCount = 5;
     private readonly int[] _validRoundCounts = new int[] { 1, 3, 5, 7, 9 };
     private bool _prevLobbyMenuActiveState = false;
-    
+
     #endregion
 
     #region Properties
@@ -169,7 +169,7 @@ public class MenuManager : NetworkBehaviour
     {
         // Try to find InputManager if it wasn't found in Awake
         inputManager = InputManager.Instance;
-        
+
         // Unsubscribe first to avoid duplicate subscriptions
         if (inputManager != null)
         {
@@ -318,6 +318,62 @@ public class MenuManager : NetworkBehaviour
 
     #endregion
 
+    #region Input Mode Switching
+
+    /// <summary>
+    /// Unified method to switch between UI and gameplay input modes
+    /// </summary>
+    /// <param name="toUIMode">True to switch to UI mode, false to switch to gameplay mode</param>
+    /// <param name="disableCameraInput">Optional: Whether to disable camera input (defaults to same as toUIMode)</param>
+    /// <param name="forceButtonSelection">Optional: Button to select after switching (for UI mode only)</param>
+    public void SwitchInputMode(bool toUIMode, bool? disableCameraInput = null, Button forceButtonSelection = null)
+    {
+        Debug.Log($"[MenuManager] SwitchInputMode called. ToUIMode: {toUIMode}");
+
+        // Determine if we should disable camera input (defaults to match UI mode)
+        bool shouldDisableCameraInput = disableCameraInput ?? toUIMode;
+
+        // Handle camera input
+        if (shouldDisableCameraInput)
+        {
+            DisableCameraInput();
+        }
+        else
+        {
+            EnableCameraInput();
+        }
+
+        // Let InputManager handle the input mode switch and initial cursor state
+        if (inputManager != null)
+        {
+            if (toUIMode)
+            {
+                inputManager.SwitchToUIMode();
+                if (!inputManager.IsInUIMode())
+                    inputManager.ForceEnableCurrentActionMap();
+            }
+            else
+            {
+                inputManager.SwitchToGameplayMode();
+                if (!inputManager.IsInGameplayMode())
+                    inputManager.ForceEnableCurrentActionMap();
+            }
+        }
+
+        // Double-check cursor state as a fallback (InputManager should handle this primarily)
+        // This ensures proper cursor state even if InputManager fails
+        Cursor.visible = toUIMode;
+        Cursor.lockState = toUIMode ? CursorLockMode.None : CursorLockMode.Locked;
+
+        // Handle button selection for controller navigation
+        if (toUIMode && forceButtonSelection != null && forceButtonSelection.gameObject.activeInHierarchy)
+        {
+            HandleButtonSelection(forceButtonSelection);
+        }
+    }
+
+    #endregion
+
     #region Menu State Management
 
     public void ShowMainMenu()
@@ -330,7 +386,7 @@ public class MenuManager : NetworkBehaviour
         HideAllMenusExcept(mainMenuPanel);
         mainMenuPanel.SetActive(true);
         menuCamera.gameObject.SetActive(true);
-        
+
         if (!menuMusicPlaying)
         {
             MenuMusicOn.Post(gameObject);
@@ -348,25 +404,13 @@ public class MenuManager : NetworkBehaviour
         if (orbitalTransposer != null)
             orbitalTransposer.m_XAxis.m_InputAxisValue = rotationSpeed;
 
-        // Critical: Ensure cursor is visible and unlocked before switching input mode
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
         // Switch to UI input mode
-        if (inputManager != null)
-            inputManager.SwitchToUIMode();
-
-        // Double-check cursor state after input mode switch
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        SwitchInputMode(toUIMode: true, forceButtonSelection: defaultMainMenuButton);
 
         gameIsPaused = false;  // Reset pause state
 
         // Clear any selected game objects
         eventSystem?.SetSelectedGameObject(null);
-
-        // Handle button selection based on input
-        HandleButtonSelection(defaultMainMenuButton);
     }
 
     public void OnPlayClicked()
@@ -377,10 +421,8 @@ public class MenuManager : NetworkBehaviour
         // Lower the priority of the menu camera
         menuCamera.Priority = 0;
 
-        inputManager.SwitchToUIMode();
-
-        // Handle button selection based on input
-        HandleButtonSelection(defaultPlayMenuButton);
+        // Switch to UI input mode
+        SwitchInputMode(toUIMode: true, forceButtonSelection: defaultPlayMenuButton);
     }
 
     public void OnOptionsClicked()
@@ -419,23 +461,11 @@ public class MenuManager : NetworkBehaviour
             HideAllMenusExcept(newOptionsMenuUI);
             newOptionsMenuUI.SetActive(true);
 
-            // Ensure cursor is visible for UI interaction
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-
-            // Switch to UI input mode
-            if (inputManager != null)
-            {
-                inputManager.SwitchToUIMode();
-                if (inputManager.IsInUIMode())
-                    inputManager.ForceEnableCurrentActionMap();
-            }
+            // Switch to UI mode
+            SwitchInputMode(toUIMode: true, forceButtonSelection: defaultSettingsMenuButton);
 
             // Enable controller selection for navigation
             controllerSelectionEnabled = true;
-
-            // Find and select the default button
-            HandleButtonSelection(defaultSettingsMenuButton);
         }
         else if (settingsMenuUI != null)
         {
@@ -443,7 +473,8 @@ public class MenuManager : NetworkBehaviour
             HideAllMenusExcept(settingsMenuUI);
             settingsMenuUI.SetActive(true);
 
-            HandleButtonSelection(defaultSettingsMenuButton);
+            // Switch to UI mode
+            SwitchInputMode(toUIMode: true, forceButtonSelection: defaultSettingsMenuButton);
         }
     }
 
@@ -476,7 +507,7 @@ public class MenuManager : NetworkBehaviour
             Time.timeScale = 0f;
 
             // Handle button selection for controller navigation
-            HandleButtonSelection(defaultPauseMenuButton);
+            SwitchInputMode(toUIMode: true, forceButtonSelection: defaultPauseMenuButton);
 
             // Make sure the Resume button will actually work by ensuring the EventSystem is properly set up
             if (pauseMenuUI != null)
@@ -499,9 +530,6 @@ public class MenuManager : NetworkBehaviour
             // Return to main menu
             Debug.Log($"[MenuManager] Settings were opened from main menu. Returning to main menu.");
             ShowMainMenu();
-
-            // Handle button selection for controller navigation
-            HandleButtonSelection(defaultMainMenuButton);
         }
 
         // Enable main camera if it was disabled
@@ -557,26 +585,10 @@ public class MenuManager : NetworkBehaviour
         // Reset time scale to normal
         Time.timeScale = 1f;
 
-        // Lock cursor when resuming - do this BEFORE switching input modes
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-
-        // Enable camera input
-        EnableCameraInput();
+        // Switch to gameplay mode
+        SwitchInputMode(toUIMode: false);
 
         PauseOff.Post(gameObject);
-
-        // Switch back to gameplay input mode
-        if (inputManager != null)
-        {
-            inputManager.SwitchToGameplayMode();
-            if (inputManager.IsInGameplayMode())
-                inputManager.ForceEnableCurrentActionMap();
-        }
-
-        // Double-check cursor lock in case input mode change affected it
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Pause()
@@ -596,10 +608,10 @@ public class MenuManager : NetworkBehaviour
             pauseLobbySettingsButton.interactable = GameManager.Instance.state != GameState.Playing;
         }
 
-        // Disable camera input - this is key to stopping camera rotation
-        DisableCameraInput();
+        // Switch to UI mode
+        SwitchInputMode(toUIMode: true, forceButtonSelection: defaultPauseMenuButton);
 
-        // Set pause state AFTER disabling camera
+        // Set pause state
         gameIsPaused = true;
 
         // Enable all child components explicitly
@@ -608,43 +620,8 @@ public class MenuManager : NetworkBehaviour
             child.gameObject.SetActive(true);
         }
 
-        // Find the default pause menu button
-        Button defaultButton = null;
-        foreach (Button button in pauseMenuUI.GetComponentsInChildren<Button>())
-        {
-            if (button.name.Contains("Resume"))
-            {
-                defaultButton = button;
-                break;
-            }
-        }
-
-        // Manually clear the event system selection
-        if (EventSystem.current != null)
-        {
-            EventSystem.current.SetSelectedGameObject(null);
-
-            // Select the default button
-            if (defaultButton != null)
-            {
-                EventSystem.current.SetSelectedGameObject(defaultButton.gameObject);
-            }
-            else if (defaultPauseMenuButton != null)
-            {
-                EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
-            }
-        }
-
         // Play sound effect if available
         PauseOn.Post(gameObject);
-
-        inputManager.SwitchToUIMode();
-        if (inputManager.IsInGameplayMode())
-            inputManager.ForceEnableCurrentActionMap();
-
-        // Double-check cursor state after input mode switch
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
     }
 
     public void StartGame()
@@ -661,20 +638,8 @@ public class MenuManager : NetworkBehaviour
         // Reset pause state
         gameIsPaused = false;
 
-        // Ensure cursor is locked for gameplay
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-
-        // Enable camera input for gameplay
-        EnableCameraInput();
-
-        // Switch to gameplay mode for input
-        if (inputManager != null)
-        {
-            inputManager.SwitchToGameplayMode();
-            if (inputManager.IsInGameplayMode())
-                inputManager.ForceEnableCurrentActionMap();
-        }
+        // Switch to gameplay mode
+        SwitchInputMode(toUIMode: false);
 
         // Start the game - use TransitionToState instead of StartGame
         GameManager.Instance.TransitionToState(GameState.Start);
@@ -717,13 +682,6 @@ public class MenuManager : NetworkBehaviour
         // Reset all menu states and show main menu
         ShowMainMenu();
 
-        // Ensure cursor is visible for main menu
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
-        // Reset connection state
-        ConnectionManager.Instance.isConnected = false;
-
         // Play button sound
         ButtonClickAudio();
         PauseOff.Post(gameObject);
@@ -750,25 +708,12 @@ public class MenuManager : NetworkBehaviour
         if (connected)
         {
             // When newly connected, immediately switch to gameplay mode
-            if (inputManager != null)
-            {
-                inputManager.SwitchToGameplayMode();
-                if (!inputManager.IsInGameplayMode())
-                    inputManager.ForceEnableCurrentActionMap();
-            }
-
-            // Lock cursor for gameplay
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
+            SwitchInputMode(toUIMode: false);
         }
         else
         {
-            // When disconnected, switch to UI mode and show main menu
-            if (inputManager != null)
-                inputManager.SwitchToUIMode();
-
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
+            // Switch to UI mode and show main menu
+            SwitchInputMode(toUIMode: true);
             ShowMainMenu();
         }
     }
@@ -917,8 +862,8 @@ public class MenuManager : NetworkBehaviour
         // Update the error text
         connectionRefusedUI.text = error;
 
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
+        // Switch to UI mode
+        SwitchInputMode(toUIMode: true);
 
         // Hide connection pending UI if it's active
         if (connectionPending.activeSelf)
@@ -963,7 +908,7 @@ public class MenuManager : NetworkBehaviour
     #endregion
 
     #region Input Handling
-    
+
     private void OnMenuToggled()
     {
         // First check if the lobby settings menu is open - if so, just close it
@@ -984,7 +929,7 @@ public class MenuManager : NetworkBehaviour
         }
 
         if (!ConnectionManager.Instance.isConnected) return;
-        
+
         // Apply cooldown to prevent rapid toggling
         if (Time.unscaledTime - lastMenuToggleTime < menuToggleCooldown)
         {
@@ -1015,14 +960,10 @@ public class MenuManager : NetworkBehaviour
                 child.gameObject.SetActive(true);
             }
 
-            // Set selection
-            HandleButtonSelection(defaultPauseMenuButton);
+            // Switch to UI mode
+            SwitchInputMode(toUIMode: true, forceButtonSelection: defaultPauseMenuButton);
 
             gameIsPaused = true;
-
-            // Ensure cursor is visible in pause menu
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
             return;
         }
 
@@ -1040,8 +981,7 @@ public class MenuManager : NetworkBehaviour
             else
             {
                 // Even if we can't open the pause menu, unlock the cursor
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                SwitchInputMode(toUIMode: true);
             }
         }
     }
@@ -1061,7 +1001,7 @@ public class MenuManager : NetworkBehaviour
         if (isInSettings)
         {
             HideAllMenusExcept(settingsOpenedFromPauseMenu ? pauseMenuUI : mainMenuPanel);
-            HandleButtonSelection(settingsOpenedFromPauseMenu ? defaultPauseMenuButton : defaultMainMenuButton);
+            SwitchInputMode(toUIMode: true, forceButtonSelection: settingsOpenedFromPauseMenu ? defaultPauseMenuButton : defaultMainMenuButton);
             return;
         }
 
@@ -1136,7 +1076,7 @@ public class MenuManager : NetworkBehaviour
             inputManager.SetControllerNavigationEnabled(true);
         }
     }
-    
+
     // Set up explicit navigation between buttons for gamepad
     private void SetupButtonNavigation()
     {
@@ -1168,7 +1108,7 @@ public class MenuManager : NetworkBehaviour
     #endregion
 
     #region UI Selection Utilities
-    
+
     private void ClearSelection()
     {
         if (eventSystem != null)
@@ -1212,7 +1152,7 @@ public class MenuManager : NetworkBehaviour
             }
         }
     }
-    
+
     #endregion
 
     #region Camera Control
@@ -1287,11 +1227,8 @@ public class MenuManager : NetworkBehaviour
 
         Debug.Log("[MenuManager] OpenLobbySettingsMenu called");
 
-        DisableCameraInput();
-
-        // Make sure cursor is visible and unlocked for menu interaction
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // Switch to UI mode
+        SwitchInputMode(toUIMode: true);
 
         if (pauseMenuUI.activeSelf)
         {
@@ -1302,18 +1239,6 @@ public class MenuManager : NetworkBehaviour
         // First activate the GameObject
         lobbySettingsMenuUI.SetActive(true);
         _prevLobbyMenuActiveState = true;
-
-        // Switch to UI input mode
-        if (inputManager != null)
-        {
-            inputManager.SwitchToUIMode();
-            if (inputManager.IsInGameplayMode())
-                inputManager.ForceEnableCurrentActionMap();
-        }
-
-        // Double-check cursor state after input mode switch
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
     }
 
     public void UpdateLobbySettingsButtonState()
@@ -1495,19 +1420,9 @@ public class MenuManager : NetworkBehaviour
     {
         Debug.Log("[MenuManager] Returning to pause menu");
 
-        // Keep camera input disabled for pause menu
-        DisableCameraInput();
-
         // Show pause menu and set up UI
         pauseMenuUI.SetActive(true);
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        // Set selected button if using controller
-        if (controllerSelectionEnabled && EventSystem.current != null && defaultPauseMenuButton != null)
-        {
-            EventSystem.current.SetSelectedGameObject(defaultPauseMenuButton.gameObject);
-        }
+        SwitchInputMode(toUIMode: true, forceButtonSelection: defaultPauseMenuButton);
     }
 
     public void ShowPauseMenu()
