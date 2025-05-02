@@ -53,8 +53,12 @@ public class GameManager : NetworkBehaviour
             Destroy(gameObject);
         }
 
-        // Get KillFeed reference
-        killFeed = ServiceLocator.GetService<KillFeed>();
+        // Get KillFeed reference if not set
+        if (killFeed == null)
+        {
+            killFeed = KillFeed.Instance;
+            Debug.Log($"[GAME] Found KillFeed via singleton: {(killFeed != null)}");
+        }
 
         TransitionToState(GameState.Pending);
     }
@@ -458,8 +462,6 @@ public class GameManager : NetworkBehaviour
             // Create kill feed message
             if (state == GameState.Playing || state == GameState.Pending)
             {
-                killFeed = ServiceLocator.GetService<KillFeed>();
-
                 var playerCollisionTracker = ServiceLocator.GetService<PlayerCollisionTracker>();
                 if (playerCollisionTracker != null)
                 {

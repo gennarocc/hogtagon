@@ -5,7 +5,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
-using Hogtagon.Core.Infrastructure;
 
 public class KillFeed : NetworkBehaviour
 {
@@ -37,10 +36,8 @@ public class KillFeed : NetworkBehaviour
         "failed spectacularly!"
     };
 
-    // Instance management
+    // Singleton pattern for easy access
     private static KillFeed instance;
-    
-    // Public accessor for the instance
     public static KillFeed Instance => instance;
     
     // Message tracking
@@ -55,8 +52,8 @@ public class KillFeed : NetworkBehaviour
             Destroy(gameObject);
             return;
         }
+        
         instance = this;
-        ServiceLocator.RegisterService<KillFeed>(this);
         
         // Validate required components
         if (killFeedItemPrefab == null)
@@ -92,20 +89,15 @@ public class KillFeed : NetworkBehaviour
         if (instance == this)
         {
             instance = null;
-            ServiceLocator.UnregisterService<KillFeed>();
         }
     }
 
     public override void OnDestroy()
     {
-        // Call base implementation
         base.OnDestroy();
-        
-        // Unregister service
         if (instance == this)
         {
             instance = null;
-            ServiceLocator.UnregisterService<KillFeed>();
         }
     }
 
@@ -115,7 +107,7 @@ public class KillFeed : NetworkBehaviour
         ClearAllMessages();
     }
 
-    private void ClearAllMessages()
+    public void ClearAllMessages()
     {
         foreach (var message in activeMessages)
         {
@@ -344,7 +336,7 @@ public class KillFeed : NetworkBehaviour
         // Ensure rich text is enabled to support color tags
         textComponent.richText = true;
 
-        if (textComponent.transform.parent.TryGetComponent<Image>(out var backgroundImage))
+        if (messageObj.TryGetComponent<Image>(out var backgroundImage))
         {
             backgroundImage.color = backgroundColor;
         }
