@@ -114,7 +114,7 @@ public class Player : NetworkBehaviour
         // Only check for input if player is dead and game is active
         ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData);
 
-        if (playerData.state != PlayerState.Alive && GameManager.Instance.state != GameState.Playing)
+        if (playerData.state != PlayerState.Alive && GameManager.Instance.state == GameState.Playing)
         {
             if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
             {
