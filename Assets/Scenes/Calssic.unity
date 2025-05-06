@@ -12285,6 +12285,21 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 11400000, guid: 19ff6c38c3fe4ce44a85b93f8f84b805, type: 2}
+  - type: 200
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: aea576d8c070a6b48901a2b64568f58e, type: 2}
+  - type: 201
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 48af205587f718240b144393ab35a700, type: 2}
+  - type: 202
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: a44cab77c37739a49ac20c92c3390560, type: 2}
   globalSoundSource: {fileID: 662722771}
 --- !u!1 &705507993
 GameObject:
@@ -21392,6 +21407,10 @@ PrefabInstance:
       propertyPath: LobbyMusicOn.WwiseObjectReference
       value: 
       objectReference: {fileID: 11400000, guid: ee213fd65eb14da4da86210a56ced317, type: 2}
+    - target: {fileID: 3090869612245087618, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 3148982492509811291, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_Name
       value: SettingsErrorMessage
@@ -22276,8 +22295,6 @@ MonoBehaviour:
   settingsManager: {fileID: 8139383635423295509}
   resolutionDropdown: {fileID: 8139383635423295500}
   fullscreenToggle: {fileID: 8139383635423295499}
-  fovSlider: {fileID: 0}
-  fovValueText: {fileID: 0}
   applyButton: {fileID: 8139383635423295493}
 --- !u!114 &8139383635423295509
 MonoBehaviour:
@@ -22311,18 +22328,6 @@ MonoBehaviour:
   cameraSteeringToggle: {fileID: 148174426}
   sensitivitySlider: {fileID: 8139383635423295494}
   sensitivityValueText: {fileID: 0}
-  uiClick:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  uiConfirm:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
-  uiCancel:
-    idInternal: 0
-    valueGuidInternal: 
-    WwiseObjectReference: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

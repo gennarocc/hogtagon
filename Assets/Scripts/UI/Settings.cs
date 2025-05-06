@@ -24,9 +24,6 @@ public class Settings : MonoBehaviour
     [SerializeField] public AK.Wwise.RTPC MasterVolume;
     [SerializeField] public AK.Wwise.RTPC MusicVolume;
     [SerializeField] public AK.Wwise.RTPC SfxVolume;
-    [SerializeField] private AK.Wwise.Event uiClick;
-    [SerializeField] private AK.Wwise.Event uiConfirm;
-    [SerializeField] private AK.Wwise.Event uiCancel;
 
     void Start()
     {
@@ -188,7 +185,7 @@ public class Settings : MonoBehaviour
             if (applyButton != null)
                 applyButton.interactable = false;
                 
-            ButtonConfirmAudio();
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         }
     }
 
@@ -257,20 +254,5 @@ public class Settings : MonoBehaviour
             int dbValue = Mathf.RoundToInt(value); 
             label.text = $"{labelName}: {dbValue}dB";
         }
-    }
-
-    public void ButtonClickAudio()
-    {
-        uiClick.Post(gameObject);
-    }
-
-    public void ButtonConfirmAudio()
-    {
-        uiConfirm.Post(gameObject);
-    }
-
-    public void ButtonCancelAudio()
-    {
-        uiCancel.Post(gameObject);
     }
 }

@@ -62,9 +62,6 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private AK.Wwise.Event MenuMusicOn;
     [SerializeField] private AK.Wwise.Event PauseOn;
     [SerializeField] private AK.Wwise.Event PauseOff;
-    [SerializeField] private AK.Wwise.Event uiClick;
-    [SerializeField] private AK.Wwise.Event uiConfirm;
-    [SerializeField] private AK.Wwise.Event uiCancel;
     [SerializeField] private float rotationSpeed = 0.01f;
 
     [Header("Lobby Settings")]
@@ -219,19 +216,11 @@ public class MenuManager : NetworkBehaviour
 
         // Set up explicit navigation for main menu buttons
         SetupButtonNavigation();
-
         // Set up lobby settings button
-        if (pauseLobbySettingsButton != null)
-        {
-            pauseLobbySettingsButton.onClick.RemoveAllListeners();
-            pauseLobbySettingsButton.onClick.AddListener(OpenLobbySettingsMenu);
-            UpdateLobbySettingsButtonState();
-            Debug.Log("[MenuManager] Connected Lobby Settings button: " + pauseLobbySettingsButton.name);
-        }
-        else
-        {
-            Debug.LogWarning("[MenuManager] Lobby Settings button reference is missing!");
-        }
+        pauseLobbySettingsButton.onClick.RemoveAllListeners();
+        pauseLobbySettingsButton.onClick.AddListener(OpenLobbySettingsMenu);
+        UpdateLobbySettingsButtonState();
+        Debug.Log("[MenuManager] Connected Lobby Settings button: " + pauseLobbySettingsButton.name);
 
         // Clear selection by default
         ClearSelection();
@@ -417,6 +406,7 @@ public class MenuManager : NetworkBehaviour
     {
         HideAllMenusExcept(playMenuPanel);
         playMenuPanel.SetActive(true);
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
 
         // Lower the priority of the menu camera
         menuCamera.Priority = 0;
@@ -428,7 +418,7 @@ public class MenuManager : NetworkBehaviour
     public void OnOptionsClicked()
     {
         Debug.Log("[MenuManager] OnOptionsClicked called");
-
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         // Reset menu state flags - we're opening from main menu
         settingsOpenedFromPauseMenu = false;
         gameIsPaused = false;
@@ -446,7 +436,7 @@ public class MenuManager : NetworkBehaviour
         Debug.Log("Setting settingsOpenedFromPauseMenu to " + settingsOpenedFromPauseMenu);
 
         // Play sound feedback
-        ButtonClickAudio();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
 
         // Hide current menu
         if (gameIsPaused)
@@ -643,7 +633,7 @@ public class MenuManager : NetworkBehaviour
 
         // Start the game - use TransitionToState instead of StartGame
         GameManager.Instance.TransitionToState(GameState.Start);
-        ButtonConfirmAudio();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
     }
 
     public void QuitGame()
@@ -683,7 +673,7 @@ public class MenuManager : NetworkBehaviour
         ShowMainMenu();
 
         // Play button sound
-        ButtonClickAudio();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         PauseOff.Post(gameObject);
     }
 
@@ -872,7 +862,7 @@ public class MenuManager : NetworkBehaviour
         }
 
         // Play error sound
-        uiCancel.Post(gameObject);
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
 
         Debug.LogWarning($"Connection Error: {error}");
     }
@@ -1194,25 +1184,6 @@ public class MenuManager : NetworkBehaviour
 
     #endregion
 
-    #region Audio
-
-    public void ButtonClickAudio()
-    {
-        uiClick.Post(gameObject);
-    }
-
-    public void ButtonConfirmAudio()
-    {
-        uiConfirm.Post(gameObject);
-    }
-
-    public void ButtonCancelAudio()
-    {
-        uiCancel.Post(gameObject);
-    }
-
-    #endregion
-
     #region Lobby Settings
 
     public void OpenLobbySettingsMenu()
@@ -1229,6 +1200,7 @@ public class MenuManager : NetworkBehaviour
 
         // Switch to UI mode
         SwitchInputMode(toUIMode: true);
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIConfirm);
 
         if (pauseMenuUI.activeSelf)
         {
@@ -1243,19 +1215,15 @@ public class MenuManager : NetworkBehaviour
 
     public void UpdateLobbySettingsButtonState()
     {
-        if (pauseLobbySettingsButton != null && GameManager.Instance != null)
-        {
-            bool shouldBeVisible = GameManager.Instance.state != GameState.Playing;
-            pauseLobbySettingsButton.gameObject.SetActive(shouldBeVisible);
-            Debug.Log($"[MenuManager] Updated lobby settings button visibility: {shouldBeVisible}");
-        }
+        bool shouldBeVisible = GameManager.Instance.state != GameState.Playing;
+        pauseLobbySettingsButton.gameObject.SetActive(shouldBeVisible);
+        Debug.Log($"[MenuManager] Updated lobby settings button visibility: {shouldBeVisible}");
     }
 
     public void ShowLobbySettingsMenu()
     {
         Debug.Log("ShowLobbySettingsMenu called - showing lobby settings menu!");
 
-        // CRITICAL: First hide the pause menu if it's active
         if (pauseMenuUI.activeSelf)
         {
             Debug.Log("[MenuManager] Hiding pause menu before showing lobby settings");
@@ -1291,7 +1259,7 @@ public class MenuManager : NetworkBehaviour
 
     public void OnGameModeDirectionClicked(bool isLeft)
     {
-        ButtonClickAudio();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
 
         // Get the current mode index and total number of modes
         int currentIndex = (int)_selectedGameMode;
@@ -1363,7 +1331,7 @@ public class MenuManager : NetworkBehaviour
             return;
 
         // Play button sound
-        ButtonClickAudio();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
 
         // Track the menu state - IMPORTANT: Set this BEFORE disabling
         _prevLobbyMenuActiveState = false;
@@ -1447,7 +1415,7 @@ public class MenuManager : NetworkBehaviour
             GameManager.Instance.SetTeamCount(count);
         }
 
-        ButtonClickAudio();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
     }
 
     #endregion

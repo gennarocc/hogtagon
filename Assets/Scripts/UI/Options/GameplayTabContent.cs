@@ -11,27 +11,27 @@ public class GameplayTabContent : TabContent
     [Header("Gameplay Settings")]
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TextMeshProUGUI warningMessageText;
-    
+
     // Default values
     private const string DEFAULT_USERNAME = "Player";
     private const int MAX_USERNAME_LENGTH = 16;
-    
+
     protected override void Awake()
     {
         base.Awake();
-        
+
         // Set up input field listener
         if (usernameInput != null)
         {
             // Set character limit
             usernameInput.characterLimit = MAX_USERNAME_LENGTH;
-            
+
             // Add listeners
             usernameInput.onValueChanged.AddListener(OnUsernameChanged);
             usernameInput.onEndEdit.AddListener(OnUsernameFinishedEditing);
         }
     }
-    
+
     protected override void InitializeUI()
     {
         // Update UI with current settings
@@ -41,14 +41,14 @@ public class GameplayTabContent : TabContent
             string savedUsername = PlayerPrefs.GetString("Username", DEFAULT_USERNAME);
             usernameInput.text = savedUsername;
         }
-        
+
         // Clear any warning messages
         if (warningMessageText != null)
         {
             warningMessageText.text = "";
         }
     }
-    
+
     public void OnUsernameChanged(string username)
     {
         if (settingsManager != null)
@@ -57,19 +57,19 @@ public class GameplayTabContent : TabContent
             // settingsManager.PlayUIClickSound();
         }
     }
-    
+
     public void OnUsernameFinishedEditing(string username)
     {
         if (settingsManager != null)
         {
             // Play sound feedback when finished editing
-            settingsManager.PlayUIClickSound();
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         }
-        
+
         // Save username if valid
         SaveUsername(username);
     }
-    
+
     private void SaveUsername(string username)
     {
         // Clear any previous warning message
@@ -78,14 +78,14 @@ public class GameplayTabContent : TabContent
             warningMessageText.text = "";
             warningMessageText.enabled = false;
         }
-        
+
         // Validate username
         if (string.IsNullOrWhiteSpace(username))
         {
             // Reset to default or previous value if empty
             string savedUsername = PlayerPrefs.GetString("Username", DEFAULT_USERNAME);
             usernameInput.text = savedUsername;
-            
+
             // Show warning message
             if (warningMessageText != null)
             {
@@ -94,10 +94,10 @@ public class GameplayTabContent : TabContent
             }
             return;
         }
-        
+
         // Trim whitespace
         username = username.Trim();
-        
+
         // Check for invalid characters (special symbols, etc.)
         if (ContainsInvalidCharacters(username))
         {
@@ -107,11 +107,11 @@ public class GameplayTabContent : TabContent
                 warningMessageText.text = "Username contains invalid characters";
                 warningMessageText.enabled = true;
             }
-            
+
             // Don't save invalid username
             return;
         }
-        
+
         // Check for minimum length
         if (username.Length < 3)
         {
@@ -122,13 +122,13 @@ public class GameplayTabContent : TabContent
             }
             return;
         }
-        
+
         // Save the username
         PlayerPrefs.SetString("Username", username);
         PlayerPrefs.Save();
-        
+
         Debug.Log($"Username set to: {username}");
-        
+
         // Try to update player name in ConnectionManager
         if (ConnectionManager.Instance != null && NetworkManager.Singleton != null)
         {
@@ -146,7 +146,7 @@ public class GameplayTabContent : TabContent
                 {
                     string warningMsg = "Player reference not found in ConnectionManager";
                     Debug.LogWarning(warningMsg);
-                    
+
                     // Show warning in UI
                     if (warningMessageText != null)
                     {
@@ -159,7 +159,7 @@ public class GameplayTabContent : TabContent
             {
                 string infoMsg = "Not connected as client, username will be used when connecting";
                 Debug.Log(infoMsg);
-                
+
                 // Optional: Show info in UI
                 // if (warningMessageText != null)
                 // {
@@ -169,18 +169,18 @@ public class GameplayTabContent : TabContent
             }
         }
     }
-    
+
     // Helper method to check for invalid characters
     private bool ContainsInvalidCharacters(string username)
     {
         // Define what characters are allowed
         // This example allows only alphanumeric and some basic characters
         System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9_\-. ]+$");
-        
+
         // Return true if the username contains invalid characters
         return !regex.IsMatch(username);
     }
-    
+
     public override void ApplySettings()
     {
         // Make sure any pending username changes are saved
@@ -188,7 +188,7 @@ public class GameplayTabContent : TabContent
         {
             SaveUsername(usernameInput.text);
         }
-        
+
         // Call the main SettingsManager ApplySettings to ensure JSON saving happens
         if (settingsManager != null)
         {
@@ -200,15 +200,15 @@ public class GameplayTabContent : TabContent
             PlayerPrefs.Save();
         }
     }
-    
+
     public override void ResetToDefaults()
     {
         if (settingsManager != null)
         {
             // Play sound feedback
-            settingsManager.PlayUIConfirmSound();
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         }
-        
+
         // Reset username to default
         if (usernameInput != null)
         {

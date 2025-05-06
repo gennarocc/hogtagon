@@ -12,8 +12,6 @@ public class VideoTabContent : TabContent
     [Header("Video Settings")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;
     [SerializeField] private Toggle fullscreenToggle;
-    [SerializeField] private Slider fovSlider;
-    [SerializeField] private TextMeshProUGUI fovValueText;
     [SerializeField] private Button applyButton;
 
     // Default values
@@ -42,16 +40,17 @@ public class VideoTabContent : TabContent
         {
             // Get all available resolutions
             Resolution[] allResolutions = Screen.resolutions;
-            
+
             // Filter to only include 60Hz, 120Hz, and 144Hz (with small margin for rounding)
-            resolutions = allResolutions.Where(res => {
+            resolutions = allResolutions.Where(res =>
+            {
                 float rate = (float)res.refreshRateRatio.value;
-                return Mathf.Approximately(rate, 60f) || 
-                       (rate >= 59.5f && rate <= 60.5f) || 
-                       (rate >= 119.5f && rate <= 120.5f) || 
+                return Mathf.Approximately(rate, 60f) ||
+                       (rate >= 59.5f && rate <= 60.5f) ||
+                       (rate >= 119.5f && rate <= 120.5f) ||
                        (rate >= 143.5f && rate <= 144.5f);
             }).ToArray();
-            
+
             resolutionDropdown.ClearOptions();
 
             List<string> options = new List<string>();
@@ -87,13 +86,6 @@ public class VideoTabContent : TabContent
             fullscreenToggle.isOn = Screen.fullScreen;
         }
 
-        if (fovSlider != null)
-        {
-            float currentFov = PlayerPrefs.GetFloat("FOV", DEFAULT_FOV);
-            fovSlider.value = currentFov;
-            UpdateFOVText(currentFov);
-        }
-
         // Update resolution dropdown
         if (resolutionDropdown != null)
         {
@@ -105,32 +97,9 @@ public class VideoTabContent : TabContent
         }
     }
 
-    public void OnFOVChanged(float value)
-    {
-        if (settingsManager != null)
-        {
-            // Play sound feedback
-            settingsManager.PlayUIClickSound();
-        }
-
-        UpdateFOVText(value);
-    }
-
-    private void UpdateFOVText(float value)
-    {
-        if (fovValueText != null)
-        {
-            fovValueText.text = value.ToString("F0") + "°";
-        }
-    }
-
     public override void ApplySettings()
     {
-        if (settingsManager != null)
-        {
-            // Play sound feedback
-            settingsManager.PlayUIConfirmSound();
-        }
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIConfirm);
 
         if (resolutions != null && resolutionDropdown != null)
         {
@@ -153,19 +122,6 @@ public class VideoTabContent : TabContent
             PlayerPrefs.SetInt("Fullscreen", fullscreenToggle.isOn ? 1 : 0);
         }
 
-        // Save FOV setting
-        if (fovSlider != null)
-        {
-            float fov = fovSlider.value;
-            PlayerPrefs.SetFloat("FOV", fov);
-
-            // Apply FOV to camera
-            if (Camera.main != null)
-            {
-                Camera.main.fieldOfView = fov;
-            }
-        }
-
         // Save all settings
         PlayerPrefs.Save();
 
@@ -178,12 +134,6 @@ public class VideoTabContent : TabContent
 
     public override void ResetToDefaults()
     {
-        if (fovSlider != null)
-        {
-            fovSlider.value = DEFAULT_FOV;
-            UpdateFOVText(DEFAULT_FOV);
-        }
-
         if (fullscreenToggle != null)
         {
             fullscreenToggle.isOn = true;

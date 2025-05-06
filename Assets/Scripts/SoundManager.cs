@@ -41,6 +41,11 @@ public class SoundManager : NetworkBehaviour
         Round30Sec = 108,
         RoundWin = 109,
         RoundTimeWarning = 110,
+
+        // UI Sounds
+        UIClick = 200,
+        UIConfirm = 201,
+        UICancel = 202
     }
 
     [Serializable]
@@ -216,6 +221,11 @@ public class SoundManager : NetworkBehaviour
     {
         // Play the global sound on all clients
         PlayLocalSound(globalSoundSource, (SoundEffectType)effectType);
+    }
+
+    public void PlayUISound(SoundEffectType effectType)
+    {
+       PlayLocalSound(globalSoundSource, effectType); 
     }
 
     #endregion

@@ -47,11 +47,6 @@ public class SettingsManager : MonoBehaviour
     [SerializeField] private Slider sensitivitySlider;
     [SerializeField] private TextMeshProUGUI sensitivityValueText;
 
-    [Header("Audio")]
-    [SerializeField] private AK.Wwise.Event uiClick;
-    [SerializeField] private AK.Wwise.Event uiConfirm;
-    [SerializeField] private AK.Wwise.Event uiCancel;
-
     // Resolution cache
     private Resolution[] resolutions;
 
@@ -424,21 +419,17 @@ public class SettingsManager : MonoBehaviour
 
     public void OnResolutionChanged(int index)
     {
-        PlayUIClickSound();
-        // Resolution will be applied when video settings are saved
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
     }
 
     public void OnFullscreenToggled(bool isFullscreen)
     {
-        PlayUIClickSound();
-        // Fullscreen will be applied when video settings are saved
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
     }
-
-
 
     public void ApplyVideoSettings()
     {
-        PlayUIConfirmSound();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIConfirm);
 
         try
         {
@@ -501,22 +492,19 @@ public class SettingsManager : MonoBehaviour
 
     public void OnMasterVolumeChanged(float volume)
     {
-        PlayUIClickSound();
-        UpdateVolumeText(masterVolumeText, volume);
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick); UpdateVolumeText(masterVolumeText, volume);
         SetMasterVolume(volume);
     }
 
     public void OnMusicVolumeChanged(float volume)
     {
-        PlayUIClickSound();
-        UpdateVolumeText(musicVolumeText, volume);
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick); UpdateVolumeText(musicVolumeText, volume);
         SetMusicVolume(volume);
     }
 
     public void OnSFXVolumeChanged(float volume)
     {
-        PlayUIClickSound();
-        UpdateVolumeText(sfxVolumeText, volume);
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick); UpdateVolumeText(sfxVolumeText, volume);
         SetSFXVolume(volume);
     }
 
@@ -551,7 +539,7 @@ public class SettingsManager : MonoBehaviour
 
     public void OnUsernameChanged(string username)
     {
-        PlayUIClickSound();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
 
         // Save the username
         if (!string.IsNullOrEmpty(username))
@@ -565,7 +553,8 @@ public class SettingsManager : MonoBehaviour
 
     public void OnCameraSteeringToggled(bool isCameraSteering)
     {
-        PlayUIClickSound();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
+
         Player player = ConnectionManager.Instance.GetPlayer(NetworkManager.Singleton.LocalClientId);
         player.gameObject.GetComponent<HogController>().useCameraBasedSteering = isCameraSteering;
         Debug.Log("[CONTROLS] Camera Steering changes to " + isCameraSteering);
@@ -573,7 +562,7 @@ public class SettingsManager : MonoBehaviour
 
     public void OnSensitivityChanged(float sensitivity)
     {
-        PlayUIClickSound();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         UpdateSensitivityText(sensitivity);
         SetCameraSensitivity(sensitivity);
     }
@@ -681,7 +670,7 @@ public class SettingsManager : MonoBehaviour
 
     public void ResetToDefaults()
     {
-        PlayUIConfirmSound();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
 
         // Reset to default values
         if (resolutionDropdown != null)
@@ -731,28 +720,6 @@ public class SettingsManager : MonoBehaviour
 
     #endregion
 
-    #region Audio
-
-    public void PlayUIClickSound()
-    {
-        if (uiClick != null)
-            uiClick.Post(gameObject);
-    }
-
-    public void PlayUIConfirmSound()
-    {
-        if (uiConfirm != null)
-            uiConfirm.Post(gameObject);
-    }
-
-    public void PlayUICancelSound()
-    {
-        if (uiCancel != null)
-            uiCancel.Post(gameObject);
-    }
-
-    #endregion
-
     /// <summary>
     /// Called when the Apply button is clicked.
     /// Saves all current settings.
@@ -779,7 +746,7 @@ public class SettingsManager : MonoBehaviour
         SaveToJsonFile();
 
         // Play confirmation sound
-        PlayUIConfirmSound();
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
     }
 
     /// <summary>

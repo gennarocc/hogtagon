@@ -57,8 +57,6 @@ public class Player : NetworkBehaviour
         menuManager.connectionPending.SetActive(false);
         menuManager.jumpUI.SetActive(true);
 
-        if (IsServer) menuManager.ShowLobbySettingsMenu();
-
         playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
 
         if (IsOwner)

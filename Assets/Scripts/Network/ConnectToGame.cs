@@ -8,7 +8,6 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
-using Unity.VisualScripting;
 
 public class ConnectToGame : MonoBehaviour
 {
@@ -26,10 +25,6 @@ public class ConnectToGame : MonoBehaviour
 
     // To track which operation we're performing for retry functionality
     public string lastJoinCode { get; private set; } = "";
-    private bool isRetrying = false;
-
-    // To track which operation we're performing for retry functionality
-
 
     private async void Start()
     {
@@ -72,7 +67,6 @@ public class ConnectToGame : MonoBehaviour
     {
         try
         {
-            Debug.Log("Creating Relay allocation...");
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(8);
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
             var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
@@ -110,7 +104,7 @@ public class ConnectToGame : MonoBehaviour
 
             connectionPending.SetActive(false);
             menuManager.DisplayConnectionError(userMessage);
-
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
             menuManager.OnPlayClicked();
         }
         catch (System.Exception e)
@@ -118,7 +112,7 @@ public class ConnectToGame : MonoBehaviour
             Debug.LogError($"Unexpected error creating lobby: {e.Message}");
             connectionPending.SetActive(false);
             menuManager.DisplayConnectionError("Unexpected error creating lobby. Please try again.");
-
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
             menuManager.OnPlayClicked();
         }
     }
@@ -163,12 +157,14 @@ public class ConnectToGame : MonoBehaviour
 
             connectionPending.SetActive(false);
             menuManager.DisplayConnectionError(userMessage);
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
         }
         catch (System.Exception e)
         {
             Debug.LogError($"Unexpected error joining lobby: {e.Message}");
             connectionPending.SetActive(false);
             menuManager.DisplayConnectionError("Unexpected error joining lobby. Please try again.");
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
         }
     }
 
@@ -176,7 +172,7 @@ public class ConnectToGame : MonoBehaviour
     {
         // Get username from PlayerPrefs
         string username = PlayerPrefs.GetString("Username", "Player");
-
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIConfirm);
         // Configure connection with username as payload;
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
 
@@ -188,6 +184,7 @@ public class ConnectToGame : MonoBehaviour
         MenuMusicOff.Post(gameObject);
         menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
+
     }
 
     public void StartHost()
@@ -195,6 +192,7 @@ public class ConnectToGame : MonoBehaviour
         // Get username from PlayerPrefs
         string username = PlayerPrefs.GetString("Username", "Player");
 
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIConfirm);
         // Configure connection with username as payload
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
 
@@ -208,18 +206,6 @@ public class ConnectToGame : MonoBehaviour
         LobbyMusicOn.Post(gameObject);
 
         // Use Invoke instead of a coroutine to open lobby settings after a delay
-        Invoke("OpenLobbySettingsAfterDelay", 1.5f);
+        Invoke("OpenLobbySettings", 1.5f);
     }
-
-    // Simple method to open the lobby settings after a delay
-    private void OpenLobbySettingsAfterDelay()
-    {
-        if (menuManager != null)
-        {
-            Debug.Log("[ConnectToGame] Opening lobby settings menu");
-            menuManager.OpenLobbySettingsMenu();
-            Debug.Log("[ConnectToGame] Lobby settings should now be visible");
-        }
-    }
-
 }

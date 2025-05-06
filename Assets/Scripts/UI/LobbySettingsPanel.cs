@@ -260,10 +260,7 @@ public class LobbySettingsPanel : MonoBehaviour
         Debug.Log("[LobbySettingsPanel] UpdateUI called");
 
         // Update lobby code
-        if (lobbyCodeText != null && ConnectionManager.Instance != null)
-        {
-            lobbyCodeText.text = "Lobby Code: " + ConnectionManager.Instance.joinCode;
-        }
+        lobbyCodeText.text = "Lobby Code: " + ConnectionManager.Instance.joinCode;
 
         // Update player count
         UpdatePlayerCount();
@@ -294,12 +291,9 @@ public class LobbySettingsPanel : MonoBehaviour
 
     private void UpdatePlayerCount()
     {
-        if (playerCountText != null && NetworkManager.Singleton != null)
-        {
-            int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
-            playerCountText.text = "Connected Players: " + playerCount +
-                (playerCount < 2 ? "\n(Need at least 2 players to start)" : "");
-        }
+        int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
+        playerCountText.text = "Connected Players: " + playerCount +
+            (playerCount < 2 ? "\n(Need at least 2 players to start)" : "");
     }
 
     private void UpdateStartButtonInteractability()
@@ -353,21 +347,17 @@ public class LobbySettingsPanel : MonoBehaviour
     // Button Event Handlers
     public void OnStartGameClicked()
     {
-        if (menuManager != null && NetworkManager.Singleton != null &&
-            NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2)
+        if (NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2)
         {
-            menuManager.ButtonClickAudio();
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
             StartGameFromLobby();
         }
     }
 
     public void OnCloseClicked()
     {
-        if (menuManager != null)
-        {
-            menuManager.ButtonClickAudio();
-            menuManager.CloseLobbySettingsMenu();
-        }
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
+        menuManager.CloseLobbySettingsMenu();
     }
 
     public void OnCopyCodeClicked()
@@ -375,7 +365,7 @@ public class LobbySettingsPanel : MonoBehaviour
         if (menuManager != null && ConnectionManager.Instance != null &&
             !string.IsNullOrEmpty(ConnectionManager.Instance.joinCode))
         {
-            menuManager.ButtonClickAudio();
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
             GUIUtility.systemCopyBuffer = ConnectionManager.Instance.joinCode;
 
             // Show feedback (could add a temporary text popup)
@@ -451,11 +441,7 @@ public class LobbySettingsPanel : MonoBehaviour
             GameManager.Instance.SetRoundCount(newRoundCount);
         }
 
-        // Play button sound
-        if (menuManager != null)
-        {
-            menuManager.ButtonClickAudio();
-        }
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
     }
 
     private void StartGameFromLobby()

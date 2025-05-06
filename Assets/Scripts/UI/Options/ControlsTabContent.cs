@@ -41,12 +41,6 @@ public class ControlsTabContent : TabContent
 
     public void OnSensitivityChanged(float sensitivity)
     {
-        if (settingsManager != null)
-        {
-            // Play sound feedback
-            settingsManager.PlayUIClickSound();
-        }
-
         // Update UI text
         UpdateSensitivityText(sensitivity);
 
@@ -94,7 +88,7 @@ public class ControlsTabContent : TabContent
         if (settingsManager != null)
         {
             // Play sound feedback
-            settingsManager.PlayUIConfirmSound();
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         }
 
         // Reset sensitivity to default
