@@ -65,7 +65,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a805822a35f0b7942913f4a51c89c5db, type: 2}
+  - {fileID: 2100000, guid: b3eb15158c63e2544b2eedc3ecce26fa, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -11256,6 +11256,10 @@ MonoBehaviour:
     m_RotationOrder: 4
   steeringDeadzone: 0.1
   invertCameraSteering: 0
+  pingCheckInterval: 0.5
+  maxPingSamples: 4
+  warningThreshold: 100
+  criticalThreshold: 150
   rb: {fileID: 3010862004317786802}
   wheelColliders:
   - {fileID: 7947942277690021792}
@@ -21540,6 +21544,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
