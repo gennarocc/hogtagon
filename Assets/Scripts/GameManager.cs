@@ -120,6 +120,7 @@ public class GameManager : NetworkBehaviour
         // Stop level music and play lobby music using NetworkSoundManager
         if (IsServer)
         {
+            gameMusicPlaying = false;
             SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LobbyMusicOn);
             SoundManager.Instance.BroadcastGlobalSound(SoundManager.SoundEffectType.LevelMusicOff);
         }

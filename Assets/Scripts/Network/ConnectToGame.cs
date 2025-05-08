@@ -63,6 +63,60 @@ public class ConnectToGame : MonoBehaviour
         hostLobby.interactable = true;
     }
 
+    private async void JoinRelay(string joinCode)
+    {
+        try
+        {
+            Debug.Log(message: "Joining Relay with " + joinCode);
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
+            ConnectionManager.Instance.joinCode = joinCode;
+            NetworkManager.Singleton.StartClient();
+        }
+        catch (RelayServiceException e)
+        {
+            Debug.LogError($"Relay join error: {e.Message}, Reason: {e.Reason}");
+
+            string userMessage = "Failed to join lobby. ";
+
+            switch (e.Reason)
+            {
+                case RelayExceptionReason.JoinCodeNotFound:
+                    userMessage += "Invalid or expired join code. Please check the code and try again.";
+                    break;
+                case RelayExceptionReason.AllocationNotFound:
+                    userMessage += "The game session no longer exists.";
+                    break;
+                case RelayExceptionReason.NetworkError:
+                case RelayExceptionReason.GatewayTimeout:
+                    userMessage += "Connection timed out. Please check your internet connection and try again.";
+                    break;
+                case RelayExceptionReason.Unauthorized:
+                    userMessage += "Authentication error. Please restart the game.";
+                    break;
+                case RelayExceptionReason.RateLimited:
+                    userMessage += "You're making too many attempts. Please wait a moment.";
+                    break;
+                default:
+                    userMessage += "An unexpected error occurred. Please try again.";
+                    break;
+            }
+
+            connectionPending.SetActive(false);
+            menuManager.DisplayConnectionError(userMessage);
+            menuManager.OnPlayClicked();
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Unexpected error joining lobby: {e.Message}");
+            connectionPending.SetActive(false);
+            menuManager.OnPlayClicked();
+            menuManager.DisplayConnectionError("Unexpected error joining lobby. Please try again.");
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
+        }
+    }
+
     private async void CreateRelay()
     {
         try
@@ -76,30 +130,31 @@ public class ConnectToGame : MonoBehaviour
         }
         catch (RelayServiceException e)
         {
-            Debug.LogError($"Relay service error: {e.Message}");
-
-            // Check for specific error types
-            bool isNetworkError = e.Message.Contains("network") || e.Message.Contains("connection") || e.Message.Contains("timeout");
-            bool isAuthError = e.Message.Contains("auth") || e.Message.Contains("token") || e.Message.Contains("unauthorized");
-            bool isRateLimitError = e.Message.Contains("rate") || e.Message.Contains("limit") || e.Message.Contains("too many");
+            Debug.LogError($"Relay service error: {e.Message}, Reason: {e.Reason}");
 
             string userMessage = "Failed to create lobby. ";
 
-            if (isNetworkError)
+            switch (e.Reason)
             {
-                userMessage += "Please check your internet connection and try again.";
-            }
-            else if (isAuthError)
-            {
-                userMessage += "Authentication issue. Please restart the game.";
-            }
-            else if (isRateLimitError)
-            {
-                userMessage += "You're creating lobbies too quickly. Please wait a moment.";
-            }
-            else
-            {
-                userMessage += e.Message;
+                case RelayExceptionReason.JoinCodeNotFound:
+                    userMessage += "Invalid or expired join code. Please check the code and try again.";
+                    break;
+                case RelayExceptionReason.AllocationNotFound:
+                    userMessage += "The game session no longer exists.";
+                    break;
+                case RelayExceptionReason.NetworkError:
+                case RelayExceptionReason.GatewayTimeout:
+                    userMessage += "Connection timed out. Please check your internet connection and try again.";
+                    break;
+                case RelayExceptionReason.Unauthorized:
+                    userMessage += "Authentication error. Please restart the game.";
+                    break;
+                case RelayExceptionReason.RateLimited:
+                    userMessage += "You're making too many attempts. Please wait a moment.";
+                    break;
+                default:
+                    userMessage += "An unexpected error occurred. Please try again.";
+                    break;
             }
 
             connectionPending.SetActive(false);
@@ -114,57 +169,6 @@ public class ConnectToGame : MonoBehaviour
             menuManager.DisplayConnectionError("Unexpected error creating lobby. Please try again.");
             SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
             menuManager.OnPlayClicked();
-        }
-    }
-
-    private async void JoinRelay(string joinCode)
-    {
-        try
-        {
-            Debug.Log(message: "Joining Relay with " + joinCode);
-            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
-            ConnectionManager.Instance.joinCode = joinCode;
-            NetworkManager.Singleton.StartClient();
-        }
-        catch (RelayServiceException e)
-        {
-            Debug.LogError($"Relay join error: {e.Message}");
-
-            // Check for specific error types
-            bool isInvalidCode = e.Message.Contains("not found") || e.Message.Contains("invalid") || e.Message.Contains("allocation");
-            bool isNetworkError = e.Message.Contains("network") || e.Message.Contains("connection") || e.Message.Contains("timeout");
-            bool isFullLobby = e.Message.Contains("full") || e.Message.Contains("capacity") || e.Message.Contains("maximum");
-
-            string userMessage = "Failed to join lobby. ";
-
-            if (isInvalidCode)
-            {
-                userMessage += "Invalid or expired join code. Please check the code and try again.";
-            }
-            else if (isNetworkError)
-            {
-                userMessage += "Please check your internet connection and try again.";
-            }
-            else if (isFullLobby)
-            {
-                userMessage += "The lobby is full. Please try a different lobby.";
-            }
-            else
-            {
-                userMessage += "No lobby found with that code.";
-            }
-
-            connectionPending.SetActive(false);
-            menuManager.DisplayConnectionError(userMessage);
-            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Unexpected error joining lobby: {e.Message}");
-            connectionPending.SetActive(false);
-            menuManager.DisplayConnectionError("Unexpected error joining lobby. Please try again.");
-            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
         }
     }
 
