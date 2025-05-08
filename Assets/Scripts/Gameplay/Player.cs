@@ -59,6 +59,8 @@ public class Player : NetworkBehaviour
 
         playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
 
+        if (IsServer && NetworkManager.Singleton.LocalClientId == clientId) MenuManager.Instance.ShowLobbySettingsMenu();
+
         if (IsOwner)
         {
             InputManager.Instance.SwitchToGameplayMode();
@@ -162,12 +164,6 @@ public class Player : NetworkBehaviour
 
     }
 
-    private void SetPlayerTexture(PlayerData playerData)
-    {
-        body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[playerData.colorIndex];
-        Debug.Log($"[PLAYER] Client: Setting FFA color for player {playerData.username} (color: {playerData.colorIndex})");
-    }
-
     private void OnPlayerDataChanged(PlayerData previousValue, PlayerData newValue)
     {
         // Apply visual updates
@@ -190,6 +186,27 @@ public class Player : NetworkBehaviour
                 playerCamera.Follow = transform;
             }
         }
+
+        // Set the car visuals
+        if (GameManager.Instance.gameMode == GameMode.TeamBattle)
+        {
+            // Convert Color32 back to Color
+            Color color = GameManager.Instance.GetTeamColor(newValue.team);
+            // Create a new material with the team color
+            Material teamMaterial = new Material(body.GetComponent<Renderer>().material);
+            teamMaterial.color = color;
+
+            // Apply the team material
+            body.GetComponent<Renderer>().material = teamMaterial;
+            Debug.Log($"[PLAYER] Setting Team color for player {newValue.username} (team: {newValue.team})");
+        }
+
+        if (GameManager.Instance.gameMode == GameMode.FreeForAll)
+        {
+            body.GetComponent<Renderer>().material = ConnectionManager.Instance.hogTextures[newValue.colorIndex];
+            Debug.Log($"[PLAYER] Setting FFA color for player {newValue.username} (color: {newValue.colorIndex})");
+        }
+
         playerIndicator.SetActive(newValue.isLobbyLeader && GameManager.Instance.gameMode == GameMode.FreeForAll);
     }
 
@@ -226,15 +243,7 @@ public class Player : NetworkBehaviour
 
     private void SetTeamColor(Color32 teamColor)
     {
-        if (body == null) return;
-        // Convert Color32 back to Color
-        Color color = teamColor;
-        // Create a new material with the team color
-        Material teamMaterial = new Material(body.GetComponent<Renderer>().material);
-        teamMaterial.color = color;
 
-        // Apply the team material
-        body.GetComponent<Renderer>().material = teamMaterial;
     }
 
     private void ApplyPlayerData(PlayerData playerData)
@@ -269,12 +278,6 @@ public class Player : NetworkBehaviour
         if (IsServer)
         {
             networkPlayerData.Value = playerData;
-        }
-
-        SetTeamColor(GameManager.Instance.GetTeamColor(playerData.team));
-        if (GameManager.Instance.gameMode == GameMode.FreeForAll)
-        {
-            SetPlayerTexture(playerData);
         }
     }
 }

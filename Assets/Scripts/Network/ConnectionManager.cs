@@ -81,6 +81,18 @@ public class ConnectionManager : NetworkBehaviour
         ClientDataListSerialized serializedList = DictionaryExtensions.ConvertDictionaryToSerializableList(clientDataDictionary);
         SendClientDataListClientRpc(clientId, serializedList);
 
+        if (IsServer)
+        {
+            GameManager.Instance.UpdateGameModeClientRpc(GameManager.Instance.gameMode);
+
+            // Add team assignment for Team Battle mode
+            if (GameManager.Instance.gameMode == GameMode.TeamBattle &&
+                GameManager.Instance.state == GameState.Playing)
+            {
+                GameManager.Instance.AssignPlayerToTeam(clientId);
+            }
+        }
+
         // If this is our local client connecting, update menu state
         if (clientId == NetworkManager.Singleton.LocalClientId)
         {

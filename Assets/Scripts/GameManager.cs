@@ -142,13 +142,12 @@ public class GameManager : NetworkBehaviour
         SetGameState(GameState.Start);
         // Get all players and player objects just once
         List<ulong> clientIds = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
-        Player[] playerObjects = FindObjectsByType<Player>(FindObjectsSortMode.None);
 
         // If we are playing a team battle assign teams.
         if (gameMode == GameMode.TeamBattle)
         {
             InitializeTeams(teamCount);
-            AssignPlayersToTeams(clientIds);
+            AssignAllPlayersToTeams(clientIds);
 
             for (int teamNumber = 1; teamNumber <= teamCount; teamNumber++)
             {
@@ -163,7 +162,23 @@ public class GameManager : NetworkBehaviour
                 }
             }
         }
-
+        
+        if (gameMode == GameMode.FreeForAll)
+        {
+            // For non-TeamBattle modes, ensure all players have team value of 0
+            foreach (ulong clientId in clientIds)
+            {
+                if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+                {
+                    if (playerData.team != 0)
+                    {
+                        playerData.team = 0;
+                        ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
+                        Debug.Log($"[GAME] Player {clientId} team reset to 0 for non-team mode");
+                    }
+                }
+            }
+        }
         TransitionToState(GameState.Playing);
     }
 
@@ -529,7 +544,6 @@ public class GameManager : NetworkBehaviour
             gameMode = mode;
             Debug.Log("[GAME] Game mode set to: " + gameMode);
 
-            // TODO: Notify clients of game mode change
             if (IsServer)
             {
                 UpdateGameModeClientRpc(mode);
@@ -556,7 +570,7 @@ public class GameManager : NetworkBehaviour
 
     // Client RPC to sync game mode with clients
     [ClientRpc(Delivery = RpcDelivery.Reliable)]
-    private void UpdateGameModeClientRpc(GameMode mode)
+    public void UpdateGameModeClientRpc(GameMode mode)
     {
         // Update local game mode
         gameMode = mode;
@@ -591,7 +605,6 @@ public class GameManager : NetworkBehaviour
 
     #region Team Management Functions
 
-    // Former TeamHelper.Initialize method
     public void InitializeTeams(int count)
     {
         teamCount = Mathf.Clamp(count, 2, 4);
@@ -603,8 +616,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Former TeamHelper.AssignPlayersToTeams method
-    public void AssignPlayersToTeams(List<ulong> players)
+    private void AssignAllPlayersToTeams(List<ulong> players)
     {
         foreach (var team in teamPlayers.Keys.ToList())
         {
@@ -628,7 +640,46 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Former TeamHelper.CheckForWinningTeam method
+    public int AssignPlayerToTeam(ulong clientId)
+    {
+        // Only handle team assignment in Team Battle mode
+        if (gameMode != GameMode.TeamBattle)
+            return 0;
+
+        // Find the team with the fewest players
+        int minTeamNumber = 1;
+        int minPlayerCount = int.MaxValue;
+
+        for (int i = 1; i <= teamCount; i++)
+        {
+            int teamSize = teamPlayers.TryGetValue(i, out List<ulong> players) ? players.Count : 0;
+            if (teamSize < minPlayerCount)
+            {
+                minPlayerCount = teamSize;
+                minTeamNumber = i;
+            }
+        }
+
+        // Add player to the team with fewest members
+        if (!teamPlayers.ContainsKey(minTeamNumber))
+        {
+            teamPlayers[minTeamNumber] = new List<ulong>();
+        }
+
+        teamPlayers[minTeamNumber].Add(clientId);
+
+        // Update player data with new team assignment
+        if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
+        {
+            playerData.team = minTeamNumber;
+            ConnectionManager.Instance.UpdatePlayerDataClientRpc(clientId, playerData);
+            Debug.Log($"[GAME] Player {clientId} assigned to team {minTeamNumber} (Team {GetTeamName(minTeamNumber)})");
+        }
+
+        return minTeamNumber;
+    }
+
+
     public bool CheckForWinningTeam(List<ulong> alivePlayers, out int winningTeamNumber, out List<ulong> winningTeamPlayers)
     {
         Dictionary<int, int> aliveCountByTeam = new Dictionary<int, int>();
@@ -668,7 +719,6 @@ public class GameManager : NetworkBehaviour
         return false;
     }
 
-    // Former TeamHelper.GetTeamPlayers method
     public List<ulong> GetTeamPlayers(int teamNumber)
     {
         if (teamPlayers.TryGetValue(teamNumber, out List<ulong> players))
@@ -678,7 +728,6 @@ public class GameManager : NetworkBehaviour
         return new List<ulong>();
     }
 
-    // Former TeamHelper.GetTeamName method
     public string GetTeamName(int teamNumber)
     {
         switch (teamNumber)
@@ -691,7 +740,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Former TeamHelper.GetTeamColor method
     public Color GetTeamColor(int teamNumber)
     {
         switch (teamNumber)
@@ -704,7 +752,6 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Former TeamHelper.Reset method
     public void ResetTeams()
     {
         // Clear team assignments but maintain the structure
@@ -713,65 +760,6 @@ public class GameManager : NetworkBehaviour
             teamPlayers[team].Clear();
         }
         winningTeam = 0;
-    }
-
-    // Former TeamHelper.ResetWinningTeam method
-    public void ResetWinningTeam()
-    {
-        winningTeam = 0;
-    }
-
-    // Former TeamHelper.RebuildTeamAssignments method
-    public void RebuildTeamAssignments()
-    {
-        // Clear team assignments
-        foreach (var team in teamPlayers.Keys.ToList())
-        {
-            teamPlayers[team].Clear();
-        }
-
-        // Fetch all player data and rebuild team assignments
-        if (NetworkManager.Singleton != null)
-        {
-            foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
-            {
-                if (ConnectionManager.Instance.TryGetPlayerData(clientId, out PlayerData playerData))
-                {
-                    int team = playerData.team;
-                    if (team > 0 && team <= teamCount)
-                    {
-                        if (!teamPlayers.ContainsKey(team))
-                        {
-                            teamPlayers[team] = new List<ulong>();
-                        }
-                        teamPlayers[team].Add(clientId);
-                    }
-                }
-            }
-        }
-    }
-
-    // Former TeamHelper.AddPlayerToTeam method
-    public void AddPlayerToTeam(ulong clientId, int teamNumber)
-    {
-        if (teamNumber > 0 && teamNumber <= teamCount)
-        {
-            if (!teamPlayers.ContainsKey(teamNumber))
-            {
-                teamPlayers[teamNumber] = new List<ulong>();
-            }
-
-            if (!teamPlayers[teamNumber].Contains(clientId))
-            {
-                teamPlayers[teamNumber].Add(clientId);
-            }
-        }
-    }
-
-    // Former TeamHelper.GetWinningTeam method
-    public int GetWinningTeam()
-    {
-        return winningTeam;
     }
 
     #endregion
