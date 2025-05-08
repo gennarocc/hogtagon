@@ -139,26 +139,14 @@ public class MenuManager : NetworkBehaviour
         var playerCamera = playerCameras.Length > 0 ? playerCameras[0] : null;
         if (playerCamera != null)
         {
-            cameraInputProvider = playerCamera.GetComponent<Cinemachine.CinemachineInputProvider>();
-            if (cameraInputProvider == null)
-                Debug.LogWarning("CinemachineInputProvider not found on player camera");
-        }
-        else
-        {
-            Debug.LogWarning("CinemachineFreeLook camera not found in scene");
+            cameraInputProvider = playerCamera.GetComponent<CinemachineInputProvider>();
         }
 
         // Find the main camera's CinemachineBrain
         var mainCamera = Camera.main;
         if (mainCamera != null)
         {
-            cinemachineBrain = mainCamera.GetComponent<Cinemachine.CinemachineBrain>();
-            if (cinemachineBrain == null)
-                Debug.LogWarning("CinemachineBrain not found on main camera");
-        }
-        else
-        {
-            Debug.LogWarning("Main camera not found in scene");
+            cinemachineBrain = mainCamera.GetComponent<CinemachineBrain>();
         }
     }
 
@@ -220,7 +208,6 @@ public class MenuManager : NetworkBehaviour
         pauseLobbySettingsButton.onClick.RemoveAllListeners();
         pauseLobbySettingsButton.onClick.AddListener(OpenLobbySettingsMenu);
         UpdateLobbySettingsButtonState();
-        Debug.Log("[MenuManager] Connected Lobby Settings button: " + pauseLobbySettingsButton.name);
 
         // Clear selection by default
         ClearSelection();
@@ -268,8 +255,6 @@ public class MenuManager : NetworkBehaviour
                     {
                         // Enable controller selection
                         controllerSelectionEnabled = true;
-                        Debug.Log("[MenuManager] Controller navigation activated. Using left stick: " + gamepad.leftStick.ReadValue());
-
                         // Force selection of a default button depending on active menu
                         GameObject buttonToSelect = null;
 
@@ -317,7 +302,7 @@ public class MenuManager : NetworkBehaviour
     /// <param name="forceButtonSelection">Optional: Button to select after switching (for UI mode only)</param>
     public void SwitchInputMode(bool toUIMode, bool? disableCameraInput = null, Button forceButtonSelection = null)
     {
-        Debug.Log($"[MenuManager] SwitchInputMode called. ToUIMode: {toUIMode}");
+        Debug.Log($"[MENU] SwitchInputMode called. ToUIMode: {toUIMode}");
 
         // Determine if we should disable camera input (defaults to match UI mode)
         bool shouldDisableCameraInput = disableCameraInput ?? toUIMode;
@@ -417,7 +402,7 @@ public class MenuManager : NetworkBehaviour
 
     public void OnOptionsClicked()
     {
-        Debug.Log("[MenuManager] OnOptionsClicked called");
+        Debug.Log("[MENU] OnOptionsClicked called");
         SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         // Reset menu state flags - we're opening from main menu
         settingsOpenedFromPauseMenu = false;
@@ -429,11 +414,11 @@ public class MenuManager : NetworkBehaviour
 
     public void Settings()
     {
-        Debug.Log("Settings method called. gameIsPaused=" + gameIsPaused);
+        Debug.Log("[MENU] Settings method called. gameIsPaused=" + gameIsPaused);
 
         // Store whether we opened this from pause menu for later
         settingsOpenedFromPauseMenu = gameIsPaused;
-        Debug.Log("Setting settingsOpenedFromPauseMenu to " + settingsOpenedFromPauseMenu);
+        Debug.Log("[MENU] Setting settingsOpenedFromPauseMenu to " + settingsOpenedFromPauseMenu);
 
         // Play sound feedback
         SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
@@ -473,7 +458,7 @@ public class MenuManager : NetworkBehaviour
         // Log current resolution and settings
         Resolution currentResolution = Screen.currentResolution;
         bool isFullScreen = Screen.fullScreen;
-        Debug.Log($"[MenuManager] ReturnFromSettingsMenu: Current resolution: {Screen.width}x{Screen.height}, fullscreen: {isFullScreen}");
+        Debug.Log($"[MENU] ReturnFromSettingsMenu: Current resolution: {Screen.width}x{Screen.height}, fullscreen: {isFullScreen}");
 
         // Disable settings UI panels
         if (settingsMenuUI != null && settingsMenuUI.activeSelf)
@@ -489,7 +474,7 @@ public class MenuManager : NetworkBehaviour
         if (settingsOpenedFromPauseMenu)
         {
             // Return to pause menu
-            Debug.Log($"[MenuManager] Settings were opened from pause menu. Returning to pause menu.");
+            Debug.Log($"[MENU] Settings were opened from pause menu. Returning to pause menu.");
             pauseMenuUI.SetActive(true);
 
             // Ensure we're still paused
@@ -518,7 +503,7 @@ public class MenuManager : NetworkBehaviour
         else
         {
             // Return to main menu
-            Debug.Log($"[MenuManager] Settings were opened from main menu. Returning to main menu.");
+            Debug.Log($"[MENU] Settings were opened from main menu. Returning to main menu.");
             ShowMainMenu();
         }
 
@@ -531,7 +516,6 @@ public class MenuManager : NetworkBehaviour
         // Log final resolution and settings
         Resolution finalResolution = Screen.currentResolution;
         bool finalIsFullScreen = Screen.fullScreen;
-        Debug.Log($"[MenuManager] ReturnFromSettingsMenu: Final resolution: {Screen.width}x{Screen.height}, fullscreen: {finalIsFullScreen}");
     }
 
     private void HideAllMenusExcept(GameObject menuToKeep)
@@ -564,7 +548,7 @@ public class MenuManager : NetworkBehaviour
 
     public void Resume()
     {
-        Debug.Log("[MenuManager] Resume called");
+        Debug.Log("[MENU] Resume called");
 
         // Hide all menus
         HideAllMenus();
@@ -583,7 +567,7 @@ public class MenuManager : NetworkBehaviour
 
     void Pause()
     {
-        Debug.Log("[MenuManager] Pause called");
+        Debug.Log("[MENU] Pause called");
 
         // Only pause the game if your in the game
         if (!ConnectionManager.Instance.isConnected) return;
@@ -638,7 +622,7 @@ public class MenuManager : NetworkBehaviour
 
     public void QuitGame()
     {
-        Debug.Log("Quitting Game");
+        Debug.Log("[MENU] Quitting Game");
         Application.Quit();
     }
 
@@ -680,14 +664,14 @@ public class MenuManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void DisconnectRequestServerRpc(ulong clientId)
     {
-        Debug.Log(message: "Disconnecting Client - " + clientId + " [" + ConnectionManager.Instance.GetClientUsername(clientId) + "]");
+        Debug.Log(message: "[MENU] Disconnecting Client - " + clientId + " [" + ConnectionManager.Instance.GetClientUsername(clientId) + "]");
         NetworkManager.Singleton.DisconnectClient(clientId);
     }
 
     public void CopyJoinCode()
     {
         GUIUtility.systemCopyBuffer = ConnectionManager.Instance.joinCode;
-        Debug.Log(message: "Join Code Copied");
+        Debug.Log(message: "[MENU] Join Code Copied");
     }
 
     public void HandleConnectionStateChange(bool connected)
@@ -864,7 +848,7 @@ public class MenuManager : NetworkBehaviour
         // Play error sound
         SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UICancel);
 
-        Debug.LogWarning($"Connection Error: {error}");
+        Debug.LogWarning($"[MENU] Connection Error: {error}");
     }
 
     #endregion
@@ -904,7 +888,7 @@ public class MenuManager : NetworkBehaviour
         // First check if the lobby settings menu is open - if so, just close it
         if (lobbySettingsMenuUI.activeSelf)
         {
-            Debug.Log("[MenuManager] Closing lobby settings menu via escape/start button");
+            Debug.Log("[MENU] Closing lobby settings menu via escape/start button");
             CloseLobbySettingsMenu();
             // Important: Set flag that we're handling this toggle and prevent the pause menu 
             // from appearing immediately on the same press
@@ -923,7 +907,7 @@ public class MenuManager : NetworkBehaviour
         // Apply cooldown to prevent rapid toggling
         if (Time.unscaledTime - lastMenuToggleTime < menuToggleCooldown)
         {
-            Debug.Log("[MenuManager] Menu toggle cooldown in effect");
+            Debug.Log("[MENU] Menu toggle cooldown in effect");
             return;
         }
 
@@ -1167,7 +1151,7 @@ public class MenuManager : NetworkBehaviour
                 // Null out the input references - this is what fixes the camera movement
                 inputProvider.XYAxis = null;
                 inputProvider.ZAxis = null;
-                Debug.Log("Disabled input reference on camera: " + camera.name);
+                Debug.Log("[MENU] Disabled input reference on camera: " + camera.name);
             }
         }
     }
@@ -1196,7 +1180,7 @@ public class MenuManager : NetworkBehaviour
             return;
         }
 
-        Debug.Log("[MenuManager] OpenLobbySettingsMenu called");
+        Debug.Log("[MENU] OpenLobbySettingsMenu called");
 
         // Switch to UI mode
         SwitchInputMode(toUIMode: true);
@@ -1204,7 +1188,7 @@ public class MenuManager : NetworkBehaviour
 
         if (pauseMenuUI.activeSelf)
         {
-            Debug.Log("[MenuManager] Hiding pause menu before showing lobby settings");
+            Debug.Log("[MENU] Hiding pause menu before showing lobby settings");
             pauseMenuUI.SetActive(false);
         }
 
@@ -1217,16 +1201,16 @@ public class MenuManager : NetworkBehaviour
     {
         bool shouldBeVisible = GameManager.Instance.state != GameState.Playing;
         pauseLobbySettingsButton.gameObject.SetActive(shouldBeVisible);
-        Debug.Log($"[MenuManager] Updated lobby settings button visibility: {shouldBeVisible}");
+        Debug.Log($"[MENU] Updated lobby settings button visibility: {shouldBeVisible}");
     }
 
     public void ShowLobbySettingsMenu()
     {
-        Debug.Log("ShowLobbySettingsMenu called - showing lobby settings menu!");
+        Debug.Log("[MENU] ShowLobbySettingsMenu called - showing lobby settings menu!");
 
         if (pauseMenuUI.activeSelf)
         {
-            Debug.Log("[MenuManager] Hiding pause menu before showing lobby settings");
+            Debug.Log("[MENU] Hiding pause menu before showing lobby settings");
             pauseMenuUI.SetActive(false);
         }
 
@@ -1239,10 +1223,7 @@ public class MenuManager : NetworkBehaviour
             // Then configure it in the next frame
             Invoke("ConfigureLobbySettingsMenu", 0.1f);
         }
-        else
-        {
-            Debug.LogError("LobbySettingsMenuUI is not assigned!");
-        }
+
     }
 
     private void UpdateGameModeDisplay()
@@ -1325,7 +1306,7 @@ public class MenuManager : NetworkBehaviour
 
     public void CloseLobbySettingsMenu()
     {
-        Debug.Log("[MenuManager] CloseLobbySettingsMenu called");
+        Debug.Log("[MENU] CloseLobbySettingsMenu called");
 
         if (lobbySettingsMenuUI == null)
             return;
@@ -1386,7 +1367,7 @@ public class MenuManager : NetworkBehaviour
 
     private void ReturnToPauseMenu()
     {
-        Debug.Log("[MenuManager] Returning to pause menu");
+        Debug.Log("[MENU] Returning to pause menu");
 
         // Show pause menu and set up UI
         pauseMenuUI.SetActive(true);
@@ -1446,7 +1427,7 @@ public class CameraInputReferences : MonoBehaviour
                 XYAxis = xyAxis,
                 ZAxis = zAxis
             });
-            Debug.Log("Stored input reference for camera: " + camera.name);
+            Debug.Log("[MENU] Stored input reference for camera: " + camera.name);
         }
     }
 
@@ -1461,7 +1442,7 @@ public class CameraInputReferences : MonoBehaviour
                 {
                     inputProvider.XYAxis = reference.XYAxis;
                     inputProvider.ZAxis = reference.ZAxis;
-                    Debug.Log("Restored input reference for camera: " + reference.Camera.name);
+                    Debug.Log("[MENU] Restored input reference for camera: " + reference.Camera.name);
                 }
             }
         }

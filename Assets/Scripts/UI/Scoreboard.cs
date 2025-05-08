@@ -105,7 +105,7 @@ public class Scoreboard : MonoBehaviour
         GameMode currentMode = gameManager.gameMode;
         bool isTeamBattle = currentMode == GameMode.TeamBattle;
 
-        Debug.Log($"[Scoreboard] Updating player list - Game Mode: {currentMode} (isTeamBattle: {isTeamBattle})");
+        Debug.Log($"[SCOREBOARD] Updating player list - Game Mode: {currentMode} (isTeamBattle: {isTeamBattle})");
 
         // Clear existing entries
         ClearPlayerEntries();
@@ -113,13 +113,11 @@ public class Scoreboard : MonoBehaviour
         if (isTeamBattle)
         {
             // Team Battle Mode - Group by teams
-            Debug.Log("[Scoreboard] Using TEAM BATTLE scoreboard layout");
             UpdateTeamBattleScoreboard();
         }
         else
         {
             // Free-for-all Mode - Sort by individual score
-            Debug.Log("[Scoreboard] Using FREE-FOR-ALL scoreboard layout");
             UpdateFreeForAllScoreboard();
         }
 
@@ -128,7 +126,6 @@ public class Scoreboard : MonoBehaviour
         {
             string gameMode = isTeamBattle ? "TEAM BATTLE" : "FREE-FOR-ALL";
             headerText.text = $"SCOREBOARD - {connectionManager.GetPlayerCount()} PLAYERS - {gameMode}";
-            Debug.Log($"[Scoreboard] Updated header to: {headerText.text}");
         }
     }
 
@@ -149,21 +146,8 @@ public class Scoreboard : MonoBehaviour
         // Get all player data
         var allPlayerData = GetAllPlayerData();
 
-        Debug.Log($"UpdateTeamBattleScoreboard: Retrieved {allPlayerData.Count} players");
-        foreach (var player in allPlayerData)
-        {
-            Debug.Log($"Player: {player.playerName}, Team: {player.teamNumber}, Score: {player.score}");
-        }
-
         // Group players by team
         var teamGroups = allPlayerData.GroupBy(p => p.teamNumber).OrderByDescending(g => g.Sum(p => p.score)).ToList();
-
-        Debug.Log($"Found {teamGroups.Count} team groups");
-        foreach (var group in teamGroups)
-        {
-            Debug.Log($"Team {group.Key}: {group.Count()} players, Total Score: {group.Sum(p => p.score)}");
-        }
-
         int currentRank = 1;
         int entryIndex = 0;
 
@@ -197,7 +181,6 @@ public class Scoreboard : MonoBehaviour
         var unassignedPlayers = allPlayerData.Where(p => p.teamNumber == 0).OrderByDescending(p => p.score).ToList();
         if (unassignedPlayers.Count > 0)
         {
-            Debug.Log($"Found {unassignedPlayers.Count} unassigned players");
             foreach (var playerData in unassignedPlayers)
             {
                 bool isAlternateRow = entryIndex % 2 == 1;
@@ -269,8 +252,6 @@ public class Scoreboard : MonoBehaviour
 
     private void CreateTeamPlayerEntry(int rank, PlayerData playerData, bool isAlternateRow, int teamNumber, Color teamColor)
     {
-        Debug.Log($"Creating team entry: Team {teamNumber}, Player {playerData.playerName}, Color: {teamColor}");
-
         GameObject entryObject = Instantiate(playerEntryPrefab, playerListContainer);
         playerEntries.Add(entryObject);
 
@@ -379,8 +360,6 @@ public class Scoreboard : MonoBehaviour
     private void CreatePlayerEntry(int rank, PlayerData playerData, bool isAlternateRow)
     {
         if (playerEntryPrefab == null || playerListContainer == null) return;
-
-        Debug.Log($"Creating player entry: Rank {rank}, Player {playerData.playerName}");
 
         GameObject entryObject = Instantiate(playerEntryPrefab, playerListContainer);
         playerEntries.Add(entryObject);
