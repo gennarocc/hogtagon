@@ -910,7 +910,7 @@ public class HogController : NetworkBehaviour
         lerpedThrottleInput = lerp;
 
         // Wwise expects a value between 1-100 so we multiply by 5 (car speed is around 1-23)
-        rpm.SetGlobalValue(speed * 5 * lerpedThrottleInput);
+        rpm.SetValue(gameObject, speed * 5 * lerpedThrottleInput);
     }
 
     #endregion
@@ -963,6 +963,7 @@ public class HogController : NetworkBehaviour
 
     private void OnGUI()
     {
+        // Keep existing ping display code
         if (IsOwner && shouldDisplayPing && NetworkManager.Singleton.IsConnectedClient)
         {
             // Display in bottom left corner
@@ -971,6 +972,66 @@ public class HogController : NetworkBehaviour
                 $"High Latency: {averagePing:0}ms",
                 pingStyle
             );
+        }
+
+        // Add debug UI for engine audio values
+        if (IsOwner && showDebugUI)
+        {
+            // Create background texture if needed
+            if (debugBackgroundTexture == null)
+            {
+                debugBackgroundTexture = new Texture2D(1, 1);
+                debugBackgroundTexture.SetPixel(0, 0, debugBackgroundColor);
+                debugBackgroundTexture.Apply();
+            }
+
+            // Define styles if not already defined elsewhere
+            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+            labelStyle.normal.textColor = labelTextColor;
+            labelStyle.fontSize = fontSize;
+
+            GUIStyle valueStyle = new GUIStyle(GUI.skin.label);
+            valueStyle.normal.textColor = valueTextColor;
+            valueStyle.fontSize = fontSize;
+
+            // Background box dimensions
+            int boxWidth = 300;
+            int boxHeight = 200;
+            int startX = 20;
+            int startY = 20;
+
+            // Draw background box
+            GUI.DrawTexture(new Rect(startX, startY, boxWidth, boxHeight), debugBackgroundTexture);
+
+            // Header
+            GUI.Label(new Rect(startX + 10, startY + 10, boxWidth - 20, 25), "Engine Audio Debug", labelStyle);
+
+            // Network variables related to engine audio
+            int yOffset = startY + 40;
+            int lineHeight = fontSize + 5;
+
+            GUI.Label(new Rect(startX + 10, yOffset, 150, lineHeight), "Net Input Sum:", labelStyle);
+            GUI.Label(new Rect(startX + 160, yOffset, 130, lineHeight), $"{netInputSum.Value:F2}", valueStyle);
+
+            yOffset += lineHeight;
+            GUI.Label(new Rect(startX + 10, yOffset, 150, lineHeight), "Net Velocity:", labelStyle);
+            GUI.Label(new Rect(startX + 160, yOffset, 130, lineHeight), $"{netVelocity.Value:F2}", valueStyle);
+
+            yOffset += lineHeight;
+            GUI.Label(new Rect(startX + 10, yOffset, 150, lineHeight), "Wheel Rotation:", labelStyle);
+            GUI.Label(new Rect(startX + 160, yOffset, 130, lineHeight), $"{netWheelRotationSpeed.Value:F2}", valueStyle);
+
+            yOffset += lineHeight;
+            GUI.Label(new Rect(startX + 10, yOffset, 150, lineHeight), "Brake Input:", labelStyle);
+            GUI.Label(new Rect(startX + 160, yOffset, 130, lineHeight), $"{netBrakeInput.Value:F2}", valueStyle);
+
+            yOffset += lineHeight;
+            GUI.Label(new Rect(startX + 10, yOffset, 150, lineHeight), "Lerped Throttle:", labelStyle);
+            GUI.Label(new Rect(startX + 160, yOffset, 130, lineHeight), $"{lerpedThrottleInput:F2}", valueStyle);
+
+            yOffset += lineHeight;
+            GUI.Label(new Rect(startX + 10, yOffset, 150, lineHeight), "RPM Value:", labelStyle);
+            GUI.Label(new Rect(startX + 160, yOffset, 130, lineHeight), $"{netVelocity.Value * 5 * lerpedThrottleInput:F2}", valueStyle);
         }
     }
     public IEnumerator PlayEngineAfterDelay()

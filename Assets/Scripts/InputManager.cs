@@ -202,39 +202,8 @@ public class InputManager : MonoBehaviour
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
         
-        // For UI mode, explicitly ensure UI navigation works
-        // EnsureUINavigationWorks();
     }
 
-    // New method to ensure UI navigation works with the new Input System
-    private void EnsureUINavigationWorks()
-    {
-        // Find the EventSystem in the scene
-        EventSystem eventSystem = EventSystem.current;
-        if (eventSystem == null)
-        {
-            Debug.LogWarning("[InputManager] No EventSystem found in scene!");
-            return;
-        }
-        
-        // Check if using a gamepad currently
-        if (Gamepad.current != null && Gamepad.current.enabled)
-        {
-            _usingGamepad = true;
-            
-            // Refresh the current selection - this helps with navigation issues
-            if (eventSystem.currentSelectedGameObject != null)
-            {
-                GameObject currentSelection = eventSystem.currentSelectedGameObject;
-                eventSystem.SetSelectedGameObject(null);
-                eventSystem.SetSelectedGameObject(currentSelection);
-            }
-            
-            Debug.Log("[InputManager] UI Navigation should now work with gamepad left stick");
-        }
-    }
-
-    // Update to check for Escape key during gameplay and handle device detection
     private void Update()
     {
         // Monitor Escape key during gameplay to pause

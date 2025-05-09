@@ -55,7 +55,6 @@ public class MenuManager : NetworkBehaviour
     [SerializeField] private Button defaultPlayMenuButton;
 
     [Header("UI Navigation")]
-    [SerializeField] private EventSystem eventSystem;
     [SerializeField] private TMP_InputField[] inputFields;
 
     [Header("Wwise")]
@@ -95,7 +94,6 @@ public class MenuManager : NetworkBehaviour
     private CinemachineInputProvider cameraInputProvider;
     private CinemachineOrbitalTransposer orbitalTransposer;
     private bool controllerSelectionEnabled = false;
-    private bool isEditingText = false;
     private int countdownTime;
     private InputManager inputManager;
     private float lastMenuToggleTime = 0f;
@@ -156,19 +154,9 @@ public class MenuManager : NetworkBehaviour
         inputManager = InputManager.Instance;
 
         // Unsubscribe first to avoid duplicate subscriptions
-        if (inputManager != null)
-        {
-            inputManager.MenuToggled -= OnMenuToggled;
-            inputManager.BackPressed -= OnBackPressed;
-            inputManager.AcceptPressed -= OnAcceptPressed;
-            inputManager.ScoreboardToggled -= HandleScoreboardToggle;
-
-            // Now subscribe
-            inputManager.MenuToggled += OnMenuToggled;
-            inputManager.BackPressed += OnBackPressed;
-            inputManager.AcceptPressed += OnAcceptPressed;
-            inputManager.ScoreboardToggled += HandleScoreboardToggle;
-        }
+        inputManager.MenuToggled += OnMenuToggled;
+        inputManager.BackPressed += OnBackPressed;
+        inputManager.ScoreboardToggled += HandleScoreboardToggle;
 
         if (NetworkManager.Singleton != null)
         {
@@ -179,29 +167,12 @@ public class MenuManager : NetworkBehaviour
 
     private void OnDisable()
     {
-        // Unsubscribe from input events
-        if (inputManager != null)
-        {
-            inputManager.MenuToggled -= OnMenuToggled;
-            inputManager.BackPressed -= OnBackPressed;
-            inputManager.AcceptPressed -= OnAcceptPressed;
-            inputManager.ScoreboardToggled -= HandleScoreboardToggle;
-        }
-
-        // Unsubscribe from player count changes
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
-            NetworkManager.Singleton.OnClientDisconnectCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
-        }
+        NetworkManager.Singleton.OnClientConnectedCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
+        NetworkManager.Singleton.OnClientDisconnectCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
     }
 
     private void Start()
     {
-        // Get reference to EventSystem if not assigned
-        if (eventSystem == null)
-            eventSystem = EventSystem.current;
-
         // Set up explicit navigation for main menu buttons
         SetupButtonNavigation();
         // Set up lobby settings button
@@ -210,24 +181,17 @@ public class MenuManager : NetworkBehaviour
         UpdateLobbySettingsButtonState();
 
         // Clear selection by default
-        eventSystem.SetSelectedGameObject(null);
+        EventSystem.current.SetSelectedGameObject(null);
 
         // Try to find InputManager again if it wasn't found in Awake/OnEnable
-        if (inputManager == null)
-        {
-            inputManager = InputManager.Instance;
-            if (inputManager != null)
-            {
-                // Subscribe to events if we just found the InputManager
-                inputManager.MenuToggled += OnMenuToggled;
-                inputManager.BackPressed += OnBackPressed;
-                inputManager.AcceptPressed += OnAcceptPressed;
-                inputManager.ScoreboardToggled += HandleScoreboardToggle;
-            }
-        }
+        inputManager = InputManager.Instance;
+        // Subscribe to events if we just found the InputManager
+        inputManager.MenuToggled += OnMenuToggled;
+        inputManager.BackPressed += OnBackPressed;
+        inputManager.ScoreboardToggled += HandleScoreboardToggle;
 
         // Check if input actions are enabled
-        if (inputManager != null && !inputManager.AreInputActionsEnabled())
+        if (!inputManager.AreInputActionsEnabled())
             inputManager.ForceEnableCurrentActionMap();
 
         // Initialize main menu
@@ -270,10 +234,10 @@ public class MenuManager : NetworkBehaviour
                             buttonToSelect = defaultSettingsMenuButton.gameObject;
 
                         // Set selected game object
-                        if (buttonToSelect != null && eventSystem != null)
+                        if (buttonToSelect != null && EventSystem.current != null)
                         {
-                            eventSystem.SetSelectedGameObject(null);
-                            eventSystem.SetSelectedGameObject(buttonToSelect);
+                            EventSystem.current.SetSelectedGameObject(null);
+                            EventSystem.current.SetSelectedGameObject(buttonToSelect);
                         }
                     }
                 }
@@ -283,7 +247,6 @@ public class MenuManager : NetworkBehaviour
         {
             // If mouse moved, reset controller selection and clear highlighting
             controllerSelectionEnabled = false;
-            //             eventSystem.SetSelectedGameObject(null);
         }
 
         // Handle text input fields
@@ -915,10 +878,8 @@ public class MenuManager : NetworkBehaviour
         // If settings is active, close it and show pause menu
         if (settingsActive)
         {
-            if (settingsMenuUI != null)
-                settingsMenuUI.SetActive(false);
-            if (newOptionsMenuUI != null)
-                newOptionsMenuUI.SetActive(false);
+            settingsMenuUI.SetActive(false);
+            newOptionsMenuUI.SetActive(false);
 
             // Force show pause menu
             pauseMenuUI.SetActive(true);
@@ -986,47 +947,14 @@ public class MenuManager : NetworkBehaviour
         }
     }
 
-    private void OnAcceptPressed()
-    {
-        // Handle accept button presses if needed
-        // Check if we're in the options menu
-        if (newOptionsMenuUI != null && newOptionsMenuUI.activeSelf)
-        {
-            // Don't do anything - let the individual UI elements handle their own click events
-            // This prevents the back functionality from triggering when pressing A on buttons
-            return;
-        }
-    }
-
     private void HandleTextInput()
     {
         // Check if any input field is currently selected
-        bool inputFieldSelected = false;
 
         if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null)
         {
-            TMP_InputField inputField = EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>();
-            if (inputField != null)
-            {
-                inputFieldSelected = true;
-
-                // // If we just started editing text
-                // if (!isEditingText)
-                // {
-                //     isEditingText = true;
-                //     // Temporarily disable controller navigation
-                //     DisableControllerInput();
-                // }
-            }
+            EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>();
         }
-
-        // // If we were editing text but are no longer
-        // if (isEditingText && !inputFieldSelected)
-        // {
-        //     isEditingText = false;
-        //     // Re-enable controller navigation
-        //     EnableControllerInput();
-        // }
     }
 
     // Methods to disable/enable controller input
@@ -1087,7 +1015,7 @@ public class MenuManager : NetworkBehaviour
             if (defaultButton != null && defaultButton.gameObject.activeInHierarchy && defaultButton.isActiveAndEnabled)
             {
                 // Clear current selection first to prevent any side effects
-                eventSystem.SetSelectedGameObject(null);
+                EventSystem.current.SetSelectedGameObject(null);
 
                 // Set the new selection after a small delay to ensure clean state
                 StartCoroutine(SelectButtonDelayed(defaultButton, 0.05f));
@@ -1096,7 +1024,7 @@ public class MenuManager : NetworkBehaviour
         else
         {
             // Otherwise, clear selection to prevent automatic highlighting
-            eventSystem.SetSelectedGameObject(null);
+            EventSystem.current.SetSelectedGameObject(null);
         }
     }
 
@@ -1106,7 +1034,7 @@ public class MenuManager : NetworkBehaviour
 
         if (button != null && button.gameObject.activeInHierarchy && button.isActiveAndEnabled)
         {
-            eventSystem.SetSelectedGameObject(button.gameObject);
+            EventSystem.current.SetSelectedGameObject(button.gameObject);
 
             // Force refresh the navigation
             if (button == playButton || button == optionsButton || button == quitButton)
@@ -1203,25 +1131,17 @@ public class MenuManager : NetworkBehaviour
             pauseMenuUI.SetActive(false);
         }
 
-        // Defer the actual setup to the next frame to ensure proper activation
-        if (lobbySettingsMenuUI != null)
-        {
-            // First activate the GameObject
-            lobbySettingsMenuUI.SetActive(true);
+        // First activate the GameObject
+        lobbySettingsMenuUI.SetActive(true);
 
-            // Then configure it in the next frame
-            Invoke("ConfigureLobbySettingsMenu", 0.1f);
-        }
-
+        // Then configure it in the next frame
+        Invoke("ConfigureLobbySettingsMenu", 0.1f);
     }
 
     private void UpdateGameModeDisplay()
     {
         // Update the value text if it exists
-        if (gameModeValueText != null)
-        {
-            gameModeValueText.text = _selectedGameMode.ToString();
-        }
+        gameModeValueText.text = _selectedGameMode.ToString();
 
         // Update team settings visibility based on game mode
         SetTeamSettingsVisibility(_selectedGameMode == GameMode.TeamBattle);
@@ -1260,37 +1180,25 @@ public class MenuManager : NetworkBehaviour
 
     private void SetTeamSettingsVisibility(bool visible)
     {
-        if (teamSettingsPanel != null)
-        {
-            teamSettingsPanel.SetActive(visible);
-        }
+        teamSettingsPanel.SetActive(visible);
     }
 
     private void UpdateTeamCountText()
     {
-        if (teamCountText != null)
-        {
-            teamCountText.text = _teamCount.ToString() + " Teams";
-        }
+        teamCountText.text = _teamCount.ToString() + " Teams";
     }
 
     private void UpdateConnectedPlayersText()
     {
-        if (connectedPlayersText != null && NetworkManager.Singleton != null)
-        {
-            int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
-            connectedPlayersText.text = "Connected Players: " + playerCount +
-                (playerCount < 2 ? "\n(Need at least 2 players to start)" : "");
-        }
+        int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
+        connectedPlayersText.text = "Connected Players: " + playerCount +
+            (playerCount < 2 ? "\n(Need at least 2 players to start)" : "");
     }
 
     private void UpdateStartGameButtonInteractability()
     {
-        if (startGameFromLobbyButton != null && NetworkManager.Singleton != null)
-        {
-            bool canStart = NetworkManager.Singleton.ConnectedClients.Count >= 2;
-            startGameFromLobbyButton.interactable = canStart;
-        }
+        bool canStart = NetworkManager.Singleton.ConnectedClients.Count >= 2;
+        startGameFromLobbyButton.interactable = canStart;
     }
 
     public void CloseLobbySettingsMenu()
