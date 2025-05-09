@@ -74,10 +74,6 @@ public class LobbySettingsPanel : MonoBehaviour
             // Setup UI and buttons
             SetupButtons();
             UpdateUI();
-
-            // Schedule periodic updates
-            CancelInvoke("StartPeriodicUpdates");
-            Invoke("StartPeriodicUpdates", 0.1f);
         }
         else
         {
@@ -121,35 +117,11 @@ public class LobbySettingsPanel : MonoBehaviour
         }
     }
 
-    // New method to start the periodic updates after a short delay
-    public void StartPeriodicUpdates()
-    {
-        Debug.Log("[LobbySettingsPanel] StartPeriodicUpdates called");
-        if (gameObject.activeInHierarchy)
-        {
-            StartCoroutine(PeriodicUIUpdate());
-        }
-    }
-
-    private IEnumerator PeriodicUIUpdate()
-    {
-        while (true)
-        {
-            // Update player count and start button every second
-            UpdatePlayerCount();
-            UpdateStartButtonInteractability();
-
-            yield return new WaitForSeconds(1f);
-        }
-    }
-
     private void SetupButtons()
     {
         Debug.Log("[LobbySettingsPanel] SetupButtons called");
 
-        // CRITICAL: NEVER disable this GameObject!
 
-        // Check if we're the host (server)
         bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
         bool hasNetwork = NetworkManager.Singleton != null;
 
@@ -161,7 +133,7 @@ public class LobbySettingsPanel : MonoBehaviour
         if (startGameButton != null)
         {
             // Start game only available to host with at least 2 players
-            bool canStartGame = isHost && hasNetwork && NetworkManager.Singleton.ConnectedClients.Count >= 2;
+            bool canStartGame = NetworkManager.Singleton.IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2;
             startGameButton.interactable = canStartGame;
 
             // Always setup the button, just disable interaction if needed
@@ -264,7 +236,8 @@ public class LobbySettingsPanel : MonoBehaviour
 
         // Update player count
         UpdatePlayerCount();
-
+        UpdateStartButtonInteractability();
+  
         // Update game mode display based on current game mode
         if (GameManager.Instance != null && menuManager != null)
         {
@@ -298,11 +271,8 @@ public class LobbySettingsPanel : MonoBehaviour
 
     private void UpdateStartButtonInteractability()
     {
-        if (startGameButton != null && NetworkManager.Singleton != null)
-        {
-            bool canStart = NetworkManager.Singleton.ConnectedClients.Count >= 2;
-            startGameButton.interactable = canStart;
-        }
+        bool canStart = NetworkManager.Singleton.ConnectedClients.Count >= 2;
+        startGameButton.interactable = canStart;
     }
 
     private void SetupButtonColors(Button button)
