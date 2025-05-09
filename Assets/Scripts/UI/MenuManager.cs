@@ -210,7 +210,7 @@ public class MenuManager : NetworkBehaviour
         UpdateLobbySettingsButtonState();
 
         // Clear selection by default
-        ClearSelection();
+        eventSystem.SetSelectedGameObject(null);
 
         // Try to find InputManager again if it wasn't found in Awake/OnEnable
         if (inputManager == null)
@@ -283,7 +283,7 @@ public class MenuManager : NetworkBehaviour
         {
             // If mouse moved, reset controller selection and clear highlighting
             controllerSelectionEnabled = false;
-            ClearSelection();
+            //             eventSystem.SetSelectedGameObject(null);
         }
 
         // Handle text input fields
@@ -352,10 +352,6 @@ public class MenuManager : NetworkBehaviour
 
     public void ShowMainMenu()
     {
-        // First reset the button states in the main menu
-        if (mainMenuPanel.GetComponent<ButtonStateResetter>() != null)
-            mainMenuPanel.GetComponent<ButtonStateResetter>().ResetAllButtonStates();
-
         // Make the main menu active and hide all others
         HideAllMenusExcept(mainMenuPanel);
         mainMenuPanel.SetActive(true);
@@ -383,8 +379,7 @@ public class MenuManager : NetworkBehaviour
 
         gameIsPaused = false;  // Reset pause state
 
-        // Clear any selected game objects
-        eventSystem?.SetSelectedGameObject(null);
+        EventSystem.current.SetSelectedGameObject(null);
     }
 
     public void OnPlayClicked()
@@ -1015,23 +1010,23 @@ public class MenuManager : NetworkBehaviour
             {
                 inputFieldSelected = true;
 
-                // If we just started editing text
-                if (!isEditingText)
-                {
-                    isEditingText = true;
-                    // Temporarily disable controller navigation
-                    DisableControllerInput();
-                }
+                // // If we just started editing text
+                // if (!isEditingText)
+                // {
+                //     isEditingText = true;
+                //     // Temporarily disable controller navigation
+                //     DisableControllerInput();
+                // }
             }
         }
 
-        // If we were editing text but are no longer
-        if (isEditingText && !inputFieldSelected)
-        {
-            isEditingText = false;
-            // Re-enable controller navigation
-            EnableControllerInput();
-        }
+        // // If we were editing text but are no longer
+        // if (isEditingText && !inputFieldSelected)
+        // {
+        //     isEditingText = false;
+        //     // Re-enable controller navigation
+        //     EnableControllerInput();
+        // }
     }
 
     // Methods to disable/enable controller input
@@ -1083,12 +1078,6 @@ public class MenuManager : NetworkBehaviour
 
     #region UI Selection Utilities
 
-    private void ClearSelection()
-    {
-        if (eventSystem != null)
-            eventSystem.SetSelectedGameObject(null);
-    }
-
     // Add this method for handling button selection
     private void HandleButtonSelection(Button defaultButton)
     {
@@ -1107,7 +1096,7 @@ public class MenuManager : NetworkBehaviour
         else
         {
             // Otherwise, clear selection to prevent automatic highlighting
-            ClearSelection();
+            eventSystem.SetSelectedGameObject(null);
         }
     }
 

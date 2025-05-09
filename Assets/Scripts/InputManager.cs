@@ -18,7 +18,6 @@ public class InputManager : MonoBehaviour
 
     // Action Maps for direct control
     private InputActionMap playerActions;
-    private InputActionMap pauseActions;
     private InputActionMap uiActions;
 
     // Input values
@@ -204,7 +203,7 @@ public class InputManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         
         // For UI mode, explicitly ensure UI navigation works
-        EnsureUINavigationWorks();
+        // EnsureUINavigationWorks();
     }
 
     // New method to ensure UI navigation works with the new Input System
@@ -216,15 +215,6 @@ public class InputManager : MonoBehaviour
         {
             Debug.LogWarning("[InputManager] No EventSystem found in scene!");
             return;
-        }
-        
-        // Check if the GamepadUINavigationFix component is present
-        GamepadUINavigationFix navigationFix = eventSystem.GetComponent<GamepadUINavigationFix>();
-        if (navigationFix == null)
-        {
-            // If not present and we're allowed to add components, add it
-            Debug.Log("[InputManager] Adding GamepadUINavigationFix to EventSystem");
-            navigationFix = eventSystem.gameObject.AddComponent<GamepadUINavigationFix>();
         }
         
         // Check if using a gamepad currently
@@ -359,12 +349,5 @@ public class InputManager : MonoBehaviour
             _brakeInput = 0f;
             _steerInput = 0f; // Reset steering input
         }
-    }
-
-    // Helper method to check if the pause menu or settings menu is active
-    public bool AreMenusActive()
-    {
-        if (MenuManager.Instance == null) return false;
-        return MenuManager.Instance.gameIsPaused;
     }
 }

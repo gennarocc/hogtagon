@@ -21943,6 +21943,10 @@ PrefabInstance:
       propertyPath: connectionRefusedUI
       value: 
       objectReference: {fileID: 1136809186}
+    - target: {fileID: 7250081988547593817, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
+      propertyPath: m_OnFocusSelectAll
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7311532329174247888, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
       propertyPath: m_fontColor.b
       value: 0.007030964
@@ -22095,6 +22099,7 @@ PrefabInstance:
     - {fileID: 5274850315330926913, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
     - {fileID: 3425908123371574216, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
     - {fileID: 9083248983410041513, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
+    - {fileID: 1993519640120752060, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
     m_RemovedGameObjects:
     - {fileID: 1136099728636315072, guid: 2192593a80f6add49be2cfdeef5808fc, type: 3}
     m_AddedGameObjects:
