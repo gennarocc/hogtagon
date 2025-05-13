@@ -89,7 +89,7 @@
                 {
                     "name": "SwapCam",
                     "type": "Button",
-                    "id": "7f9985fb-7e0a-4765-b2a6-30df30013f86",
+                    "id": "ced1be92-9ffe-4da0-8fa4-528cec849833",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -363,8 +363,8 @@
                 },
                 {
                     "name": "",
-                    "id": "2468878d-c992-4b17-af87-daac2ca3f5b4",
-                    "path": "<Keyboard>/f8",
+                    "id": "1a9adfcd-8500-4b1c-9b94-d48f9b99d478",
+                    "path": "",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
