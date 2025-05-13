@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using Unity.Netcode;
+using System.Collections;
 
 /// <summary>
 /// Controls the PauseMenuPanel UI, handling button styling and functionality
@@ -88,7 +89,7 @@ public class PauseMenuPanel : MonoBehaviour
         // Display join code if available
         if (joinCodeText != null && ConnectionManager.Instance != null && !string.IsNullOrEmpty(ConnectionManager.Instance.joinCode))
         {
-            joinCodeText.text = "CODE: " + ConnectionManager.Instance.joinCode;
+            joinCodeText.text = "CODE: " + ConnectionManager.Instance.joinCode + "\n(CLICK TO COPY)";
         }
 
         // Only show the lobby settings button for the host
@@ -244,6 +245,34 @@ public class PauseMenuPanel : MonoBehaviour
         else
         {
             Debug.LogError("[PauseMenuPanel] MenuManager reference is missing");
+        }
+    }
+
+
+    public void OnCopyCodeClicked()
+    {
+        if (menuManager != null && ConnectionManager.Instance != null &&
+            !string.IsNullOrEmpty(ConnectionManager.Instance.joinCode))
+        {
+            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
+            GUIUtility.systemCopyBuffer = ConnectionManager.Instance.joinCode;
+
+            // Show feedback (could add a temporary text popup)
+            Debug.Log("Lobby code copied to clipboard: " + ConnectionManager.Instance.joinCode);
+
+            // Flash the text to show it was copied
+            StartCoroutine(FlashLobbyCodeText());
+        }
+    }
+
+    private IEnumerator FlashLobbyCodeText()
+    {
+        if (joinCodeText != null)
+        {
+            Color originalColor = joinCodeText.color;
+            joinCodeText.color = Color.yellow;
+            yield return new WaitForSeconds(0.2f);
+            joinCodeText.color = originalColor;
         }
     }
 

@@ -232,12 +232,12 @@ public class LobbySettingsPanel : MonoBehaviour
         Debug.Log("[LobbySettingsPanel] UpdateUI called");
 
         // Update lobby code
-        lobbyCodeText.text = "Lobby Code: " + ConnectionManager.Instance.joinCode;
+        lobbyCodeText.text = "CODE: " + ConnectionManager.Instance.joinCode + "\n(CLICK TO COPY)";
 
         // Update player count
         UpdatePlayerCount();
         UpdateStartButtonInteractability();
-  
+
         // Update game mode display based on current game mode
         if (GameManager.Instance != null && menuManager != null)
         {
@@ -267,6 +267,9 @@ public class LobbySettingsPanel : MonoBehaviour
         int playerCount = NetworkManager.Singleton.ConnectedClients.Count;
         playerCountText.text = "Connected Players: " + playerCount +
             (playerCount < 2 ? "\n(Need at least 2 players to start)" : "");
+
+        // Change text color to red if less than 2 players, otherwise use original color
+        playerCountText.color = playerCount < 2 ? Color.red : Color.green;
     }
 
     private void UpdateStartButtonInteractability()

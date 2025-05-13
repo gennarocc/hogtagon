@@ -281,20 +281,17 @@ public class MenuManager : NetworkBehaviour
         }
 
         // Let InputManager handle the input mode switch and initial cursor state
-        if (inputManager != null)
+        if (toUIMode)
         {
-            if (toUIMode)
-            {
-                inputManager.SwitchToUIMode();
-                if (!inputManager.IsInUIMode())
-                    inputManager.ForceEnableCurrentActionMap();
-            }
-            else
-            {
-                inputManager.SwitchToGameplayMode();
-                if (!inputManager.IsInGameplayMode())
-                    inputManager.ForceEnableCurrentActionMap();
-            }
+            inputManager.SwitchToUIMode();
+            if (!inputManager.IsInUIMode())
+                inputManager.ForceEnableCurrentActionMap();
+        }
+        else
+        {
+            inputManager.SwitchToGameplayMode();
+            if (!inputManager.IsInGameplayMode())
+                inputManager.ForceEnableCurrentActionMap();
         }
 
         // Double-check cursor state as a fallback (InputManager should handle this primarily)
@@ -626,28 +623,9 @@ public class MenuManager : NetworkBehaviour
         NetworkManager.Singleton.DisconnectClient(clientId);
     }
 
-    public void CopyJoinCode()
-    {
-        GUIUtility.systemCopyBuffer = ConnectionManager.Instance.joinCode;
-        Debug.Log(message: "[MENU] Join Code Copied");
-    }
-
     public void HandleConnectionStateChange(bool connected)
     {
-        // Update connection state
         ConnectionManager.Instance.isConnected = connected;
-
-        if (connected)
-        {
-            // When newly connected, immediately switch to gameplay mode
-            SwitchInputMode(toUIMode: false);
-        }
-        else
-        {
-            // Switch to UI mode and show main menu
-            SwitchInputMode(toUIMode: true);
-            ShowMainMenu();
-        }
     }
 
     private void OnPlayerCountChanged(int newCount)
@@ -1119,23 +1097,6 @@ public class MenuManager : NetworkBehaviour
         bool shouldBeVisible = GameManager.Instance.state != GameState.Playing;
         pauseLobbySettingsButton.gameObject.SetActive(shouldBeVisible);
         Debug.Log($"[MENU] Updated lobby settings button visibility: {shouldBeVisible}");
-    }
-
-    public void ShowLobbySettingsMenu()
-    {
-        Debug.Log("[MENU] ShowLobbySettingsMenu called - showing lobby settings menu!");
-
-        if (pauseMenuUI.activeSelf)
-        {
-            Debug.Log("[MENU] Hiding pause menu before showing lobby settings");
-            pauseMenuUI.SetActive(false);
-        }
-
-        // First activate the GameObject
-        lobbySettingsMenuUI.SetActive(true);
-
-        // Then configure it in the next frame
-        Invoke("ConfigureLobbySettingsMenu", 0.1f);
     }
 
     private void UpdateGameModeDisplay()
