@@ -208,8 +208,5 @@ public class ConnectToGame : MonoBehaviour
         MenuMusicOff.Post(gameObject);
         menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
-
-        // Use Invoke instead of a coroutine to open lobby settings after a delay
-        Invoke("OpenLobbySettings", 1.5f);
     }
 }

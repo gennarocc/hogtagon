@@ -105,7 +105,7 @@ public class InputManager : MonoBehaviour
         // ShowScoreboard
         controls.Gameplay.ShowScoreboard.performed += ctx => ScoreboardToggled?.Invoke(true);
         controls.Gameplay.ShowScoreboard.canceled += ctx => ScoreboardToggled?.Invoke(false);
-        
+
         // Pause Menu
         controls.Gameplay.PauseMenu.performed += ctx => MenuToggled?.Invoke();
 
@@ -122,7 +122,7 @@ public class InputManager : MonoBehaviour
     {
         // Start with UI mode for main menu
         SwitchToUIMode();
-        
+
         // Force controller navigation to be enabled by default
         _controllerNavigationEnabled = true;
     }
@@ -135,19 +135,20 @@ public class InputManager : MonoBehaviour
     // Switch to gameplay controls
     public void SwitchToGameplayMode()
     {
+        Debug.Log("[INPUT] Switching to Gameplay mode");
         if (_currentInputState == InputState.Gameplay)
             return;
-        
+
         // Disable UI action map and enable gameplay action map
         uiActions.Disable();
         playerActions.Enable();
 
         _currentInputState = InputState.Gameplay;
-        
+
         // Apply cursor locking
         ForceCursorLock();
     }
-    
+
     // Force the cursor to be locked and hidden
     private void ForceCursorLock()
     {
@@ -155,7 +156,7 @@ public class InputManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
-    
+
     // Coroutine to enforce cursor lock over several frames
     private IEnumerator EnforceCursorLock()
     {
@@ -163,7 +164,7 @@ public class InputManager : MonoBehaviour
         for (int i = 0; i < 5; i++)
         {
             yield return new WaitForSeconds(0.1f * i);
-            
+
             // Only apply if still in gameplay mode
             if (_currentInputState == InputState.Gameplay)
             {
@@ -183,25 +184,27 @@ public class InputManager : MonoBehaviour
     {
         if (_currentInputState == InputState.UI)
             return;
-        
+
+        Debug.Log("[INPUT] Switching to Gameplay mode");
+
         // Disable gameplay action map and enable UI action map
         playerActions.Disable();
         uiActions.Enable();
-        
+
         // Update state
         _currentInputState = InputState.UI;
-        
+
         // Reset input values when switching to UI
         _throttleInput = 0f;
         _brakeInput = 0f;
         _steerInput = 0f; // Reset steering input
         _lookInput = Vector2.zero;
         _isHonking = false;
-        
+
         // Ensure the cursor is visible for UI interactions
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-        
+
     }
 
     private void Update()
@@ -214,7 +217,7 @@ public class InputManager : MonoBehaviour
             {
                 // Always invoke MenuToggled when escape is pressed, regardless of current mode
                 MenuToggled?.Invoke();
-                
+
                 // Record the time of this toggle
                 lastMenuToggleTime = Time.unscaledTime;
             }
@@ -224,7 +227,7 @@ public class InputManager : MonoBehaviour
         if (_controllerNavigationEnabled)
         {
             DetectInputDevice();
-            
+
             // If we detect gamepad input in UI mode, make sure to handle it
             if (_currentInputState == InputState.UI && _usingGamepad)
             {
@@ -239,7 +242,7 @@ public class InputManager : MonoBehaviour
             _lookInput = Vector2.zero;
             _steerInput = 0f; // Reset steering input when navigation is disabled
         }
-        
+
         // If we're in UI mode (menus are open), force look input to zero
         // This will prevent the camera from being controlled while menus are open
         if (_currentInputState == InputState.UI)
@@ -272,7 +275,7 @@ public class InputManager : MonoBehaviour
     {
         return _currentInputState == InputState.Gameplay;
     }
-    
+
     // Check if we're currently in UI input mode
     public bool IsInUIMode()
     {
@@ -308,7 +311,7 @@ public class InputManager : MonoBehaviour
     public void SetControllerNavigationEnabled(bool enabled)
     {
         _controllerNavigationEnabled = enabled;
-        
+
         // If we're re-enabling controller navigation, reset values
         if (enabled)
         {

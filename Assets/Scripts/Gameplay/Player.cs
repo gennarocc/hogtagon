@@ -59,11 +59,8 @@ public class Player : NetworkBehaviour
 
         playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
 
-        if (IsServer && NetworkManager.Singleton.LocalClientId == clientId) MenuManager.Instance.ShowLobbySettingsMenu();
-
         if (IsOwner)
         {
-            InputManager.Instance.SwitchToGameplayMode();
             // Activate player camera;
             playerCamera = GameObject.Find("PlayerCamera").GetComponent<CinemachineFreeLook>();
             playerCamera.gameObject.SetActive(true);
@@ -71,6 +68,15 @@ public class Player : NetworkBehaviour
             playerCamera.Follow = transform;
 
         }
+
+        if (IsOwner && !IsServer) MenuManager.Instance.SwitchInputMode(false);
+
+        if (IsServer && NetworkManager.Singleton.LocalClientId == clientId) 
+        {
+            MenuManager.Instance.OpenLobbySettingsMenu();
+            Cursor.visible = true;
+        }
+
     }
 
     public void Start()
