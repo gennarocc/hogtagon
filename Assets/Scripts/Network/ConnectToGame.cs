@@ -8,6 +8,7 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using UnityEngine.UI;
+using Steamworks;
 
 public class ConnectToGame : MonoBehaviour
 {
@@ -25,11 +26,15 @@ public class ConnectToGame : MonoBehaviour
 
     // To track which operation we're performing for retry functionality
     public string lastJoinCode { get; private set; } = "";
+    
+    // Steam integration
+    private bool steamInitialized = false;
 
     private async void Start()
     {
         startCamera.cullingMask = 31;
         joinLobby.interactable = false;
+        
         // Start Relay Service.
         InitializationOptions hostOptions = new InitializationOptions().SetProfile("host");
         InitializationOptions clientOptions = new InitializationOptions().SetProfile("client");
@@ -45,7 +50,6 @@ public class ConnectToGame : MonoBehaviour
             await UnityServices.InitializeAsync(clientOptions);
         }
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
-
     }
 
     public void OnInputFieldValueChanged()
@@ -174,10 +178,11 @@ public class ConnectToGame : MonoBehaviour
 
     public void StartClient()
     {
-        // Get username from PlayerPrefs
-        string username = PlayerPrefs.GetString("Username", "Player");
+        // Get the appropriate username
+        string username = GetPlayerUsername();
+        
         SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIConfirm);
-        // Configure connection with username as payload;
+        // Configure connection with username as payload
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
 
         // Store the join code for potential retry
@@ -188,14 +193,13 @@ public class ConnectToGame : MonoBehaviour
         MenuMusicOff.Post(gameObject);
         menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
-
     }
 
     public void StartHost()
     {
-        // Get username from PlayerPrefs
-        string username = PlayerPrefs.GetString("Username", "Player");
-
+        // Get the appropriate username
+        string username = GetPlayerUsername();
+        
         SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIConfirm);
         // Configure connection with username as payload
         NetworkManager.Singleton.NetworkConfig.ConnectionData = Encoding.ASCII.GetBytes(username);
@@ -208,5 +212,64 @@ public class ConnectToGame : MonoBehaviour
         MenuMusicOff.Post(gameObject);
         menuManager.menuMusicPlaying = false;
         LobbyMusicOn.Post(gameObject);
+    }
+
+    private string GetPlayerUsername()
+    {
+        // Get saved username as fallback
+        string savedUsername = PlayerPrefs.GetString("Username", "Player");
+        string finalUsername = savedUsername;
+        
+        // Try to get Steam username first (highest priority)
+        try
+        {
+            // Check if Steam is already initialized
+            if (!steamInitialized)
+            {
+                // Initialize the SteamAPI
+                if (SteamAPI.Init())
+                {
+                    steamInitialized = true;
+                    Debug.Log("[MENU] Steam initialized successfully.");
+                }
+                else
+                {
+                    Debug.Log("[MENU] SteamAPI initialization failed.");
+                    return finalUsername;
+                }
+            }
+            
+            // If we get here, Steam is initialized
+            if (steamInitialized)
+            {
+                string steamUsername = SteamFriends.GetPersonaName();
+                
+                if (!string.IsNullOrEmpty(steamUsername))
+                {
+                    Debug.Log("[MENU] Using Steam name: " + steamUsername);
+                    
+                    // Always save the steam username for next time
+                    PlayerPrefs.SetString("Username", steamUsername);
+                    PlayerPrefs.Save();
+                    
+                    finalUsername = steamUsername;
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Exception during Steam username retrieval: " + e.Message);
+        }
+        
+        return finalUsername;
+    }
+    
+    private void OnDestroy()
+    {
+        // Shutdown the SteamAPI when the object is destroyed
+        if (steamInitialized)
+        {
+            SteamAPI.Shutdown();
+        }
     }
 }
