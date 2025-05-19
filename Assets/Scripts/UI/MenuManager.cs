@@ -692,7 +692,7 @@ public class MenuManager : NetworkBehaviour
         if (isGameWin)
         {
             // Final game winner message
-            winnerText.text = $"{coloredPlayerName} IS THE BIG WINNER!";
+            winnerText.text = $"{coloredPlayerName} CONQUERED THE HOGTAGON!";
         }
         else
         {
