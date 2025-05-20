@@ -72,7 +72,7 @@ public class ConnectToGame : MonoBehaviour
         try
         {
             Debug.Log(message: "Joining Relay with " + joinCode);
-            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode.ToUpper());
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(AllocationUtils.ToRelayServerData(joinAllocation, "dtls"));
             ConnectionManager.Instance.joinCode = joinCode;
             NetworkManager.Singleton.StartClient();
@@ -220,7 +220,6 @@ public class ConnectToGame : MonoBehaviour
         string savedUsername = PlayerPrefs.GetString("Username", "Player");
         string finalUsername = savedUsername;
         
-        // Try to get Steam username first (highest priority)
         try
         {
             // Check if Steam is already initialized
@@ -258,7 +257,7 @@ public class ConnectToGame : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError("Exception during Steam username retrieval: " + e.Message);
+            Debug.LogError("[MENU] Exception during Steam username retrieval: " + e.Message);
         }
         
         return finalUsername;

@@ -70,12 +70,6 @@ public class AudioTabContent : TabContent
 
     public void OnMasterVolumeChanged(float volume)
     {
-        if (settingsManager != null)
-        {
-            // Play sound feedback
-            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
-        }
-
         // Update UI
         UpdateVolumeText(masterVolumeText, volume);
 
@@ -85,12 +79,6 @@ public class AudioTabContent : TabContent
 
     public void OnMusicVolumeChanged(float volume)
     {
-        if (settingsManager != null)
-        {
-            // Play sound feedback
-            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
-        }
-
         // Update UI
         UpdateVolumeText(musicVolumeText, volume);
 
@@ -100,13 +88,6 @@ public class AudioTabContent : TabContent
 
     public void OnSFXVolumeChanged(float volume)
     {
-        if (settingsManager != null)
-        {
-            // Play sound feedback
-            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
-        }
-
-        // Update UI
         UpdateVolumeText(sfxVolumeText, volume);
 
         // Set the volume
@@ -173,39 +154,20 @@ public class AudioTabContent : TabContent
         PlayerPrefs.Save();
 
         // Call the main SettingsManager ApplySettings to ensure JSON saving happens
-        if (settingsManager != null)
-        {
-            settingsManager.ApplySettings();
-        }
+        settingsManager.ApplySettings();
     }
 
     public override void ResetToDefaults()
     {
-        if (settingsManager != null)
-        {
-            // Play sound feedback
-            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
-        }
+        // Play sound feedback
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
 
         // Reset master volume
-        if (masterVolumeSlider != null)
-        {
-            masterVolumeSlider.value = DEFAULT_MASTER_VOLUME;
-            OnMasterVolumeChanged(DEFAULT_MASTER_VOLUME);
-        }
-
-        // Reset music volume
-        if (musicVolumeSlider != null)
-        {
-            musicVolumeSlider.value = DEFAULT_MUSIC_VOLUME;
-            OnMusicVolumeChanged(DEFAULT_MUSIC_VOLUME);
-        }
-
-        // Reset SFX volume
-        if (sfxVolumeSlider != null)
-        {
-            sfxVolumeSlider.value = DEFAULT_SFX_VOLUME;
-            OnSFXVolumeChanged(DEFAULT_SFX_VOLUME);
-        }
+        masterVolumeSlider.value = DEFAULT_MASTER_VOLUME;
+        OnMasterVolumeChanged(DEFAULT_MASTER_VOLUME);
+        musicVolumeSlider.value = DEFAULT_MUSIC_VOLUME;
+        OnMusicVolumeChanged(DEFAULT_MUSIC_VOLUME);
+        sfxVolumeSlider.value = DEFAULT_SFX_VOLUME;
+        OnSFXVolumeChanged(DEFAULT_SFX_VOLUME);
     }
 }

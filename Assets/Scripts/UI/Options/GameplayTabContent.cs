@@ -27,7 +27,6 @@ public class GameplayTabContent : TabContent
             usernameInput.characterLimit = MAX_USERNAME_LENGTH;
 
             // Add listeners
-            usernameInput.onValueChanged.AddListener(OnUsernameChanged);
             usernameInput.onEndEdit.AddListener(OnUsernameFinishedEditing);
         }
     }
@@ -49,23 +48,8 @@ public class GameplayTabContent : TabContent
         }
     }
 
-    public void OnUsernameChanged(string username)
-    {
-        if (settingsManager != null)
-        {
-            // Play sound feedback - only for typing if desired
-            // settingsManager.PlayUIClickSound();
-        }
-    }
-
     public void OnUsernameFinishedEditing(string username)
     {
-        if (settingsManager != null)
-        {
-            // Play sound feedback when finished editing
-            SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
-        }
-
         // Save username if valid
         SaveUsername(username);
     }

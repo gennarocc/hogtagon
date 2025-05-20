@@ -490,7 +490,7 @@ public class HogController : NetworkBehaviour
         if (oppositeDirection)
         {
             // Increase turn speed when steering in the opposite direction
-            multiplier = 3.0f; // Can be adjusted for desired responsiveness
+            multiplier = 1.5f; // Can be adjusted for desired responsiveness
         }
         else if (noInput)
         {

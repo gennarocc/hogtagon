@@ -21,6 +21,7 @@ public class MenuManager : NetworkBehaviour
     [Header("Menu Panels")]
     [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject playMenuPanel;
+    [SerializeField] private GameObject creditsMenuPanel;
     [SerializeField] private GameObject pauseMenuUI;
     [SerializeField] private GameObject settingsMenuUI;
     [SerializeField] private GameObject newOptionsMenuUI;
@@ -355,6 +356,13 @@ public class MenuManager : NetworkBehaviour
         SwitchInputMode(toUIMode: true, forceButtonSelection: defaultPlayMenuButton);
     }
 
+    public void OnCreditsClicked()
+    {
+        HideAllMenusExcept(creditsMenuPanel);
+        creditsMenuPanel.SetActive(true);
+        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
+    }
+
     public void OnOptionsClicked()
     {
         Debug.Log("[MENU] OnOptionsClicked called");
@@ -484,6 +492,7 @@ public class MenuManager : NetworkBehaviour
         if (tempUI != menuToKeep) tempUI.SetActive(false);
         if (connectionPending != menuToKeep) connectionPending.SetActive(false);
         if (lobbySettingsMenuUI != menuToKeep) lobbySettingsMenuUI.SetActive(false);
+        if (creditsMenuPanel != menuToKeep) creditsMenuPanel.SetActive(false);
     }
 
     private void HideAllMenus()

@@ -492,19 +492,16 @@ public class SettingsManager : MonoBehaviour
 
     public void OnMasterVolumeChanged(float volume)
     {
-        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick); UpdateVolumeText(masterVolumeText, volume);
         SetMasterVolume(volume);
     }
 
     public void OnMusicVolumeChanged(float volume)
     {
-        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick); UpdateVolumeText(musicVolumeText, volume);
         SetMusicVolume(volume);
     }
 
     public void OnSFXVolumeChanged(float volume)
     {
-        SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick); UpdateVolumeText(sfxVolumeText, volume);
         SetSFXVolume(volume);
     }
 
