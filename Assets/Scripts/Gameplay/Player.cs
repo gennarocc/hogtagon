@@ -247,9 +247,9 @@ public class Player : NetworkBehaviour
         }
     }
 
-    private void SetTeamColor(Color32 teamColor)
+    public bool isPlayerAlive()
     {
-
+        return networkPlayerData.Value.state == PlayerState.Alive;
     }
 
     private void ApplyPlayerData(PlayerData playerData)
