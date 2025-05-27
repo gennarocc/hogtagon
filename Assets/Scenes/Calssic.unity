@@ -12870,6 +12870,11 @@ MonoBehaviour:
       idInternal: 0
       valueGuidInternal: 
       WwiseObjectReference: {fileID: 11400000, guid: a44cab77c37739a49ac20c92c3390560, type: 2}
+  - type: 12
+    audioEvent:
+      idInternal: 0
+      valueGuidInternal: 
+      WwiseObjectReference: {fileID: 11400000, guid: 8e44b84044b0a3643bd21e71e9badf9f, type: 2}
   globalSoundSource: {fileID: 662722771}
 --- !u!1 &705507993
 GameObject:
@@ -15393,7 +15398,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000061035156, y: -0.7548828}
+  m_AnchoredPosition: {x: 0, y: -0.7548828}
   m_SizeDelta: {x: -236, y: 37.98999}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1430104359

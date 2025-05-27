@@ -285,6 +285,11 @@ public class HogController : NetworkBehaviour
         {
             jumpInputReceived = true;
         }
+
+        if (jumpOnCooldown)
+        {
+            SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogJumpCooling);
+        }
     }
 
     private void OnHornPressed()
