@@ -18,9 +18,8 @@ namespace AK
         static const AkUniqueID CLOWNHONK = 3571403586U;
         static const AkUniqueID ENGINEOFF = 2388455330U;
         static const AkUniqueID ENGINEON = 2439330724U;
-        static const AkUniqueID HOG1HONK = 3990552864U;
-        static const AkUniqueID HOG2HONK = 2346132799U;
         static const AkUniqueID HOGCOOLDOWNCOMPLETE = 1209236599U;
+        static const AkUniqueID HOGHONK = 3500513135U;
         static const AkUniqueID HOGHORN = 3567623486U;
         static const AkUniqueID HOGIMPACTHIGH = 1467666939U;
         static const AkUniqueID HOGIMPACTLOW = 3718586431U;
@@ -41,6 +40,7 @@ namespace AK
         static const AkUniqueID ROUNDOUTOFTIME = 3045288105U;
         static const AkUniqueID ROUNDSTART = 211290109U;
         static const AkUniqueID ROUNDWIN = 3391830779U;
+        static const AkUniqueID SCIFI2HONK = 842852769U;
         static const AkUniqueID SCIFIHONK = 2840820481U;
         static const AkUniqueID TIRESCREECHOFF = 3010988261U;
         static const AkUniqueID TIRESCREECHON = 3670274905U;

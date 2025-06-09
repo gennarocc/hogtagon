@@ -472,18 +472,21 @@
 						</Action>
 					</ChildrenList>
 				</Event>
-				<Event Name="hog1Honk" ID="{4EDA5EA5-74E9-498E-AC36-E2BCE5A78A14}">
+				<Event Name="HogHonk" ID="{4EDA5EA5-74E9-498E-AC36-E2BCE5A78A14}">
 					<ChildrenList>
 						<Action Name="" ID="{C59B1F8B-4C59-4CA5-9019-7098DAC3C0F9}" ShortID="54919690">
 							<ReferenceList>
 								<Reference Name="Target">
-									<ObjectRef Name="hog1-honk" ID="{C0BB0A5B-90EB-4463-AFBA-540AFA493B7B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+									<ObjectRef Name="pig-honk" ID="{0343A481-D5AB-45FF-B12B-73A20C3DB6E9}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
 					</ChildrenList>
 				</Event>
 				<Event Name="hog2Honk" ID="{6824C696-F2A4-47E0-9CE8-E8BB9653E7A5}">
+					<PropertyList>
+						<Property Name="Inclusion" Type="bool" Value="False"/>
+					</PropertyList>
 					<ChildrenList>
 						<Action Name="" ID="{028AF658-D8DC-4CD8-87DA-199377B43C44}" ShortID="906572339">
 							<ReferenceList>
@@ -500,6 +503,17 @@
 							<ReferenceList>
 								<Reference Name="Target">
 									<ObjectRef Name="scifi-honk" ID="{6280242F-01CC-41F2-89C0-BF8F8FED1D8C}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="scifi2Honk" ID="{7C41E7DC-8244-4B84-B442-6C1E8390EFB6}">
+					<ChildrenList>
+						<Action Name="" ID="{1D9BDF98-2611-417F-A176-054414484E08}" ShortID="993430169">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="scifi2-honk" ID="{A307DE9B-6FC4-492F-9EC5-16D70B4B556B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
 								</Reference>
 							</ReferenceList>
 						</Action>
