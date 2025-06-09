@@ -439,6 +439,72 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="ahoogaHonk" ID="{B318B57D-3139-4215-85D8-D930A568F860}">
+					<ChildrenList>
+						<Action Name="" ID="{09815B68-6D22-47BB-850E-9A9187C43AA0}" ShortID="770271371">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="ahooga-honk" ID="{38D5E149-2871-45B0-A03D-3372AC79A846}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="clownHonk" ID="{CCAD34CF-A893-41F5-AE34-C6CF220B7EE3}">
+					<ChildrenList>
+						<Action Name="" ID="{CD060164-65EA-4D04-AF62-C84D37F8B873}" ShortID="440972938">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="clown-honk" ID="{BEE34AB1-AC80-4461-90E5-30A5C67FFC40}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="gooseHonk" ID="{B882EAF1-A980-4ACB-935E-D4CA50F865D3}">
+					<ChildrenList>
+						<Action Name="" ID="{89F58D8E-DC5C-4487-8B09-188567D7C7FD}" ShortID="944114116">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="goose-honk" ID="{F97FA161-F3BD-4D43-93A4-6DD35A0135F0}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="hog1Honk" ID="{4EDA5EA5-74E9-498E-AC36-E2BCE5A78A14}">
+					<ChildrenList>
+						<Action Name="" ID="{C59B1F8B-4C59-4CA5-9019-7098DAC3C0F9}" ShortID="54919690">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog1-honk" ID="{C0BB0A5B-90EB-4463-AFBA-540AFA493B7B}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="hog2Honk" ID="{6824C696-F2A4-47E0-9CE8-E8BB9653E7A5}">
+					<ChildrenList>
+						<Action Name="" ID="{028AF658-D8DC-4CD8-87DA-199377B43C44}" ShortID="906572339">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="hog2-honk" ID="{4E263349-0AF5-455F-B600-2655ADDB2694}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="scifiHonk" ID="{DB09017D-17AE-4DB0-B998-891D77901DD0}">
+					<ChildrenList>
+						<Action Name="" ID="{4270ABA4-FE1E-42F1-A0BC-2F25E76647EC}" ShortID="259723518">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="scifi-honk" ID="{6280242F-01CC-41F2-89C0-BF8F8FED1D8C}" WorkUnitID="{FE56812C-DDD9-4361-93A7-11B917E8AF21}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>

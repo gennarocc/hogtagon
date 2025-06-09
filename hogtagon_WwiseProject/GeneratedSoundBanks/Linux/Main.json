@@ -10,7 +10,7 @@
     "Type": "User",
     "GUID": "{1F271523-D06E-43F1-94DA-5F0AB2541AA1}",
     "Language": "SFX",
-    "Hash": "{8B50A30F-4A98-7A5A-DA37-A6AB2840E4BD}",
+    "Hash": "{299FEE4A-47BA-CCBE-74D9-D90CBA473496}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Main",
     "ShortName": "Main",
     "Path": "Main.bnk",
@@ -86,6 +86,14 @@
       "Location": "Memory",
       "ShortName": "hog-jump-cooling1.wav",
       "CachePath": "C8/{C8865A99-61AE-073A-23B9-1EFB74F4934A}.wem"
+     },
+     {
+      "Id": "276780446",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "scifi-honk.wav",
+      "CachePath": "61/{61997E59-558C-4382-1974-DA458D34CC86}.wem"
      },
      {
       "Id": "289264218",
@@ -272,6 +280,14 @@
       "CachePath": "41/{41C16F17-8FBA-2E87-5A1B-2BF3F1D8E963}.wem"
      },
      {
+      "Id": "626714143",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "ahooga-honk.wav",
+      "CachePath": "D7/{D7B22019-BE16-7726-53F1-A8F65A410D7C}.wem"
+     },
+     {
       "Id": "669803493",
       "Language": "SFX",
       "Streaming": "false",
@@ -336,6 +352,14 @@
       "CachePath": "35/{356F6AF9-6ED4-4298-EB17-F144863E216B}.wem"
      },
      {
+      "Id": "811018331",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "hog2-honk.wav",
+      "CachePath": "AA/{AAAF9743-7B94-923B-C676-E0DFAB158B73}.wem"
+     },
+     {
       "Id": "811391391",
       "Language": "SFX",
       "Streaming": "false",
@@ -350,6 +374,14 @@
       "Location": "Memory",
       "ShortName": "gear-shift-3.wav",
       "CachePath": "70/{70065D4A-C8CE-388F-5222-0571DFE128FB}.wem"
+     },
+     {
+      "Id": "857437726",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "clown-honk.wav",
+      "CachePath": "B3/{B38BB1F8-6029-D282-776D-272B32CAB5A2}.wem"
      },
      {
       "Id": "862707693",
@@ -392,6 +424,14 @@
       "CachePath": "DB/{DB7765BD-D580-FEBD-035F-2F1931C8E891}.wem"
      },
      {
+      "Id": "1047984062",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "hog1-honk.wav",
+      "CachePath": "A6/{A6266436-5A75-747E-021B-04B5915A0CE9}.wem"
+     },
+     {
       "Id": "1060462459",
       "Language": "SFX",
       "Streaming": "false",
@@ -401,6 +441,20 @@
      }
     ],
     "Events": [
+     {
+      "Id": "2877398186",
+      "Name": "ahoogaHonk",
+      "ObjectPath": "\\Events\\Default Work Unit\\ahoogaHonk",
+      "GUID": "{B318B57D-3139-4215-85D8-D930A568F860}",
+      "DurationType": "OneShot",
+      "DurationMin": "1.0653334",
+      "DurationMax": "1.0653334",
+      "MediaRefs": [
+       {
+        "Id": "626714143"
+       }
+      ]
+     },
      {
       "Id": "144991338",
       "Name": "CarExplosion",
@@ -424,6 +478,20 @@
        },
        {
         "Id": "862707693"
+       }
+      ]
+     },
+     {
+      "Id": "3571403586",
+      "Name": "clownHonk",
+      "ObjectPath": "\\Events\\Default Work Unit\\clownHonk",
+      "GUID": "{CCAD34CF-A893-41F5-AE34-C6CF220B7EE3}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.56970835",
+      "DurationMax": "0.56970835",
+      "MediaRefs": [
+       {
+        "Id": "857437726"
        }
       ]
      },
@@ -480,6 +548,34 @@
        },
        {
         "Id": "842752452"
+       }
+      ]
+     },
+     {
+      "Id": "3990552864",
+      "Name": "hog1Honk",
+      "ObjectPath": "\\Events\\Default Work Unit\\hog1Honk",
+      "GUID": "{4EDA5EA5-74E9-498E-AC36-E2BCE5A78A14}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.24272917",
+      "DurationMax": "0.24272917",
+      "MediaRefs": [
+       {
+        "Id": "1047984062"
+       }
+      ]
+     },
+     {
+      "Id": "2346132799",
+      "Name": "hog2Honk",
+      "ObjectPath": "\\Events\\Default Work Unit\\hog2Honk",
+      "GUID": "{6824C696-F2A4-47E0-9CE8-E8BB9653E7A5}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.23464583",
+      "DurationMax": "0.23464583",
+      "MediaRefs": [
+       {
+        "Id": "811018331"
        }
       ]
      },
@@ -703,6 +799,20 @@
       ]
      },
      {
+      "Id": "2840820481",
+      "Name": "scifiHonk",
+      "ObjectPath": "\\Events\\Default Work Unit\\scifiHonk",
+      "GUID": "{DB09017D-17AE-4DB0-B998-891D77901DD0}",
+      "DurationType": "OneShot",
+      "DurationMin": "1.3520833",
+      "DurationMax": "1.3520833",
+      "MediaRefs": [
+       {
+        "Id": "276780446"
+       }
+      ]
+     },
+     {
       "Id": "3010988261",
       "Name": "TireScreechOff",
       "ObjectPath": "\\Events\\Default Work Unit\\TireScreechOff",
@@ -781,6 +891,6 @@
     ]
    }
   ],
-  "FileHash": "{DF8B5812-7617-D272-8BC2-A2D291DE5B66}"
+  "FileHash": "{958E99A8-E81D-8BE6-6E14-7F83599BB4AA}"
  }
 }

@@ -2228,6 +2228,160 @@
 								<ActiveSource Name="CrankcaseAudio REV" ID="{8618FAD0-5D6E-4FA2-9B7B-E720E6747C0F}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
+						<Folder Name="dlc-horns" ID="{FD1BE683-EECA-47B9-A6AF-CB4F92D0173C}" ShortID="556648089">
+							<ChildrenList>
+								<Sound Name="ahooga-honk" ID="{38D5E149-2871-45B0-A03D-3372AC79A846}" ShortID="312939834">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="ahooga-honk" ID="{08690183-C03F-440C-B423-A0EC281EDBE6}">
+											<Language>SFX</Language>
+											<AudioFile>ahooga-honk.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="626714143"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="ahooga-honk" ID="{08690183-C03F-440C-B423-A0EC281EDBE6}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="clown-honk" ID="{BEE34AB1-AC80-4461-90E5-30A5C67FFC40}" ShortID="802075678">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="clown-honk" ID="{DAD3549E-64F0-4ABB-BD29-852AE2CF72CE}">
+											<Language>SFX</Language>
+											<AudioFile>clown-honk.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="857437726"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="clown-honk" ID="{DAD3549E-64F0-4ABB-BD29-852AE2CF72CE}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="goose-honk" ID="{F97FA161-F3BD-4D43-93A4-6DD35A0135F0}" ShortID="384335649">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="goose-honk" ID="{53D1DC86-8DA4-498E-800D-3911BEFFEBF6}">
+											<Language>SFX</Language>
+											<AudioFile>goose-honk.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="186494206"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="goose-honk" ID="{53D1DC86-8DA4-498E-800D-3911BEFFEBF6}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="hog1-honk" ID="{C0BB0A5B-90EB-4463-AFBA-540AFA493B7B}" ShortID="845163415">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="hog1-honk" ID="{9FE32A61-9C3A-4833-8788-BFC2D47AC9B0}">
+											<Language>SFX</Language>
+											<AudioFile>hog1-honk.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="1047984062"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="hog1-honk" ID="{9FE32A61-9C3A-4833-8788-BFC2D47AC9B0}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="hog2-honk" ID="{4E263349-0AF5-455F-B600-2655ADDB2694}" ShortID="451445415">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="hog2-honk" ID="{C1CED219-9224-4D9D-A2D2-52087C7047B3}">
+											<Language>SFX</Language>
+											<AudioFile>hog2-honk.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="811018331"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="hog2-honk" ID="{C1CED219-9224-4D9D-A2D2-52087C7047B3}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+								<Sound Name="scifi-honk" ID="{6280242F-01CC-41F2-89C0-BF8F8FED1D8C}" ShortID="131861002">
+									<PropertyList>
+										<Property Name="EnableLoudnessNormalization" Type="bool" Value="True"/>
+									</PropertyList>
+									<ReferenceList>
+										<Reference Name="Conversion">
+											<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{5A14E917-E83E-47C6-AA0C-CDDB655B14F7}"/>
+										</Reference>
+										<Reference Name="OutputBus">
+											<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{1E71857E-FE54-4EEE-B922-20EBF26DDEAC}"/>
+										</Reference>
+									</ReferenceList>
+									<ChildrenList>
+										<AudioFileSource Name="scifi-honk" ID="{FBE8C582-BE31-4955-9DB2-3CC5F699CCDD}">
+											<Language>SFX</Language>
+											<AudioFile>scifi-honk.wav</AudioFile>
+											<MediaIDList>
+												<MediaID ID="276780446"/>
+											</MediaIDList>
+										</AudioFileSource>
+									</ChildrenList>
+									<ActiveSourceList>
+										<ActiveSource Name="scifi-honk" ID="{FBE8C582-BE31-4955-9DB2-3CC5F699CCDD}" Platform="Linked"/>
+									</ActiveSourceList>
+								</Sound>
+							</ChildrenList>
+						</Folder>
 					</ChildrenList>
 				</Folder>
 				<Folder Name="Announcer" ID="{9645805C-C284-41B0-B66E-D8F0C1193E10}" ShortID="74537990">

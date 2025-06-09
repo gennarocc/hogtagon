@@ -8,8 +8,11 @@ Event	ID	Name			Wwise Object Path	Notes
 	1209236599	HogCooldownComplete			\Default Work Unit\HogCooldownComplete	
 	1467666939	HogImpactHigh			\Default Work Unit\HogImpactHigh	
 	1933252553	uiCancel			\Default Work Unit\uiCancel	
+	2346132799	hog2Honk			\Default Work Unit\hog2Honk	
 	2388455330	EngineOff			\Default Work Unit\EngineOff	
 	2439330724	EngineOn			\Default Work Unit\EngineOn	
+	2840820481	scifiHonk			\Default Work Unit\scifiHonk	
+	2877398186	ahoogaHonk			\Default Work Unit\ahoogaHonk	
 	3010988261	TireScreechOff			\Default Work Unit\TireScreechOff	
 	3013779447	HogImpactMed			\Default Work Unit\HogImpactMed	
 	3045288105	RoundOutOfTime			\Default Work Unit\RoundOutOfTime	
@@ -17,9 +20,11 @@ Event	ID	Name			Wwise Object Path	Notes
 	3181948357	PlayerElimination			\Default Work Unit\PlayerElimination	
 	3391830779	RoundWin			\Default Work Unit\RoundWin	
 	3567623486	HogHorn			\Default Work Unit\HogHorn	
+	3571403586	clownHonk			\Default Work Unit\clownHonk	
 	3670274905	TireScreechOn			\Default Work Unit\TireScreechOn	
 	3718586431	HogImpactLow			\Default Work Unit\HogImpactLow	
 	3921005316	PauseOff			\Default Work Unit\PauseOff	
+	3990552864	hog1Honk			\Default Work Unit\hog1Honk	
 
 Game Parameter	ID	Name			Wwise Object Path	Notes
 	796049864	RPM			\Default Work Unit\RPM	
@@ -34,6 +39,7 @@ In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	184000432	car-explosion-3	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\0D\{0DD92B6E-2B4C-387A-19C7-068697F5788B}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\car-explosion\car-explosion-3		52566
 	191368066	impact-3c	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\94\{94FCCCBF-4772-D5F2-C17C-678D43A9D0CF}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\high-impact\impact-3c		44228
 	225365045	hog-jump-cooling1	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\C8\{C8865A99-61AE-073A-23B9-1EFB74F4934A}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-jump\hog-jump-cooling\hog-jump-cooling1		7682
+	276780446	scifi-honk	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\61\{61997E59-558C-4382-1974-DA458D34CC86}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\dlc-horns\scifi-honk		22489
 	289264218	player-elimination	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\7C\{7CE1E1EE-F8CD-292F-D4BF-1B5DEDE2E10B}.wem		\Actor-Mixer Hierarchy\Default Work Unit\Announcer\player-elimination		61920
 	299928938	impact-1a	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\E5\{E50A7C1A-612A-CF3F-ACDE-8987AD459D27}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\low-impact\impact-1a		25291
 	307100629	gear-shift-1	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\B2\{B2B519DE-9AFC-7C7D-B756-02B4ECE69C73}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\gear-shift-1		8842
@@ -57,6 +63,7 @@ In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	595717928	gear-shift-2	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\4D\{4D6FCE07-2FDC-F570-F5B2-EEC3AD0A4339}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\gear-shift-2		14745
 	603757496	round-start	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\81\{8145100E-8F66-5B00-B258-90840CA82E9C}.wem		\Actor-Mixer Hierarchy\Default Work Unit\Announcer\round-start		37079
 	607401393	impact-3b	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\41\{41C16F17-8FBA-2E87-5A1B-2BF3F1D8E963}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\high-impact\impact-3b		30909
+	626714143	ahooga-honk	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\D7\{D7B22019-BE16-7726-53F1-A8F65A410D7C}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\dlc-horns\ahooga-honk		13261
 	669803493	final-moments-1	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\94\{94CEFDA5-0546-5C0F-6CB4-21CE5457EC50}.wem		\Actor-Mixer Hierarchy\Default Work Unit\Announcer\out-of-time\final-moments-1		81139
 	671294554	running-out-of-time-2	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\C6\{C67741B4-42B1-2BC8-093B-10F1BE1B2AE0}.wem		\Actor-Mixer Hierarchy\Default Work Unit\Announcer\out-of-time\running-out-of-time-2		80507
 	708298719	impact-1b	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\42\{4248A475-19EA-E450-6816-F338529A9B91}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\low-impact\impact-1b		29678
@@ -65,12 +72,15 @@ In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	766515755	hog-jump1	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\6A\{6A93AA65-3B0F-722F-3641-04C46D8EC321}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-jump\hog-jump\hog-jump1		12295
 	783942544	impact-2c	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\ED\{EDC76917-6446-FA4C-5572-F57CB80A3E63}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\medium-impact\impact-2c		17960
 	796949936	2k-rpm-loop	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\35\{356F6AF9-6ED4-4298-EB17-F144863E216B}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\2k-rpm-loop		57763
+	811018331	hog2-honk	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\AA\{AAAF9743-7B94-923B-C676-E0DFAB158B73}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\dlc-horns\hog2-honk		6720
 	811391391	4k-rpm-loop	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\C1\{C1B47AA4-EF53-E380-9AB3-CE17F3136F68}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\4k-rpm-loop		78308
 	842752452	gear-shift-3	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\70\{70065D4A-C8CE-388F-5222-0571DFE128FB}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-engine\gear-shift-3		10575
+	857437726	clown-honk	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\B3\{B38BB1F8-6029-D282-776D-272B32CAB5A2}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\dlc-horns\clown-honk		10197
 	862707693	car-explosion-2	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\5F\{5F97042C-70BD-CE50-F9AA-F6049720CAAD}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\car-explosion\car-explosion-2		55583
 	908125136	hog-jump-cooling3	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\92\{92EFB117-F2AA-43DA-FCFF-7DBB29E8C3F1}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-jump\hog-jump-cooling\hog-jump-cooling3		5816
 	986065534	final-moments-2	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\8E\{8E119F33-D8C8-9909-A7E9-E8EEA3E0AF8B}.wem		\Actor-Mixer Hierarchy\Default Work Unit\Announcer\out-of-time\final-moments-2		81269
 	1032222109	impact-2a	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\8A\{8A8D8744-F648-AD8D-B5A9-A4B6BA1C0FB2}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\hog-impact\medium-impact\impact-2a		30993
 	1040679246	tire-screeching-2	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\DB\{DB7765BD-D580-FEBD-035F-2F1931C8E891}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\tire-screech\tire-screech_one-shot\tire-screeching-2		7092
+	1047984062	hog1-honk	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\A6\{A6266436-5A75-747E-021B-04B5915A0CE9}.wem		\Actor-Mixer Hierarchy\Default Work Unit\warthog\dlc-horns\hog1-honk		6660
 	1060462459	ui-navigation-click	C:\Users\Owner\repos\hogtagon\hogtagon_WwiseProject\.cache\9D\{9D806EAF-C7D9-11BC-0920-26A28A329334}.wem		\Actor-Mixer Hierarchy\Default Work Unit\UI\ui-navigation-click		2080
 
