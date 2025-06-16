@@ -21,6 +21,7 @@ public class SettingsData
     
     // Gameplay settings
     public string username = "Player";
+    public int honkType = 300;
     
     // Controls settings
     public float sensitivity = 1.0f;

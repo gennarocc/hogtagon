@@ -8,6 +8,7 @@ using UnityEngine.EventSystems;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using Steamworks;
 
 public class MenuManager : NetworkBehaviour
 {
@@ -86,6 +87,13 @@ public class MenuManager : NetworkBehaviour
 
     [Header("Connection Error UI")]
     [SerializeField] private TextMeshProUGUI connectionRefusedUI;
+
+    [Header("DLC")]
+    public bool dlcOwned = false;
+
+    // Steam integration
+    private bool steamInitialized = false;
+    private AppId_t dlcAppId = new AppId_t(3809750);
 
     #endregion
 
@@ -1267,6 +1275,77 @@ public class MenuManager : NetworkBehaviour
     }
 
     #endregion
+
+    private bool initializeSteamApi()
+    {
+        // Initialize the SteamAPI
+        if (SteamAPI.Init())
+        {
+            steamInitialized = true;
+            Debug.Log("[STEAM] Steam initialized successfully.");
+            return true;
+        }
+        else
+        {
+            Debug.Log("[STEAM] SteamAPI initialization failed.");
+            return false;
+        }
+    }
+    public string GetSteamUsername()
+    {
+        // Get saved username as fallback
+        string savedUsername = PlayerPrefs.GetString("Username", "Player");
+        string finalUsername = savedUsername;
+
+        try
+        {
+            if (!steamInitialized)
+            {
+                bool connected = initializeSteamApi();
+                if (!connected) return finalUsername;
+            }
+
+            if (steamInitialized)
+            {
+                string steamUsername = SteamFriends.GetPersonaName();
+
+                if (!string.IsNullOrEmpty(steamUsername))
+                {
+                    Debug.Log("[STEAM] Using Steam name: " + steamUsername);
+
+                    // Always save the steam username for next time
+                    PlayerPrefs.SetString("Username", steamUsername);
+                    PlayerPrefs.Save();
+
+                    finalUsername = steamUsername;
+                }
+
+
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[MENU] Exception during Steam username retrieval: " + e.Message);
+        }
+
+        return finalUsername;
+    }
+
+    public void CheckDlcOwnership()
+    {
+        if (!steamInitialized)
+        {
+            bool connected = initializeSteamApi();
+            if (!connected) return;
+        }
+
+        if (SteamApps.BIsDlcInstalled(dlcAppId))
+        {
+            Debug.Log("[STEAM] DLC Owned and Activated");
+            dlcOwned = true;
+        }
+
+    }
 }
 
 // Helper class to store and restore camera input references

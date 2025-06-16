@@ -294,10 +294,11 @@ public class HogController : NetworkBehaviour
 
     private void OnHornPressed()
     {
-        if (GetComponent<Player>().isPlayerAlive()) // Can not honk while dead 
-        {
-            SoundManager.Instance.PlayNetworkedSound(gameObject, SoundManager.SoundEffectType.HogHorn);
-        }
+        if (!GetComponent<Player>().isPlayerAlive()) return; // Can not honk while dead 
+
+        int type = PlayerPrefs.GetInt("HonkType");
+        Debug.Log("[HOG] Playing DLC Honk type - " + type);
+        SoundManager.Instance.PlayNetworkedSound(gameObject, (SoundManager.SoundEffectType)type);
     }
 
     private ClientInput CollectInput()

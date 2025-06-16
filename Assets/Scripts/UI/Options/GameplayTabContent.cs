@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode;
+using Steamworks;
 
 /// <summary>
 /// Handles the Gameplay settings tab content
@@ -11,6 +12,8 @@ public class GameplayTabContent : TabContent
     [Header("Gameplay Settings")]
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private TextMeshProUGUI warningMessageText;
+    [SerializeField] private TMP_Dropdown honkTypeDropdown;
+    [SerializeField] private Button applyButton;
 
     // Default values
     private const string DEFAULT_USERNAME = "Player";
@@ -29,23 +32,24 @@ public class GameplayTabContent : TabContent
             // Add listeners
             usernameInput.onEndEdit.AddListener(OnUsernameFinishedEditing);
         }
+
+        if (honkTypeDropdown != null)
+        {
+            honkTypeDropdown.value = PlayerPrefs.GetInt("HonkType") - 300;
+        }
+
+        honkTypeDropdown.interactable = MenuManager.Instance.dlcOwned;
     }
 
     protected override void InitializeUI()
     {
-        // Update UI with current settings
-        if (usernameInput != null)
-        {
-            // Get saved username or use default
-            string savedUsername = PlayerPrefs.GetString("Username", DEFAULT_USERNAME);
-            usernameInput.text = savedUsername;
-        }
+        // Get saved username or use default
+        string savedUsername = PlayerPrefs.GetString("Username", DEFAULT_USERNAME);
+        usernameInput.text = savedUsername;
 
-        // Clear any warning messages
-        if (warningMessageText != null)
-        {
-            warningMessageText.text = "";
-        }
+        LoadHonkType();
+
+        warningMessageText.text = "";
     }
 
     public void OnUsernameFinishedEditing(string username)
@@ -57,11 +61,8 @@ public class GameplayTabContent : TabContent
     private void SaveUsername(string username)
     {
         // Clear any previous warning message
-        if (warningMessageText != null)
-        {
-            warningMessageText.text = "";
-            warningMessageText.enabled = false;
-        }
+        warningMessageText.text = "";
+        warningMessageText.enabled = false;
 
         // Validate username
         if (string.IsNullOrWhiteSpace(username))
@@ -182,6 +183,35 @@ public class GameplayTabContent : TabContent
         {
             // No other gameplay settings to apply currently
             PlayerPrefs.Save();
+        }
+    }
+
+    public void OnHonkTypeChanged()
+    {
+        int honkTypeValue = 300 + honkTypeDropdown.value;
+
+        // Save to PlayerPrefs
+        PlayerPrefs.SetInt("HonkType", honkTypeValue);
+        PlayerPrefs.Save();
+
+
+        SoundManager.Instance.PlayUISound((SoundManager.SoundEffectType)honkTypeValue);
+
+        Debug.Log($"Honk Type changed to: {honkTypeValue} (Index: {honkTypeDropdown.value})");
+
+        applyButton.interactable = true;
+    }
+
+    private void LoadHonkType()
+    {
+        // Load saved honk type and set dropdown accordingly
+        int savedHonkType = PlayerPrefs.GetInt("HonkType", 300); // Default to 300
+        int dropdownIndex = savedHonkType - 300; // Convert back to index
+
+        // Ensure index is within valid range
+        if (dropdownIndex >= 0 && dropdownIndex < honkTypeDropdown.options.Count)
+        {
+            honkTypeDropdown.value = dropdownIndex;
         }
     }
 

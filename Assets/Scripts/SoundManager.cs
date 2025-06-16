@@ -17,7 +17,7 @@ public class SoundManager : NetworkBehaviour
     public enum SoundEffectType
     {
         // Player-specific sounds
-        HogHorn = 0,
+        HogHorn = 300,
         TireScreechOn = 1,
         TireScreechOff = 2,
         HogImpactLow = 3,
@@ -46,7 +46,13 @@ public class SoundManager : NetworkBehaviour
         // UI Sounds
         UIClick = 200,
         UIConfirm = 201,
-        UICancel = 202
+        UICancel = 202,
+
+        // DLC Honks
+        DLCHonk1 = 301,
+        DLCHonk2 = 302,
+        DLCHonk3 = 303,
+        DLCHonk4 = 304,
     }
 
     [Serializable]

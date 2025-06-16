@@ -3,8 +3,6 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.Audio;
-using System.IO;
-using Newtonsoft.Json;
 using Unity.Netcode;
 using System.Linq;
 
@@ -42,6 +40,7 @@ public class SettingsManager : MonoBehaviour
     [Header("Gameplay Settings")]
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private Toggle cameraSteeringToggle;
+    [SerializeField] private TMP_Dropdown honkTypeDropdown;
 
     [Header("Controls Settings")]
     [SerializeField] private Slider sensitivitySlider;
@@ -56,6 +55,7 @@ public class SettingsManager : MonoBehaviour
     private const float DEFAULT_SFX_VOLUME = 0.8f;
     private const float DEFAULT_SENSITIVITY = 1.0f;
     private const string DEFAULT_USERNAME = "Player";
+    private const int DEFAULT_HONK_TYPE = 300;
 
     private void Awake()
     {
@@ -197,6 +197,9 @@ public class SettingsManager : MonoBehaviour
             // Save gameplay settings
             if (usernameInput != null)
                 PlayerPrefs.SetString("Username", usernameInput.text);
+
+            if (honkTypeDropdown.value != 0)
+                PlayerPrefs.SetInt("HonkType", 300 + honkTypeDropdown.value);
 
             // Save controls settings
             if (sensitivitySlider != null)
@@ -642,7 +645,8 @@ public class SettingsManager : MonoBehaviour
                 musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f),
                 sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 0.8f),
                 username = PlayerPrefs.GetString("Username", "Player"),
-                sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f)
+                sensitivity = PlayerPrefs.GetFloat("Sensitivity", 1.0f),
+                honkType = PlayerPrefs.GetInt("HonkType", 300)
             };
 
             // Save directly to JSON
@@ -770,6 +774,7 @@ public class SettingsManager : MonoBehaviour
 
                 // Gameplay settings
                 username = usernameInput != null ? usernameInput.text : DEFAULT_USERNAME,
+                honkType = honkTypeDropdown.value != 0 ? honkTypeDropdown.value + DEFAULT_HONK_TYPE : DEFAULT_HONK_TYPE,
 
                 // Controls settings
                 sensitivity = sensitivitySlider != null ? sensitivitySlider.value : DEFAULT_SENSITIVITY

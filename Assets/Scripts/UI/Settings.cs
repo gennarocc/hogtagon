@@ -11,10 +11,10 @@ public class Settings : MonoBehaviour
     [SerializeField] public Slider cameraSensitivity;
     [SerializeField] private Toggle fullscreenToggle;
     [SerializeField] private Button applyButton;
-    
+
     private Resolution[] resolutions;
     private List<Resolution> filteredResolutions;
-    
+
     // Store pending changes
     private int pendingResolutionIndex;
     private bool pendingFullscreenState;
@@ -33,26 +33,26 @@ public class Settings : MonoBehaviour
             fullscreenToggle.onValueChanged.AddListener(OnFullscreenToggled);
         if (applyButton != null)
             applyButton.onClick.AddListener(ApplyVideoSettings);
-            
+
         // Initialize settings
         LoadResolutions();
-        
+
         // Set initial pending values
         pendingFullscreenState = Screen.fullScreen;
         if (fullscreenToggle != null)
             fullscreenToggle.isOn = pendingFullscreenState;
-            
+
         // Initially disable apply button if no changes
         if (applyButton != null)
             applyButton.interactable = false;
-            
+
         // Initialize volume labels with current values
         if (masterVolumeText != null && MasterVolume != null)
             UpdateVolumeLabel(masterVolumeText, "Master Volume", MasterVolume.GetGlobalValue());
-            
+
         if (musicVolumeText != null && MusicVolume != null)
             UpdateVolumeLabel(musicVolumeText, "Music Volume", MusicVolume.GetGlobalValue());
-            
+
         if (sfxVolumeText != null && SfxVolume != null)
             UpdateVolumeLabel(sfxVolumeText, "SFX Volume", SfxVolume.GetGlobalValue());
     }
@@ -64,18 +64,18 @@ public class Settings : MonoBehaviour
         {
             // When opening the menu, update UI to match actual current settings
             LoadCurrentResolution();
-            
+
             if (fullscreenToggle != null)
                 fullscreenToggle.isOn = Screen.fullScreen;
-                
+
             // Reset pending values to match current system state
             pendingFullscreenState = Screen.fullScreen;
             pendingResolutionIndex = resolutionDropdown.value;
-            
+
             // Reset the apply button state
             if (applyButton != null)
                 applyButton.interactable = false;
-                
+
             hasUnappliedChanges = false;
         }
     }
@@ -84,15 +84,16 @@ public class Settings : MonoBehaviour
     {
         // Get all possible resolutions
         Resolution[] allResolutions = Screen.resolutions;
-        
+
         // Filter to only include 60Hz, 120Hz, and 144Hz (with small margin for rounding)
-        resolutions = allResolutions.Where(res => {
+        resolutions = allResolutions.Where(res =>
+        {
             float rate = (float)res.refreshRateRatio.value;
-            return (rate >= 59.5f && rate <= 60.5f) || 
-                   (rate >= 119.5f && rate <= 120.5f) || 
+            return (rate >= 59.5f && rate <= 60.5f) ||
+                   (rate >= 119.5f && rate <= 120.5f) ||
                    (rate >= 143.5f && rate <= 144.5f);
         }).ToArray();
-        
+
         filteredResolutions = new List<Resolution>();
 
         // Clear existing options
@@ -100,7 +101,7 @@ public class Settings : MonoBehaviour
 
         // Create options with resolution dimensions and refresh rate
         List<string> options = new List<string>();
-        
+
         // Log all available resolutions for debugging
         Debug.Log($"[Settings] Available resolutions count (filtered): {resolutions.Length}");
         for (int i = 0; i < resolutions.Length; i++)
@@ -110,19 +111,19 @@ public class Settings : MonoBehaviour
             filteredResolutions.Add(resolutions[i]);
             Debug.Log($"  [{i}] {option} - Raw refreshRate: {resolutions[i].refreshRateRatio.value}");
         }
-        
+
         // Sort options by resolution (ascending) and then by refresh rate (ascending)
         var sortedList = filteredResolutions.Select((res, index) => new { Resolution = res, Option = options[index] })
             .OrderBy(item => item.Resolution.width * item.Resolution.height)
             .ThenBy(item => (float)item.Resolution.refreshRateRatio.value)
             .ToList();
-            
+
         filteredResolutions = sortedList.Select(item => item.Resolution).ToList();
         options = sortedList.Select(item => item.Option).ToList();
 
         // Add options to dropdown
         resolutionDropdown.AddOptions(options);
-        
+
         // Now load current resolution after populating dropdown
         LoadCurrentResolution();
     }
@@ -133,10 +134,10 @@ public class Settings : MonoBehaviour
         int currentWidth = Screen.width;
         int currentHeight = Screen.height;
         float currentRefreshRate = (float)Screen.currentResolution.refreshRateRatio.value;
-        
+
         // Default to first option if no match is found
         int bestMatchIndex = 0;
-        
+
         for (int i = 0; i < filteredResolutions.Count; i++)
         {
             if (filteredResolutions[i].width == currentWidth &&
@@ -161,7 +162,7 @@ public class Settings : MonoBehaviour
         if (applyButton != null)
             applyButton.interactable = true;
     }
-    
+
     // Called when fullscreen toggle changes
     public void OnFullscreenToggled(bool isFullscreen)
     {
@@ -170,7 +171,7 @@ public class Settings : MonoBehaviour
         if (applyButton != null)
             applyButton.interactable = true;
     }
-    
+
     // Called when Apply button is clicked
     public void ApplyVideoSettings()
     {
@@ -180,11 +181,11 @@ public class Settings : MonoBehaviour
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, pendingFullscreenState);
             SaveResolutionPreference(selectedResolution);
             SaveFullscreenPreference(pendingFullscreenState);
-            
+
             hasUnappliedChanges = false;
             if (applyButton != null)
                 applyButton.interactable = false;
-                
+
             SoundManager.Instance.PlayUISound(SoundManager.SoundEffectType.UIClick);
         }
     }
@@ -195,7 +196,7 @@ public class Settings : MonoBehaviour
         PlayerPrefs.SetInt("ResolutionHeight", resolution.height);
         PlayerPrefs.Save();
     }
-    
+
     private void SaveFullscreenPreference(bool isFullscreen)
     {
         PlayerPrefs.SetInt("Fullscreen", isFullscreen ? 1 : 0);
@@ -226,7 +227,7 @@ public class Settings : MonoBehaviour
     [SerializeField] private TextMeshProUGUI masterVolumeText;
     [SerializeField] private TextMeshProUGUI musicVolumeText;
     [SerializeField] private TextMeshProUGUI sfxVolumeText;
-    
+
     public void SetMasterVolume(float vol)
     {
         MasterVolume.SetGlobalValue(vol);
@@ -244,14 +245,14 @@ public class Settings : MonoBehaviour
         SfxVolume.SetGlobalValue(vol);
         UpdateVolumeLabel(sfxVolumeText, "SFX Volume", vol);
     }
-    
+
     private void UpdateVolumeLabel(TextMeshProUGUI label, string labelName, float value)
     {
         if (label != null)
         {
             // Convert slider value to decibels (assuming 0-100 scale)
             // You can adjust this calculation based on your actual volume range
-            int dbValue = Mathf.RoundToInt(value); 
+            int dbValue = Mathf.RoundToInt(value);
             label.text = $"{labelName}: {dbValue}dB";
         }
     }
