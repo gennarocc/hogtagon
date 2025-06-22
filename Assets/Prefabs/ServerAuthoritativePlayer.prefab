@@ -10590,7 +10590,7 @@ GameObject:
   - component: {fileID: 2513074227899650122}
   m_Layer: 3
   m_Name: Model
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11256,6 +11256,10 @@ MonoBehaviour:
     m_RotationOrder: 4
   steeringDeadzone: 0.1
   invertCameraSteering: 0
+  pingCheckInterval: 0.5
+  maxPingSamples: 4
+  warningThreshold: 100
+  criticalThreshold: 150
   rb: {fileID: 3010862004317786802}
   wheelColliders:
   - {fileID: 7947942277690021792}
@@ -16460,7 +16464,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8814684486626846411
 RectTransform:
   m_ObjectHideFlags: 0
@@ -21560,7 +21564,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 45bc8f7cb5f5bde40ae623ce1a538ed5, type: 3}
       propertyPath: m_TagString

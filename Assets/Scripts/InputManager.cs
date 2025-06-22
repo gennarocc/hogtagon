@@ -38,6 +38,8 @@ public class InputManager : MonoBehaviour
     public event Action BackPressed;
     public event Action AcceptPressed;
     public event Action<bool> ScoreboardToggled;
+    public event Action SpawnAICarPressed;
+    public event Action StartAIDrivingPressed;
 
     // Device state
     private bool _usingGamepad = false;
@@ -108,6 +110,12 @@ public class InputManager : MonoBehaviour
 
         // Pause Menu
         controls.Gameplay.PauseMenu.performed += ctx => MenuToggled?.Invoke();
+
+        // Spawn AI Car
+        controls.Gameplay.SpawnAICar.performed += ctx => SpawnAICarPressed?.Invoke();
+        
+        // Start AI Driving
+        controls.Gameplay.StartAIDriving.performed += ctx => StartAIDrivingPressed?.Invoke();
 
         // UI controls
         controls.UI.OpenMenu.performed += ctx => MenuToggled?.Invoke();

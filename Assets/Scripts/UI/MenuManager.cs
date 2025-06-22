@@ -153,10 +153,13 @@ public class MenuManager : NetworkBehaviour
         // Try to find InputManager if it wasn't found in Awake
         inputManager = InputManager.Instance;
 
-        // Unsubscribe first to avoid duplicate subscriptions
-        inputManager.MenuToggled += OnMenuToggled;
-        inputManager.BackPressed += OnBackPressed;
-        inputManager.ScoreboardToggled += HandleScoreboardToggle;
+        // Subscribe to InputManager events if available
+        if (inputManager != null)
+        {
+            inputManager.MenuToggled += OnMenuToggled;
+            inputManager.BackPressed += OnBackPressed;
+            inputManager.ScoreboardToggled += HandleScoreboardToggle;
+        }
 
         if (NetworkManager.Singleton != null)
         {
@@ -167,8 +170,19 @@ public class MenuManager : NetworkBehaviour
 
     private void OnDisable()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
-        NetworkManager.Singleton.OnClientDisconnectCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
+        // Unsubscribe from InputManager events
+        if (inputManager != null)
+        {
+            inputManager.MenuToggled -= OnMenuToggled;
+            inputManager.BackPressed -= OnBackPressed;
+            inputManager.ScoreboardToggled -= HandleScoreboardToggle;
+        }
+
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
+            NetworkManager.Singleton.OnClientDisconnectCallback -= (id) => OnPlayerCountChanged(NetworkManager.Singleton.ConnectedClients.Count);
+        }
     }
 
     private void Start()
@@ -184,15 +198,20 @@ public class MenuManager : NetworkBehaviour
         EventSystem.current.SetSelectedGameObject(null);
 
         // Try to find InputManager again if it wasn't found in Awake/OnEnable
-        inputManager = InputManager.Instance;
-        // Subscribe to events if we just found the InputManager
-        inputManager.MenuToggled += OnMenuToggled;
-        inputManager.BackPressed += OnBackPressed;
-        inputManager.ScoreboardToggled += HandleScoreboardToggle;
+        if (inputManager == null)
+            inputManager = InputManager.Instance;
+        
+        // Subscribe to events if we have the InputManager
+        if (inputManager != null)
+        {
+            inputManager.MenuToggled += OnMenuToggled;
+            inputManager.BackPressed += OnBackPressed;
+            inputManager.ScoreboardToggled += HandleScoreboardToggle;
 
-        // Check if input actions are enabled
-        if (!inputManager.AreInputActionsEnabled())
-            inputManager.ForceEnableCurrentActionMap();
+            // Check if input actions are enabled
+            if (!inputManager.AreInputActionsEnabled())
+                inputManager.ForceEnableCurrentActionMap();
+        }
 
         // Initialize main menu
         ShowMainMenu();
@@ -281,17 +300,20 @@ public class MenuManager : NetworkBehaviour
         }
 
         // Let InputManager handle the input mode switch and initial cursor state
-        if (toUIMode)
+        if (inputManager != null)
         {
-            inputManager.SwitchToUIMode();
-            if (!inputManager.IsInUIMode())
-                inputManager.ForceEnableCurrentActionMap();
-        }
-        else
-        {
-            inputManager.SwitchToGameplayMode();
-            if (!inputManager.IsInGameplayMode())
-                inputManager.ForceEnableCurrentActionMap();
+            if (toUIMode)
+            {
+                inputManager.SwitchToUIMode();
+                if (!inputManager.IsInUIMode())
+                    inputManager.ForceEnableCurrentActionMap();
+            }
+            else
+            {
+                inputManager.SwitchToGameplayMode();
+                if (!inputManager.IsInGameplayMode())
+                    inputManager.ForceEnableCurrentActionMap();
+            }
         }
 
         // Double-check cursor state as a fallback (InputManager should handle this primarily)

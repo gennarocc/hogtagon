@@ -24,10 +24,17 @@ public class ConnectionManager : NetworkBehaviour
 
     private void Start()
     {
-        NetworkManager.Singleton.ConnectionApprovalCallback += ConnectionApprovalCallback;
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
-        NetworkManager.Singleton.OnTransportFailure += OnTransportFailure;
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.ConnectionApprovalCallback += ConnectionApprovalCallback;
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
+            NetworkManager.Singleton.OnTransportFailure += OnTransportFailure;
+        }
+        else
+        {
+            Debug.LogError("NetworkManager.Singleton is null in ConnectionManager.Start()");
+        }
 
         if (Instance == null)
         {
@@ -45,6 +52,21 @@ public class ConnectionManager : NetworkBehaviour
         // The client identifier to be authenticated
         var clientId = request.ClientNetworkId;
         response.Approved = false;
+
+        // Check if required managers are available
+        if (SpawnPointManager.Instance == null)
+        {
+            response.Reason = "SpawnPointManager not initialized";
+            Debug.LogError("SpawnPointManager.Instance is null in ConnectionApprovalCallback");
+            return;
+        }
+
+        if (GameManager.Instance == null)
+        {
+            response.Reason = "GameManager not initialized";
+            Debug.LogError("GameManager.Instance is null in ConnectionApprovalCallback");
+            return;
+        }
 
         // Set player username
         string decodedUsername = System.Text.Encoding.ASCII.GetString(request.Payload);
@@ -81,7 +103,7 @@ public class ConnectionManager : NetworkBehaviour
         ClientDataListSerialized serializedList = DictionaryExtensions.ConvertDictionaryToSerializableList(clientDataDictionary);
         SendClientDataListClientRpc(clientId, serializedList);
 
-        if (IsServer)
+        if (IsServer && GameManager.Instance != null)
         {
             GameManager.Instance.UpdateGameModeClientRpc(GameManager.Instance.gameMode);
 
@@ -94,7 +116,7 @@ public class ConnectionManager : NetworkBehaviour
         }
 
         // If this is our local client connecting, update menu state
-        if (clientId == NetworkManager.Singleton.LocalClientId)
+        if (NetworkManager.Singleton != null && clientId == NetworkManager.Singleton.LocalClientId)
         {
             isConnected = true;
 
@@ -107,7 +129,7 @@ public class ConnectionManager : NetworkBehaviour
     private void OnClientDisconnectCallback(ulong clientId)
     {
         // Unassign Spawn Point
-        if (IsServer)
+        if (IsServer && SpawnPointManager.Instance != null)
             SpawnPointManager.Instance.UnassignSpawnPoint(clientId);
 
         // Remove Data from Client Dictionary/List
@@ -126,21 +148,21 @@ public class ConnectionManager : NetworkBehaviour
                 scoreboard.UpdatePlayerList();
 
             // If server and only one player left, reset to lobby state and show message
-            if (IsServer && NetworkManager.Singleton.ConnectedClients.Count <= 1)
+            if (IsServer && NetworkManager.Singleton != null && NetworkManager.Singleton.ConnectedClients.Count <= 1 && GameManager.Instance != null)
             {
                 GameManager.Instance.TransitionToState(GameState.Pending);
                 ShowHostAloneMessageClientRpc(username);
             }
         }
 
-        if (!IsServer && NetworkManager.Singleton.DisconnectReason != string.Empty)
+        if (!IsServer && NetworkManager.Singleton != null && NetworkManager.Singleton.DisconnectReason != string.Empty)
         {
             menuManager.ShowMainMenu();
             menuManager.DisplayConnectionError(NetworkManager.Singleton.DisconnectReason);
         }
 
         // If this is our local client disconnecting, update menu state
-        if (clientId == NetworkManager.Singleton.LocalClientId)
+        if (NetworkManager.Singleton != null && clientId == NetworkManager.Singleton.LocalClientId)
         {
             isConnected = false;
 
@@ -164,9 +186,12 @@ public class ConnectionManager : NetworkBehaviour
 
     private void OnTransportFailure()
     {
-        menuManager.connectionPending.SetActive(false);
-        menuManager.DisplayConnectionError("Connection Timeout");
-        menuManager.ShowMainMenu();
+        if (menuManager != null)
+        {
+            menuManager.connectionPending.SetActive(false);
+            menuManager.DisplayConnectionError("Connection Timeout");
+            menuManager.ShowMainMenu();
+        }
     }
 
     public bool CheckUsernameAvailability(string username)
@@ -190,7 +215,7 @@ public class ConnectionManager : NetworkBehaviour
     [ClientRpc]
     private void SendClientDataListClientRpc(ulong clientId, ClientDataListSerialized serializedList)
     {
-        if (NetworkManager.Singleton.LocalClientId == clientId)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClientId == clientId)
         {
             // Purge any existing data.
             if (clientDataDictionary.Count > 0)

@@ -116,6 +116,24 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SpawnAICar"",
+                    ""type"": ""Button"",
+                    ""id"": ""a1b2c3d4-e5f6-7890-1234-567890abcdef"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""StartAIDriving"",
+                    ""type"": ""Button"",
+                    ""id"": ""f1e2d3c4-b5a6-7890-1234-567890fedcba"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -208,66 +226,22 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""2D Vector"",
+                    ""name"": """",
                     ""id"": ""31aeb5dc-de10-4fef-98a6-61b3494e2483"",
-                    ""path"": ""2DVector"",
+                    ""path"": ""<Mouse>/delta"",
                     ""interactions"": """",
-                    ""processors"": """",
+                    ""processors"": ""ScaleVector2(x=5,y=5)"",
                     ""groups"": """",
                     ""action"": ""Look"",
-                    ""isComposite"": true,
+                    ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""up"",
-                    ""id"": ""936dd858-770e-4e72-8e14-878d0751092d"",
-                    ""path"": ""<Mouse>/delta/y"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""down"",
-                    ""id"": ""8a7ab150-7608-4c7c-ba94-02820fc3e725"",
-                    ""path"": ""<Mouse>/delta/y"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""left"",
-                    ""id"": ""e70c8a86-c149-4d8f-b06f-dcca1381e627"",
-                    ""path"": ""<Mouse>/delta/x"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""right"",
-                    ""id"": ""fd35b006-5369-45aa-8c05-cbf2fb71579a"",
-                    ""path"": ""<Mouse>/delta/x"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Look"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
                 },
                 {
                     ""name"": """",
                     ""id"": ""52be239d-fca0-4e39-ba9d-6b891490c433"",
                     ""path"": ""<Gamepad>/rightStick"",
                     ""interactions"": """",
-                    ""processors"": ""StickDeadzone"",
+                    ""processors"": ""StickDeadzone,ScaleVector2(x=300,y=300)"",
                     ""groups"": """",
                     ""action"": ""Look"",
                     ""isComposite"": false,
@@ -393,6 +367,28 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
                     ""action"": ""SwapCam"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b1c2d3e4-f506-7890-1234-567890abcdef"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SpawnAICar"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c2d3e4f5-a6b7-8901-2345-678901bcdef0"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""StartAIDriving"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -510,6 +506,8 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         m_Gameplay_PauseMenu = m_Gameplay.FindAction("PauseMenu", throwIfNotFound: true);
         m_Gameplay_Screenshot = m_Gameplay.FindAction("Screenshot", throwIfNotFound: true);
         m_Gameplay_SwapCam = m_Gameplay.FindAction("SwapCam", throwIfNotFound: true);
+        m_Gameplay_SpawnAICar = m_Gameplay.FindAction("SpawnAICar", throwIfNotFound: true);
+        m_Gameplay_StartAIDriving = m_Gameplay.FindAction("StartAIDriving", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_OpenMenu = m_UI.FindAction("OpenMenu", throwIfNotFound: true);
@@ -593,6 +591,8 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Gameplay_PauseMenu;
     private readonly InputAction m_Gameplay_Screenshot;
     private readonly InputAction m_Gameplay_SwapCam;
+    private readonly InputAction m_Gameplay_SpawnAICar;
+    private readonly InputAction m_Gameplay_StartAIDriving;
     public struct GameplayActions
     {
         private @DefaultControls m_Wrapper;
@@ -607,6 +607,8 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         public InputAction @PauseMenu => m_Wrapper.m_Gameplay_PauseMenu;
         public InputAction @Screenshot => m_Wrapper.m_Gameplay_Screenshot;
         public InputAction @SwapCam => m_Wrapper.m_Gameplay_SwapCam;
+        public InputAction @SpawnAICar => m_Wrapper.m_Gameplay_SpawnAICar;
+        public InputAction @StartAIDriving => m_Wrapper.m_Gameplay_StartAIDriving;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -646,6 +648,12 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @SwapCam.started += instance.OnSwapCam;
             @SwapCam.performed += instance.OnSwapCam;
             @SwapCam.canceled += instance.OnSwapCam;
+            @SpawnAICar.started += instance.OnSpawnAICar;
+            @SpawnAICar.performed += instance.OnSpawnAICar;
+            @SpawnAICar.canceled += instance.OnSpawnAICar;
+            @StartAIDriving.started += instance.OnStartAIDriving;
+            @StartAIDriving.performed += instance.OnStartAIDriving;
+            @StartAIDriving.canceled += instance.OnStartAIDriving;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -680,6 +688,12 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
             @SwapCam.started -= instance.OnSwapCam;
             @SwapCam.performed -= instance.OnSwapCam;
             @SwapCam.canceled -= instance.OnSwapCam;
+            @SpawnAICar.started -= instance.OnSpawnAICar;
+            @SpawnAICar.performed -= instance.OnSpawnAICar;
+            @SpawnAICar.canceled -= instance.OnSpawnAICar;
+            @StartAIDriving.started -= instance.OnStartAIDriving;
+            @StartAIDriving.performed -= instance.OnStartAIDriving;
+            @StartAIDriving.canceled -= instance.OnStartAIDriving;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -779,6 +793,8 @@ public partial class @DefaultControls: IInputActionCollection2, IDisposable
         void OnPauseMenu(InputAction.CallbackContext context);
         void OnScreenshot(InputAction.CallbackContext context);
         void OnSwapCam(InputAction.CallbackContext context);
+        void OnSpawnAICar(InputAction.CallbackContext context);
+        void OnStartAIDriving(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
