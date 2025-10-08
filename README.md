@@ -10,6 +10,8 @@ Hogtagon is a personal project I built to develop my skills in Unity, multiplaye
 
 The game features online multiplayer using Unity Netcode for GameObjects and Unity Relay Services to allow players to seamlessly connect with their friends. For the optimal experiance, 8 players is highly recomended. 
 
+![HogtagonPromo](Assets/Marketing/Finals/AnnouncementCover.png)
+
 ## Built With
 
 - [Unity](https://unity.com/) - Game Engine
