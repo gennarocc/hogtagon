@@ -23,5 +23,8 @@ The game features online multiplayer using Unity Netcode for GameObjects and Uni
 ## Credits
 
 **Gennaro Cuomo** - Lead & Programming
+
 **Daniel Ramirez** - Audio Design
+
 **Charles Moore** - UX and Trailer
+
